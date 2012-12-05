@@ -30,7 +30,7 @@ for img in temporal(data)        # iterate (slice) over the different times
 end
 ```
 
-This is possible only if `data` contains enough metadata to convey what's needed about the raw representation. 
+This is possible only if there are strict conventions about how images are to be interpreted (e.g., Matlab's convention that an RGB image is a `(H, W, 3)` array), or if `data` contains enough metadata to describe the raw representation. In Julia, both are possible simultaneously: the intent is to provide a set of defaults that work on plain arrays, and also make it easy for users to supply metadata to achieve the correct behavior on custom types. The basic hope is that by defining a small set of accessor functions on your image type, you can prepare it for use in generic algorithms.
 
 For all the advantages of generic algorithms, this author is not very interested in algorithms that look pretty but come with a large performance hit. It will be interesting to see how well one can achieve performance and generality. Julia's forthcoming immutable types seem promising as an additional tool for achieving this goal.
 
