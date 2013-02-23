@@ -40,3 +40,17 @@ For all the advantages of generic algorithms, this author is not very interested
 - Support for PNG and PPM/PGM/PBM is basically ready (needs refactoring, yay for `try...finally`!)
 - Some thoughts on support for direct color & indexed images are in place, and a few prototype accessor functions are available
 - Some older but useful code is not incorporated into the new framework, so there's a bit of disjointedness to what you'll see later in the file.
+
+## TODO
+
+Tasks that will retain value even if the underlying representation changes, ordered roughly in increasing difficulty:
+- Update for any deprecations in Julia
+- Image I/O: incorporate try/finally to clean up error handling
+- Image display: incorporate Winston. Add imshow, imshowsc.
+- Image I/O: incorporate TIF reading from https://github.com/rephorm/TIFF.jl
+- Image I/O: check out the PNG support and improve as needed. It's possible now that one wouldn't require the C library any more. Make sure support for transparency works (which one can't get via ImageMagick).
+
+These tasks would also be useful, but the risk is that they might need reworking multiple times if the underlying representation of images evolves:
+- Improve documentation
+- Algorithms: get algorithms working with current framework
+- Representation: figure out iteration over image sequences, color channel selection, etc.
