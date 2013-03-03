@@ -1,164 +1,176 @@
+#### Types and constructors ####
+
 # Plain arrays can be treated as images. Other types will have
 # metadata associated, make yours a child of one of the following:
-abstract AbstractImage{T} <: AbstractArray{T}      # image with metadata
-abstract AbstractImageDirect{T} <: AbstractImage{T}        # each pixel has own value/color
-abstract AbstractImageIndexed{T} <: AbstractImage{T}       # indexed images (i.e., lookup table)
+abstract AbstractImage{T} <: AbstractArray{T}         # image with metadata
+abstract AbstractImageDirect{T} <: AbstractImage{T}   # each pixel has own value/color
+abstract AbstractImageIndexed{T} <: AbstractImage{T}  # indexed images (i.e., lookup table)
 
-# Types to tag the colorspace
-abstract ColorSpace
-type RGB <: ColorSpace end
-type RGBA <: ColorSpace end
-type Gray <: ColorSpace end
-type LAB <: ColorSpace end
-type HSV <: ColorSpace end
-
-# Generic programming with images---whether represented as plain arrays or as types with metadata---uses the following accessor functions:
-#  
-
-
-##### Treating plain arrays as images #####
-
-# The following functions allow plain arrays to be treated as images
-# for all image-processing functions:
-# storageorder(img::Matrix) = ["y","x"]     # vertical-major storage order
-# function storageorder{T}(img::Array{T,3})
-#     if size(img, 3) == 3
-#         return ["y","x","c"]              # an rgb image
-#     else
-#         error("Cannot infer storage order of Array, use a type with metadata")
-#     end
-# end
-# # You could write the following generically in terms of the above, but
-# # for efficiency it's better to have a direct implementation:
-# colorspace(img::Matrix) = CSgray
-# function colorspace{T}(img::Array{T,3})
-#     if size(img, 3) == 3
-#         return CSsRGB
-#     else
-#         error("Cannot infer colorspace of Array, use a type with metadata")
-#     end
-# end
-# ncoords(img::Matrix) = 2
-# function ncoords{T}(img::Array{T,3})
-#     if size(img, 3) == 3
-#         return 2
-#     else
-#         error("Cannot infer the number of spatial dimensions of Array, use a type with metadata")
-#     end
-# end
-
-data(img::Array) = img
-
-##### Basic image types with metadata #####
-
-# Image with a defined color space and storage order
-type ImageCS{T,A<:AbstractArray,CS<:ColorSpace} <: AbstractImageDirect{T}
+# Direct image (e.g., grayscale, RGB)
+type Image{T,A<:AbstractArray} <: AbstractImageDirect{T}
     data::A
-    order::Vector{ASCIIString}  # storage order, e.g., ["y","x","c"]
-    
-    function ImageCS(data::A, order::Vector{ASCIIString}, ::Type{CS})
-        check_colordim(CS, order)
-        new(data, order)
-    end
+    properties::Dict
 end
-ImageCS{T,A<:AbstractArray{T},CS<:ColorSpace}(data::A, order::Vector{ASCIIString}, ::Type{CS}) = ImageCS{T,A,CS}(data,order)
-
-# Image with color space and explicit pixel min/max values (useful for contrast scaling)
-type ImageCSMinMax{T,A<:AbstractArray{T},CS<:ColorSpace} <: AbstractImageDirect{T}
-    data::A
-    order::Vector{ASCIIString}
-    min::T
-    max::T
-
-    function ImageCSMinMax(data::A, order::Vector{ASCIIString}, mn, mx)
-        check_colordim(CS, order)
-        new(data, order, convert(T, mn), convert(T, mx))
-    end
-end
-ImageCSMinMax{T,A<:AbstractArray{T},CS<:ColorSpace}(data::A, order::Vector{ASCIIString}, ::Type{CS}, mn, mx) = ImageCSMinMax{T,A,CS}(data,order,mn,mx)
+Image{A<:AbstractArray}(data::A, props::Dict) = Image{eltype(data),A}(data,props)
+Image{A<:AbstractArray}(data::A) = Image(data,Dict{String,Any}())
 
 # Indexed image (colormap)
-type ImageCmap{T,A<:AbstractArray,C<:AbstractArray,CS<:ColorSpace} <: AbstractImageIndexed{T}
+type ImageCmap{T,A<:AbstractArray,C<:AbstractArray} <: AbstractImageIndexed{T}
     data::A
-    order::Vector{ASCIIString}
     cmap::C
+    properties::Dict
 end
-ImageCmap{T,A<:AbstractArray{T},C<:AbstractArray,CS<:ColorSpace}(data::A, order::Vector{ASCIIString}, ::Type{CS}, cmap::C) = ImageCmap{T,A,C,CS}(data, order, cmap)
+ImageCmap{A<:AbstractArray,C<:AbstractArray}(data::A, cmap::C, props::Dict) = ImageCmap{eltype(data),A,C}(data, cmap, props)
+ImageCmap{A<:AbstractArray,C<:AbstractArray}(data::A, cmap::C) = ImageCmap(data, cmap, Dict{String,Any}())
 
-data(img::AbstractImage) = img.data
+#### Core operations ####
 
-assign{IM<:AbstractImage}(img::IM, X, ind...) = assign(img.data, X, ind...)
-# ref and sub return a value or AbstractArray, not an Image
-ref{IM<:AbstractImage}(img::IM, ind...) = ref(img.data, ind...)
-sub{IM<:AbstractImage}(img::IM, ind...) = sub(img.data, ind...)
-# refim and subim return an Image
-refim{T,A<:AbstractArray,CS<:ColorSpace}(img::ImageCS{T,A,CS}, ind...) = ImageCS(ref(img.data, ind...), img.order, CS)
-refim{T,A<:AbstractArray,CS<:ColorSpace}(img::ImageCSMinMax{T,A,CS}, ind...) = ImageCS(ref(img.data, ind...), img.order, CS, img.min, img.max)
-refim{T,A<:AbstractArray,C<:AbstractArray,CS<:ColorSpace}(img::ImageCmap{T,A,C,CS}, ind...) = ImageCmap(ref(img.data, ind...), img.order, CS, cmap)
+size(img::AbstractImage) = size(img.data)
+size(img::AbstractImage, i::Integer) = size(img.data, i)
 
+ndims(img::AbstractImage) = ndims(img.data)
 
 copy(img::AbstractImage) = deepcopy(img)
+# copy, replacing the data
+copy(img::Image, data::AbstractArray) = Image(data, copy(img.properties))
+copy(img::ImageCmap, data::AbstractArray) = ImageCmap(data, copy(img.cmap), copy(img.properties))
 
-# ncoords{T,N}(img::Union(ImageCS{T,N}, ImageCSMinMax{T,N}, ImageColormap{T,N})) = N
-# 
-# storageorder(img::Union(ImageCS, ImageCSMinMax, ImageColormap)) = img.order
-# 
-# colorspace{T, N, CS<:ColorSpace}(img::Union(ImageCS{T,N,CS}, ImageCSMinMax{T,N,CS}, ImageColormap{T,N,CS})) = CS
-# 
-# function size_spatial(img::Union(Array,AbstractImageDirect))
-#     order = storageorder(img)
-#     data = pixeldata(img)
-#     m = match(r"c", order)
-#     if m == nothing
-#         return size(data)
-#     else
-#         return ntuple(ncoords(img), i->size(data, i+(i >= m.offset)))
-#     end
-# end
-# size_spatial(img::ImageColormap) = size(img.data)
-# 
-# # The number of color channels
-# function ncolors(img::Union(Array,AbstractImageDirect))
-#     order = storageorder(img)
-#     data = pixeldata(img)
-#     m = match(r"c", order)
-#     if m == nothing
-#         return 1
-#     else
-#         return size(data, m.offset)
-#     end
-# end
+similar{T}(img::Image, ::Type{T}, dims::Dims) = Image(similar(img.data, T, dims), copy(img.properties))
+similar{T}(img::Image, ::Type{T}) = Image(similar(img.data, T), copy(img.properties))
+similar(img::Image) = Image(similar(img.data), copy(img.properties))
+similar{T}(img::ImageCmap, ::Type{T}, dims::Dims) = ImageCmap(similar(img.data, T, dims), copy(img.cmap), copy(img.properties))
+similar{T}(img::ImageCmap, ::Type{T}) = ImageCmap(similar(img.data, T), copy(img.cmap), copy(img.properties))
+similar(img::ImageCmap) = ImageCmap(similar(img.data), copy(img.cmap), copy(img.properties))
 
-clim_min{T<:Float}(img::Union(Array{T}, ImageCS{T}, ImageColormap{T})) = zero(T)
-clim_max{T<:Float}(img::Union(Array{T}, ImageCS{T}, ImageColormap{T})) = one(T)
-clim_min{T<:Integer}(img::Union(Array{T}, ImageCS{T}, ImageColormap{T})) = typemin(T)
-clim_max{T<:Integer}(img::Union(Array{T}, ImageCS{T}, ImageColormap{T})) = typemax(T)
-clim_min(img::ImageCSMinMax) = img.min
-clim_max(img::ImageCSMinMax) = img.max
-
-
-_show(io::IO, img::AbstractImage) = print(io, typeof(img), "\n  data: ", summary(img.data), "\n  order: ", show(io, img.order))
-show(io::IO, img::AbstractImage) = _show(io, img)
-function show(io::IO, img::ImageCSMinMax)
-    _show(io, img)
-    print(io, "\n  minmax: ", img.min, ", ", img.max)
-end
-function show(io::IO, img::ImageCmap)
-    _show(io, img)
-    print(io, "\n  map: ", summary(img.map))
-end
-
-
-check_colordim(::Type{Gray}, order::Vector{ASCIIString}) = nothing
-function check_colordim{CS<:ColorSpace}(::Type{CS}, order::Vector{ASCIIString})
-    havec = false
-    for s in order
-        if s == "c"
-            havec = true
-            break
+convert(::Type{Image}, img::Image) = img
+function convert(::Type{Image}, img::ImageCmap)
+    local data
+    local prop
+    if size(img.cmap, 2) == 1
+        data = reshape(img.cmap[img.data[:]], size(img.data))
+        prop = img.properties
+    else
+        newsz = tuple(size(img.data)...,size(img.cmap,2))
+        data = reshape(img.cmap[img.data[:],:], newsz)
+        prop = copy(img.properties)
+        prop["colordim"] = length(newsz)
+        indx = Base.ht_keyindex(prop, "storageorder")
+        if indx > 0
+            prop.vals[indx] = [prop.vals[indx], "color"]
         end
     end
-    if !havec
-        error("order array does not indicate the color dimension")
+    Image(data, prop)
+end
+
+assign(img::AbstractImage, X, i::Real) = assign(img.data, X, i)
+assign{T<:Real}(img::AbstractImage, X, I::Union(Real,AbstractArray{T})...) = assign(img.data, X, I...)
+
+# ref and sub return a value or AbstractArray, not an Image
+ref(img::AbstractImage, i::Real) = ref(img.data, i)
+ref{T<:Real}(img::AbstractImage, I::Union(Real,AbstractArray{T})...) = ref(img.data, I...)
+sub{T<:Real}(img::AbstractImage, I::RangeIndex...) = sub(img.data, I...) # needed because subarray not in sync with array
+sub{T<:Real}(img::AbstractImage, I::Union(Real,AbstractArray{T})...) = sub(img.data, I...)
+
+# refim and subim return an Image
+refim{T<:Real}(img::AbstractImage, I::Union(Real,AbstractArray{T})...) = copy(img, ref(img.data, I...))
+subim{T<:Real}(img::AbstractImage, I::Union(Real,AbstractArray{T})...) = copy(img, sub(img.data, I...))
+
+function show(io::IO, img::AbstractImageDirect)
+    IT = typeof(img)
+    print(io, colorspace(img), " ", IT.name, " with:\n  data: ", summary(img.data), "\n  properties: ", img.properties)
+end
+function show(io::IO, img::AbstractImageIndexed)
+    IT = typeof(img)
+    print(io, colorspace(img), " ", IT.name, " with:\n  data: ", summary(img.data), "\n  cmap: ", summary(img.cmap), "\n  properties: ", img.properties)
+end
+
+data(img::AbstractArray) = img
+data(img::AbstractImage) = img.data
+
+min(img::AbstractImageDirect) = min(img.data)
+max(img::AbstractImageDirect) = max(img.data)
+# min/max deliberately not defined for AbstractImageIndexed
+
+#### Properties ####
+
+# Generic programming with images uses properties to obtain information. The strategy is to define a particular property name, and then write an accessor function of the same name. The accessor function provides default behavior for plain arrays and when the property is not defined. Alternatively, use get(img, "propname", default) or has(img, "propname") to define your own default behavior.
+
+# You can define whatever properties you want. Here is a list of properties that are used in some algorithms:
+#   colorspace: "RGB", "RGBA", "Gray", "Binary", "Lab", "HSV", etc.
+#   colordim: the array dimension used to store color information, or 0 if not present
+#   seqdim: the array dimension used for time (i.e., sequence), or 0 for single images
+#   limits: (minvalue,maxvalue) for this type of image (e.g., (0,255) for Uint8 images, even if pixels do not reach these values)
+#   pixelspacing: the spacing between adjacent pixels along spatial dimensions
+#   storageorder: a string naming each dimension (names can be arbitrary and hence are not used in generic algorithms)
+
+has(a::AbstractArray, k::String) = false
+has(img::AbstractImage, k::String) = has(img.properties, k)
+
+get(img::AbstractArray, k::String, default) = default
+get(img::AbstractImage, k::String, default) = get(img.properties, k, default)
+
+# So that defaults don't have to be evaluated unless they are needed, we also define a @get macro (thanks Toivo Hennington):
+macro get(img, k, default)
+    quote
+        img, k = $(esc(img)), $(esc(k))
+        local val
+        if isa(img, StridedArray)
+            val = $(esc(default))
+        else
+            index = Base.ht_keyindex(img.properties, k)
+            val = (index > 0) ? img.properties.vals[index] : $(esc(default))
+        end
+        val
     end
+end
+
+
+colorspace(img::AbstractArray{Bool}) = "Binary"
+colorspace(img::AbstractArray{Bool,3}) = "Binary"
+colorspace(img::AbstractArray) = "Gray"
+colorspace{T}(img::AbstractArray{T,3}) = (size(img, 3) == 3) ? "RGB" : error("Cannot infer colorspace of Array, use an AbstractImage type")
+colorspace(img::AbstractImage{Bool}) = "Binary"
+colorspace(img::AbstractImage) = get(img.properties, "colorspace", "Gray")
+
+colordim{T}(img::AbstractArray{T,3}) = (size(img, 3) == 3) ? 3 : error("Cannot infer colordim of Array, use an AbstractImage type")
+colordim(img::AbstractImageDirect) = get(img, "colordim", 0)
+colordim(img::AbstractImageIndexed) = 0
+
+seqdim(img) = get(img, "seqdim", 0)
+
+limits(img::AbstractArray{Bool}) = 0,1
+limits{T<:Integer}(img::AbstractArray{T}) = typemin(T), typemax(T)
+limits{T<:FloatingPoint}(img::AbstractArray{T}) = zero(T), one(T)
+limits(img::AbstractImage{Bool}) = 0,1
+limits{T}(img::AbstractImageDirect{T}) = get(img, "limits", (typemin(T), typemax(T)))
+limits(img::AbstractImageIndexed) = @get img "limits" (min(img.cmap), max(img.cmap))
+
+pixelspacing{T}(img::AbstractArray{T,3}) = (size(img, 3) == 3) ? [1.0,1.0] : error("Cannot infer pixelspacing of Array, use an AbstractImage type")
+pixelspacing(img::AbstractMatrix) = [1.0,1.0]
+pixelspacing(img::AbstractImage) = @get img "pixelspacing" _pixelspacing(img)
+_pixelspacing(img::AbstractImage) = ones(sdims(img))
+
+# number of spatial dimensions in the image
+sdims(img) = ndims(img) - (colordim(img) != 0) - (seqdim(img) != 0)
+
+storageorder(img::AbstractMatrix) = ["y", "x"]
+storageorder{T}(img::AbstractArray{T,3}) = (size(img, 3) == 3) ? ["y", "x", "c"] : error("Cannot infer storageorder of Array, use an AbstractImage type")
+storageorder(img::AbstractImage) = img.properties["storageorder"]
+
+function coords_spatial(img)
+    ind = [1:ndims(img)]
+    cdim = colordim(img)
+    if cdim > 0
+        ind = setdiff(ind, cdim)
+    end
+    tdim = seqdim(img)
+    if tdim > 0
+        ind = setdiff(ind, tdim)
+    end
+    ind
+end
+
+function size_spatial(img)
+    sz = size(img)
+    sz[coords_spatial(img)]
 end
