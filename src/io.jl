@@ -165,11 +165,39 @@ function imread(filename::String, ::Type{ImageMagick})
 end
 
 function imwrite(img, filename::String, ::Type{ImageMagick})
-        cmd = `convert -size $(w)x$(h) -depth 8 rgb: $filename` # FIXME
-        stream, p = writesto(cmd)
+    if sdims(img) != 2
+        error("Writing multidimensional images is not yet supported")
+    end
+    if timedim(img) != 0
+        error("Writing image sequences (i.e., images over time) is not yet supported")
+    end
+    perm = spatialpermutation(xy, img)
+    w, h = widthheight(img, perm)
+    cs = colorspace(img)
+    cd = colordim(img)
+    bitdepth = 8*eltype(img)
+    local cmd
+    if isdirect(img)
+        if cs[1:min(4,length(cs))] == "Gray"
+            if cs == "GrayAlpha"
+                error("Not yet implemented")
+            end
+            cmd = `convert -size $(w)x$(h) -depth $bitdepth gray: $filename`
+        else
+            csparsed = lower(rgb)
+            if cs == "24bit"
+                csparsed = "rgb"
+            end
+            cmd = `convert -size $(w)x$(h) -depth $bitdepth $csparsed: $filename`
+        end
+        stream, proc = writesto(cmd)
         spawn(cmd)
-        imwrite(img, stream, ImageMagick)
-        Base.wait_success(p)
+        write_binary_color_perm(stream, img.data, cd, perm)
+        Base.wait_success(proc)
+    else
+        error("Not yet implemented")
+    end
+end
 
 # function imwrite(img, stream::IO, ::Type{ImageMagick})
 #     if sdims(img) != 2
