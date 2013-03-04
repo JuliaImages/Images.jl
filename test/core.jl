@@ -32,7 +32,7 @@ img[4] = prev+1
 @assert Images.colorspace(img) == "RGB"
 @assert Images.colordim(img) == 0
 @assert Images.colordim(imgd) == 3
-@assert Images.seqdim(img) == 0
+@assert Images.timedim(img) == 0
 @assert Images.limits(img) == (12,255)
 @assert Images.limits(imgd) == (0,255)
 @assert Images.pixelspacing(img) == [2.0, 3.0]

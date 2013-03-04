@@ -25,6 +25,8 @@ ImageCmap{A<:AbstractArray,C<:AbstractArray}(data::A, cmap::C) = ImageCmap(data,
 
 #### Core operations ####
 
+eltype{T}(img::AbstractImage{T}) = T
+
 size(img::AbstractImage) = size(img.data)
 size(img::AbstractImage, i::Integer) = size(img.data, i)
 
@@ -34,6 +36,9 @@ copy(img::AbstractImage) = deepcopy(img)
 # copy, replacing the data
 copy(img::Image, data::AbstractArray) = Image(data, copy(img.properties))
 copy(img::ImageCmap, data::AbstractArray) = ImageCmap(data, copy(img.cmap), copy(img.properties))
+# Provide new data but reuse the properties
+share(img::Image, data::AbstractArray) = Image(data, img.properties)
+share(img::ImageCmap, data::AbstractArray) = ImageCmap(data, img.cmap, img.properties)
 
 similar{T}(img::Image, ::Type{T}, dims::Dims) = Image(similar(img.data, T, dims), copy(img.properties))
 similar{T}(img::Image, ::Type{T}) = Image(similar(img.data, T), copy(img.properties))
@@ -94,9 +99,9 @@ sub(img::AbstractImage, I::RangeIndex...) = sub(img.data, I...)
 slice(img::AbstractImage, I::RangeIndex...) = slice(img.data, I...)
 
 # refim, subim, and sliceim return an Image
-refim{T<:Real}(img::AbstractImage, I::Union(Real,AbstractArray{T})...) = copy(img, ref(img.data, I...))
-subim(img::AbstractImage, I::RangeIndex...) = copy(img, sub(img.data, I...))
-sliceim(img::AbstractImage, I::RangeIndex...) = copy(img, slice(img.data, I...))
+refim{T<:Real}(img::AbstractImage, I::Union(Real,AbstractArray{T})...) = share(img, ref(img.data, I...))
+subim(img::AbstractImage, I::RangeIndex...) = share(img, sub(img.data, I...))
+# sliceim(img::AbstractImage, I::RangeIndex...) = copy(img, slice(img.data, I...))  # fixme: adjust colordim, timedim, pixelspacing, and spatialorder
 
 function show(io::IO, img::AbstractImageDirect)
     IT = typeof(img)
@@ -148,6 +153,10 @@ macro get(img, k, default)
 end
 
 # Using plain arrays, we have to make all sorts of guesses about colorspace and storage order. This can be a big problem for three-dimensional images, image sequences, cameras with more than 16-bits, etc. In such cases use an AbstractImage type.
+isdirect(img::AbstractArray) = false
+isdirect(img::AbstractImageDirect) = true
+isdirect(img::AbstractImageIndexed) = false
+
 colorspace(img::AbstractMatrix{Bool}) = "Binary"
 colorspace(img::AbstractArray{Bool}) = "Binary"
 colorspace(img::AbstractArray{Bool,3}) = "Binary"
