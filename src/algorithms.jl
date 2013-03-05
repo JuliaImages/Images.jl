@@ -1,53 +1,7 @@
-
-function chop!(img::Union(Array, AbstractImageDirect))
-    mx = clim_max(img)
-    img[img .> mx] = mx
-    mn = clim_min(img)
-    img[img .< mn] = mn
-    return img
-end
-
-function chop(img)
-    ret = copy(img)
-    chop!(ret)
-end
-
-function uint8{T<:Float}(img::Union(Array{T}, ImageCS{T}, ImageCSMinMax{T}))
-    ret = copy(data(img))
-    mx = clim_max(img)
-    mn = clim_min(img)
-    if mn != 0
-        ret -= mn
-    end
-    udat = uint8(round((typemax(Uint8)/(mx-mn))*data))
-end
-function uint16{T<:Float}(img::Union(Array{T}, ImageCS{T}, ImageCSMinMax{T}))
-    data = chop(img)
-    mx = clim_max(img)
-    mn = clim_min(img)
-    if mn != 0
-        dat = dat-mn
-    end
-    udat = uint16(round((typemax(Uint16)/(mx-mn))*data))
-end
-uint{T<:Float}(img::Union(Array{T}, ImageCS{T}, ImageCSMinMax{T})) = uint8(img)
-uint{T<:Integer}(img::Union(Array{T}, ImageCS{T}, ImageCSMinMax{T})) = pixeldata(img)
-
-# Put pixel data in target storage order
-function pixeldata_permute(img::AbstractImageDirect, targetorder::ASCIIString)
-    p = permutation_to(storageorder(img), targetorder)
-    data = pixeldata(img)
-    return permute(data, p)
-end
-
-
-
-#############################################################
-
 function lut(pal::Vector, a)
     out = similar(a, eltype(pal))
-    n = numel(pal)
-    for i=1:numel(a)
+    n = length(pal)
+    for i=1:length(a)
         out[i] = pal[clamp(a[i], 1, n)]
     end
     out
@@ -59,7 +13,7 @@ function indexedcolor(data, pal)
 end
 
 function indexedcolor(data, pal, w, l)
-    n = numel(pal)-1
+    n = length(pal)-1
     if n == 0
         return fill(pal[1], size(data))
     end
@@ -74,103 +28,21 @@ const palette_fire = uint32([4284111450, 4284702808, 4285294423, 4285886038, 428
 
 const palette_rainbow = uint32([4279125737, 4279064810, 4279004140, 4279009006, 4278948336, 4278953201, 4278892531, 4278897397, 4278836727, 4278841593, 4278644669, 4278513537, 4278382149, 4278251018, 4280086024, 4281921031, 4283756038, 4285591045, 4287491588, 4289326595, 4291161602, 4292996609, 4294897152, 4294759425, 4294687234, 4294615300, 4294543109, 4294471175, 4294398984, 4294327050, 4294254859, 4294182925])
 
-# Permute an array to put the color channel first
-function permute_c_first(dat::Array, storageorder::ASCIIString)
-    m = match(r"c", storageorder)
-    if m == nothing || m.offset == 1
-        return dat
-    end
-    porder = [m.offset]
-    for i = 1:ndims(dat)
-        if i != m.offset
-            push(porder, i)
-        end
-    end
-    return permute(dat, porder)
-end
-
-function write_bitmap_data(s, img)
-    n, m = size(img)
-    if eltype(img) <: Integer
-        if ndims(img) == 3 && size(img,3) == 3
-            for i=1:n, j=1:m, k=1:3
-                write(s, uint8(img[i,j,k]))
-            end
-        elseif ndims(img) == 2
-            if is(eltype(img),Int32) || is(eltype(img),Uint32)
-                for i=1:n, j=1:m
-                    p = img[i,j]
-                    write(s, uint8(redval(p)))
-                    write(s, uint8(greenval(p)))
-                    write(s, uint8(blueval(p)))
-                end
-            else
-                for i=1:n, j=1:m, k=1:3
-                    write(s, uint8(img[i,j]))
-                end
-            end
-        else
-            error("unsupported array dimensions")
-        end
-    elseif eltype(img) <: Float
-        # prevent overflow
-        a = copy(img)
-        a[img .> 1] = 1
-        a[img .< 0] = 0
-        if ndims(a) == 3 && size(a,3) == 3
-            for i=1:n, j=1:m, k=1:3
-                write(s, uint8(255*a[i,j,k]))
-            end
-        elseif ndims(a) == 2
-            for i=1:n, j=1:m, k=1:3
-                write(s, uint8(255*a[i,j]))
-            end
-        else
-            error("unsupported array dimensions")
-        end
-    else
-        error("unsupported array type")
-    end
-end
-
-# demo:
-# m = [ mandel(complex(r,i)) for i=-1:.01:1, r=-2:.01:0.5 ];
-# ppmwrite(indexedcolor(m, palette_fire), "mandel.ppm")
-
-function imwrite(I, file::String)
-    if length(file) > 3 && file[end-3:end]==".ppm"
-        # fall back to built-in in case convert not available
-        return imwrite(I, file, PPMBinary)
-    end
-    h, w = size(I)
-    cmd = `convert -size $(w)x$(h) -depth 8 rgb: $file`
-    stream = fdio(write_to(cmd).fd, true)
-    spawn(cmd)
-    write_bitmap_data(stream, I)
-    close(stream)
-    wait(cmd)
-end
+redval(p)   = (p>>>16)&0xff
+greenval(p) = (p>>>8)&0xff
+blueval(p)  = p&0xff
 
 function imshow(img, range)
-    if colorspace(img) == CSGray
+    if ndims(img) == 2 
+        # only makes sense for gray scale images
         img = imadjustintensity(img, range)
     end
-    if use_imshow_cmd
-        tmp::String = "/tmp/tmp.png"
-        imwrite(img, tmp)
-        cmd = `$imshow_cmd $tmp`
-        spawn(cmd)
-    elseif use_gaston
-        a = AxesConf()
-        pdata, a.ylabel, a.xlabel = pixeldata_yxc_named(img)
-        c = CurveConf()
-        addcoords([],[],pdata,c)
-        addconf(a)
-        llplot()
-    else
-        error("Can't show image, no viewer is configured")
-    end
+    tmp::String = "./tmp.ppm"
+    imwrite(img, tmp)
+    cmd = `feh $tmp`
+    spawn(cmd)
 end
+
 imshow(img) = imshow(img, [])
 
 function imadjustintensity{T}(img::Array{T,2}, range)
@@ -292,7 +164,7 @@ function ssd{T}(A::Array{T}, B::Array{T})
 end
 
 # normalized by Array size
-ssdn{T}(A::Array{T}, B::Array{T}) = ssd(A, B)/numel(A)
+ssdn{T}(A::Array{T}, B::Array{T}) = ssd(A, B)/length(A)
 
 # sum of absolute differences
 function sad{T}(A::Array{T}, B::Array{T})
@@ -300,7 +172,7 @@ function sad{T}(A::Array{T}, B::Array{T})
 end
 
 # normalized by Array size
-sadn{T}(A::Array{T}, B::Array{T}) = sad(A, B)/numel(A)
+sadn{T}(A::Array{T}, B::Array{T}) = sad(A, B)/length(A)
 
 # normalized cross correlation
 function ncc{T}(A::Array{T}, B::Array{T})
@@ -315,73 +187,89 @@ function imfilter{T}(img::Matrix{T}, filter::Matrix{T}, border::String, value)
     s1, s2 = int((sf[1]-1)/2), int((sf[2]-1)/2)
     # correlation instead of convolution
     filter = fliplr(fliplr(filter).')
+    mid1 = s1+1:s1+si[1]
+    mid2 = s2+1:s2+si[2]
+    left = 1:s2
+    right = size(A,2)-s2+1:size(A,2)
+    top = 1:s1
+    bot = size(A,1)-s1+1:size(A,1)
     if border == "replicate"
-        A[s1+1:end-s1, s2+1:end-s2] = img
-        A[s1+1:end-s1, 1:s2] = repmat(img[:,1], 1, s2)
-        A[s1+1:end-s1, end-s2+1:end] = repmat(img[:,end], 1, s2)
-        A[1:s1, s2+1:end-s2] = repmat(img[1,:], s1, 1)
-        A[end-s1+1:end, s2+1:end-s2] = repmat(img[end,:], s1, 1)
-        A[1:s1, 1:s2] = fliplr(fliplr(img[1:s1, 1:s2])')
-        A[end-s1+1:end, 1:s2] = img[end-s1+1:end, 1:s2]'
-        A[1:s1, end-s2+1:end] = img[1:s1, end-s2+1:end]'
-        A[end-s1+1:end, end-s2+1:end] = flipud(fliplr(img[end-s1+1:end, end-s2+1:end]))'
+        A[mid1, mid2] = img
+        A[mid1, left] = repmat(img[:,1], 1, s2)
+        A[mid1, right] = repmat(img[:,end], 1, s2)
+        A[top, mid2] = repmat(img[1,:], s1, 1)
+        A[bot, mid2] = repmat(img[end,:], s1, 1)
+        A[top, left] = fliplr(fliplr(img[top, left])')
+        A[bot, left] = img[end-s1+1:end, left]'
+        A[top, right] = img[top, end-s2+1:end]'
+        A[bot, right] = flipud(fliplr(img[end-s1+1:end, end-s2+1:end]))'
     elseif border == "circular"
-        A[s1+1:end-s1, s2+1:end-s2] = img
-        A[s1+1:end-s1, 1:s2] = img[:, end-s2:end]
-        A[s1+1:end-s1, end-s2+1:end] = img[:, 1:s2]
-        A[1:s1, s2+1:end-s2] = img[end-s1+1:end, :]
-        A[end-s1+1:end, s2+1:end-s2] = img[1:s1, :]
-        A[1:s1, 1:s2] = img[end-s1+1:end, end-s2+1:end]
-        A[end-s1+1:end, 1:s2] = img[1:s1, end-s2+1:end]
-        A[1:s1, end-s2+1:end] = img[end-s1+1:end, 1:s2]
-        A[end-s1+1:end, end-s2+1:end] = img[1:s1, 1:s2]
+        A[mid1, mid2] = img
+        A[mid1, left] = img[:, end-s2+1:end]
+        A[mid1, right] = img[:, left]
+        A[top, mid2] = img[end-s1+1:end, :]
+        A[bot, mid2] = img[top, :]
+        A[top, left] = img[end-s1+1:end, end-s2+1:end]
+        A[bot, left] = img[top, end-s2+1:end]
+        A[top, right] = img[end-s1+1:end, left]
+        A[bot, right] = img[top, left]
     elseif border == "mirror"
-        A[s1+1:end-s1, s2+1:end-s2] = img
-        A[s1+1:end-s1, 1:s2] = fliplr(img[:, 1:s2])
-        A[s1+1:end-s1, end-s2+1:end] = fliplr(img[:, end-s2:end])
-        A[1:s1, s2+1:end-s2] = flipud(img[1:s1, :])
-        A[end-s1+1:end, s2+1:end-s2] = flipud(img[end-s1+1:end, :])
-        A[1:s1, 1:s2] = fliplr(fliplr(img[1:s1, 1:s2])')
-        A[end-s1+1:end, 1:s2] = img[end-s1+1:end, 1:s2]'
-        A[1:s1, end-s2+1:end] = img[1:s1, end-s2+1:end]'
-        A[end-s1+1:end, end-s2+1:end] = flipud(fliplr(img[end-s1+1:end, end-s2+1:end]))'
+        A[mid1, mid2] = img
+        A[mid1, left] = fliplr(img[:, left])
+        A[mid1, right] = fliplr(img[:, end-s2+1:end])
+        A[top, mid2] = flipud(img[top, :])
+        A[bot, mid2] = flipud(img[end-s1+1:end, :])
+        A[top, left] = fliplr(fliplr(img[top, left])')
+        A[bot, left] = img[end-s1+1:end, left]'
+        A[top, right] = img[top, end-s2+1:end]'
+        A[bot, right] = flipud(fliplr(img[end-s1+1:end, end-s2+1:end]))'
     elseif border == "value"
         A += value
-        A[s1+1:end-s1, s2+1:end-s2] = img
+        A[mid1, mid2] = img
     else
         error("wrong border treatment")
     end
     # check if separable
-    U, S, V = svd(filter)
+    U, S, V = svdt(filter)
     separable = true;
     for i = 2:length(S)
         # assumption that <10^-7 \approx 0
-        separable = separable && (abs(S[i]) < 10^-7)
+        separable = separable && (abs(S[i]) < 1e-7)
     end
     if separable
         # conv2 isn't suitable for this (kernel center should be the actual center of the kernel)
-        #C = conv2(squeeze(U[:,1]*sqrt(S[1])), squeeze(V[1,:]*sqrt(S[1])), A)
-        x = squeeze(U[:,1]*sqrt(S[1]))
-        y = squeeze(V[1,:]*sqrt(S[1]))
+        #C = conv2(U[:,1]*sqrt(S[1]), vec(V[1,:])*sqrt(S[1]), A)
+        x = U[:,1]*sqrt(S[1])
+        y = vec(V[1,:])*sqrt(S[1])
         sa = size(A)
         m = length(y)+sa[1]
         n = length(x)+sa[2]
         B = zeros(T, m, n)
-        B[int((length(x))/2)+1:sa[1]+int((length(x))/2),int((length(y))/2)+1:sa[2]+int((length(y))/2)] = A
-        y = fft([zeros(T,int((m-length(y)-1)/2)); y; zeros(T,int((m-length(y)-1)/2))])
-        x = fft([zeros(T,int((m-length(x)-1)/2)); x; zeros(T,int((n-length(x)-1)/2))])
-        C = fftshift(ifft2(fft2(B) .* (y * x.')))
+        B[int(length(x)/2)+1:sa[1]+int(length(x)/2),int(length(y)/2)+1:sa[2]+int(length(y)/2)] = A
+        yp = zeros(T, m)
+        halfy = int((m-length(y)-1)/2)
+        yp[halfy+1:halfy+length(y)] = y
+        y = fft(yp)
+        xp = zeros(T, n)
+        halfx = int((n-length(x)-1)/2)
+        xp[halfx+1:halfx+length(x)] = x
+        x = fft(xp)
+        C = fftshift(ifft(fft(B) .* (y * x.')))
         if T <: Real
             C = real(C)
         end
     else
         #C = conv2(A, filter)
         sa, sb = size(A), size(filter)
-        At = zeros(T, sa[1]+sb[1], sa[2]+sb[2])
-        Bt = zeros(T, sa[1]+sb[1], sa[2]+sb[2])
-        At[int(end/2-sa[1]/2)+1:int(end/2+sa[1]/2), int(end/2-sa[2]/2)+1:int(end/2+sa[2]/2)] = A
-        Bt[int(end/2-sb[1]/2)+1:int(end/2+sb[1]/2), int(end/2-sb[2]/2)+1:int(end/2+sb[2]/2)] = filter
-        C = fftshift(ifft2(fft2(At).*fft2(Bt)))
+        At = zeros(T, sa[1]+sb[1]-1, sa[2]+sb[2]-1)
+        Bt = zeros(T, sa[1]+sb[1]-1, sa[2]+sb[2]-1)
+        halfa1 = ifloor((size(At,1)-sa[1])/2)
+        halfa2 = ifloor((size(At,2)-sa[2])/2)
+        halfb1 = ifloor((size(Bt,1)-sb[1])/2)
+        halfb2 = ifloor((size(Bt,2)-sb[2])/2)
+        At[halfa1+1:halfa1+sa[1], halfa2+1:halfa2+sa[2]] = A
+        Bt[halfb1+1:halfb1+sb[1], halfb2+1:halfb2+sb[2]] = filter
+        C = fftshift(ifft(fft(At).*fft(Bt)))
         if T <: Real
             C = real(C)
         end
@@ -395,7 +283,7 @@ function imfilter{T}(img::Array{T,3}, filter::Matrix{T}, border::String, value)
     x, y, c = size(img)
     out = zeros(T, x, y, c)
     for i = 1:c
-        out[:,:,i] = imfilter(squeeze(img[:,:,i]), filter, border, value)
+        out[:,:,i] = imfilter(img[:,:,i], filter, border, value)
     end
     out
 end
@@ -403,7 +291,7 @@ end
 imfilter(img, filter) = imfilter(img, filter, "replicate", 0)
 imfilter(img, filter, border) = imfilter(img, filter, border, 0)
 
-function imlineardiffusion{T}(img::Array{T,2}, dt::Float, iterations::Integer)
+function imlineardiffusion{T}(img::Array{T,2}, dt::FloatingPoint, iterations::Integer)
     u = img
     f = imlaplacian()
     for i = dt:dt:dt*iterations
@@ -412,7 +300,7 @@ function imlineardiffusion{T}(img::Array{T,2}, dt::Float, iterations::Integer)
     u
 end
 
-function imthresh{T}(img::Array{T,2}, threshold::Float)
+function imthresh{T}(img::Array{T,2}, threshold::FloatingPoint)
     if !(0.0 <= threshold <= 1.0)
         error("threshold must be between 0 and 1")
     end
@@ -438,7 +326,7 @@ function rgb2ntsc{T}(img::Array{T})
     trans = [0.299 0.587 0.114; 0.596 -0.274 -0.322; 0.211 -0.523 0.312]
     out = zeros(T, size(img))
     for i = 1:size(img,1), j = 1:size(img,2)
-        out[i,j,:] = trans * squeeze(img[i,j,:])
+        out[i,j,:] = trans * vec(img[i,j,:])
     end
     return out
 end
@@ -447,7 +335,7 @@ function ntsc2rgb{T}(img::Array{T})
     trans = [1 0.956 0.621; 1 -0.272 -0.647; 1 -1.106 1.703]
     out = zeros(T, size(img))
     for i = 1:size(img,1), j = 1:size(img,2)
-        out[i,j,:] = trans * squeeze(img[i,j,:])
+        out[i,j,:] = trans * vec(img[i,j,:])
     end
     return out
 end
@@ -457,7 +345,7 @@ function rgb2ycbcr{T}(img::Array{T})
     offset = [16.0; 128.0; 128.0]
     out = zeros(T, size(img))
     for i = 1:size(img,1), j = 1:size(img,2)
-        out[i,j,:] = offset + trans * squeeze(img[i,j,:])
+        out[i,j,:] = offset + trans * vec(img[i,j,:])
     end
     return out
 end
@@ -467,7 +355,7 @@ function ycbcr2rgb{T}(img::Array{T})
     offset = [16.0; 128.0; 128.0]
     out = zeros(T, size(img))
     for i = 1:size(img,1), j = 1:size(img,2)
-        out[i,j,:] = trans * (squeeze(img[i,j,:]) - offset)
+        out[i,j,:] = trans * (vec(img[i,j,:]) - offset)
     end
     return out
 end
@@ -556,7 +444,7 @@ function imROF{T}(img::Array{T,2}, lambda::Number, iterations::Integer)
     div_p = zeros(T, s1, s2)
     dt = lambda/4
     for i = 1:iterations
-        div_p = backdiffx(squeeze(p[:,:,1])) + backdiffy(squeeze(p[:,:,2]))
+        div_p = backdiffx(p[:,:,1]) + backdiffy(p[:,:,2])
         u = img + div_p/lambda
         grad_u = cat(3, forwarddiffx(u), forwarddiffy(u))
         grad_u_mag = sqrt(grad_u[:,:,1].^2 + grad_u[:,:,2].^2)
@@ -570,8 +458,7 @@ end
 function imROF{T}(img::Array{T,3}, lambda::Number, iterations::Integer)
     out = zeros(T, size(img))
     for i = 1:size(img, 3)
-        out[:,:,i] = imROF(squeeze(img[:,:,i]), lambda, iterations)
+        out[:,:,i] = imROF(img[:,:,i], lambda, iterations)
     end
     return out
 end
-
