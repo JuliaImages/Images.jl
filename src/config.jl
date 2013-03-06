@@ -22,7 +22,7 @@ have_winston = false
 # Find a system image viewer
 imshow_cmd = ""
 if !have_winston
-    imshow_cmd_list = ["feh", "gwenview"]
+    imshow_cmd_list = ["feh", "gwenview", "open"]
     for thiscmd in imshow_cmd_list
         _, p = readsfrom(`which $thiscmd`)
         if Base.wait_success(p)
