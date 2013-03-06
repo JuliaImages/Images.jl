@@ -33,20 +33,31 @@ size(img::AbstractImage, i::Integer) = size(img.data, i)
 ndims(img::AbstractImage) = ndims(img.data)
 
 copy(img::AbstractImage) = deepcopy(img)
+
 # copy, replacing the data
 copy(img::Image, data::AbstractArray) = Image(data, copy(img.properties))
+
 copy(img::ImageCmap, data::AbstractArray) = ImageCmap(data, copy(img.cmap), copy(img.properties))
+
 # Provide new data but reuse the properties & cmap
 share(img::Image, data::AbstractArray) = Image(data, img.properties)
+
 share(img::ImageCmap, data::AbstractArray) = ImageCmap(data, img.cmap, img.properties)
 
+# similar
 similar{T}(img::Image, ::Type{T}, dims::Dims) = Image(similar(img.data, T, dims), copy(img.properties))
+
 similar{T}(img::Image, ::Type{T}) = Image(similar(img.data, T), copy(img.properties))
+
 similar(img::Image) = Image(similar(img.data), copy(img.properties))
+
 similar{T}(img::ImageCmap, ::Type{T}, dims::Dims) = ImageCmap(similar(img.data, T, dims), copy(img.cmap), copy(img.properties))
+
 similar{T}(img::ImageCmap, ::Type{T}) = ImageCmap(similar(img.data, T), copy(img.cmap), copy(img.properties))
+
 similar(img::ImageCmap) = ImageCmap(similar(img.data), copy(img.cmap), copy(img.properties))
 
+# convert
 convert{I<:AbstractImage}(::Type{I}, img::I) = img
 # Convert an indexed image (cmap) to a direct image
 function convert{ID<:AbstractImageDirect,II<:AbstractImageIndexed}(::Type{ID}, img::II)
@@ -83,18 +94,42 @@ function convert{T,N}(::Type{Array{T,N}}, img::AbstractImage)
     end
 end
 
+# Indexing. In addition to conventional array indexing, support syntax like
+#    img["x", 100:400, "t", 32]
+# where anything not mentioned by name is taken to include the whole range
+
+# assign
 assign(img::AbstractImage, X, i::Real) = assign(img.data, X, i)
+
 assign{T<:Real}(img::AbstractImage, X, I::Union(Real,AbstractArray{T})...) = assign(img.data, X, I...)
+
+assign{T<:Real}(img::AbstractImage, X, dimname::String, ind::Union(Real,AbstractArray{T}), nameind...) = assign(img.data, X, named2coords(img, dimname, ind, nameind...)...)
 
 # ref, sub, and slice return a value or AbstractArray, not an Image
 ref(img::AbstractImage, i::Real) = ref(img.data, i)
+
 ref{T<:Real}(img::AbstractImage, I::Union(Real,AbstractArray{T})...) = ref(img.data, I...)
+
+# ref{T<:Real}(img::AbstractImage, dimname::String, ind::Union(Real,AbstractArray{T}), nameind...) = ref(img.data, named2coords(img, dimname, ind, nameind...)...)
+ref(img::AbstractImage, dimname::ASCIIString, ind, nameind...) = ref(img.data, named2coords(img, dimname, ind, nameind...)...)
+
 sub(img::AbstractImage, I::RangeIndex...) = sub(img.data, I...)
+
+sub(img::AbstractImage, dimname::String, ind::RangeIndex, nameind::RangeIndex...) = sub(img.data, named2coords(img, dimname, ind, nameind...)...)
+
 slice(img::AbstractImage, I::RangeIndex...) = slice(img.data, I...)
 
-# refim, subim, and sliceim return an Image
+slice(img::AbstractImage, dimname::String, ind::RangeIndex, nameind::RangeIndex...) = slice(img.data, named2coords(img, dimname, ind, nameind...)...)
+
+# refim, subim, and sliceim return an Image. The first two share properties, the last requires a copy.
 refim{T<:Real}(img::AbstractImage, I::Union(Real,AbstractArray{T})...) = share(img, ref(img.data, I...))
+
+refim{T<:Real}(img::AbstractImage, dimname::String, ind::Union(Real,AbstractArray{T}), nameind...) = refim(img, named2coords(img, dimname, ind, nameind...)...)
+
 subim(img::AbstractImage, I::RangeIndex...) = share(img, sub(img.data, I...))
+
+subim(img::AbstractImage, dimname::String, ind::RangeIndex, nameind...) = subim(img, named2coords(img, dimname, ind, nameind...)...)
+
 function sliceim(img::AbstractImage, I::RangeIndex...)
     dimmap = Array(Int, ndims(img))
     n = 0
@@ -131,6 +166,8 @@ function sliceim(img::AbstractImage, I::RangeIndex...)
     end
     ret
 end
+
+subim(img::AbstractImage, dimname::String, ind::RangeIndex, nameind...) = subim(img, named2coords(img, dimname, ind, nameind...)...)
 
 function show(io::IO, img::AbstractImageDirect)
     IT = typeof(img)
@@ -405,4 +442,34 @@ function default_permutation(to, from)
         p[pzero] = setdiff(1:length(to), p)
     end
     p
+end
+
+# Support indexing via
+#    img["t", 32, "x", 100:400]
+# where anything not mentioned by name is assumed to include the whole range
+function named2coords(img::AbstractImage, nameind...)
+    c = Any[map(i->1:i, size(img))...]
+    so = spatialorder(img)
+    for i = 1:2:length(nameind)
+        dimname = nameind[i]
+        local n
+        if dimname == "color"
+            n = colordim(img)
+        elseif dimname == "t"
+            n = timedim(img)
+        else
+            n = 0
+            for j = 1:length(so)
+                if dimname == so[j]
+                    n = j
+                    break
+                end
+            end
+        end
+        if n == 0
+            error("There is no dimension called ", dimname)
+        end
+        c[n] = nameind[i+1]
+    end
+    tuple(c...)
 end

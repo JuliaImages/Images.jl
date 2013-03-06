@@ -1,6 +1,6 @@
 B = rand(1:20,3,5)
 cmap = uint8(repmat(linspace(12,255,20),1,3))
-img = Images.ImageCmap(B,cmap,["colorspace" => "RGB", "pixelspacing" => [2.0, 3.0], "spatialorder" => Images.yx])
+img = Images.ImageCmap(copy(B),cmap,["colorspace" => "RGB", "pixelspacing" => [2.0, 3.0], "spatialorder" => Images.yx])
 imgd = convert(Images.Image, img)
 
 # basic information
@@ -62,6 +62,13 @@ s = Images.sliceim(imgd, 2, 1:4, 1:3)
 @assert ndims(s) == 2
 @assert Images.sdims(s) == 1
 @assert Images.colordim(s) == 2
+
+# named indexing
+@assert img["y", 2, "x", 4] == B[2,4]
+@assert img["x", 4, "y", 2] == B[2,4]
+chan = imgd["color", 2]
+Blookup = reshape(cmap[B[:],1], size(B))
+@assert chan == Blookup
 
 # spatial order, width/height, and permutations
 @assert Images.spatialpermutation(Images.yx, imgd) == [1,2]
