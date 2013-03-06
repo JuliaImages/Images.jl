@@ -54,6 +54,15 @@ s = Images.subim(img, 2, 1:4)
 @assert ndims(s) == 2
 @assert Images.sdims(s) == 2
 @assert size(s) == (1,4)
+s = Images.sliceim(img, 2, 1:4)
+@assert ndims(s) == 1
+@assert Images.sdims(s) == 1
+@assert size(s) == (4,)
+s = Images.sliceim(imgd, 2, 1:4, 1:3)
+@assert ndims(s) == 2
+@assert Images.sdims(s) == 1
+@assert Images.colordim(s) == 2
+
 # spatial order, width/height, and permutations
 @assert Images.spatialpermutation(Images.yx, imgd) == [1,2]
 @assert Images.widthheight(imgd) == (5,3)

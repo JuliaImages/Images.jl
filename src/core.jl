@@ -95,7 +95,42 @@ slice(img::AbstractImage, I::RangeIndex...) = slice(img.data, I...)
 # refim, subim, and sliceim return an Image
 refim{T<:Real}(img::AbstractImage, I::Union(Real,AbstractArray{T})...) = share(img, ref(img.data, I...))
 subim(img::AbstractImage, I::RangeIndex...) = share(img, sub(img.data, I...))
-# sliceim(img::AbstractImage, I::RangeIndex...) = copy(img, slice(img.data, I...))  # fixme: adjust colordim, timedim, pixelspacing, and spatialorder
+function sliceim(img::AbstractImage, I::RangeIndex...)
+    dimmap = Array(Int, ndims(img))
+    n = 0
+    for j = 1:ndims(img)
+        if !isa(I[j], Int); n += 1; end;
+        dimmap[j] = n
+    end
+    ret = copy(img, slice(img.data, I...))
+    cd = colordim(img)
+    if cd > 0
+        ret.properties["colordim"] = isa(I[cd], Int) ? 0 : dimmap[cd]
+    end
+    td = timedim(img)
+    if td > 0
+        ret.properties["timedim"] = isa(I[cd], Int) ? 0 : dimmap[td]
+    end
+    sp = spatialproperties(img)
+    if !isempty(sp)
+        c = coords_spatial(img)
+        l = Int[map(length, I[c])...]
+        keep = l .> 1
+        if !all(keep)
+            for pname in sp
+                p = img.properties[pname]
+                if isa(p, Vector)
+                    ret.properties[pname] = p[keep]
+                elseif isa(p, Matrix)
+                    ret.properties[pname] = p[keep, keep]
+                else
+                    error("Do not know how to handle property ", pname)
+                end
+            end
+        end
+    end
+    ret
+end
 
 function show(io::IO, img::AbstractImageDirect)
     IT = typeof(img)
