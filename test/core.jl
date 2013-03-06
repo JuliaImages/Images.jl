@@ -1,6 +1,6 @@
 B = rand(1:20,3,5)
 cmap = uint8(repmat(linspace(12,255,20),1,3))
-img = Images.ImageCmap(B,cmap,["colorspace" => "RGB", "pixelspacing" => [2.0, 3.0]])
+img = Images.ImageCmap(B,cmap,["colorspace" => "RGB", "pixelspacing" => [2.0, 3.0], "spatialorder" => Images.yx])
 imgd = convert(Images.Image, img)
 
 # basic information
@@ -42,6 +42,18 @@ img[4] = prev+1
 @assert Images.coords_spatial(img) == Images.coords_spatial(imgd)
 @assert Images.size_spatial(img) == Images.size_spatial(imgd)
 
+@assert Images.storageorder(img) == Images.yx
+@assert Images.storageorder(imgd) == [Images.yx, "color"]
+
+# sub/slice
+s = sub(img, 2, 1:4)
+@assert ndims(s) == 2
+@assert Images.sdims(s) == 2
+@assert size(s) == (1,4)
+s = Images.subim(img, 2, 1:4)
+@assert ndims(s) == 2
+@assert Images.sdims(s) == 2
+@assert size(s) == (1,4)
 # spatial order, width/height, and permutations
 @assert Images.spatialpermutation(Images.yx, imgd) == [1,2]
 @assert Images.widthheight(imgd) == (5,3)
