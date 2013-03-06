@@ -175,7 +175,7 @@ function imwrite(img, filename::String, ::Type{ImageMagick})
     w, h = widthheight(img, perm)
     cs = colorspace(img)
     cd = colordim(img)
-    bitdepth = 8*eltype(img)
+    bitdepth = 8*sizeof(eltype(img))
     local cmd
     if isdirect(img)
         if cs[1:min(4,length(cs))] == "Gray"
@@ -184,7 +184,7 @@ function imwrite(img, filename::String, ::Type{ImageMagick})
             end
             cmd = `convert -size $(w)x$(h) -depth $bitdepth gray: $filename`
         else
-            csparsed = lower(rgb)
+            csparsed = lowercase(cs)
             if cs == "24bit"
                 csparsed = "rgb"
             end
