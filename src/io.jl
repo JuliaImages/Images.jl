@@ -118,6 +118,7 @@ function imread(filename::String, ::Type{ImageMagick})
     cmd = `identify -format "%r\n%z\n%w %h %n\n" $filename`
     stream, _ = readsfrom(cmd)
     imclass = strip(readline(stream))
+    imclass = replace(imclass, " ", "")  # on some platforms spaces are inserted
     isdirect, hasalpha, colorspace = classdict[imclass]
     bitdepth = parse_int(strip(readline(stream)))
     szline = strip(readline(stream))
