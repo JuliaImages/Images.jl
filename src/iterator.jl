@@ -2,6 +2,8 @@ module Iter
 
 import Base.assign, Base.done, Base.next, Base.ref, Base.start
 
+export Iterator
+
 parent(A::Array) = A
 parent(A::SubArray) = A.parent
 first_index(A::Array) = 1
@@ -25,7 +27,9 @@ function Iterator(A::StridedArray, dims, slices)
         end
         f += (slices[i]-1)*s[notdims[i]]
     end
-    if N == 2
+    if N == 1
+        return Iterator1D(sz[dims[1]], s[dims[1]], f)
+    elseif N == 2
         return Iterator2D(sz[dims[1]], sz[dims[2]], s[dims[1]], s[dims[2]], f)
     else
         error(N, " dimensions not yet supported")
@@ -37,6 +41,27 @@ Iterator(A::StridedArray) = Iterator(A, 1:ndims(A), ())
 # Iterator stores size information, IteratorState holds the current state
 
 abstract IteratorState
+
+# 1D
+immutable Iterator1D
+    ni::Int
+    stridei::Int
+    first_index::Int
+end
+
+immutable Iterator1DState <: IteratorState
+    i::Int
+    index::Int
+end
+
+start(iter::Iterator1D) = Iterator1DState(1, iter.first_index)
+
+# next(iter::Iterator1D, state::Iterator1DState) = state, Iterator1DState(state.i+1, state.index + iter.stridei)
+next(iter::Iterator1D, state::Iterator1DState) = state, Iterator1DState(state.i+1, state.index+1)
+
+done(iter::Iterator1D, state::Iterator1DState) = state.i > iter.ni
+
+
 
 # 2D
 immutable Iterator2D
