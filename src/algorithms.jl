@@ -1,3 +1,74 @@
+# Conversions
+
+# function convert(cs::String, img::Image) # FIXME
+#     local ret
+#     if cs == "ARGB"
+#         if colorspace(img) == "RGBA"
+#             cd = colordim(img)
+#             if cd == 0
+#                 error("Not yet supported")
+#             end
+#             c = Any[map(i->1:i, size(img))...]
+#             c[cd] = [4,1,2,3]
+#             ret = copy(img, img[c...])
+#             ret.properties["colorspace"] = cs
+#         end
+#     end
+#     ret
+# end
+#
+# function uint8(img::Image) # FIXME
+#     l = limits(img)
+#     r = l[2]/0xff
+#     copy(img, uint8(ifloor(img.data/r)))
+# end
+
+
+#### Scaling/clipping/type conversion ####
+
+type ScaleNone{T} <: ScaleInfo{T}; end
+
+scale{T}(scalei::ScaleNone{T}, val::T) = val
+scale(scalei::ScaleNone{Uint8}, val::Uint16) = (val>>>8) & 0xff
+
+type ClipMin{T,From} <: ScaleInfo{T}
+    min::From
+end
+type ClipMax{T,From} <: ScaleInfo{T}
+    max::From
+end
+type ClipMinMax{T,From} <: ScaleInfo{T}
+    min::From
+    max::From
+end
+
+scale{T}(scalei::ClipMin{T,T}, val::T) = max(val, scalei.min)
+scale(scalei::ClipMin{Uint8,Uint16}, val::Uint16) = (max(val, scalei.min)>>>8) & 0xff
+scale{T}(scalei::ClipMax{T,T}, val::T) = min(val, scalei.max)
+scale(scalei::ClipMax{Uint8,Uint16}, val::Uint16) = (min(val, scalei.max)>>>8) & 0xff
+scale{T}(scalei::ClipMinMax{T,T}, val::T) = min(max(val, scalei.min), scalei.max)
+scale(scalei::ClipMinMax{Uint8,Uint16}, val::Uint16) = (min(max(val, scalei.min), scalei.max)>>>8) & 0xff
+
+# this version also subtracts the min value
+type ScaleMinMax{T,From} <: ScaleInfo{T}
+    min::From
+    max::From
+    s::T
+end
+
+scale{T,From}(scalei::ScaleMinMax{T,From}, val::From) = convert(T, scalei.s*(min(max(val, scalei.min), scalei.max)-scalei.min))
+
+
+function scaleinfo{From<:Unsigned}(::Type{Uint8}, img::AbstractArray{From})
+    l = limits(img)
+    if l[1] == typemin(From) && l[2] == typemax(From)
+        return ScaleNone{Uint8}()
+    end
+    ScaleMinMax{Uint8,From}(l[1],l[2],255/(l[2]-l[1]))
+end
+
+#### Color palettes ####
+
 function lut(pal::Vector, a)
     out = similar(a, eltype(pal))
     n = length(pal)

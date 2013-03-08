@@ -492,3 +492,11 @@ function named2coords(img::AbstractImage, nameind...)
     end
     tuple(c...)
 end
+
+
+
+
+#### Additional support types ####
+
+# Dispatch-based scaling/clipping/type conversion
+abstract ScaleInfo{T}
