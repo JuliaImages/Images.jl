@@ -375,7 +375,10 @@ end
 #### Permutations over dimensions ####
 
 # width and height, translating "x" and "y" spatialorder into horizontal and vertical, respectively
-widthheight(img::AbstractArray, p) = size(img, p[1]), size(img, p[2])
+function widthheight(img::AbstractArray, p)
+    c = coords_spatial(img)
+    size(img, c[p[1]]), size(img, c[p[2]])
+end
 widthheight(img::AbstractArray) = widthheight(img, spatialpermutation(xy, img))
 
 # Calculate the permutation needed to put the spatial dimensions into a specified order
