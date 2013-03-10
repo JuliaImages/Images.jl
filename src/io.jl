@@ -134,6 +134,7 @@ function imread(filename::String, ::Type{ImageMagick})
     end
     prop = ["colorspace" => colorspace, "spatialorder" => spatialorder]
     # Extract the data
+    isdirect = true   # haven't figured out how to get indexed image data yet
     if isdirect
         local data
         if colorspace[1:min(length(colorspace),4)] == "Gray"
@@ -158,10 +159,14 @@ function imread(filename::String, ::Type{ImageMagick})
         return Image(data, prop)
     else
         # Indexed image
-        cmd = `convert $filename -channel Index -separate -depth $bitdepth gray:-`
+        # Note: this doesn't work, IM doesn't really return the index
+        println("Reading indexed image ", filename)
+#         cmd = `convert $filename -channel Index -separate -depth $bitdepth gray:-`
+        cmd = `convert $filename -channel Index -separate -`
         stream, _ = readsfrom(cmd)
         data = read(stream, typedict[bitdepth], sz...)
-        error("Haven't figured out yet how to get the colormap")
+#         error("Haven't figured out yet how to get the colormap")
+        return ImageCmap(data, [], prop)
     end
 end
 

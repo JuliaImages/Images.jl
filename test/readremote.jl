@@ -32,3 +32,6 @@ img = Images.imread(file)
 @assert size(img, 1) == 4
 @assert eltype(img) == Uint16
 
+# Indexed
+file = getfile("present.gif")
+img = Images.imread(file)
