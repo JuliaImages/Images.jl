@@ -12,7 +12,7 @@ abstract ImageFileType
 # format.
 fileext = Dict{ByteString, Vector{Int}}()
 filemagic = Array(Vector{Uint8}, 0)
-filetype = Array(CompositeKind, 0)
+filetype = Array(Any, 0)
 
 function add_image_file_format{ImageType<:ImageFileType}(ext::ByteString, magic::Vector{Uint8}, ::Type{ImageType})
     # Check to see whether these magic bytes are already in the database
@@ -91,12 +91,11 @@ end
 function imwrite(img, filename::String)
     _, ext = splitext(filename)
     ext = lowercase(ext)
-    stream = open(filename, "w")
     if has(fileext, ext)
         # Write using specific format
         candidates = fileext[ext]
         index = candidates[1]  # TODO?: use options, don't default to first
-        imwrite(img, stream, filetype[index])
+        imwrite(img, filename, filetype[index])
     elseif have_imagemagick
         # Fall back on ImageMagick
         imwrite(img, filename, ImageMagick)
@@ -143,7 +142,7 @@ function imread(filename::String, ::Type{ImageMagick})
             stream, _ = readsfrom(cmd)
             data = read(stream, typedict[bitdepth], sz...)
             if hasalpha
-                cmd = `convert $filename -depth $bitdepth gray:-`
+                cmd = `convert $filename -alpha extract -depth $bitdepth gray:-`
                 stream, _ = readsfrom(cmd)
                 alpha = read(stream, typedict[bitdepth], sz...)
                 data = cat(ndims(data)+1, data, alpha)
@@ -171,104 +170,231 @@ function imread(filename::String, ::Type{ImageMagick})
 end
 
 function imwrite(img, filename::String, ::Type{ImageMagick})
-    if sdims(img) != 2
-        error("Writing multidimensional images is not yet supported")
-    end
-    if timedim(img) != 0
-        error("Writing image sequences (i.e., images over time) is not yet supported")
-    end
-    perm = spatialpermutation(xy, img)
-    w, h = widthheight(img, perm)
     cs = colorspace(img)
-    cd = colordim(img)
     bitdepth = 8*sizeof(eltype(img))
+    csout = cs
+    if cs == "RGB24"
+        csout = "rgb"
+        bitdepth = 8
+    elseif cs == "ARGB32"
+        csout = "rgba"
+        bitdepth = 8
+    elseif cs == "ARGB"
+        csout = "rgba"
+    end
+    if eltype(img) <: FloatingPoint
+        bitdepth = 8  # TODO?: allow this to be specified
+    end
+    T = typedict[bitdepth]
+    scalei = scaleinfo(typedict[bitdepth], img)
+    w, h = widthheight(img)
     local cmd
-    if isdirect(img)
+    # For now, convert to direct
+    if isa(img, AbstractImageIndexed)
+        img = convert(Image, img)
+    end
+    if true # isdirect(img)
         if cs[1:min(4,length(cs))] == "Gray"
             if cs == "GrayAlpha"
                 error("Not yet implemented")
+                # Need to figure out how to write separate channels to the file twice
             end
             cmd = `convert -size $(w)x$(h) -depth $bitdepth gray: $filename`
+            stream, proc = writesto(cmd)
+            spawn(cmd)
+            writegray(stream, img, scalei)
+            close(stream)
         else
-            csparsed = lowercase(cs)
-            if cs == "24bit"
-                csparsed = "rgb"
+            csparsed = lowercase(csout)
+            if !(csparsed == "rgb" || csparsed == "rgba")
+                error("Output format ", csparsed, " not recognized")
             end
-            cmd = `convert -size $(w)x$(h) -depth $bitdepth $csparsed: $filename`
+            if csparsed == "rgba"
+                error("ImageMagick doesn't do the right thing here, sorry")
+            end
+            cmd = `convert -size $(w)x$(h) -depth $bitdepth $csparsed:- $filename`
+            stream, proc = writesto(cmd)
+            spawn(cmd)
+            writecolor(stream, img, scalei)
+            close(stream)
         end
-        stream, proc = writesto(cmd)
-        spawn(cmd)
-        write_binary_color_perm(stream, img.data, cd, perm)
-        Base.wait_success(proc)
-    else
-        error("Not yet implemented")
     end
 end
 
-# function imwrite(img, stream::IO, ::Type{ImageMagick})
-#     if sdims(img) != 2
-#         error("ImageMagick writes only 2-dimensional images")
-#     end
-#     p = spatialpermutation(xy, img)
-#     w, h = widthheight(img, p)
-#     
-#     write_rgb_hmajor_uint8(img, stream::IO)
-# # Write in RGB, horizontal-major, uint8 format
-# function write_rgb_hmajor_uint8(img, stream::IO)
-#     p = ordercxy(img)
-#     sz = size(img)
-#     if length(p) == 2
-#         m, n = sz[p]
-#         nc = 1
-#     else
-#         nc, m, n = sz[p]
-#     end
-#     if nc != 1 && nc != 3
-#         error("Must either be grayscale or three-color")
-#     end
-#     if eltype(img) <: Integer
-#         if nc == 3
-#             for i=1:n, j=1:m, k=1:3
-#                 write(s, uint8(img[i,j,k]))
-#             end
-#         elseif ndims(img) == 2
-#             if colorspace(img) == "24bit"
-#                 for i=1:n, j=1:m
-#                     p = img[i,j]
-#                     write(s, uint8(redval(p)))
-#                     write(s, uint8(greenval(p)))
-#                     write(s, uint8(blueval(p)))
-#                 end
-#             else
-#                 for i=1:n, j=1:m, k=1:3
-#                     write(s, uint8(img[i,j]))
-#                 end
-#             end
-#         else
-#             error("unsupported array dimensions")
-#         end
-#     elseif eltype(img) <: FloatingPoint
-#         # prevent overflow
-#         a = copy(img)
-#         a[img .> 1] = 1
-#         a[img .< 0] = 0
-#         if ndims(a) == 3 && size(a,3) == 3
-#             for i=1:n, j=1:m, k=1:3
-#                 write(s, uint8(255*a[i,j,k]))
-#             end
-#         elseif ndims(a) == 2
-#             for i=1:n, j=1:m, k=1:3
-#                 write(s, uint8(255*a[i,j]))
-#             end
-#         else
-#             error("unsupported array dimensions")
-#         end
-#     else
-#         error("unsupported array type")
-#     end
-# end
+# Write grayscale values in horizontal-major order
+function writegray(stream, img, scalei::ScaleInfo)
+    assert2d(img)
+    xfirst = isxfirst(img)
+    firstindex, spsz, spstride, csz, cstride = iterate_spatial(img)
+    isz, jsz = spsz
+    istride, jstride = spstride
+    A = parent(img)
+    if xfirst
+        for j = 1:jsz
+            k = firstindex + (j-1)*jstride
+            for i = 0:istride:(isz-1)*istride
+                write(stream, scale(scalei, A[k+i]))
+            end
+        end
+    else
+        for i = 1:isz
+            for j = 1:jsz
+                k = firstindex+(i-1)*istride+(j-1)*jstride
+                write(stream, scale(scalei,A[k]))
+            end
+        end
+    end
+end
 
-
+# Write RGB or RGBA values in horizontal-major order
+# The A value is written if present, otherwise skipped
+function writecolor(stream, img, scalei::ScaleInfo)
+    assert2d(img)
+    xfirst = isxfirst(img)
+    firstindex, spsz, spstride, csz, cstride = iterate_spatial(img)
+    isz, jsz = spsz
+    istride, jstride = spstride
+    A = parent(img)
+    cs = colorspace(img)
+    if cs == "Gray"
+        if xfirst
+            for j = 1:jsz
+                k = firstindex + (j-1)*jstride
+                for i = 0:istride:(isz-1)*istride
+                    v = scale(scalei, A[k+i])
+                    write(stream, v)
+                    write(stream, v)
+                    write(stream, v)
+                end
+            end
+        else
+            for i = 1:isz
+                for j = 1:jsz
+                    k = firstindex+(i-1)*istride+(j-1)*jstride
+                    v = scale(scalei, A[k])
+                    write(stream, v)
+                    write(stream, v)
+                    write(stream, v)
+                end
+            end
+        end
+    elseif cs == "RGB"
+        if xfirst
+            for j = 1:jsz
+                k = firstindex + (j-1)*jstride
+                for i = 0:istride:(isz-1)*istride
+                    ki = k+i
+                    write(stream, scale(scalei, A[ki]))
+                    write(stream, scale(scalei, A[ki+cstride]))
+                    write(stream, scale(scalei, A[ki+2cstride]))
+                end
+            end
+        else
+            for i = 1:isz
+                for j = 1:jsz
+                    k = firstindex+(i-1)*istride+(j-1)*jstride
+                    write(stream, scale(scalei, A[k]))
+                    write(stream, scale(scalei, A[k+cstride]))
+                    write(stream, scale(scalei, A[k+2cstride]))
+                end
+            end
+        end
+    elseif cs == "ARGB"
+        if xfirst
+            for j = 1:jsz
+                k = firstindex + (j-1)*jstride
+                for i = 0:istride:(isz-1)*istride
+                    ki = k+i
+                    write(stream,scale(scalei, A[ki+cstride]))
+                    write(stream,scale(scalei, A[ki+2cstride]))
+                    write(stream,scale(scalei, A[ki+3cstride]))
+                    write(stream,scale(scalei, A[ki]))
+                end
+            end
+        else
+            for i = 1:isz
+                for j = 1:jsz
+                    k = firstindex+(i-1)*istride+(j-1)*jstride
+                    write(stream,scale(scalei, A[k+cstride]))
+                    write(stream,scale(scalei, A[k+2cstride]))
+                    write(stream,scale(scalei, A[k+3cstride]))
+                    write(stream,scale(scalei, A[k]))
+                end
+            end
+        end
+    elseif cs == "RGBA"
+        if xfirst
+            for j = 1:jsz
+                k = firstindex + (j-1)*jstride
+                for i = 0:istride:(isz-1)*istride
+                    ki = k+i
+                    write(stream,scale(scalei, A[ki]))
+                    write(stream,scale(scalei, A[ki+cstride]))
+                    write(stream,scale(scalei, A[ki+2cstride]))
+                    write(stream,scale(scalei, A[ki+3cstride]))
+                end
+            end
+        else
+            for i = 1:isz
+                for j = 1:jsz
+                    k = firstindex+(i-1)*istride+(j-1)*jstride
+                    write(stream,scale(scalei, A[k]))
+                    write(stream,scale(scalei, A[k+cstride]))
+                    write(stream,scale(scalei, A[k+2cstride]))
+                    write(stream,scale(scalei, A[k+3cstride]))
+                end
+            end
+        end
+    elseif cs == "RGB24"
+        if xfirst
+            for j = 1:jsz
+                k = firstindex + (j-1)*jstride
+                for i = 0:istride:(isz-1)*istride
+                    v = A[k+i]
+                    write(stream, redval(v))
+                    write(stream, greenval(v))
+                    write(stream, blueval(v))
+                end
+            end
+        else
+            for i = 1:isz
+                for j = 1:jsz
+                    k = firstindex+(i-1)*istride+(j-1)*jstride
+                    v = A[k]
+                    write(stream, redval(v))
+                    write(stream, greenval(v))
+                    write(stream, blueval(v))
+                end
+            end
+        end
+    elseif cs == "ARGB32"
+        if xfirst
+            for j = 1:jsz
+                k = firstindex + (j-1)*jstride
+                for i = 0:istride:(isz-1)*istride
+                    v = A[k+i]
+                    write(stream, redval(v))
+                    write(stream, greenval(v))
+                    write(stream, blueval(v))
+                    write(stream, alphaval(v))
+                end
+            end
+        else
+            for i = 1:isz
+                for j = 1:jsz
+                    k = firstindex+(i-1)*istride+(j-1)*jstride
+                    v = A[k]
+                    write(stream, redval(v))
+                    write(stream, greenval(v))
+                    write(stream, blueval(v))
+                    write(stream, alphaval(v))
+                end
+            end
+        end
+    else
+        error("colorspace ", cs, " not yet supported")
+    end
+end
 
 ## PPM, PGM, and PBM ##
 type PPMBinary <: ImageFileType end
@@ -284,7 +410,7 @@ add_image_file_format(".ppm", b"P4", PBMBinary)
 
 function parse_netpbm_size(stream::IO)
     szline = strip(readline(stream))
-    while isempty(szline) || szline[1] == "#"
+    while isempty(szline) || szline[1] == '#'
         szline = strip(readline(stream))
     end
     parse_ints(szline, 2)
@@ -357,18 +483,32 @@ function imread{S<:IO}(stream::S, ::Type{PBMBinary})
     Image(dat, ["storageorder" => ["x", "y"]])
 end
 
-# function imwrite(img, file::String, ::Type{PPMBinary})
-#     s = open(file, "w")
-#     write(s, "P6\n")
-#     write(s, "# ppm file written by julia\n")
-#     dat = pixeldata_cxy(img)
-#     if eltype(dat) <: FloatingPoint
-#     m, n = size(dat)
-#     mx = int(clim_max(img))
-#     write(s, "$m $n\n$mx\n")
-#     write(s, dat)
-#     close(s)
-# end
+function imwrite(img, filename::String, ::Type{PPMBinary})
+    stream = open(filename, "w")
+    imwrite(img, stream, PPMBinary)
+end
+
+function imwrite(img, s::IO, ::Type{PPMBinary})
+    write(s, "P6\n")
+    write(s, "# ppm file written by Julia\n")
+    w, h = widthheight(img)
+    bitdepth = 8*sizeof(eltype(img))
+    if eltype(img) <: FloatingPoint
+        bitdepth = 8
+    end
+    cs = colorspace(img)
+    if cs == "RGB24"
+        bitdepth = 8
+    elseif cs == "ARGB32"
+        bitdepth = 8
+    end
+    T = typedict[bitdepth]
+    mx = int(typemax(T))
+    scalei = scaleinfo(T, img)
+    write(s, "$w $h\n$mx\n")
+    writecolor(s, img, scalei)
+    close(s)
+end
 
 # ## PNG ##
 # type PNGFile <: ImageFileType end

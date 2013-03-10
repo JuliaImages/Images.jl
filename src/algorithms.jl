@@ -29,8 +29,11 @@
 type ScaleNone{T} <: ScaleInfo{T}; end
 
 scale{T}(scalei::ScaleNone{T}, val::T) = val
+scale{T,S}(scalei::ScaleNone{T}, val::S) = convert(T, val)
 scale(scalei::ScaleNone{Uint8}, val::Uint16) = (val>>>8) & 0xff
 
+# The Clip types just enforce bounds, but do not scale or
+# subtract the minimum
 type ClipMin{T,From} <: ScaleInfo{T}
     min::From
 end
@@ -49,22 +52,33 @@ scale(scalei::ClipMax{Uint8,Uint16}, val::Uint16) = (min(val, scalei.max)>>>8) &
 scale{T}(scalei::ClipMinMax{T,T}, val::T) = min(max(val, scalei.min), scalei.max)
 scale(scalei::ClipMinMax{Uint8,Uint16}, val::Uint16) = (min(max(val, scalei.min), scalei.max)>>>8) & 0xff
 
-# this version also subtracts the min value
-type ScaleMinMax{T,From} <: ScaleInfo{T}
+# This scales and subtracts the min value
+type ScaleMinMax{To,From} <: ScaleInfo{To}
     min::From
     max::From
-    s::T
+    s::Float64
 end
 
-scale{T,From}(scalei::ScaleMinMax{T,From}, val::From) = convert(T, scalei.s*(min(max(val, scalei.min), scalei.max)-scalei.min))
+scale{To<:Integer,From}(scalei::ScaleMinMax{To,From}, val::From) = convert(To, round(scalei.s*(min(max(val, scalei.min), scalei.max)-scalei.min)))
+
+scale{To,From}(scalei::ScaleMinMax{To,From}, val::From) = convert(To, scalei.s*(min(max(val, scalei.min), scalei.max)-scalei.min))
 
 
-function scaleinfo{From<:Unsigned}(::Type{Uint8}, img::AbstractArray{From})
+function scaleinfo{To<:Unsigned,From<:Unsigned}(::Type{To}, img::AbstractArray{From})
     l = limits(img)
     if l[1] == typemin(From) && l[2] == typemax(From)
-        return ScaleNone{Uint8}()
+        return ScaleNone{To}()
     end
-    ScaleMinMax{Uint8,From}(l[1],l[2],255/(l[2]-l[1]))
+    ScaleMinMax{To,From}(l[1],l[2],typemax(To)/(l[2]-l[1]))
+end
+
+function scaleinfo{To<:Unsigned,From<:FloatingPoint}(::Type{To}, img::AbstractArray{From})
+    l = limits(img)
+    if !isinf(l[1]) && !isinf(l[2])
+        return ScaleMinMax{To,From}(l[1],l[2],typemax(To)/(l[2]-l[1]))
+    else
+        return ScaleNone{To}
+    end
 end
 
 #### Color palettes ####
@@ -124,6 +138,7 @@ const palette_rainbow = [0xff0e46e9,0xff0d58ea,0xff0c6bec,0xff0c7eee,0xff0b91f0,
 redval(p)   = (p>>>16)&0xff
 greenval(p) = (p>>>8)&0xff
 blueval(p)  = p&0xff
+alphaval(p)   = (p>>>24)&0xff
 
 function imshow(img, range)
     if ndims(img) == 2 

@@ -47,7 +47,7 @@ Detection of these external packages has improved slightly.
   to better-preseve the image's native format.
   This includes reading alpha channels
   and (unfinished) support for indexed images.
-  Image writing is currently broken but will be fixed soon.
+  Image writing does not yet support transparency, but works otherwise.
 - PPM/PGM/PBM is supported directly
 - A wrapper of libpng was once written,
   but it is currently disabled
