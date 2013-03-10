@@ -110,36 +110,27 @@ end
 # end
 # display(r::Cairo.CairoRenderer, img::AbstractArray) = display(r, img, r.lowerleft[1], r.lowerleft[2], 
 
-# FIXME: this always opens a new window
+function display(wb::WindowImage, img::AbstractArray)
+    scalei = scaleinfo(Uint8, img)
+    cairoRGB(wb.buf, img, scalei)
+    wb
+end
+
 function display(img::AbstractArray)
     scalei = scaleinfo(Uint8, img)
     buf, format = cairoRGB(img, scalei)
     WindowImage(buf, format)
-    nothing
-end
-
-function cairoRGB{T<:Union(Int32,Uint32)}(img::AbstractArray{T})
-    cs = colorspace(img)
-    xfirst = isxfirst(img)
-    if cs == "RGB24"
-        if xfirst
-            return img.data, Cairo.CAIRO_FORMAT_RGB24
-        else
-            return img.data', Cairo.CAIRO_FORMAT_RGB24
-        end
-    elseif cs == "ARGB32"
-        if xfirst
-            return img.data, Cairo.CAIRO_FORMAT_ARGB32
-        else
-            return img.data', Cairo.CAIRO_FORMAT_ARGB32
-        end
-    else
-        error("colorspace ", cs, " not yet supported for 32-bit images")
-    end
 end
 
 # Efficient conversions to RGB24 or ARGB32
 function cairoRGB(img::Union(StridedArray,AbstractImageDirect), scalei::ScaleInfo)
+    w, h = widthheight(img)
+    buf = Array(Uint32, w, h)
+    format = cairoRGB(buf, img, scalei)
+    buf, format
+end
+
+function cairoRGB(buf::Array{Uint32,2}, img::Union(StridedArray,AbstractImageDirect), scalei::ScaleInfo)
     assert2d(img)
     cs = colorspace(img)
     xfirst = isxfirst(img)
@@ -155,7 +146,27 @@ function cairoRGB(img::Union(StridedArray,AbstractImageDirect), scalei::ScaleInf
     else
         w, h = jsz, isz
     end
-    buf = Array(Uint32, w, h)
+    if size(buf, 1) != w || size(buf, 2) != h
+        error("Output buffer is of the wrong size")
+    end
+    # Check to see whether we can do a direct copy
+    if eltype(img) <: Union(Uint32, Int32)
+        if cs == "RGB24"
+            if xfirst
+                copy!(buf, img.data)
+            else
+                copyt!(buf, img.data)
+            end
+            return Cairo.CAIRO_FORMAT_RGB24
+        elseif cs == "ARGB32"
+            if xfirst
+                copy!(buf, img.data)
+            else
+                copyt!(buf, img.data)
+            end
+            return Cairo.CAIRO_FORMAT_ARGB32
+        end
+    end
     local format
     if cstride == 0
         if cs == "Gray"
@@ -251,7 +262,7 @@ function cairoRGB(img::Union(StridedArray,AbstractImageDirect), scalei::ScaleInf
             error("colorspace ", cs, " not yet supported")
         end
     end
-    buf, format
+    format
 end
 
 rgb24(r::Uint8, g::Uint8, b::Uint8) = convert(Uint32,r)<<16 + convert(Uint32,g)<<8 + convert(Uint32,b)
