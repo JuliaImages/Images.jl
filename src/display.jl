@@ -113,6 +113,7 @@ end
 function display(wb::WindowImage, img::AbstractArray)
     scalei = scaleinfo(Uint8, img)
     cairoRGB(wb.buf, img, scalei)
+    update(wb)
     wb
 end
 
@@ -135,9 +136,6 @@ function cairoRGB(buf::Array{Uint32,2}, img::Union(StridedArray,AbstractImageDir
     cs = colorspace(img)
     xfirst = isxfirst(img)
     firstindex, spsz, spstride, csz, cstride = iterate_spatial(img)
-    if cs == "ARGB" && xfirst
-        return reinterpret(Uint32, img.data, spsz), Cairo.CAIRO_FORMAT_ARGB32
-    end
     isz, jsz = spsz
     istride, jstride = spstride
     A = parent(img)

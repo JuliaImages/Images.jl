@@ -204,8 +204,6 @@ max(img::AbstractImageDirect) = max(img.data)
 #   timedim: the array dimension used for time (i.e., sequence), or 0 for single images
 #   limits: (minvalue,maxvalue) for this type of image (e.g., (0,255) for Uint8
 #     images, even if pixels do not reach these values)
-#   bounds: if present, you can assert that the values fall between the bounds. This can
-#     save you an unnecessary clipping operation
 #   pixelspacing: the spacing between adjacent pixels along spatial dimensions
 #   spatialorder: a string naming each spatial dimension, in the storage order of
 #     the data array. Names can be arbitrary, but the choices "x" and "y" have special
@@ -271,10 +269,10 @@ limits(img::AbstractImage{Bool}) = 0,1
 limits{T}(img::AbstractImageDirect{T}) = get(img, "limits", (typemin(T), typemax(T)))
 limits(img::AbstractImageIndexed) = @get img "limits" (min(img.cmap), max(img.cmap))
 
-bounds{T}(img::StridedArray{T}) = typemin(T), typemax(T)
-bounds{T}(img::AbstractImageDirect{T}) = get(img, "bounds", (typemin(T), typemax(T)))
-bounds(img::AbstractImageIndexed) = get(img, "bounds", (typemin(eltype(img.cmap)), typemax(eltype(img.cmap))))
-
+# bounds{T}(img::StridedArray{T}) = typemin(T), typemax(T)
+# bounds{T}(img::AbstractImageDirect{T}) = get(img, "bounds", (typemin(T), typemax(T)))
+# bounds(img::AbstractImageIndexed) = get(img, "bounds", (typemin(eltype(img.cmap)), typemax(eltype(img.cmap))))
+# 
 pixelspacing{T}(img::StridedArray{T,3}) = (size(img, defaultarraycolordim) == 3) ? [1.0,1.0] : error("Cannot infer pixelspacing of Array, use an AbstractImage type")
 pixelspacing(img::StridedMatrix) = [1.0,1.0]
 pixelspacing(img::AbstractImage) = @get img "pixelspacing" _pixelspacing(img)
@@ -396,7 +394,7 @@ function spatialpermutation(to, img::AbstractImage)
 end
 
 # Permute the dimensions of an image, also permuting the relevant properties. If you have non-default properties that are vectors or matrices relative to spatial dimensions, include their names in the list of spatialprops.
-function permutedims(img::AbstractImage, p, spatialprops::Vector)
+function permutedims(img::AbstractImage, p::Union(Vector{Int}, (Int...)), spatialprops::Vector)
     if length(p) != ndims(img)
         error("The permutation must have length equal to the number of dimensions")
     end
