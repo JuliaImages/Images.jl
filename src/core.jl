@@ -68,7 +68,7 @@ convert{I<:AbstractImageDirect}(::Type{I}, img::I) = img
 convert{I<:AbstractImageIndexed}(::Type{I}, img::I) = img
 # Convert an indexed image (cmap) to a direct image
 function convert{ID<:AbstractImageDirect,II<:AbstractImageIndexed}(::Type{ID}, img::II)
-    local data
+    local data::StridedArray
     local prop
     if size(img.cmap, 2) == 1
         data = reshape(img.cmap[img.data[:]], size(img.data))
