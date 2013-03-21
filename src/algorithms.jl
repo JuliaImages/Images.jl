@@ -1,35 +1,50 @@
-# Conversions
+#### Math with images ####
 
-# function convert(cs::String, img::Image) # FIXME
-#     local ret
-#     if cs == "ARGB"
-#         if colorspace(img) == "RGBA"
-#             cd = colordim(img)
-#             if cd == 0
-#                 error("Not yet supported")
-#             end
-#             c = Any[map(i->1:i, size(img))...]
-#             c[cd] = [4,1,2,3]
-#             ret = copy(img, img[c...])
-#             ret.properties["colorspace"] = cs
-#         end
-#     end
-#     ret
-# end
-#
-# function uint8(img::Image) # FIXME
-#     l = limits(img)
-#     r = l[2]/0xff
-#     copy(img, uint8(ifloor(img.data/r)))
-# end
-
+(+)(img::AbstractImageDirect, n::Number) = share(img, data(img)+n)
+(+)(n::Number, img::AbstractImageDirect) = share(img, data(img)+n)
+(+)(img::AbstractImageDirect, A::BitArray) = share(img, data(img)+A)
+(+)(img::AbstractImageDirect, A::AbstractArray) = share(img, data(img)+data(A))
+(-)(img::AbstractImageDirect, n::Number) = share(img, data(img)-n)
+(-)(n::Number, img::AbstractImageDirect) = share(img, n-data(img))
+(-)(img::AbstractImageDirect, A::BitArray) = share(img, data(img)-A)
+(-)(img::AbstractImageDirect, A::AbstractArray) = share(img, data(img)-data(A))
+(*)(img::AbstractImageDirect, n::Number) = share(img, data(img)*n)
+(*)(n::Number, img::AbstractImageDirect) = share(img, data(img)*n)
+(/)(img::AbstractImageDirect, n::Number) = share(img, data(img)/n)
+(.*)(img::AbstractImageDirect, A::BitArray) = share(img, data(img).*A)
+(.*)(A::BitArray, img::AbstractImageDirect) = share(img, data(img).*A)
+(.*)(img1::AbstractImageDirect, img2::AbstractImageDirect) = share(img, data(img1).*data(img2))
+(.*)(img::AbstractImageDirect, A::AbstractArray) = share(img, data(img).*A)
+(.*)(A::AbstractArray, img::AbstractImageDirect) = share(img, data(img).*A)
+(./)(img::AbstractImageDirect, A::BitArray) = share(img, data(img)./A)
+(./)(img1::AbstractImageDirect, img2::AbstractImageDirect) = share(img, data(img1)./data(img2))
+(./)(img::AbstractImageDirect, A::AbstractArray) = share(img, data(img)./A)
+# (./)(A::AbstractArray, img::AbstractImageDirect) = share(img, A./data(img))
+(.<)(img::AbstractImageDirect, n::Number) = data(img) .< n
+(.>)(img::AbstractImageDirect, n::Number) = data(img) .> n
+(.<)(img::AbstractImageDirect, A::AbstractArray) = data(img) .< A
+(.>)(img::AbstractImageDirect, A::AbstractArray) = data(img) .> A
+(.==)(img::AbstractImageDirect, n::Number) = data(img) .== n
+(.==)(img::AbstractImageDirect, A::AbstractArray) = data(img) .== A
 
 #### Scaling/clipping/type conversion ####
 
+function scale{T}(scalei::ScaleInfo{T}, img::Union(StridedArray,AbstractImageDirect))
+    out = similar(img, T)
+    dout = data(out)
+    dimg = data(img)
+    for i = 1:length(dimg)
+        dout[i] = scale(scalei, dimg[i])
+    end
+    out
+end
+
 type ScaleNone{T} <: ScaleInfo{T}; end
 
-scale{T}(scalei::ScaleNone{T}, val::T) = val
-scale{T,S}(scalei::ScaleNone{T}, val::S) = convert(T, val)
+scale{T<:Number}(scalei::ScaleNone{T}, val::T) = val
+scale{T,S<:Number}(scalei::ScaleNone{T}, val::S) = convert(T, val)
+scale{T<:Integer,S<:FloatingPoint}(scalei::ScaleNone{T}, val::S) = convert(T, round(val))
+scale(scalei::ScaleNone{Uint8}, val::Uint16) = (val>>>8) & 0xff
 scale(scalei::ScaleNone{Uint8}, val::Uint16) = (val>>>8) & 0xff
 
 # The Clip types just enforce bounds, but do not scale or
@@ -45,11 +60,11 @@ type ClipMinMax{T,From} <: ScaleInfo{T}
     max::From
 end
 
-scale{T}(scalei::ClipMin{T,T}, val::T) = max(val, scalei.min)
+scale{T<:Number}(scalei::ClipMin{T,T}, val::T) = max(val, scalei.min)
 scale(scalei::ClipMin{Uint8,Uint16}, val::Uint16) = (max(val, scalei.min)>>>8) & 0xff
-scale{T}(scalei::ClipMax{T,T}, val::T) = min(val, scalei.max)
+scale{T<:Number}(scalei::ClipMax{T,T}, val::T) = min(val, scalei.max)
 scale(scalei::ClipMax{Uint8,Uint16}, val::Uint16) = (min(val, scalei.max)>>>8) & 0xff
-scale{T}(scalei::ClipMinMax{T,T}, val::T) = min(max(val, scalei.min), scalei.max)
+scale{T<:Number}(scalei::ClipMinMax{T,T}, val::T) = min(max(val, scalei.min), scalei.max)
 scale(scalei::ClipMinMax{Uint8,Uint16}, val::Uint16) = (min(max(val, scalei.min), scalei.max)>>>8) & 0xff
 
 # This scales and subtracts the min value
@@ -59,9 +74,9 @@ type ScaleMinMax{To,From} <: ScaleInfo{To}
     s::Float64
 end
 
-scale{To<:Integer,From}(scalei::ScaleMinMax{To,From}, val::From) = convert(To, round(scalei.s*(min(max(val, scalei.min), scalei.max)-scalei.min)))
+scale{To<:Integer,From<:Number}(scalei::ScaleMinMax{To,From}, val::From) = convert(To, round(scalei.s*(min(max(val, scalei.min), scalei.max)-scalei.min)))
 
-scale{To,From}(scalei::ScaleMinMax{To,From}, val::From) = convert(To, scalei.s*(min(max(val, scalei.min), scalei.max)-scalei.min))
+scale{To<:Number,From<:Number}(scalei::ScaleMinMax{To,From}, val::From) = convert(To, scalei.s*(min(max(val, scalei.min), scalei.max)-scalei.min))
 
 
 function scaleinfo{To<:Unsigned,From<:Unsigned}(::Type{To}, img::AbstractArray{From})
@@ -77,7 +92,7 @@ function scaleinfo{To<:Unsigned,From<:FloatingPoint}(::Type{To}, img::AbstractAr
     if !isinf(l[1]) && !isinf(l[2])
         return ScaleMinMax{To,From}(l[1],l[2],typemax(To)/(l[2]-l[1]))
     else
-        return ScaleNone{To}
+        return ScaleNone{To}()
     end
 end
 
@@ -140,7 +155,8 @@ greenval(p) = (p>>>8)&0xff
 blueval(p)  = p&0xff
 alphaval(p)   = (p>>>24)&0xff
 
-function imadjustintensity{T}(img::Array{T,2}, range)
+function imadjustintensity{T}(img::AbstractArray{T}, range)
+    assert_scalar_color(img)
     if length(range) == 0
         range = [min(img) max(img)]
     elseif length(range) == 1
@@ -152,6 +168,7 @@ function imadjustintensity{T}(img::Array{T,2}, range)
     out = tmp
 end
 
+# FIXME
 function rgb2gray{T}(img::Array{T,3})
     n, m = size(img)
     wr, wg, wb = 0.30, 0.59, 0.11
@@ -171,6 +188,7 @@ function rgb2gray{T}(img::Array{T,3})
     out
 end
 
+# FIXME
 rgb2gray{T}(img::Array{T,2}) = img
 
 function sobel()
@@ -254,29 +272,25 @@ end
 imlog() = imlog(0.5)
 
 # Sum of squared differences
-function ssd{T}(A::Array{T}, B::Array{T})
-    return sum((A-B).^2)
-end
+ssd{T}(A::AbstractArray{T}, B::AbstractArray{T}) = sum((data(A)-data(B)).^2)
 
 # normalized by Array size
-ssdn{T}(A::Array{T}, B::Array{T}) = ssd(A, B)/length(A)
+ssdn{T}(A::AbstractArray{T}, B::AbstractArray{T}) = ssd(A, B)/length(A)
 
 # sum of absolute differences
-function sad{T}(A::Array{T}, B::Array{T})
-    return sum(abs(A-B))
-end
+sad{T}(A::AbstractArray{T}, B::AbstractArray{T}) = sum(abs(data(A)-data(B)))
 
 # normalized by Array size
-sadn{T}(A::Array{T}, B::Array{T}) = sad(A, B)/length(A)
+sadn{T}(A::AbstractArray{T}, B::AbstractArray{T}) = sad(A, B)/length(A)
 
 # normalized cross correlation
-function ncc{T}(A::Array{T}, B::Array{T})
-    Am = (A-mean(A))[:]
-    Bm = (B-mean(B))[:]
+function ncc{T}(A::AbstractArray{T}, B::AbstractArray{T})
+    Am = (data(A)-mean(data(A)))[:]
+    Bm = (data(B)-mean(data(B)))[:]
     return dot(Am,Bm)/(norm(Am)*norm(Bm))
 end
 
-function imfilter{T}(img::Matrix{T}, filter::Matrix{T}, border::String, value)
+function _imfilter{T}(img::StridedMatrix{T}, filter::Matrix{T}, border::String, value)
     si, sf = size(img), size(filter)
     A = zeros(T, si[1]+sf[1]-1, si[2]+sf[2]-1)
     s1, s2 = int((sf[1]-1)/2), int((sf[2]-1)/2)
@@ -325,7 +339,9 @@ function imfilter{T}(img::Matrix{T}, filter::Matrix{T}, border::String, value)
         error("wrong border treatment")
     end
     # check if separable
-    U, S, V = svdt(filter)
+#     U, S, Vt = svdt(filter)
+    SVD = svdfact(filter)
+    U, S, Vt = SVD[:U], SVD[:S], SVD[:Vt]
     separable = true;
     for i = 2:length(S)
         # assumption that <10^-7 \approx 0
@@ -333,9 +349,9 @@ function imfilter{T}(img::Matrix{T}, filter::Matrix{T}, border::String, value)
     end
     if separable
         # conv2 isn't suitable for this (kernel center should be the actual center of the kernel)
-        #C = conv2(U[:,1]*sqrt(S[1]), vec(V[1,:])*sqrt(S[1]), A)
+        #C = conv2(U[:,1]*sqrt(S[1]), vec(Vt[1,:])*sqrt(S[1]), A)
         x = U[:,1]*sqrt(S[1])
-        y = vec(V[1,:])*sqrt(S[1])
+        y = vec(Vt[1,:])*sqrt(S[1])
         sa = size(A)
         m = length(y)+sa[1]
         n = length(x)+sa[2]
@@ -370,17 +386,27 @@ function imfilter{T}(img::Matrix{T}, filter::Matrix{T}, border::String, value)
         end
     end
     sc = size(C)
-    out = C[int(sc[1]/2-si[1]/2):int(sc[1]/2+si[1]/2)-1, int(sc[2]/2-si[2]/2):int(sc[2]/2+si[2]/2)-1]
+    out = share(img, C[int(sc[1]/2-si[1]/2):int(sc[1]/2+si[1]/2)-1, int(sc[2]/2-si[2]/2):int(sc[2]/2+si[2]/2)-1])
 end
 
 # imfilter for multi channel images
-function imfilter{T}(img::Array{T,3}, filter::Matrix{T}, border::String, value)
-    x, y, c = size(img)
-    out = zeros(T, x, y, c)
-    for i = 1:c
-        out[:,:,i] = imfilter(img[:,:,i], filter, border, value)
+function imfilter{T}(img::AbstractArray{T}, filter::Matrix{T}, border::String, value)
+    assert2d(img)
+    cd = colordim(img)
+    local A
+    if cd == 0
+        A = _imfilter(data(img), filter, border, value)
+    else
+        A = similar(data(img))
+        coords = Any[map(i->1:i, size(img))...]
+        for i = 1:size(img, cd)
+            coords[cd] = i
+            simg = slice(img, coords...)
+            tmp = _imfilter(simg, filter, border, value)
+            A[coords...] = tmp[:]
+        end
     end
-    out
+    share(img, A)
 end
 
 imfilter(img, filter) = imfilter(img, filter, "replicate", 0)
@@ -395,24 +421,12 @@ function imlineardiffusion{T}(img::Array{T,2}, dt::FloatingPoint, iterations::In
     u
 end
 
-function imthresh{T}(img::Array{T,2}, threshold::FloatingPoint)
-    if !(0.0 <= threshold <= 1.0)
-        error("threshold must be between 0 and 1")
-    end
-    img_max, img_min = max(img), min(img)
-    tmp = zeros(T, size(img))
-    # matter of taste?
-    #tmp[img >= threshold*(img_max-img_min)+img_min] = 1
-    tmp[img >= threshold] = 1
-    return tmp
-end
-
-function imgaussiannoise{T}(img::Array{T}, variance::Number, mean::Number)
+function imgaussiannoise{T}(img::AbstractArray{T}, variance::Number, mean::Number)
     return img + sqrt(variance)*randn(size(img)) + mean
 end
 
-imgaussiannoise{T}(img::Array{T}, variance::Number) = imgaussiannoise(img, variance, 0)
-imgaussiannoise{T}(img::Array{T}) = imgaussiannoise(img, 0.01, 0)
+imgaussiannoise{T}(img::AbstractArray{T}, variance::Number) = imgaussiannoise(img, variance, 0)
+imgaussiannoise{T}(img::AbstractArray{T}) = imgaussiannoise(img, 0.01, 0)
 
 function rgb2ntsc{T}(img::Array{T})
     trans = [0.299 0.587 0.114; 0.596 -0.274 -0.322; 0.211 -0.523 0.312]
@@ -452,7 +466,11 @@ function ycbcr2rgb{T}(img::Array{T})
     return out
 end
 
-function imcomplement{T}(img::Array{T})
+function imcomplement{T}(img::AbstractArray{T})
+    l = limits(img)
+    if l[2] != 1
+        error("imcomplement not defined unless upper limit is 1")
+    end
     return 1 - img
 end
 
@@ -496,8 +514,9 @@ function hsi2rgb{T}(img::Array{T})
     return cat(3, R, G, B)
 end
 
-function imstretch{T}(img::Array{T,2}, m::Number, slope::Number)
-    return 1./(1 + (m./(img + eps(T))).^slope)
+function imstretch{T}(img::AbstractArray{T}, m::Number, slope::Number)
+    assert_scalar_color(img)
+    share(img, 1./(1 + (m./(data(img) + eps(T))).^slope))
 end
 
 function imedge{T}(img::Array{T}, method::String, border::String)
@@ -554,3 +573,29 @@ function imROF{T}(img::Array{T,3}, lambda::Number, iterations::Integer)
     end
     return out
 end
+
+
+# Conversions
+
+# function convert(cs::String, img::Image) # FIXME
+#     local ret
+#     if cs == "ARGB"
+#         if colorspace(img) == "RGBA"
+#             cd = colordim(img)
+#             if cd == 0
+#                 error("Not yet supported")
+#             end
+#             c = Any[map(i->1:i, size(img))...]
+#             c[cd] = [4,1,2,3]
+#             ret = copy(img, img[c...])
+#             ret.properties["colorspace"] = cs
+#         end
+#     end
+#     ret
+# end
+#
+# function uint8(img::Image) # FIXME
+#     l = limits(img)
+#     r = l[2]/0xff
+#     copy(img, uint8(ifloor(img.data/r)))
+# end

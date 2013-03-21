@@ -101,6 +101,9 @@ function convert{T,N}(::Type{Array{T,N}}, img::AbstractImage)
     end
 end
 
+# Convert an array to an image
+convert(::Type{Image}, A::Array) = Image(A, ["colorspace" => colorspace(A), "colordim" => colordim(A), "spatialorder" => spatialorder(A), "limits" => limits(A)])
+
 # Indexing. In addition to conventional array indexing, support syntax like
 #    img["x", 100:400, "t", 32]
 # where anything not mentioned by name is taken to include the whole range
@@ -269,10 +272,6 @@ limits(img::AbstractImage{Bool}) = 0,1
 limits{T}(img::AbstractImageDirect{T}) = get(img, "limits", (typemin(T), typemax(T)))
 limits(img::AbstractImageIndexed) = @get img "limits" (min(img.cmap), max(img.cmap))
 
-# bounds{T}(img::StridedArray{T}) = typemin(T), typemax(T)
-# bounds{T}(img::AbstractImageDirect{T}) = get(img, "bounds", (typemin(T), typemax(T)))
-# bounds(img::AbstractImageIndexed) = get(img, "bounds", (typemin(eltype(img.cmap)), typemax(eltype(img.cmap))))
-# 
 pixelspacing{T}(img::StridedArray{T,3}) = (size(img, defaultarraycolordim) == 3) ? [1.0,1.0] : error("Cannot infer pixelspacing of Array, use an AbstractImage type")
 pixelspacing(img::StridedMatrix) = [1.0,1.0]
 pixelspacing(img::AbstractImage) = @get img "pixelspacing" _pixelspacing(img)
