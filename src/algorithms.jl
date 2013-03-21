@@ -140,19 +140,6 @@ greenval(p) = (p>>>8)&0xff
 blueval(p)  = p&0xff
 alphaval(p)   = (p>>>24)&0xff
 
-function imshow(img, range)
-    if ndims(img) == 2 
-        # only makes sense for gray scale images
-        img = imadjustintensity(img, range)
-    end
-    tmp::String = "./tmp.ppm"
-    imwrite(img, tmp)
-    cmd = `feh $tmp`
-    spawn(cmd)
-end
-
-imshow(img) = imshow(img, [])
-
 function imadjustintensity{T}(img::Array{T,2}, range)
     if length(range) == 0
         range = [min(img) max(img)]
@@ -426,9 +413,6 @@ end
 
 imgaussiannoise{T}(img::Array{T}, variance::Number) = imgaussiannoise(img, variance, 0)
 imgaussiannoise{T}(img::Array{T}) = imgaussiannoise(img, 0.01, 0)
-
-# 'illustrates' fourier transform
-ftshow{T}(A::Array{T,2}) = imshow(log(1+abs(fftshift(A))),[])
 
 function rgb2ntsc{T}(img::Array{T})
     trans = [0.299 0.587 0.114; 0.596 -0.274 -0.322; 0.211 -0.523 0.312]

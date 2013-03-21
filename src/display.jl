@@ -270,3 +270,23 @@ argb32(a::Uint8, r::Uint8, g::Uint8, b::Uint8) = convert(Uint32,a)<<24 + convert
 rgb24{T}(scalei::ScaleInfo{Uint8}, r::T, g::T, b::T) = convert(Uint32,scale(scalei,r))<<16 + convert(Uint32,scale(scalei,g))<<8 + convert(Uint32,scale(scalei,b))
 
 argb32{T}(scalei::ScaleInfo{Uint8}, a::T, r::T, g::T, b::T) = convert(Uint32,scale(scalei,a))<<24 + convert(Uint32,scale(scalei,r))<<16 + convert(Uint32,scale(scalei,g))<<8 + convert(Uint32,scale(scalei,b))
+
+
+
+# External-viewer interface
+function imshow(img, range)
+    if ndims(img) == 2 
+        # only makes sense for gray scale images
+        img = imadjustintensity(img, range)
+    end
+    tmp::String = "./tmp.ppm"
+    imwrite(img, tmp)
+    cmd = `feh $tmp`
+    spawn(cmd)
+end
+
+imshow(img) = imshow(img, [])
+
+# 'illustrates' fourier transform
+ftshow{T}(A::Array{T,2}) = imshow(log(1+abs(fftshift(A))),[])
+
