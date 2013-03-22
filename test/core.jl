@@ -75,12 +75,12 @@ Blookup = reshape(cmap[B[:],1], size(B))
 # spatial order, width/height, and permutations
 @assert spatialpermutation(Images.yx, imgd) == [1,2]
 @assert widthheight(imgd) == (5,3)
-C = convert(Array{Uint8,3}, imgd)
+C = convert(Array, imgd)
 @assert C == imgd.data
 imgd.properties["spatialorder"] = ["x", "y"]
 @assert spatialpermutation(Images.xy, imgd) == [1,2]
 @assert widthheight(imgd) == (3,5)
-C = convert(Array{Uint8,3}, imgd)
+C = convert(Array, imgd)
 @assert C == permutedims(imgd.data, [2,1,3])
 imgd.properties["spatialorder"] = ["y", "x"]
 @assert spatialpermutation(Images.xy, imgd) == [2,1]

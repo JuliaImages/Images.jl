@@ -90,6 +90,7 @@ function convert{T,N}(::Type{Array{T,N}}, img::AbstractImage)
     end
     # put in canonical storage order
     p = spatialpermutation(spatialorder(Matrix), img)
+    p = coords_spatial(img)[p]
     cd = colordim(img)
     if cd > 0
         push!(p, cd)
@@ -100,6 +101,7 @@ function convert{T,N}(::Type{Array{T,N}}, img::AbstractImage)
         return permutedims(img.data, p)
     end
 end
+convert(::Type{Array}, img::AbstractImage) = convert(Array{eltype(img), ndims(img)}, img)
 
 # Convert an array to an image
 convert(::Type{Image}, A::Array) = Image(A, ["colorspace" => colorspace(A), "colordim" => colordim(A), "spatialorder" => spatialorder(A), "limits" => limits(A)])
