@@ -17,20 +17,24 @@ you should not use plain arrays.)
 
 It's worth noting that these conventions are sometimes inconvenient.
 For example, the `x` coordinate (horizontal) is second and the `y` coordinate
-(vertical) is first; in other words, one uses `img[y,x]` to address a pixel that is displayed at a
+(vertical) is first; in other words, one uses `img[y,x]` to address a pixel that
+is displayed at a
 particular `x,y` position. This often catches newcomers (and sometimes even
 old-timers) by surprise. 
 Moreover, most image file formats, cameras, and graphics libraries such as
-Cairo use "horizontal-major" storage of images, and have the color dimension first (fastest). This therefore necessitates a
+Cairo use "horizontal-major" storage of images, and have the color dimension
+first (fastest). This therefore necessitates a
 permutation of the dimensions of the raw data array.
 
-The conventions for plain arrays are "baked in" via a few simple utility functions in the file
+The conventions for plain arrays are "baked in" via a few simple utility
+functions in the file
 `core.jl`; if you really need to use plain arrays but want to work with
 different conventions, you can (locally) change these defaults with just a few
-lines. Algorithms which have been properly written "generically" should continue
+lines. Algorithms which have been written generically should continue
 to work.
 
-However, a more flexible approach is to use one of the "self-documenting" image types.
+However, a more flexible approach is to use one of the self-documenting image
+types.
 
 ### Image types
 
@@ -61,8 +65,8 @@ seamlessly presents views of a large number of separate files. If you have a
 suitably-defined `AbstractArray` type, you can probably use `Image` without
 needing to create alternative `AbstractImageDirect` types.
 
-`properties` is a dictionary, usually using `String` keys, that allows you to
-annotate images. More detail about these is below.
+`properties` is a dictionary, usually with `String` keys, that allows you to
+annotate images. More detail about these can be found below.
 
 The only other concrete image type is for indexed images:
 
@@ -82,7 +86,8 @@ If `img` is an `Image`, then `img[i,j]` looks up the value `img.data[i,j]`.
 Assignment, `sub`, and `slice` work similarly. In other words, an
 `Image` works just as if you were using plain arrays.
 
-If you are indexing over an extended region and want to get back an `Image`, rather than a value or an `Array`, then you
+If you are indexing over an extended region and want to get back an `Image`,
+rather than a value or an `Array`, then you
 will want to use `refim`, `subim`, and `sliceim`. For the first two, the
 resulting image will share everything but the `data` field with the original
 image; if you make modifications in one, the other will also be affected. For
@@ -111,15 +116,16 @@ the array.
 
 Here is a list of the properties supported in `core.jl`:
 
-- colorspace: "RGB", "RGBA", "Gray", "Binary", "24bit", "Lab", "HSV", etc.
-- colordim: the array dimension used to store color information, or 0 if there
+- `colorspace`: "RGB", "RGBA", "Gray", "Binary", "24bit", "Lab", "HSV", etc.
+- `colordim`: the array dimension used to store color information, or 0 if there
 is no dimension corresponding to color
-- timedim: the array dimension used for time (i.e., sequence), or 0 for single
+- `timedim`: the array dimension used for time (i.e., sequence), or 0 for single
 images
-- limits: (minvalue,maxvalue) for this type of image (e.g., (0,255) for Uint8
+- `limits`: (minvalue,maxvalue) for this type of image (e.g., (0,255) for Uint8
 images, even if pixels do not reach these values)
-- pixelspacing: the spacing between adjacent pixels along spatial dimensions
-- spatialorder: a string naming each spatial dimension, in the storage order of
+- `pixelspacing`: the spacing between adjacent pixels along spatial dimensions
+- `spatialorder`: a string naming each spatial dimension, in the storage order
+of
 the data array. Names can be arbitrary, but the choices "x" and "y" have special
 meaning (horizontal and vertical, respectively, irrespective of storage order).
 If supplied, you must have one entry per spatial dimension.
@@ -130,32 +136,47 @@ used; if not, hopefully-reasonable defaults will be chosen.
 
 ## Writing generic algorithms
 
-There are many examples that you can use as a guide. `imfilter` (in
-`algorithms.jl`) is a reasonable example of how you can quite easily convert an
-algorithm that was designed to work on arrays into a generic algorithm.
-`imfilter` originally required an `Array` input, and works only with 2d images.
-We can make it work with arbitrary image types by renaming the core algorithm
-(we chose `_imfilter`) and then providing just a bit of checking.
+There are many examples that you can use as a guide. Here we work through the
+example of `imfilter` (in
+`algorithms.jl`), which was originally designed to work on just arrays, and show
+how to convert it into an algorithm that works with most image types.
+(One important limitation is that Julia's `imfilter` algorithm currently works
+only with 2d images; generalizing it to multiple dimensions is a different
+topic.) First, let's assume that we've re-named the old array-based algorithm as
+`_imfilter`. Then a more general variant of `imfilter` can be written in the
+following way:
+
 ```
-function imfilter{T}(img::AbstractArray{T}, filter::Matrix{T}, border::String, value)
-    assert2d(img)      # Julia's imfilter was written for 2d images, so enforce this
+function imfilter{T}(img::AbstractArray{T}, filter::Matrix{T}, border::String,
+value)
+    assert2d(img)      # Julia's imfilter was written for 2d images, so enforce
+this
     cd = colordim(img) # find out which dimension corresponds to color, if any
     local A
     if cd == 0         # no explicit array dimension for color
         A = _imfilter(data(img), filter, border, value)
     else
         A = similar(data(img))                    # allocate the output
-        coords = Any[map(i->1:i, size(img))...]   # indexes covering the whole array
+        coords = Any[map(i->1:i, size(img))...]   # indexes covering the whole
+array
         for i = 1:size(img, cd)
-            coords[cd] = i                        # slice along the color dimension
+            coords[cd] = i                        # slice along the color
+dimension
             simg = slice(img, coords...)
-            tmp = _imfilter(simg, filter, border, value)   # filter this color channel
+            tmp = _imfilter(simg, filter, border, value)   # filter this color
+channel
             A[coords...] = tmp[:]                 # store the result
         end
     end
     share(img, A)       # output image has the same properties as the input
 end
 ```
-Despite the fact that this allows the color channel to be any one of the array dimensions, it is hardly any more complicated than a version that assumed that the third dimension corresponded to color.
+Despite the fact that this allows the color channel to be any one of the array
+dimensions, it is hardly any more complicated than its predecessory which
+assumed that the third dimension corresponded to color.
 
-Other examples can be found in both `algorithms.jl` and `core.jl`. Further examples are in `display.jl` and `io.jl`; these tend to be more complex because either they are heavily optimized for efficiency and/or because of the needs of interoperating with external packages/disk files.
+Other examples showing how to generalize array-based code can be found in both
+`algorithms.jl` and `core.jl`. Yet other examples are in `display.jl` and
+`io.jl`; these tend to be more complex because either they are heavily optimized
+for efficiency and/or because of the needs of interoperating with external
+packages/disk files.
