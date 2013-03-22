@@ -149,22 +149,18 @@ following way:
 ```
 function imfilter{T}(img::AbstractArray{T}, filter::Matrix{T}, border::String,
 value)
-    assert2d(img)      # Julia's imfilter was written for 2d images, so enforce
-this
+    assert2d(img)      # Julia's imfilter was written for 2d images, so enforce this
     cd = colordim(img) # find out which dimension corresponds to color, if any
     local A
     if cd == 0         # no explicit array dimension for color
         A = _imfilter(data(img), filter, border, value)
     else
         A = similar(data(img))                    # allocate the output
-        coords = Any[map(i->1:i, size(img))...]   # indexes covering the whole
-array
+        coords = Any[map(i->1:i, size(img))...]   # indexes covering the whole array
         for i = 1:size(img, cd)
-            coords[cd] = i                        # slice along the color
-dimension
+            coords[cd] = i                        # slice along the color dimension
             simg = slice(img, coords...)
-            tmp = _imfilter(simg, filter, border, value)   # filter this color
-channel
+            tmp = _imfilter(simg, filter, border, value)   # filter this color channel
             A[coords...] = tmp[:]                 # store the result
         end
     end
