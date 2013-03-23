@@ -107,7 +107,19 @@ end
 #### Implementation of specific formats ####
 
 ## ImageMagick's convert ##
-classdict = ["DirectClassGray" => (true,false,"Gray"), "DirectClassGrayMatte" => (true,true,"GrayAlpha"), "DirectClassCMYK" => (true,false,"CMYK"), "DirectClassRGB" => (true,false,"RGB"), "DirectClassRGBMatte" => (true,true,"RGBA"), "PseudoClassGray" => (false,false,"Gray"), "PseudoClassRGB" => (false,false,"RGB")]
+classdict = [
+  "DirectClassGray" => (true, false, "Gray"),
+  "DirectClassGrayMatte" => (true, true, "GrayAlpha"),
+  "DirectClassCMYK" => (true, false, "CMYK"),
+  "DirectClassRGB" => (true, false, "RGB"),
+  "DirectClasssRGB" => (true, false, "RGB"),
+  "DirectClassRGBMatte" => (true, true, "RGBA"),
+  "DirectClasssRGBMatte" => (true, true, "RGBA"),
+  "PseudoClassGray" => (false, false, "Gray"),
+  "PseudoClassRGB" => (false, false, "RGB"),
+  "PseudoClasssRGB" => (false, false, "RGB")
+]
+
 tfdict = ["True" => true, "False" => false]
 
 typedict = [8 => Uint8, 16 => Uint16, 32 => Uint32]
