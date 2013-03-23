@@ -168,7 +168,7 @@ value)
 end
 ```
 Despite the fact that this allows the color channel to be any one of the array
-dimensions, it is hardly any more complicated than its predecessory which
+dimensions, it is hardly any more complicated than its predecessor which
 assumed that the third dimension corresponded to color.
 
 Other examples showing how to generalize array-based code can be found in both
