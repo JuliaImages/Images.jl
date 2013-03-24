@@ -48,7 +48,7 @@ WindowImage with buffer size 140x105
 ```
 Overall, however, the `display` infrastructure is still quite crude---there is no resizing and no support for putting the image inside a container different from the full window.
 
-## Working with images: a filtering example
+## Working with images: some examples
 
 Here's a short example that may help you get started:
 ```
@@ -58,4 +58,7 @@ h = ones(7,7)/49;                     # a boxcar smoothing filter
 imgf = imfilter(img, h)
 display(img)
 display(imgf)
+clp = ClipMinMax(Uint8, 0.0, 255.0)
+imgc = scale(clp,3img)                # generate an oversaturated image
+display(imgc)
 ```

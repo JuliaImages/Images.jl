@@ -47,25 +47,31 @@ scale{T<:Integer,S<:FloatingPoint}(scalei::ScaleNone{T}, val::S) = convert(T, ro
 scale(scalei::ScaleNone{Uint8}, val::Uint16) = (val>>>8) & 0xff
 scale(scalei::ScaleNone{Uint8}, val::Uint16) = (val>>>8) & 0xff
 
+convert{I<:AbstractImageDirect}(::Type{I}, img::Union(StridedArray,AbstractImageDirect)) = scale(ScaleNone{eltype(I)}(), img)
+
 # The Clip types just enforce bounds, but do not scale or
 # subtract the minimum
 type ClipMin{T,From} <: ScaleInfo{T}
     min::From
 end
+ClipMin{T,From}(::Type{T}, min::From) = ClipMin{T,From}(min)
 type ClipMax{T,From} <: ScaleInfo{T}
     max::From
 end
+ClipMax{T,From}(::Type{T}, max::From) = ClipMax{T,From}(max)
 type ClipMinMax{T,From} <: ScaleInfo{T}
     min::From
     max::From
 end
+ClipMinMax{T,From}(::Type{T}, min::From, max::From) = ClipMinMax{T,From}(min,max)
 
 scale{T<:Number}(scalei::ClipMin{T,T}, val::T) = max(val, scalei.min)
 scale(scalei::ClipMin{Uint8,Uint16}, val::Uint16) = (max(val, scalei.min)>>>8) & 0xff
 scale{T<:Number}(scalei::ClipMax{T,T}, val::T) = min(val, scalei.max)
 scale(scalei::ClipMax{Uint8,Uint16}, val::Uint16) = (min(val, scalei.max)>>>8) & 0xff
 scale{T<:Number}(scalei::ClipMinMax{T,T}, val::T) = min(max(val, scalei.min), scalei.max)
-scale(scalei::ClipMinMax{Uint8,Uint16}, val::Uint16) = (min(max(val, scalei.min), scalei.max)>>>8) & 0xff
+scale{T<:Number,F<:Number}(scalei::ClipMinMax{T,F}, val::F) = convert(T,min(max(val, scalei.min), scalei.max))
+# scale(scalei::ClipMinMax{Uint8,Uint16}, val::Uint16) = (min(max(val, scalei.min), scalei.max)>>>8) & 0xff
 
 # This scales and subtracts the min value
 type ScaleMinMax{To,From} <: ScaleInfo{To}
@@ -95,6 +101,7 @@ function scaleinfo{To<:Unsigned,From<:FloatingPoint}(::Type{To}, img::AbstractAr
         return ScaleNone{To}()
     end
 end
+
 
 #### Color palettes ####
 

@@ -26,6 +26,7 @@ ImageCmap{A<:StridedArray,C<:AbstractArray}(data::A, cmap::C) = ImageCmap(data, 
 #### Core operations ####
 
 eltype{T}(img::AbstractImage{T}) = T
+eltype{T}(::Type{AbstractImage{T}}) = T
 
 size(img::AbstractImage) = size(img.data)
 size(img::AbstractImage, i::Integer) = size(img.data, i)

@@ -17,6 +17,11 @@ export # types
     AbstractImageIndexed,
     Image,
     ImageCmap,
+    ClipMin,
+    ClipMax,
+    ClipMinMax,
+    ScaleMinMax,
+    ScaleNone,
 
     # constants
     palette_fire,
