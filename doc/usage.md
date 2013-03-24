@@ -48,3 +48,14 @@ WindowImage with buffer size 140x105
 ```
 Overall, however, the `display` infrastructure is still quite crude---there is no resizing and no support for putting the image inside a container different from the full window.
 
+## Working with images: a filtering example
+
+Here's a short example that may help you get started:
+```
+using Images
+img = float64(imread("peppers.png"))  # an RGB image (you can pick anything)
+h = ones(7,7)/49;                     # a boxcar smoothing filter
+imgf = imfilter(img, h)
+display(img)
+display(imgf)
+```
