@@ -102,6 +102,14 @@ function scaleinfo{To<:Unsigned,From<:FloatingPoint}(::Type{To}, img::AbstractAr
     end
 end
 
+function scaleminmax{To}(::Type{To}, img::AbstractArray)
+    mn = min(img)
+    mx = max(img)
+    ScaleMinMax{To,eltype(img)}(mn, mx, typemax(To)/(mx-mn))
+end
+scaleminmax(img::AbstractArray) = scaleminmax(Uint8, img)
+
+sc(img::AbstractArray) = scale(scaleminmax(img), img)
 
 #### Color palettes ####
 

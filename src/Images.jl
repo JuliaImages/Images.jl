@@ -110,8 +110,10 @@ export # types
     prewitt,
     sad,
     sadn,
+    sc,
     scale,
     scaleinfo,
+    scaleminmax,
     sobel,
     ssd,
     ssdn
