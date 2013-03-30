@@ -73,15 +73,15 @@ copy!(wb::WindowImage, data::Array{Uint32,2}) = copy!(wb.buf, data)
 fill!(wb::WindowImage, val::Uint32) = fill!(wb.buf, val)
 
 # Copy-with-transpose
-function copyt!(wb::WindowImage, data::Array{Uint32,2})
+function copyt!(buf::Array{Uint32,2}, data::Array{Uint32,2})
     h, w = size(data)
-    if size(wb.buf,1) != w || size(wb.buf,2) != h
+    if size(buf,1) != w || size(buf,2) != h
         error("Size mismatch")
     end
     for j = 1:w, i = 1:h
-        wb.buf[j,i] = data[i,j]
+        buf[j,i] = data[i,j]
     end
-    wb
+    buf
 end
 
 #### A demo  ####
@@ -110,18 +110,21 @@ end
 # end
 # display(r::Cairo.CairoRenderer, img::AbstractArray) = display(r, img, r.lowerleft[1], r.lowerleft[2], 
 
-function display(wb::WindowImage, img::AbstractArray)
-    scalei = scaleinfo(Uint8, img)
+# display in a previous window
+function display(wb::WindowImage, img::AbstractArray, scalei::ScaleInfo)
     cairoRGB(wb.buf, img, scalei)
     update(wb)
     wb
 end
+display(wb::WindowImage, img::AbstractArray) = display(wb, img, scaleinfo(Uint8, img))
 
-function display(img::AbstractArray)
-    scalei = scaleinfo(Uint8, img)
+# display in a new window
+function display(img::AbstractArray, scalei::ScaleInfo)
     buf, format = cairoRGB(img, scalei)
     WindowImage(buf, format)
 end
+display(img::AbstractArray) = display(img, scaleinfo(Uint8, img))
+
 
 # Efficient conversions to RGB24 or ARGB32
 function cairoRGB(img::Union(StridedArray,AbstractImageDirect), scalei::ScaleInfo)
