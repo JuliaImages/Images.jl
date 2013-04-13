@@ -13,8 +13,15 @@ abstract ImageFileType
 fileext = Dict{ByteString, Vector{Int}}()
 filemagic = Array(Vector{Uint8}, 0)
 filetype = Array(Any, 0)
+filesrcloaded = Array(Bool, 0)
+filesrc = Array(String, 0)
 
-function add_image_file_format{ImageType<:ImageFileType}(ext::ByteString, magic::Vector{Uint8}, ::Type{ImageType})
+function loadformat(index::Int)
+    include(joinpath(Pkg.dir(), "Images", "src", "ioformats", filesrc[index]))
+    filesrcloaded[index] = true
+end
+
+function add_image_file_format{ImageType<:ImageFileType}(ext::ByteString, magic::Vector{Uint8}, ::Type{ImageType}, filecode::ASCIIString)
     # Check to see whether these magic bytes are already in the database
     for i in 1:length(filemagic)
         if magic == filemagic[i]
@@ -32,7 +39,10 @@ function add_image_file_format{ImageType<:ImageFileType}(ext::ByteString, magic:
     else
         fileext[ext] = [len]
     end
+    push!(filesrcloaded, isempty(filecode))
+    push!(filesrc, filecode)
 end
+add_image_file_format{ImageType<:ImageFileType}(ext::ByteString, magic::Vector{Uint8}, ::Type{ImageType}) = add_image_file_format(ext, magic, ImageType, "")
 
 # Define our fallback file format now, because we need it in generic imread.
 # This has no extension (and is not added to the database), because it is always used as a stream.
@@ -46,11 +56,13 @@ function imread(filename::String)
     # Use the extension as a hint to determine file type
     if has(fileext, ext)
         candidates = fileext[ext]
-#        println(candidates)
         index = image_decode_magic(stream, magicbuf, candidates)
         if index > 0
             # Position to end of this type's magic bytes
             seek(stream, length(filemagic[index]))
+            if !filesrcloaded[index]
+                loadformat(index)
+            end
             return imread(stream, filetype[index])
         end
     end
@@ -58,6 +70,9 @@ function imread(filename::String)
     index = image_decode_magic(stream, magicbuf, 1:length(filemagic))
     if index > 0
         seek(stream, length(filemagic[index]))
+        if !filesrcloaded[index]
+            loadformat(index)
+        end
         return imread(stream, filetype[index])
     end
     # There are no registered readers for this type. Try using ImageMagick if available.
@@ -95,6 +110,9 @@ function imwrite(img, filename::String)
         # Write using specific format
         candidates = fileext[ext]
         index = candidates[1]  # TODO?: use options, don't default to first
+        if !filesrcloaded[index]
+            loadformat(index)
+        end
         imwrite(img, filename, filetype[index])
     elseif have_imagemagick
         # Fall back on ImageMagick
@@ -415,10 +433,10 @@ type PBMBinary <: ImageFileType end
 
 add_image_file_format(".ppm", b"P6", PPMBinary)
 #add_image_file_format(".ppm", b"P3", PPMASCII)
-add_image_file_format(".ppm", b"P5", PGMBinary)
-#add_image_file_format(".ppm", b"P2", PGMASCII)
-add_image_file_format(".ppm", b"P4", PBMBinary)
-#add_image_file_format(".ppm", b"P1", PBMASCII)
+add_image_file_format(".pgm", b"P5", PGMBinary)
+#add_image_file_format(".pgm", b"P2", PGMASCII)
+add_image_file_format(".pbm", b"P4", PBMBinary)
+#add_image_file_format(".pbm", b"P1", PBMASCII)
 
 function parse_netpbm_size(stream::IO)
     szline = strip(readline(stream))
@@ -732,3 +750,6 @@ function parse_ints(line, n)
     end
     tuple(ret...)
 end
+
+
+### Register formats for later loading here

@@ -3,7 +3,11 @@
 It is not difficult to extend the Images library to handle custom
 image files.  For an example, here are the essential steps for code
 that reads a `.sif` file, a file format used by Andor Technology for
-their scientific CCD cameras.  All of the following code is found in
+their scientific CCD cameras.
+
+### Implementation for personal use
+
+All of the following code is found in
 one file, `readSIF.jl`.
 
 First, we create a new type for the image, whose parent is
@@ -33,7 +37,7 @@ function imread{S<:IO}(stream::S, ::Type{AndorSIF})
 ```
 
 When this imread is called, the magic bytes have already been read
-from the stream.  To make parsing the header easier, we started over
+from the stream.  In this case, it's easier to parse the header if we start over
 from the beginning of the file with the `seek(stream, 0)` statement.
 
 Next, we parse the header information.  Many of the fields in this
@@ -74,3 +78,22 @@ Finally, we wrap up by setting the properties, including the new
     Image(pixels, prop)
 end # imread()
 ```
+
+### Contributing a file format to Images
+
+To make your file format available to others, only a few changes are needed.
+First, move your "registration" code from `readSIF.jl` to Images'
+`io.jl`:
+
+```julia
+type AndorSIF <: ImageFileType end
+add_image_file_format(".sif", b"Andor Technology Multi-Channel File", AndorSIF, "readSIF.jl")
+```
+Note that we've added one more argument to this function, the `"readSIF.jl"`
+string. By supplying a filename, you're setting it up so that the code to handle
+SIF images is loaded automatically the first time you try to read or write a SIF
+file.
+
+The final step is to take the remainder of `readSIF.jl` and add it
+to the `ioformats` directory (inside `src/`). Submit a pull request, and once
+merged your format will be usable by anyone.
