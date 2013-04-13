@@ -17,7 +17,11 @@ filesrcloaded = Array(Bool, 0)
 filesrc = Array(String, 0)
 
 function loadformat(index::Int)
-    include(joinpath(Pkg.dir(), "Images", "src", "ioformats", filesrc[index]))
+    filename = joinpath("ioformats", filesrc[index])
+    if !isfile(filename)
+        filename = joinpath(Pkg.dir(), "Images", "src", "ioformats", filesrc[index])
+    end
+    include(filename)
     filesrcloaded[index] = true
 end
 
@@ -753,3 +757,5 @@ end
 
 
 ### Register formats for later loading here
+type Dummy <: ImageFileType; end
+add_image_file_format(".dummy", b"Dummy Image", Dummy, "dummy.jl")
