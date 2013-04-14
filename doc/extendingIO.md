@@ -15,7 +15,7 @@ First, we create a new type for the image, whose parent is
 the "magic bytes" to the new type.  The magic bytes are found at
 the start of the file and are used to uniquely identify the format.
 
-```
+```julia
 # readSIF.jl, adds an imread function for Andor .sif images
 
 using Images
@@ -28,7 +28,7 @@ Next, we create an imread function to handle the new image type.  But
 first, we have to explicitly import the imread function so that we can
 extend it:
 
-```
+```julia
 import Images.imread
 function imread{S<:IO}(stream::S, ::Type{AndorSIF})
     seek(stream, 0)
@@ -47,7 +47,7 @@ changes, pulling out the rug from underneath you).  This particular file
 type has a large number of fields.  For completeness, we will store
 all of these fields in a `Dict` named `ixon`:
 
-```
+```julia
     # ...skipped a few uninteresting fields before here
     l = strip(readline(stream))
     fields = split(l)
@@ -66,14 +66,14 @@ byte of the actual image data.  Along the way, we collect variables
 array, an image sequence over time).  Now we are ready to read the
 actual pixel data:
 
-```
+```julia
     pixels = read(stream, Float32, width, height, frames)
 ```
 
 Finally, we wrap up by setting the properties, including the new
 `ixon` collection, and return the `Image`:
 
-```
+```julia
     prop = {"colorspace" => "Gray", "spatialorder" => "yxt", "ixon" => ixon}
     Image(pixels, prop)
 end # imread()
@@ -81,19 +81,27 @@ end # imread()
 
 ### Contributing a file format to Images
 
-To make your file format available to others, only a few changes are needed.
-First, move your "registration" code from `readSIF.jl` to Images'
-`io.jl`:
+To make your file format available to others, only a few changes are
+needed.  First, move your "registration" code from `readSIF.jl` to
+Images' `io.jl`:
 
 ```julia
 type AndorSIF <: ImageFileType end
 add_image_file_format(".sif", b"Andor Technology Multi-Channel File", AndorSIF, "readSIF.jl")
 ```
-Note that we've added one more argument to this function, the `"readSIF.jl"`
-string. By supplying a filename, you're setting it up so that the code to handle
-SIF images is loaded automatically the first time you try to read or write a SIF
-file.
 
-The final step is to take the remainder of `readSIF.jl` and add it
-to the `ioformats` directory (inside `src/`). Submit a pull request, and once
-merged your format will be usable by anyone.
+Note that we've added one more argument to this function, the
+`"readSIF.jl"` string. By supplying a filename, you're setting it up
+so that the code to handle SIF images is loaded automatically the
+first time you try to read or write a SIF file.
+
+Second, the `AndorSIF` type is now found in the `Images` module, so
+tell the `imread` call to look there in `readSIF.jl`:
+
+```julia
+function imread{S<:IO}(stream::S, ::Type{Images.AndorSIF})
+```
+
+The final step is to take `readSIF.jl` and add it to the `ioformats`
+directory (inside `src/`). Submit a pull request, and once merged your
+format will be usable by anyone.

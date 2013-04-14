@@ -753,9 +753,13 @@ function parse_ints(line, n)
         end
     end
     tuple(ret...)
+    
 end
 
 
 ### Register formats for later loading here
 type Dummy <: ImageFileType; end
 add_image_file_format(".dummy", b"Dummy Image", Dummy, "dummy.jl")
+
+type AndorSIF <: Images.ImageFileType end
+add_image_file_format(".sif", b"Andor Technology Multi-Channel File", AndorSIF, "readSIF.jl")
