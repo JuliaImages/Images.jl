@@ -3,9 +3,6 @@
 
 using Images
 
-type AndorSIF <: Images.ImageFileType end
-add_image_file_format(".sif", b"Andor Technology Multi-Channel File", AndorSIF)
-
 import Images.imread
 function imread{S<:IO}(stream::S, ::Type{AndorSIF})
     # line 1
