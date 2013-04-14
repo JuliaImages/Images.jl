@@ -15,7 +15,7 @@ First, we create a new type for the image, whose parent is
 the "magic bytes" to the new type.  The magic bytes are found at
 the start of the file and are used to uniquely identify the format.
 
-```
+```julia
 # readSIF.jl, adds an imread function for Andor .sif images
 
 using Images
@@ -28,7 +28,7 @@ Next, we create an imread function to handle the new image type.  But
 first, we have to explicitly import the imread function so that we can
 extend it:
 
-```
+```julia
 import Images.imread
 function imread{S<:IO}(stream::S, ::Type{AndorSIF})
     seek(stream, 0)
@@ -47,7 +47,7 @@ changes, pulling out the rug from underneath you).  This particular file
 type has a large number of fields.  For completeness, we will store
 all of these fields in a `Dict` named `ixon`:
 
-```
+```julia
     # ...skipped a few uninteresting fields before here
     l = strip(readline(stream))
     fields = split(l)
@@ -66,14 +66,14 @@ byte of the actual image data.  Along the way, we collect variables
 array, an image sequence over time).  Now we are ready to read the
 actual pixel data:
 
-```
+```julia
     pixels = read(stream, Float32, width, height, frames)
 ```
 
 Finally, we wrap up by setting the properties, including the new
 `ixon` collection, and return the `Image`:
 
-```
+```julia
     prop = {"colorspace" => "Gray", "spatialorder" => "yxt", "ixon" => ixon}
     Image(pixels, prop)
 end # imread()
