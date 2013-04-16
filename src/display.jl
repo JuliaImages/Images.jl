@@ -1,43 +1,41 @@
 # Display images so they fill a window
 
-# TkRenderer modified from Winston, +steps towards resize support
+# TkRenderer adapted from Winston's tk.jl
 import Tk
 import Cairo
 
-TkRenderer(name, w, h) = TkRenderer(name, w, h, nothing)
-function TkRenderer(name, w, h, closecb)
+function TkRenderer(name, w, h, closecb=nothing)
     win = Tk.Window(name, w, h)
     c = Tk.Canvas(win)
-#     Tk.pack(c)
-    # Have the frame fill the window
-    Tk.tcl_eval("pack configure $(c.c.path) -expand 1 -fill both")
-    Tk.init_canvas(c)
+    Tk.pack(c, {:expand => true, :fill => "both"})
     if !is(closecb,nothing)
         ccb = Tk.tcl_callback(closecb)
         Tk.tcl_eval("bind $(win.path) <Destroy> $ccb")
     end
-    r = Cairo.CairoRenderer(Tk.cairo_surface(c))
-    r.upperright = (w,h)
-    r.on_open = () -> (cr = Tk.cairo_context(c); Cairo.set_source_rgb(cr, 1, 1, 1); Cairo.paint(cr))
-    r.on_close = () -> (Tk.reveal(c); Tk.tcl_doevent())
-    r, c
+    c.redraw = function (_)
+#         r = Tk.getgc(c)
+#         set_source_rgb(r, 0, 0, 0)
+#         paint(r)
+        Tk.reveal(c)
+        Tk.tcl_doevent()
+    end
+    c
 end
 
 # Create a window that "views" an in-memory buffer
 # This does no transposition, that should be handled by the caller (or see copyt! below)
 type WindowImage
-    r::Cairo.CairoRenderer
     c::Tk.Canvas
     surf::Cairo.CairoSurface
     buf::Array{Uint32,2}
 
     function WindowImage(buf::Array{Uint32,2}, format::Integer, title::String)
         w, h = size(buf)    # note it's in [x,y] order, not [row,col] order!
-        r, c = TkRenderer(title, w, h)
+        c = TkRenderer(title, w, h)
         surf = Cairo.CairoImageSurface(buf, format, w, h)
-        Cairo.image(r, surf, 0, 0, w, h)
-        r.on_close()
-        obj = new(r, c, surf, buf)
+        Cairo.image(Tk.getgc(c), surf, 0, 0, w, h)
+        c.redraw(c)
+        obj = new(c, surf, buf)
         # Set up the resize callback
         rcb = Tk.tcl_callback((path) -> resize(obj))
         Tk.tcl_eval("bind $(c.c.path) <Configure> {$rcb}")
@@ -52,15 +50,11 @@ show(io::IO, wb::WindowImage) = print(io, "WindowImage with buffer size ", Base.
 function resize(wb::WindowImage)
     f = wb.c.c
     win = f.parent
-    w = Tk.windowwidth(win)
-    h = Tk.windowheight(win)
-    @show w
-    Tk.tcl_eval("$(win.path) configure -width $w -height $h")
-    Tk.pack(f)
-    println("frame width = ", Tk.width(f))
-#     Tk.tcl_eval("$(f.path) configure -width $(w) -height $(h)")
-#     Cairo.image(wb.r, wb.surf, 0, 0, w, h)
-#     wb.r.on_close()
+    w = Tk.width(win)
+    h = Tk.height(win)
+    Tk.configure(wb.c)
+    Cairo.image(Tk.getgc(wb.c), wb.surf, 0, 0, w, h)
+    wb.c.redraw(wb.c)
 end
 
 # If you write new data to the buffer (e.g., using copy!), refresh the display
