@@ -95,6 +95,10 @@ function image_decode_magic{S<:IO}(stream::S, magicbuf::Vector{Uint8}, candidate
         len = length(filemagic[i])
         maxlen = (len > maxlen) ? len : maxlen
     end
+    # If there are no magic bytes, simply use the file extension
+    if maxlen == 0 && length(candidates) == 1
+        return candidates[1]
+    end
     while length(magicbuf) < maxlen && !eof(stream)
         push!(magicbuf, read(stream, Uint8))
     end
