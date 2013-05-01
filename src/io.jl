@@ -38,7 +38,7 @@ function add_image_file_format{ImageType<:ImageFileType}(ext::ByteString, magic:
     push!(filemagic, magic)
     len = length(filemagic)
     push!(filetype, ImageType)
-    if has(fileext, ext)
+    if haskey(fileext, ext)
         push!(fileext[ext], len)
     else
         fileext[ext] = [len]
