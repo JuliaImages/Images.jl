@@ -8,7 +8,6 @@ include("core.jl")
 include("config.jl")
 include("iterator.jl")
 include("io.jl")
-include("display.jl")
 include("algorithms.jl")
 
 export # types
@@ -60,12 +59,6 @@ export # types
     add_image_file_format,
     imread,
     imwrite,
-    
-    # display functions
-    display,
-    ftshow,
-    imshow,
-    update,
     
     # iterator functions
     first_index,
