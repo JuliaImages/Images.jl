@@ -21,6 +21,7 @@ export # types
     ClipMinMax,
     ScaleMinMax,
     ScaleNone,
+    SliceData,
 
     # constants
     palette_fire,
@@ -43,6 +44,8 @@ export # types
     nimages,
     pixelspacing,
     refim,
+    rerange!,
+    reslice!,
     sdims,
     size_spatial,
     share,

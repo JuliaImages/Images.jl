@@ -153,11 +153,19 @@ function sliceim(img::AbstractImage, I::RangeIndex...)
     ret = copy(img, slice(img.data, I...))
     cd = colordim(img)
     if cd > 0
-        ret.properties["colordim"] = isa(I[cd], Int) ? 0 : dimmap[cd]
+        if isa(I[cd], Int)
+            ret.properties["colordim"] = 0
+            ret.properties["colorspace"] = "Gray"
+        else
+            ret.properties["colordim"] = dimmap[cd]
+            if I[cd] != 1:size(img, cd)
+                ret.properties["colorspace"] = "channels"
+            end
+        end
     end
     td = timedim(img)
     if td > 0
-        ret.properties["timedim"] = isa(I[cd], Int) ? 0 : dimmap[td]
+        ret.properties["timedim"] = isa(I[td], Int) ? 0 : dimmap[td]
     end
     sp = spatialproperties(img)
     if !isempty(sp)
@@ -181,6 +189,87 @@ function sliceim(img::AbstractImage, I::RangeIndex...)
 end
 
 subim(img::AbstractImage, dimname::String, ind::RangeIndex, nameind...) = subim(img, named2coords(img, dimname, ind, nameind...)...)
+
+# We'll frequently want to pull out different 2d slices from the same image, so here's a type and set of functions making that easier.
+# We deliberately do not require the user to specify the full list of new slicing/ranging parameters, as often we'll want to change some aspects (e.g., z-slice) but not others (e.g., color coordinates)
+type SliceData
+    slicedims::(Int...,)
+    slicestrides::(Int...,)
+    rangedims::(Int...,)
+
+    function SliceData(A::AbstractArray, slicedims::(Int...,))
+        keep = trues(ndims(A))
+        for i = 1:length(slicedims)
+            keep[slicedims[i]] = false
+        end
+        s = strides(A)
+        new(slicedims, ntuple(length(slicedims), i->s[slicedims[i]]), tuple((1:ndims(A))[keep]...))
+    end
+end
+
+function _slice(A::AbstractArray, sd::SliceData, I::Int...)
+    if length(I) != length(sd.slicedims)
+        throw(BoundsError())
+    end
+    indexes = RangeIndex[1:size(A, i) for i = 1:ndims(A)]
+    for i = 1:length(I)
+        indexes[sd.slicedims[i]] = I[i]
+    end
+    indexes
+end
+
+function slice(A::AbstractArray, sd::SliceData, I::Int...)
+    indexes = _slice(A, sd, I...)
+    slice(A, indexes...)
+end
+
+function sliceim(img::AbstractImage, sd::SliceData, I::Int...)
+    indexes = _slice(img, sd, I...)
+    sliceim(img, indexes...)
+end
+
+function first_index(A::SubArray, sd::SliceData)
+    newfirst = 1
+    for i = 1:length(sd.slicedims)
+        newfirst += (A.indexes[sd.slicedims[i]]-1)*sd.slicestrides[i]
+    end
+    for i = 1:length(sd.rangedims)
+        newfirst += (A.indexes[sd.rangedims[i]][1]-1)*A.strides[i]
+    end
+    newfirst
+end
+
+function reslice!(A::SubArray, sd::SliceData, I::Int...)
+    indexes = RangeIndex[A.indexes...]
+    for i = 1:length(I)
+        indexes[sd.slicedims[i]] = I[i]
+    end
+    A.indexes = tuple(indexes...)
+    A.first_index = first_index(A, sd)
+    A
+end
+
+function reslice!(img::AbstractImage, sd::SliceData, I::Int...)
+    reslice!(img.data, sd, I...)
+    img
+end
+
+function rerange!(A::SubArray, sd::SliceData, I::(RangeIndex...,))
+    indexes = RangeIndex[A.indexes...]
+    for i = 1:length(I)
+        indexes[sd.rangedims[i]] = I[i]
+    end
+    A.indexes = tuple(indexes...)
+    A.first_index = first_index(A, sd)
+    A
+end
+
+function rerange!(img::AbstractImage, sd::SliceData, I::(RangeIndex...,))
+    rerange!(img.data, sd, I...)
+    img
+end
+
+
 
 function show(io::IO, img::AbstractImageDirect)
     IT = typeof(img)

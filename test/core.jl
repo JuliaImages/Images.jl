@@ -65,6 +65,31 @@ s = sliceim(imgd, 2, 1:4, 1:3)
 @assert sdims(s) == 1
 @assert colordim(s) == 2
 
+# reslicing
+D = randn(3,5,4)
+sd = SliceData(D, (2,))
+C = slice(D, sd, 2)
+@assert C == reshape(D[1:end, 2, 1:end], size(C))
+reslice!(C, sd, 3)
+@assert C == reshape(D[1:end, 3, 1:end], size(C))
+sd = SliceData(D, (3,))
+C = slice(D, sd, 2)
+@assert C == reshape(D[1:end, 1:end, 2], size(C))
+
+sd = SliceData(imgd, (2,))
+s = sliceim(imgd, sd, 2)
+@assert colordim(s) == 2
+@assert colorspace(s) == "RGB"
+@assert s.data == reshape(imgd[:,2,:], size(s))
+sd = SliceData(imgd, (3,))
+s = sliceim(imgd, sd, 2)
+@assert colordim(s) == 0
+@assert colorspace(s) == "Gray"
+@assert s.data == imgd[:,:,2]
+reslice!(s, sd, 3)
+@assert s.data == imgd[:,:,3]
+
+
 # named indexing
 @assert img["y", 2, "x", 4] == B[2,4]
 @assert img["x", 4, "y", 2] == B[2,4]
