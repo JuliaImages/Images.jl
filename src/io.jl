@@ -38,7 +38,7 @@ function add_image_file_format{ImageType<:ImageFileType}(ext::ByteString, magic:
     push!(filemagic, magic)
     len = length(filemagic)
     push!(filetype, ImageType)
-    if has(fileext, ext)
+    if haskey(fileext, ext)
         push!(fileext[ext], len)
     else
         fileext[ext] = [len]
@@ -58,7 +58,7 @@ function imread(filename::String)
     stream = open(filename, "r")
     magicbuf = Array(Uint8, 0)
     # Use the extension as a hint to determine file type
-    if has(fileext, ext)
+    if haskey(fileext, ext)
         candidates = fileext[ext]
         index = image_decode_magic(stream, magicbuf, candidates)
         if index > 0
@@ -114,7 +114,7 @@ end
 function imwrite(img, filename::String)
     _, ext = splitext(filename)
     ext = lowercase(ext)
-    if has(fileext, ext)
+    if haskey(fileext, ext)
         # Write using specific format
         candidates = fileext[ext]
         index = candidates[1]  # TODO?: use options, don't default to first

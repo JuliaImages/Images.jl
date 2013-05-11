@@ -289,7 +289,7 @@ max(img::AbstractImageDirect) = max(img.data)
 
 #### Properties ####
 
-# Generic programming with images uses properties to obtain information. The strategy is to define a particular property name, and then write an accessor function of the same name. The accessor function provides default behavior for plain arrays and when the property is not defined. Alternatively, use get(img, "propname", default) or has(img, "propname") to define your own default behavior.
+# Generic programming with images uses properties to obtain information. The strategy is to define a particular property name, and then write an accessor function of the same name. The accessor function provides default behavior for plain arrays and when the property is not defined. Alternatively, use get(img, "propname", default) or haskey(img, "propname") to define your own default behavior.
 
 # You can define whatever properties you want. Here is a list of properties used
 # in some algorithms:
@@ -305,8 +305,8 @@ max(img::AbstractImageDirect) = max(img.data)
 #     meaning (horizontal and vertical, respectively, irrespective of storage order).
 #     If supplied, you must have one entry per spatial dimension.
 
-has(a::StridedArray, k::String) = false
-has(img::AbstractImage, k::String) = has(img.properties, k)
+haskey(a::StridedArray, k::String) = false
+haskey(img::AbstractImage, k::String) = haskey(img.properties, k)
 
 get(img::StridedArray, k::String, default) = default
 get(img::AbstractImage, k::String, default) = get(img.properties, k, default)
@@ -520,14 +520,14 @@ permutedims(img::AbstractImage, p) = permutedims(img, p, spatialproperties(img))
 
 # Default list of spatial properties possessed by an image
 function spatialproperties(img::AbstractImage)
-    if has(img, "spatialproperties")
+    if haskey(img, "spatialproperties")
         return img.properties["spatialproperties"]
     end
     spatialprops = ASCIIString[]
-    if has(img, "spatialorder")
+    if haskey(img, "spatialorder")
         push!(spatialprops, "spatialorder")
     end
-    if has(img, "pixelspacing")
+    if haskey(img, "pixelspacing")
         push!(spatialprops, "pixelspacing")
     end
     spatialprops
