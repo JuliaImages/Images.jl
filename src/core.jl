@@ -197,7 +197,7 @@ type SliceData
     slicestrides::(Int...,)
     rangedims::(Int...,)
 
-    function SliceData(A::AbstractArray, slicedims::(Int...,))
+    function SliceData(A::AbstractArray, slicedims::Int...)
         keep = trues(ndims(A))
         for i = 1:length(slicedims)
             keep[slicedims[i]] = false
@@ -206,6 +206,8 @@ type SliceData
         new(slicedims, ntuple(length(slicedims), i->s[slicedims[i]]), tuple((1:ndims(A))[keep]...))
     end
 end
+
+SliceData(img::AbstractImage, dimname::String, dimnames::String...) = SliceData(img, named2dimindexes(img, dimname, dimnames...)...)
 
 function _slice(A::AbstractArray, sd::SliceData, I::Int...)
     if length(I) != length(sd.slicedims)
@@ -412,7 +414,7 @@ function coords_spatial(img)
         end
     elseif sd > cd
         delete!(ind, sd)
-        if sd > 0
+        if cd > 0
             delete!(ind, cd)
         end
     end
@@ -485,7 +487,9 @@ function spatialpermutation(to, img::AbstractImage)
 end
 
 # Permute the dimensions of an image, also permuting the relevant properties. If you have non-default properties that are vectors or matrices relative to spatial dimensions, include their names in the list of spatialprops.
-function permutedims(img::AbstractImage, p::Union(Vector{Int}, (Int...)), spatialprops::Vector)
+permutedims(img::AbstractImage, p::(), spatialprops::Vector = spatialproperties(img)) = img
+
+function permutedims(img::AbstractImage, p::Union(Vector{Int}, (Int...)), spatialprops::Vector = spatialproperties(img))
     if length(p) != ndims(img)
         error("The permutation must have length equal to the number of dimensions")
     end
@@ -516,7 +520,8 @@ function permutedims(img::AbstractImage, p::Union(Vector{Int}, (Int...)), spatia
     end
     ret
 end
-permutedims(img::AbstractImage, p) = permutedims(img, p, spatialproperties(img))
+
+permutedims{S<:String}(img::AbstractImage, pstr::Union(Vector{S}, (S...)), spatialprops::Vector = spatialproperties(img)) = permutedims(img, named2dimindexes(img, pstr...), spatialprops)
 
 # Default list of spatial properties possessed by an image
 function spatialproperties(img::AbstractImage)
@@ -585,6 +590,31 @@ function named2coords(img::AbstractImage, nameind...)
     tuple(c...)
 end
 
+function named2dimindexes(img::AbstractImage, dimnames::String...)
+    so = spatialorder(img)
+    dimindexes = Array(Int, length(dimnames))
+    for i = 1:length(dimnames)
+        dimname = dimnames[i]
+        n = 0
+        if dimname == "color"
+            n = colordim(img)
+        elseif dimname == "t"
+            n = timedim(img)
+        else
+            for j = 1:length(so)
+                if dimname == so[j]
+                    n = j
+                    break
+                end
+            end
+        end
+        if n == 0
+            error("There is no dimension called ", dimname)
+        end
+        dimindexes[i] = n
+    end
+    dimindexes
+end
 
 
 

@@ -67,28 +67,29 @@ s = sliceim(imgd, 2, 1:4, 1:3)
 
 # reslicing
 D = randn(3,5,4)
-sd = SliceData(D, (2,))
+sd = SliceData(D, 2)
 C = slice(D, sd, 2)
 @assert C == reshape(D[1:end, 2, 1:end], size(C))
 reslice!(C, sd, 3)
 @assert C == reshape(D[1:end, 3, 1:end], size(C))
-sd = SliceData(D, (3,))
+sd = SliceData(D, 3)
 C = slice(D, sd, 2)
 @assert C == reshape(D[1:end, 1:end, 2], size(C))
 
-sd = SliceData(imgd, (2,))
+sd = SliceData(imgd, 2)
 s = sliceim(imgd, sd, 2)
 @assert colordim(s) == 2
 @assert colorspace(s) == "RGB"
+@assert spatialorder(s) == ["y"]
 @assert s.data == reshape(imgd[:,2,:], size(s))
-sd = SliceData(imgd, (3,))
+sd = SliceData(imgd, 3)
 s = sliceim(imgd, sd, 2)
 @assert colordim(s) == 0
 @assert colorspace(s) == "Gray"
+@assert spatialorder(s) == Images.yx
 @assert s.data == imgd[:,:,2]
 reslice!(s, sd, 3)
 @assert s.data == imgd[:,:,3]
-
 
 # named indexing
 @assert img["y", 2, "x", 4] == B[2,4]
@@ -96,6 +97,18 @@ reslice!(s, sd, 3)
 chan = imgd["color", 2]
 Blookup = reshape(cmap[B[:],1], size(B))
 @assert chan == Blookup
+
+sd = SliceData(imgd, "x")
+s = sliceim(imgd, sd, 2)
+@assert spatialorder(s) == ["y"]
+@assert s.data == reshape(imgd[:,2,:], size(s))
+sd = SliceData(imgd, "y")
+s = sliceim(imgd, sd, 2)
+@assert spatialorder(s) == ["x"]
+@assert s.data == reshape(imgd[2,:,:], size(s))
+sd = SliceData(imgd, "x", "y")
+s = sliceim(imgd, sd, 2, 1)
+@assert s.data == reshape(imgd[1,2,:], 3)
 
 # spatial order, width/height, and permutations
 @assert spatialpermutation(Images.yx, imgd) == [1,2]
@@ -115,3 +128,9 @@ imgd.properties["spatialorder"] = ["L", "x"]
 @assert spatialpermutation(Images.xy, imgd) == [2,1]
 @assert spatialpermutation(Images.xy, A) == [2,1]
 @assert spatialpermutation(Images.yx, A) == [1,2]
+
+imgd.properties["spatialorder"] = Images.yx
+imgp = permutedims(imgd, ["x", "y", "color"])
+@assert imgp.data == permutedims(imgd.data, [2,1,3])
+imgp = permutedims(imgd, ("color", "x", "y"))
+@assert imgp.data == permutedims(imgd.data, [3,2,1])
