@@ -157,9 +157,9 @@ function imread(filename::String, ::Type{ImageMagick})
     imclass = strip(readline(stream))
     imclass = replace(imclass, " ", "")  # on some platforms spaces are inserted
     isdirect, hasalpha, colorspace = classdict[imclass]
-    bitdepth = parse_int(strip(readline(stream)))
+    bitdepth = parseint(strip(readline(stream)))
     szline = strip(readline(stream))
-    w, h, n = parse_ints(szline, 3)
+    w, h, n = parseints(szline, 3)
     local sz
     local spatialorder
     if n > 1
@@ -451,13 +451,13 @@ function parse_netpbm_size(stream::IO)
     while isempty(szline) || szline[1] == '#'
         szline = strip(readline(stream))
     end
-    parse_ints(szline, 2)
+    parseints(szline, 2)
 end
 
 function parse_netpbm_maxval(stream::IO)
     eatwspace_comment(stream, '#')
     maxvalline = strip(readline(stream))
-    parse_int(maxvalline)
+    parseint(maxvalline)
 end
 
 function imread{S<:IO}(stream::S, ::Type{PPMBinary})
@@ -742,7 +742,7 @@ end
 # end    
 # imwrite(data, cs, stream, ::Type{PNGFile}) = imwrite(data, cs, stream, PNGFile, Options())
 
-function parse_ints(line, n)
+function parseints(line, n)
     ret = Array(Int, n)
     pos = 1
     for i = 1:n
@@ -750,7 +750,7 @@ function parse_ints(line, n)
         if pos2 == 0
             pos2 = length(line)+1
         end
-        ret[i] = parse_int(line[pos:pos2-1])
+        ret[i] = parseint(line[pos:pos2-1])
         pos = pos2+1
         if pos > length(line) && i < n
             error("Line terminated without finding all ", n, " integers")
