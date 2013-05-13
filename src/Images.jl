@@ -19,6 +19,7 @@ export # types
     ClipMin,
     ClipMax,
     ClipMinMax,
+    ScaleInfo,
     ScaleMinMax,
     ScaleNone,
     SliceData,
@@ -82,6 +83,7 @@ export # types
     rgb2hsi,
     rgb2ntsc,
     rgb2ycbcr,
+    uint32color!,
     ycbcr2rgb,
     
     # algorithms
@@ -101,7 +103,7 @@ export # types
     imlog,
     imROF,
     imstretch,
-    imthresh,
+#     imthresh,
     ncc,
     prewitt,
     sad,
@@ -113,5 +115,7 @@ export # types
     sobel,
     ssd,
     ssdn
+
+@deprecate cairoRGB uint32color!
 
 end
