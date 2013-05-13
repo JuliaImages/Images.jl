@@ -118,6 +118,8 @@ setindex!{T<:Real}(img::AbstractImage, X, I::Union(Real,AbstractArray{T})...) = 
 
 setindex!{T<:Real}(img::AbstractImage, X, dimname::String, ind::Union(Real,AbstractArray{T}), nameind...) = setindex!(img.data, X, named2coords(img, dimname, ind, nameind...)...)
 
+setindex!(img::AbstractImage, X, propname::String) = setindex!(img.properties, X, propname)
+
 # getindex, sub, and slice return a value or AbstractArray, not an Image
 getindex(img::AbstractImage, i::Real) = getindex(img.data, i)
 
@@ -125,6 +127,8 @@ getindex{T<:Real}(img::AbstractImage, I::Union(Real,AbstractArray{T})...) = geti
 
 # getindex{T<:Real}(img::AbstractImage, dimname::String, ind::Union(Real,AbstractArray{T}), nameind...) = getindex(img.data, named2coords(img, dimname, ind, nameind...)...)
 getindex(img::AbstractImage, dimname::ASCIIString, ind, nameind...) = getindex(img.data, named2coords(img, dimname, ind, nameind...)...)
+
+getindex(img::AbstractImage, propname::ASCIIString) = getindex(img.properties, propname)
 
 sub(img::AbstractImage, I::RangeIndex...) = sub(img.data, I...)
 
