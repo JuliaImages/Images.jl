@@ -13,7 +13,7 @@
 (/)(img::AbstractImageDirect, n::Number) = share(img, data(img)/n)
 (.*)(img::AbstractImageDirect, A::BitArray) = share(img, data(img).*A)
 (.*)(A::BitArray, img::AbstractImageDirect) = share(img, data(img).*A)
-(.*)(img1::AbstractImageDirect, img2::AbstractImageDirect) = share(img, data(img1).*data(img2))
+(.*)(img1::AbstractImageDirect, img2::AbstractImageDirect) = share(img1, data(img1).*data(img2))
 (.*)(img::AbstractImageDirect, A::AbstractArray) = share(img, data(img).*A)
 (.*)(A::AbstractArray, img::AbstractImageDirect) = share(img, data(img).*A)
 (./)(img::AbstractImageDirect, A::BitArray) = share(img, data(img)./A)
@@ -122,9 +122,9 @@ function uint32color!(buf::Array{Uint32,2}, img::Union(StridedArray,AbstractImag
     istride, jstride = spstride
     A = parent(img)
     if transpose
-        w, h = isz, jsz
-    else
         w, h = jsz, isz
+    else
+        w, h = isz, jsz
     end
     if size(buf, 1) != w || size(buf, 2) != h
         @show size(buf)
