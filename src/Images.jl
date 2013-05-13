@@ -117,5 +117,6 @@ export # types
     ssdn
 
 @deprecate cairoRGB uint32color!
+@deprecate refim    getindexim
 
 end

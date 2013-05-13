@@ -111,20 +111,20 @@ convert(::Type{Image}, A::Array) = Image(A, ["colorspace" => colorspace(A), "col
 #    img["x", 100:400, "t", 32]
 # where anything not mentioned by name is taken to include the whole range
 
-# assign
-assign(img::AbstractImage, X, i::Real) = assign(img.data, X, i)
+# setindex!
+setindex!(img::AbstractImage, X, i::Real) = setindex!(img.data, X, i)
 
-assign{T<:Real}(img::AbstractImage, X, I::Union(Real,AbstractArray{T})...) = assign(img.data, X, I...)
+setindex!{T<:Real}(img::AbstractImage, X, I::Union(Real,AbstractArray{T})...) = setindex!(img.data, X, I...)
 
-assign{T<:Real}(img::AbstractImage, X, dimname::String, ind::Union(Real,AbstractArray{T}), nameind...) = assign(img.data, X, named2coords(img, dimname, ind, nameind...)...)
+setindex!{T<:Real}(img::AbstractImage, X, dimname::String, ind::Union(Real,AbstractArray{T}), nameind...) = setindex!(img.data, X, named2coords(img, dimname, ind, nameind...)...)
 
-# ref, sub, and slice return a value or AbstractArray, not an Image
-ref(img::AbstractImage, i::Real) = ref(img.data, i)
+# getindex, sub, and slice return a value or AbstractArray, not an Image
+getindex(img::AbstractImage, i::Real) = getindex(img.data, i)
 
-ref{T<:Real}(img::AbstractImage, I::Union(Real,AbstractArray{T})...) = ref(img.data, I...)
+getindex{T<:Real}(img::AbstractImage, I::Union(Real,AbstractArray{T})...) = getindex(img.data, I...)
 
-# ref{T<:Real}(img::AbstractImage, dimname::String, ind::Union(Real,AbstractArray{T}), nameind...) = ref(img.data, named2coords(img, dimname, ind, nameind...)...)
-ref(img::AbstractImage, dimname::ASCIIString, ind, nameind...) = ref(img.data, named2coords(img, dimname, ind, nameind...)...)
+# getindex{T<:Real}(img::AbstractImage, dimname::String, ind::Union(Real,AbstractArray{T}), nameind...) = getindex(img.data, named2coords(img, dimname, ind, nameind...)...)
+getindex(img::AbstractImage, dimname::ASCIIString, ind, nameind...) = getindex(img.data, named2coords(img, dimname, ind, nameind...)...)
 
 sub(img::AbstractImage, I::RangeIndex...) = sub(img.data, I...)
 
@@ -134,10 +134,10 @@ slice(img::AbstractImage, I::RangeIndex...) = slice(img.data, I...)
 
 slice(img::AbstractImage, dimname::String, ind::RangeIndex, nameind::RangeIndex...) = slice(img.data, named2coords(img, dimname, ind, nameind...)...)
 
-# refim, subim, and sliceim return an Image. The first two share properties, the last requires a copy.
-refim{T<:Real}(img::AbstractImage, I::Union(Real,AbstractArray{T})...) = share(img, ref(img.data, I...))
+# getindexim, subim, and sliceim return an Image. The first two share properties, the last requires a copy.
+getindexim{T<:Real}(img::AbstractImage, I::Union(Real,AbstractArray{T})...) = share(img, getindex(img.data, I...))
 
-refim{T<:Real}(img::AbstractImage, dimname::String, ind::Union(Real,AbstractArray{T}), nameind...) = refim(img, named2coords(img, dimname, ind, nameind...)...)
+getindexim{T<:Real}(img::AbstractImage, dimname::String, ind::Union(Real,AbstractArray{T}), nameind...) = getindexim(img, named2coords(img, dimname, ind, nameind...)...)
 
 subim(img::AbstractImage, I::RangeIndex...) = share(img, sub(img.data, I...))
 
