@@ -476,6 +476,9 @@ function widthheight(img::AbstractArray, p)
 end
 widthheight(img::AbstractArray) = widthheight(img, spatialpermutation(xy, img))
 
+width(img::AbstractArray) = widthheight(img)[1]
+height(img::AbstractArray) = widthheight(img)[2]
+
 # Calculate the permutation needed to put the spatial dimensions into a specified order
 spatialpermutation(to, img::AbstractArray) = default_permutation(to, spatialorder(img))
 function spatialpermutation(to, img::AbstractImage)

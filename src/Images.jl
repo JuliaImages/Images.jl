@@ -38,6 +38,7 @@ export # types
     colorspace,
     coords_spatial,
     data,
+    height,
     isdirect,
     isxfirst,
     isyfirst,
@@ -57,6 +58,7 @@ export # types
     storageorder,
     subim,
     timedim,
+    width,
     widthheight,
     
     # io functions
