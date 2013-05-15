@@ -141,6 +141,7 @@ function uint32color!(buf::Array{Uint32,2}, img::Union(StridedArray,AbstractImag
             else
                 copy!(buf, img.data)
             end
+            return buf
         end
     end
     if cstride == 0
@@ -233,7 +234,20 @@ function uint32color!(buf::Array{Uint32,2}, img::Union(StridedArray,AbstractImag
             error("colorspace ", cs, " not yet supported")
         end
     end
+    return buf
 end
+
+function uint32color(img::Union(StridedArray,AbstractImageDirect), transpose::Bool, scalei::ScaleInfo = scaleinfo(Uint8, img))
+    w, h = widthheight(img)
+    if transpose
+        w, h = h, w
+    end
+    buf = Array(Uint32, w, h)
+    uint32color!(buf, img, transpose, scalei)
+end
+
+uint32color(img::Union(StridedArray,AbstractImageDirect), scalei::ScaleInfo = scaleinfo(Uint8, img)) =
+    uint32color(img, !isxfirst(img), scalei)
 
 rgb24(r::Uint8, g::Uint8, b::Uint8) = convert(Uint32,r)<<16 + convert(Uint32,g)<<8 + convert(Uint32,b)
 

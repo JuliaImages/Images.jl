@@ -85,6 +85,7 @@ export # types
     rgb2hsi,
     rgb2ntsc,
     rgb2ycbcr,
+    uint32color,
     uint32color!,
     ycbcr2rgb,
     
