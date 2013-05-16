@@ -118,7 +118,12 @@ setindex!{T<:Real}(img::AbstractImage, X, I::Union(Real,AbstractArray{T})...) = 
 
 setindex!{T<:Real}(img::AbstractImage, X, dimname::String, ind::Union(Real,AbstractArray{T}), nameind...) = setindex!(img.data, X, named2coords(img, dimname, ind, nameind...)...)
 
+# Adding a new property via setindex!
 setindex!(img::AbstractImage, X, propname::String) = setindex!(img.properties, X, propname)
+
+# Delete a property!
+delete!(img::AbstractImage, propname::String) = delete!(img.properties, propname)
+
 
 # getindex, sub, and slice return a value or AbstractArray, not an Image
 getindex(img::AbstractImage, i::Real) = getindex(img.data, i)
