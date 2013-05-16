@@ -29,7 +29,7 @@ function add_image_file_format{ImageType<:ImageFileType}(ext::ByteString, magic:
     # Check to see whether these magic bytes are already in the database
     for i in 1:length(filemagic)
         if magic == filemagic[i]
-            fileext[ext] = i  # update/add extension lookup
+            fileext[ext] = [i]  # update/add extension lookup
             filetype[i] = ImageType
             return
         end
