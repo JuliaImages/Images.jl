@@ -199,6 +199,8 @@ end
 
 subim(img::AbstractImage, dimname::String, ind::RangeIndex, nameind...) = subim(img, named2coords(img, dimname, ind, nameind...)...)
 
+sliceim(img::AbstractImage, dimname::String, ind::RangeIndex, nameind...) = sliceim(img, named2coords(img, dimname, ind, nameind...)...)
+
 # We'll frequently want to pull out different 2d slices from the same image, so here's a type and set of functions making that easier.
 # We deliberately do not require the user to specify the full list of new slicing/ranging parameters, as often we'll want to change some aspects (e.g., z-slice) but not others (e.g., color coordinates)
 type SliceData
