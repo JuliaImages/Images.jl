@@ -49,6 +49,10 @@ scale(scalei::ScaleNone{Uint8}, val::Uint16) = (val>>>8) & 0xff
 
 convert{I<:AbstractImageDirect}(::Type{I}, img::Union(StridedArray,AbstractImageDirect)) = scale(ScaleNone{eltype(I)}(), img)
 
+type BitShift{T,N} <: ScaleInfo{T} end
+
+scale{T,N}(scalei::BitShift{T,N}, val::Integer) = convert(T, val>>>N)
+
 # The Clip types just enforce bounds, but do not scale or
 # subtract the minimum
 type ClipMin{T,From} <: ScaleInfo{T}
@@ -80,10 +84,16 @@ type ScaleMinMax{To,From} <: ScaleInfo{To}
     s::Float64
 end
 
-scale{To<:Integer,From<:Number}(scalei::ScaleMinMax{To,From}, val::From) = convert(To, round(scalei.s*(min(max(val, scalei.min), scalei.max)-scalei.min)))
+function scale{To<:Integer,From<:Number}(scalei::ScaleMinMax{To,From}, val::From)
+    # Clip to range min:max and subtract min
+    t::From = (val > scalei.min) ? ((val < scalei.max) ? val-scalei.min : scalei.max-scalei.min) : zero(From)
+    convert(To, ifloor(scalei.s*t))
+end
 
-scale{To<:Number,From<:Number}(scalei::ScaleMinMax{To,From}, val::From) = convert(To, scalei.s*(min(max(val, scalei.min), scalei.max)-scalei.min))
-
+function scale{To<:Number,From<:Number}(scalei::ScaleMinMax{To,From}, val::From)
+    t::From = (val > scalei.min) ? ((val < scalei.max) ? val-scalei.min : scalei.max-scalei.min) : zero(From)
+    convert(To, scalei.s*t)
+end
 
 function scaleinfo{To<:Unsigned,From<:Unsigned}(::Type{To}, img::AbstractArray{From})
     l = limits(img)

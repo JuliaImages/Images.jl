@@ -16,6 +16,7 @@ export # types
     AbstractImageIndexed,
     Image,
     ImageCmap,
+    BitShift,
     ClipMin,
     ClipMax,
     ClipMinMax,
