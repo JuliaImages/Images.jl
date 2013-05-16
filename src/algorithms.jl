@@ -144,6 +144,10 @@ function uint32color!(buf::Array{Uint32,2}, img::Union(StridedArray,AbstractImag
             return buf
         end
     end
+    uint32color!(buf, A, transpose, cs, firstindex, isz, jsz, istride, jstride, cstride, scalei)
+end
+
+function uint32color!(buf::Array{Uint32,2}, A::Array, transpose::Bool, cs::String, firstindex::Int, isz::Int, jsz::Int, istride::Int, jstride::Int, cstride::Int, scalei::ScaleInfo)
     if cstride == 0
         if cs == "Gray"
             if !transpose
