@@ -3,6 +3,7 @@ module Images
 using Color
 
 importall Base
+import Base.Graphics: width, height
 
 include("core.jl")
 include("config.jl")

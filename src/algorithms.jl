@@ -124,6 +124,15 @@ sc(img::AbstractArray, mn::Number, mx::Number) = scale(scaleminmax(img, mn, mx),
 uint32color!(buf::Array{Uint32,2}, img::Union(StridedArray,AbstractImageDirect),
              scalei::ScaleInfo = scaleinfo(Uint8, img)) = uint32color!(buf, img, !isxfirst(img), scalei)
 
+uint32color!(buf::Array{Uint32,2}, img::Union(StridedArray,AbstractImageDirect),
+             scalei::ScaleInfo = scaleinfo(Uint8, img)) = uint32color!(buf, img, !isxfirst(img), scalei)
+
+function uint32color!{S<:String}(buf::Array{Uint32,2}, img::Union(StridedArray,AbstractImageDirect), 
+                                 xy::Array{S} = xy, scalei::ScaleInfo = scaleinfo(Uint8, img))
+    p = spatialpermutation(xy, img)
+    uint32color!(buf, img, p[1] > p[2], scalei)
+end
+
 function uint32color!(buf::Array{Uint32,2}, img::Union(StridedArray,AbstractImageDirect), transpose::Bool, scalei::ScaleInfo = scaleinfo(Uint8, img))
     assert2d(img)
     cs = colorspace(img)
