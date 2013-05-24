@@ -767,3 +767,7 @@ add_image_file_format(".dummy", b"Dummy Image", Dummy, "dummy.jl")
 
 type AndorSIF <: Images.ImageFileType end
 add_image_file_format(".sif", b"Andor Technology Multi-Channel File", AndorSIF, "readSIF.jl")
+
+# Imagine file format (http://holylab.wustl.edu, "Software" tab)
+type ImagineFile <: Images.ImageFileType end
+add_image_file_format(".imagine", b"IMAGINE", ImagineFile, "Imagine.jl")
