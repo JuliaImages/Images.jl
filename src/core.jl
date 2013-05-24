@@ -2,26 +2,26 @@
 
 # Plain arrays can be treated as images. Other types will have
 # metadata associated, make yours a child of one of the following:
-abstract AbstractImage{T} <: AbstractArray{T}         # image with metadata
-abstract AbstractImageDirect{T} <: AbstractImage{T}   # each pixel has own value/color
-abstract AbstractImageIndexed{T} <: AbstractImage{T}  # indexed images (i.e., lookup table)
+abstract AbstractImage{T,N} <: AbstractArray{T,N}         # image with metadata
+abstract AbstractImageDirect{T,N} <: AbstractImage{T,N}   # each pixel has own value/color
+abstract AbstractImageIndexed{T,N} <: AbstractImage{T,N}  # indexed images (i.e., lookup table)
 
 # Direct image (e.g., grayscale, RGB)
-type Image{T,A<:StridedArray} <: AbstractImageDirect{T}
+type Image{T,N,A<:AbstractArray} <: AbstractImageDirect{T,N}
     data::A
     properties::Dict
 end
-Image{A<:StridedArray}(data::A, props::Dict) = Image{eltype(data),A}(data,props)
-Image{A<:StridedArray}(data::A) = Image(data,Dict{String,Any}())
+Image{A<:AbstractArray}(data::A, props::Dict) = Image{eltype(data),ndims(data),A}(data,props)
+Image{A<:AbstractArray}(data::A) = Image(data,Dict{String,Any}())
 
 # Indexed image (colormap)
-type ImageCmap{T,A<:StridedArray,C<:AbstractArray} <: AbstractImageIndexed{T}
+type ImageCmap{T,N,A<:AbstractArray,C<:AbstractArray} <: AbstractImageIndexed{T,N}
     data::A
     cmap::C
     properties::Dict
 end
-ImageCmap{A<:StridedArray,C<:AbstractArray}(data::A, cmap::C, props::Dict) = ImageCmap{eltype(data),A,C}(data, cmap, props)
-ImageCmap{A<:StridedArray,C<:AbstractArray}(data::A, cmap::C) = ImageCmap(data, cmap, Dict{String,Any}())
+ImageCmap{A<:AbstractArray,C<:AbstractArray}(data::A, cmap::C, props::Dict) = ImageCmap{eltype(data),ndims(data),A,C}(data, cmap, props)
+ImageCmap{A<:AbstractArray,C<:AbstractArray}(data::A, cmap::C) = ImageCmap(data, cmap, Dict{String,Any}())
 
 #### Core operations ####
 
@@ -38,49 +38,54 @@ strides(img::AbstractImage) = strides(img.data)
 copy(img::AbstractImage) = deepcopy(img)
 
 # copy, replacing the data
-copy(img::StridedArray, data::StridedArray) = data
+copy(img::AbstractArray, data::AbstractArray) = data
 
-copy(img::Image, data::StridedArray) = Image(data, copy(img.properties))
+copy{A<:AbstractArray}(img::Image, data::A) = Image(data, copy(img.properties))
 
-copy(img::ImageCmap, data::StridedArray) = ImageCmap(data, copy(img.cmap), copy(img.properties))
+copy{A<:AbstractArray}(img::ImageCmap, data::A) = ImageCmap(data, copy(img.cmap), copy(img.properties))
 
 # Provide new data but reuse the properties & cmap
-share(img::StridedArray, data::StridedArray) = data
+share(img::AbstractArray, data::AbstractArray) = data
 
-share(img::Image, data::StridedArray) = Image(data, img.properties)
+share{A<:AbstractArray}(img::Image, data::A) = Image(data, img.properties)
 
-share(img::ImageCmap, data::StridedArray) = ImageCmap(data, img.cmap, img.properties)
+share{A<:AbstractArray}(img::ImageCmap, data::A) = ImageCmap(data, img.cmap, img.properties)
 
 # similar
-similar{T}(img::Image, ::Type{T}, dims::Dims) = Image(similar(img.data, T, dims), copy(img.properties))
+similar(img::Image) = Image(similar(img.data), copy(img.properties))
+similar(img::Image, ::NTuple{0}) = Image(similar(img.data), copy(img.properties))
+
+similar(img::Image, dims::Dims) = Image(similar(img.data, dims), copy(img.properties))
 
 similar{T}(img::Image, ::Type{T}) = Image(similar(img.data, T), copy(img.properties))
 
-similar(img::Image) = Image(similar(img.data), copy(img.properties))
+similar{T}(img::Image, ::Type{T}, dims::Dims) = Image(similar(img.data, T, dims), copy(img.properties))
 
-similar{T}(img::ImageCmap, ::Type{T}, dims::Dims) = ImageCmap(similar(img.data, T, dims), copy(img.cmap), copy(img.properties))
+similar(img::ImageCmap) = ImageCmap(similar(img.data), copy(img.cmap), copy(img.properties))
+similar(img::ImageCmap, ::NTuple{0}) = ImageCmap(similar(img.data), copy(img.cmap), copy(img.properties))
+
+similar{T}(img::ImageCmap, dims::Dims) = ImageCmap(similar(img.data, dims), copy(img.cmap), copy(img.properties))
 
 similar{T}(img::ImageCmap, ::Type{T}) = ImageCmap(similar(img.data, T), copy(img.cmap), copy(img.properties))
 
-similar(img::ImageCmap) = ImageCmap(similar(img.data), copy(img.cmap), copy(img.properties))
+similar{T}(img::ImageCmap, ::Type{T}, dims::Dims) = ImageCmap(similar(img.data, T, dims), copy(img.cmap), copy(img.properties))
 
 # convert
 convert{I<:AbstractImageDirect}(::Type{I}, img::I) = img
 convert{I<:AbstractImageIndexed}(::Type{I}, img::I) = img
 # Convert an indexed image (cmap) to a direct image
 function convert{ID<:AbstractImageDirect,II<:AbstractImageIndexed}(::Type{ID}, img::II)
-    local data::StridedArray
-    local prop
     if size(img.cmap, 2) == 1
         data = reshape(img.cmap[img.data[:]], size(img.data))
         prop = img.properties
+        return Image(data, prop)
     else
         newsz = tuple(size(img.data)...,size(img.cmap,2))
         data = reshape(img.cmap[img.data[:],:], newsz)
         prop = copy(img.properties)
         prop["colordim"] = length(newsz)
+        return Image(data, prop)
     end
-    Image(data, prop)
 end
 # Convert an Image to an array. We convert the image into the canonical storage order convention for arrays. We restrict this to 2d images because for plain arrays this convention exists only for 2d.
 # In other cases---or if you don't want the storage order altered---just grab the .data field and perform whatever manipulations you need directly.
@@ -283,19 +288,19 @@ function rerange!(img::AbstractImage, sd::SliceData, I::(RangeIndex...,))
 end
 
 
-
+const emptyset = Set()
 function show(io::IO, img::AbstractImageDirect)
     IT = typeof(img)
     print(io, colorspace(img), " ", IT.name, " with:\n  data: ", summary(img.data), "\n  properties:")
-    showdictlines(io, img.properties, get(img, "suppress", Set()))
+    showdictlines(io, img.properties, get(img, "suppress", emptyset))
 end
 function show(io::IO, img::AbstractImageIndexed)
     IT = typeof(img)
     print(io, colorspace(img), " ", IT.name, " with:\n  data: ", summary(img.data), "\n  cmap: ", summary(img.cmap), "\n  properties:")
-    showdictlines(io, img.properties, get(img, "suppress", Set()))
+    showdictlines(io, img.properties, get(img, "suppress", emptyset))
 end
 
-data(img::StridedArray) = img
+data(img::AbstractArray) = img
 data(img::AbstractImage) = img.data
 
 min(img::AbstractImageDirect) = min(img.data)
@@ -320,10 +325,10 @@ max(img::AbstractImageDirect) = max(img.data)
 #     meaning (horizontal and vertical, respectively, irrespective of storage order).
 #     If supplied, you must have one entry per spatial dimension.
 
-haskey(a::StridedArray, k::String) = false
+haskey(a::AbstractArray, k::String) = false
 haskey(img::AbstractImage, k::String) = haskey(img.properties, k)
 
-get(img::StridedArray, k::String, default) = default
+get(img::AbstractArray, k::String, default) = default
 get(img::AbstractImage, k::String, default) = get(img.properties, k, default)
 
 # So that defaults don't have to be evaluated unless they are needed, we also define a @get macro (thanks Toivo Hennington):
@@ -331,7 +336,7 @@ macro get(img, k, default)
     quote
         img, k = $(esc(img)), $(esc(k))
         local val
-        if isa(img, StridedArray)
+        if !isa(img, AbstractImage)
             val = $(esc(default))
         else
             index = Base.ht_keyindex(img.properties, k)
@@ -350,37 +355,37 @@ const yx = ["y", "x"]
 # order used in Cairo & most image file formats (with color as the very first dimension)
 const xy = ["x", "y"]
 spatialorder(::Type{Matrix}) = yx
-spatialorder(img::StridedArray) = (sdims(img) == 2) ? spatialorder(Matrix) : error("Wrong number of spatial dimensions for plain Array, use an AbstractImage type")
+spatialorder(img::AbstractArray) = (sdims(img) == 2) ? spatialorder(Matrix) : error("Wrong number of spatial dimensions for plain Array, use an AbstractImage type")
 
-isdirect(img::StridedArray) = true
+isdirect(img::AbstractArray) = true
 isdirect(img::AbstractImageDirect) = true
 isdirect(img::AbstractImageIndexed) = false
 
-colorspace(img::StridedMatrix{Bool}) = "Binary"
-colorspace(img::StridedArray{Bool}) = "Binary"
-colorspace(img::StridedArray{Bool,3}) = "Binary"
-colorspace{T<:Union(Int32,Uint32)}(img::StridedMatrix{T}) = "RGB24"
-colorspace(img::StridedMatrix) = "Gray"
-colorspace{T}(img::StridedArray{T,3}) = (size(img, defaultarraycolordim) == 3) ? "RGB" : error("Cannot infer colorspace of Array, use an AbstractImage type")
+colorspace(img::AbstractMatrix{Bool}) = "Binary"
+colorspace(img::AbstractArray{Bool}) = "Binary"
+colorspace(img::AbstractArray{Bool,3}) = "Binary"
+colorspace{T<:Union(Int32,Uint32)}(img::AbstractMatrix{T}) = "RGB24"
+colorspace(img::AbstractMatrix) = "Gray"
+colorspace{T}(img::AbstractArray{T,3}) = (size(img, defaultarraycolordim) == 3) ? "RGB" : error("Cannot infer colorspace of Array, use an AbstractImage type")
 colorspace(img::AbstractImage{Bool}) = "Binary"
 colorspace(img::AbstractImage) = get(img.properties, "colorspace", "Unknown")
 
-colordim(img::StridedMatrix) = 0
-colordim{T}(img::StridedArray{T,3}) = (size(img, defaultarraycolordim) == 3) ? 3 : error("Cannot infer colordim of Array, use an AbstractImage type")
+colordim(img::AbstractMatrix) = 0
+colordim{T}(img::AbstractArray{T,3}) = (size(img, defaultarraycolordim) == 3) ? 3 : error("Cannot infer colordim of Array, use an AbstractImage type")
 colordim(img::AbstractImageDirect) = get(img, "colordim", 0)
 colordim(img::AbstractImageIndexed) = 0
 
 timedim(img) = get(img, "timedim", 0)
 
-limits(img::StridedArray{Bool}) = 0,1
-limits{T<:Integer}(img::StridedArray{T}) = typemin(T), typemax(T)
-limits{T<:FloatingPoint}(img::StridedArray{T}) = zero(T), one(T)
+limits(img::AbstractArray{Bool}) = 0,1
+limits{T<:Integer}(img::AbstractArray{T}) = typemin(T), typemax(T)
+limits{T<:FloatingPoint}(img::AbstractArray{T}) = zero(T), one(T)
 limits(img::AbstractImage{Bool}) = 0,1
 limits{T}(img::AbstractImageDirect{T}) = get(img, "limits", (typemin(T), typemax(T)))
 limits(img::AbstractImageIndexed) = @get img "limits" (min(img.cmap), max(img.cmap))
 
-pixelspacing{T}(img::StridedArray{T,3}) = (size(img, defaultarraycolordim) == 3) ? [1.0,1.0] : error("Cannot infer pixelspacing of Array, use an AbstractImage type")
-pixelspacing(img::StridedMatrix) = [1.0,1.0]
+pixelspacing{T}(img::AbstractArray{T,3}) = (size(img, defaultarraycolordim) == 3) ? [1.0,1.0] : error("Cannot infer pixelspacing of Array, use an AbstractImage type")
+pixelspacing(img::AbstractMatrix) = [1.0,1.0]
 pixelspacing(img::AbstractImage) = @get img "pixelspacing" _pixelspacing(img)
 _pixelspacing(img::AbstractImage) = ones(sdims(img))
 

@@ -11,9 +11,9 @@
 (*)(img::AbstractImageDirect, n::Number) = share(img, data(img)*n)
 (*)(n::Number, img::AbstractImageDirect) = share(img, data(img)*n)
 (/)(img::AbstractImageDirect, n::Number) = share(img, data(img)/n)
+(.*)(img1::AbstractImageDirect, img2::AbstractImageDirect) = share(img1, data(img1).*data(img2))
 (.*)(img::AbstractImageDirect, A::BitArray) = share(img, data(img).*A)
 (.*)(A::BitArray, img::AbstractImageDirect) = share(img, data(img).*A)
-(.*)(img1::AbstractImageDirect, img2::AbstractImageDirect) = share(img1, data(img1).*data(img2))
 (.*)(img::AbstractImageDirect, A::AbstractArray) = share(img, data(img).*A)
 (.*)(A::AbstractArray, img::AbstractImageDirect) = share(img, data(img).*A)
 (./)(img::AbstractImageDirect, A::BitArray) = share(img, data(img)./A)
@@ -133,7 +133,7 @@ function uint32color!{S<:String}(buf::Array{Uint32,2}, img::Union(StridedArray,A
     uint32color!(buf, img, p[1] > p[2], scalei)
 end
 
-function uint32color!(buf::Array{Uint32,2}, img::Union(StridedArray,AbstractImageDirect), transpose::Bool, scalei::ScaleInfo = scaleinfo(Uint8, img))
+function uint32color!{T,N,A<:StridedArray}(buf::Array{Uint32,2}, img::Union(StridedArray,Image{T,N,A}), transpose::Bool, scalei::ScaleInfo = scaleinfo(Uint8, img))
     assert2d(img)
     cs = colorspace(img)
     firstindex, spsz, spstride, csz, cstride = iterate_spatial(img)
