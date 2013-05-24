@@ -286,11 +286,13 @@ end
 
 function show(io::IO, img::AbstractImageDirect)
     IT = typeof(img)
-    print(io, colorspace(img), " ", IT.name, " with:\n  data: ", summary(img.data), "\n  properties: ", img.properties)
+    print(io, colorspace(img), " ", IT.name, " with:\n  data: ", summary(img.data), "\n  properties:")
+    showdictlines(io, img.properties, get(img, "suppress", Set()))
 end
 function show(io::IO, img::AbstractImageIndexed)
     IT = typeof(img)
-    print(io, colorspace(img), " ", IT.name, " with:\n  data: ", summary(img.data), "\n  cmap: ", summary(img.cmap), "\n  properties: ", img.properties)
+    print(io, colorspace(img), " ", IT.name, " with:\n  data: ", summary(img.data), "\n  cmap: ", summary(img.cmap), "\n  properties:")
+    showdictlines(io, img.properties, get(img, "suppress", Set()))
 end
 
 data(img::StridedArray) = img
@@ -572,6 +574,19 @@ function default_permutation(to, from)
         p[pzero] = setdiff(1:length(to), p)
     end
     p
+end
+
+function showdictlines(io::IO, dict::Dict, suppress::Set)
+    for (k, v) in dict
+        if k == "suppress"
+            continue
+        end
+        if !contains(suppress, k)
+            print(io, "\n    ", k, ": ", v)
+        else
+            print(io, "\n    ", k, ": <suppressed>")
+        end
+    end
 end
 
 # Support indexing via
