@@ -597,6 +597,117 @@ end
 imfilter(img, filter) = imfilter(img, filter, "replicate", 0)
 imfilter(img, filter, border) = imfilter(img, filter, border, 0)
 
+# IIR filtering of Gaussians
+# See
+#  Young, van Vliet, and van Ginkel, "Recursive Gabor Filtering",
+#    IEEE TRANSACTIONS ON SIGNAL PROCESSING, VOL. 50: 2798-2805.
+# and
+#  Triggs and Sdika, "Boundary Conditions for Young - van Vliet
+#    Recursive Filtering, IEEE TRANSACTIONS ON SIGNAL PROCESSING,
+# Here we're using NA boundary conditions, so we set i- and i+
+# (in Triggs & Sdika notation) to zero.
+# Note these two papers use different sign conventions for the coefficients.
+
+function imfilter_gaussian{T<:FloatingPoint}(img::AbstractArray{T}, sigma::Vector)
+    A = data(img)
+    nanflag = isnan(A)
+    hasnans = any(nanflag)
+    if hasnans
+        A = copy(A)
+        A[nanflag] = 0
+    end
+    validpixels = convert(Array{T}, !nanflag)
+    ret = imfilter_gaussian(A, validpixels, sigma)
+    if hasnans
+        ret[nanflag] = NaN
+    end
+    share(img, ret)
+end
+
+function imfilter_gaussian{T<:Integer}(img::AbstractArray{T}, sigma::Vector)
+    A = convert(Array{Float64}, data(img))
+    validpixels = convert(Array{Float64}, trues(size(A)))
+    ret = imfilter_gaussian(A, validpixels, sigma)
+    share(img, convert(Array{T}, round(ret)))
+end
+
+function imfilter_gaussian{T<:FloatingPoint}(data::Array{T}, validpixels::Array{T}, sigma::Vector)
+    nd = ndims(data)
+    if length(sigma) != nd
+        error("Dimensionality mismatch")
+    end
+    numerator = _imfilter_gaussian(data, sigma)
+    denominator = _imfilter_gaussian(validpixels, sigma)
+    return numerator./denominator
+end
+
+function iir_gaussian_coefficients(T::Type, sigma::Number)
+    if sigma < 1
+        warn("sigma is too small for accuracy")
+    end
+    m0 = convert(T,1.16680)
+    m1 = convert(T,1.10783)
+    m2 = convert(T,1.40586)
+    q = convert(T,1.31564*(sqrt(1+0.490811*sigma*sigma) - 1))
+    scale = (m0+q)*(m1*m1 + m2*m2  + 2m1*q + q*q)
+    B = m0*(m1*m1 + m2*m2)/scale
+    B *= B
+    # This is what Young et al call b, but in filt() notation would be called a
+    a1 = q*(2*m0*m1 + m1*m1 + m2*m2 + (2*m0+4*m1)*q + 3*q*q)/scale
+    a2 = -q*q*(m0 + 2m1 + 3q)/scale
+    a3 = q*q*q/scale
+    a = [-a1,-a2,-a3]
+    Mdenom = (1+a1-a2+a3)*(1-a1-a2-a3)*(1+a2+(a1-a3)*a3)
+    M = [-a3*a1+1-a3^2-a2      (a3+a1)*(a2+a3*a1)  a3*(a1+a3*a2);
+          a1+a3*a2            -(a2-1)*(a2+a3*a1)  -(a3*a1+a3^2+a2-1)*a3;
+          a3*a1+a2+a1^2-a2^2   a1*a2+a3*a2^2-a1*a3^2-a3^3-a3*a2+a3  a3*(a1+a3*a2)]/Mdenom;
+    return a, B, M
+end
+
+function filtfb(y, a, B, M)
+    x = convert(Array{eltype(y)}, y)
+    a1 = a[1]
+    a2 = a[2]
+    a3 = a[3]
+    x[2] -= a1*x[1]
+    x[3] -= a1*x[2] + a2*x[1]
+    for i = 4:length(x)
+        x[i] -= a1*x[i-1] + a2*x[i-2] + a3*x[i-3]
+    end
+    vstart = M*x[end:-1:end-2]
+    x[end] = vstart[1]
+    x[end-1] -= a1*x[end]   + a2*vstart[2] + a3*vstart[3]
+    x[end-2] -= a1*x[end-1] + a2*x[end]    + a3*vstart[2]
+    for i = length(x)-3:-1:1
+        x[i] -= a1*x[i+1] + a2*x[i+2] + a3*x[i+3]
+    end
+    for i = 1:length(x)
+        x[i] *= B
+    end
+    x
+end
+
+function _imfilter_gaussian{T<:FloatingPoint}(A::AbstractArray{T}, sigma::Vector)
+    nd = ndims(A)
+    local Aout
+    for d = 1:nd
+        if sigma[d] == 0
+            continue
+        end
+        if size(A, d) < 3
+            error("All filtered dimensions must be of size 3 or larger")
+        end
+        a, B, M = iir_gaussian_coefficients(T, sigma[d])
+        func = y -> filtfb(y, a, B, M)
+        if d == 1
+            Aout = mapslices(func, A, 1)
+        else
+            Aout = mapslices(func, Aout, d)
+        end
+    end
+    Aout
+end
+
 function imlineardiffusion{T}(img::Array{T,2}, dt::FloatingPoint, iterations::Integer)
     u = img
     f = imlaplacian()
