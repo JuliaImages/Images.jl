@@ -364,13 +364,13 @@ end
 uint32color(img::Union(StridedArray,AbstractImageDirect), scalei::ScaleInfo = scaleinfo(Uint8, img)) =
     uint32color(img, !isxfirst(img), scalei)
 
-rgb24(r::Uint8, g::Uint8, b::Uint8) = convert(Uint32,r)<<16 + convert(Uint32,g)<<8 + convert(Uint32,b)
+rgb24(r::Uint8, g::Uint8, b::Uint8) = convert(Uint32,r)<<16 | convert(Uint32,g)<<8 | convert(Uint32,b)
 
-argb32(a::Uint8, r::Uint8, g::Uint8, b::Uint8) = convert(Uint32,a)<<24 + convert(Uint32,r)<<16 + convert(Uint32,g)<<8 + convert(Uint32,b)
+argb32(a::Uint8, r::Uint8, g::Uint8, b::Uint8) = convert(Uint32,a)<<24 | convert(Uint32,r)<<16 | convert(Uint32,g)<<8 | convert(Uint32,b)
 
-rgb24{T}(scalei::ScaleInfo{Uint8}, r::T, g::T, b::T) = convert(Uint32,scale(scalei,r))<<16 + convert(Uint32,scale(scalei,g))<<8 + convert(Uint32,scale(scalei,b))
+rgb24{T}(scalei::ScaleInfo{Uint8}, r::T, g::T, b::T) = convert(Uint32,scale(scalei,r))<<16 | convert(Uint32,scale(scalei,g))<<8 | convert(Uint32,scale(scalei,b))
 
-argb32{T}(scalei::ScaleInfo{Uint8}, a::T, r::T, g::T, b::T) = convert(Uint32,scale(scalei,a))<<24 + convert(Uint32,scale(scalei,r))<<16 + convert(Uint32,scale(scalei,g))<<8 + convert(Uint32,scale(scalei,b))
+argb32{T}(scalei::ScaleInfo{Uint8}, a::T, r::T, g::T, b::T) = convert(Uint32,scale(scalei,a))<<24 | convert(Uint32,scale(scalei,r))<<16 | convert(Uint32,scale(scalei,g))<<8 | convert(Uint32,scale(scalei,b))
 
 
 #### Color palettes ####
