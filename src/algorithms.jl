@@ -1,3 +1,95 @@
+#### 1d SubArrays ####
+# Some algorithms, like IIR filtering, benefit from something like this
+# (currently mapslices is just too slow, and would benefit from an in-place syntax)
+
+immutable SubVector{T} <: AbstractArray{T,1}
+    ptr::Ptr{T}
+    stride::Int
+    len::Int
+end
+
+SubVector{T}(A::Array{T}, firstindex::Integer, strd::Integer, len::Integer) = SubVector{T}(convert(Ptr{T}, A) + (firstindex - 1)*sizeof(T), int(strd), int(len))
+
+function SubVector{T}(A::Array{T}, indexes::RangeIndex...)
+    n = 0
+    for i in indexes
+        n += !isa(i, Int)
+    end
+    if n > 1
+        error("Must be 1-dimensional")
+    end
+    firstindex = 1
+    strd = 0
+    len = 1
+    pstride = 1
+    for j = 1:length(indexes)
+        i = indexes[j]
+        if min(i) < 1 || max(i) > size(A, j)
+            error(BoundsError)
+        end
+        if isa(i, Int)
+            firstindex += (i-1)*pstride
+        else
+            strd = pstride * step(i)
+            len = length(i)
+            firstindex += (first(i)-1)*pstride
+        end
+        pstride *= size(A,j)
+    end
+    SubVector(A, firstindex, strd, len)
+end
+
+function SubVector{T}(s::SubVector{T}, index::RangeIndex)
+    if min(index) < 1 || max(index) > length(s)
+        error(BoundsError)
+    end
+    ptr = s.ptr + (first(index)-1)*s.stride
+    strd = s.stride * step(index)
+    len = length(index)
+    SubVector{T}(ptr, strd, len)
+end
+
+# Functions needed to support SubVector as an AbstractArray
+ndims(s::SubVector) = 1
+length(s::SubVector) = s.len
+size(s::SubVector) = (s.len,)
+size(s::SubVector, d::Integer) = (d == 1) ? s.len : 1
+eltype{T}(s::SubVector{T}) = T
+
+similar{T}(s::SubVector, ::Type{T}, sz::NTuple{1, Int}) = Array(T, sz)
+function similar{T}(s::SubVector, ::Type{T}, sz::Dims)
+    n = 0
+    for len in sz
+        n += (len > 1)
+    end
+    if n > 1
+        error("Requested type is not a vector")
+    end
+    Array(T, sz)
+end
+
+unsafe_load(s::SubVector, i::Integer) = unsafe_load(s.ptr, (i-1)*s.stride + 1)
+
+function getindex(s::SubVector, i::Integer)
+    if 1 <= i <= length(s)
+        return unsafe_load(s, i)
+    else
+        error(BoundsError)
+    end
+end
+
+unsafe_store!{T}(s::SubVector{T}, x, i::Integer) = unsafe_store!(s.ptr, x, (i-1)*s.stride + 1)
+
+function setindex!{T}(s::SubVector{T}, x, i::Integer)
+    xT = convert(T, x)
+    if 1 <= i <= length(s)
+        unsafe_store!(s, xT, i)
+    else
+        error(BoundsError)
+    end
+    xT
+end
+
 #### Math with images ####
 
 (+)(img::AbstractImageDirect, n::Number) = share(img, data(img)+n)
@@ -636,8 +728,8 @@ function imfilter_gaussian{T<:FloatingPoint}(data::Array{T}, validpixels::Array{
     if length(sigma) != nd
         error("Dimensionality mismatch")
     end
-    numerator = _imfilter_gaussian(data, sigma)
-    denominator = _imfilter_gaussian(validpixels, sigma)
+    numerator = _imfilter_gaussian_subvector(data, sigma)
+    denominator = _imfilter_gaussian_subvector(validpixels, sigma)
     return numerator./denominator
 end
 
@@ -666,6 +758,10 @@ end
 
 function filtfb(y, a, B, M)
     x = convert(Array{eltype(y)}, y)
+    filtfb!(x, a, B, M)
+end
+
+function filtfb!{T}(x::AbstractArray{T}, a::Array{T}, B::T, M::Array{T})
     a1 = a[1]
     a2 = a[2]
     a3 = a[3]
@@ -707,6 +803,31 @@ function _imfilter_gaussian{T<:FloatingPoint}(A::AbstractArray{T}, sigma::Vector
     end
     Aout
 end
+
+function _imfilter_gaussian_subvector{T<:FloatingPoint}(A::Array{T}, sigma::Vector)
+    nd = ndims(A)
+    Aout = copy(A)
+    szA = [size(A)...]
+    indexes = Array(RangeIndex, nd)
+    for d = 1:nd
+        if sigma[d] == 0
+            continue
+        end
+        if size(A, d) < 3
+            error("All filtered dimensions must be of size 3 or larger")
+        end
+        a, B, M = iir_gaussian_coefficients(T, sigma[d])
+        notd = setdiff([1:nd], d)
+        indexes[d] = 1:size(A, d)
+        for c in Counter(szA[notd])
+            indexes[notd] = c
+            s = SubVector(Aout, indexes...)
+            filtfb!(s, a, B, M)
+        end
+    end
+    Aout
+end
+
 
 function imlineardiffusion{T}(img::Array{T,2}, dt::FloatingPoint, iterations::Integer)
     u = img

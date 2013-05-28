@@ -31,6 +31,17 @@ imgs = imadjustintensity(img, [])
 mnA = min(A)
 @assert ssd(imgs, (A-mnA)/(mxA-mnA)) < eps()
 
+# SubVector
+A = reshape(1:48, 8, 6)
+s = Images.SubVector(A, 1:3:8, 2)
+@assert s[2] == A[4,2]
+@assert s == A[1:3:8, 2]
+s = Images.SubVector(A, 2:3:8, 2)
+@assert s == A[2:3:8, 2]
+s = Images.SubVector(A, 4, 3:6)
+@assert s == vec(A[4, 3:6])
+s[1] = 0
+@assert A[4,3] == 0
 
 # filtering
 @assert all_close(imfilter(ones(4,4), ones(3,3)), 9.0)

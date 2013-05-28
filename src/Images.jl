@@ -1,6 +1,7 @@
 module Images
 
 using Color
+using Grid
 
 importall Base
 import Base.Graphics: width, height
