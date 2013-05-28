@@ -82,8 +82,12 @@ The `data` array here just encodes the index used to look up the color in the
 
 ## Addressing image data
 
+For any valid image type, `data(img)` returns the array that corresponds to the image.
+This works when `img` is a plain `Array` (in which case no operation is performed) as well as for an `Image` (in which case it returns `img.data`).
+This is our first example of how to write generic algorithms.
+
 If `img` is an `Image`, then `img[i,j]` looks up the value `img.data[i,j]`.
-Assignment, `sub`, and `slice` work similarly. In other words, an
+Assignment, `sub`, and `slice` work similarly. In other words, for indexing an
 `Image` works just as if you were using plain arrays.
 
 If you are indexing over an extended region and want to get back an `Image`,
@@ -93,6 +97,15 @@ resulting image will share everything but the `data` field with the original
 image; if you make modifications in one, the other will also be affected. For
 `sliceim`, because it can change the dimensionality some adjustments to
 `properties` are needed; in this case a copy is made.
+
+One of the properties (see below) that you can grant to images is `spatialorder`, which provides a name for each spatial dimension in the image.
+Using this feature, you can cut out regions or slices from images in the following ways:
+
+```julia
+A = img["x", 200:400, "y", 500:700]
+imgs = sliceim(img, "z", 14)      # cuts out the 14th frame in a stack
+```
+These routines "do the right thing" no matter what storage order is being used.
 
 ## Image properties and accessor functions
 
