@@ -42,6 +42,8 @@ s = Images.SubVector(A, 4, 3:6)
 @assert s == vec(A[4, 3:6])
 s[1] = 0
 @assert A[4,3] == 0
+ss = Images.SubVector(s, 4:-2:2)
+@assert ss == [44,28]
 
 # filtering
 @assert all_close(imfilter(ones(4,4), ones(3,3)), 9.0)

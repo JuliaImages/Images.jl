@@ -43,7 +43,7 @@ function SubVector{T}(s::SubVector{T}, index::RangeIndex)
     if min(index) < 1 || max(index) > length(s)
         error(BoundsError)
     end
-    ptr = s.ptr + (first(index)-1)*s.stride
+    ptr = s.ptr + (first(index)-1)*s.stride*sizeof(T)
     strd = s.stride * step(index)
     len = length(index)
     SubVector{T}(ptr, strd, len)
