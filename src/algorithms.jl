@@ -213,30 +213,14 @@ sc(img::AbstractArray) = scale(scaleminmax(img), img)
 sc(img::AbstractArray, mn::Number, mx::Number) = scale(scaleminmax(img, mn, mx), img)
 
 #### Converting 2d image to uint32 color ####
-uint32color!(buf::Array{Uint32,2}, img::Union(StridedArray,AbstractImageDirect),
-             scalei::ScaleInfo = scaleinfo(Uint8, img)) = uint32color!(buf, img, !isxfirst(img), scalei)
-
-uint32color!(buf::Array{Uint32,2}, img::Union(StridedArray,AbstractImageDirect),
-             scalei::ScaleInfo = scaleinfo(Uint8, img)) = uint32color!(buf, img, !isxfirst(img), scalei)
-
-function uint32color!{S<:String}(buf::Array{Uint32,2}, img::Union(StridedArray,AbstractImageDirect), 
-                                 xy::Array{S} = xy, scalei::ScaleInfo = scaleinfo(Uint8, img))
-    p = spatialpermutation(xy, img)
-    uint32color!(buf, img, p[1] > p[2], scalei)
-end
-
-function uint32color!{T,N,A<:StridedArray}(buf::Array{Uint32,2}, img::Union(StridedArray,Image{T,N,A}), transpose::Bool, scalei::ScaleInfo = scaleinfo(Uint8, img))
+function uint32color!{T,N,A<:StridedArray}(buf::Array{Uint32,2}, img::Union(StridedArray,Image{T,N,A}), scalei::ScaleInfo = scaleinfo(Uint8, img))
     assert2d(img)
     cs = colorspace(img)
     firstindex, spsz, spstride, csz, cstride = iterate_spatial(img)
     isz, jsz = spsz
     istride, jstride = spstride
     A = parent(img)
-    if transpose
-        w, h = jsz, isz
-    else
-        w, h = isz, jsz
-    end
+    w, h = isz, jsz
     if size(buf, 1) != w || size(buf, 2) != h
         @show size(buf)
         @show w
@@ -247,38 +231,24 @@ function uint32color!{T,N,A<:StridedArray}(buf::Array{Uint32,2}, img::Union(Stri
     # Check to see whether we can do a direct copy
     if eltype(img) <: Union(Uint32, Int32)
         if cs == "RGB24" || cs == "ARGB32"
-            if transpose
-                copyt!(buf, img.data)
-            else
-                copy!(buf, img.data)
-            end
+            copy!(buf, img.data)
             return buf
         end
     end
-    uint32color!(buf, A, transpose, cs, firstindex, isz, jsz, istride, jstride, cstride, scalei)
+    uint32color!(buf, A, cs, firstindex, isz, jsz, istride, jstride, cstride, scalei)
 end
 
-function uint32color!(buf::Array{Uint32,2}, A::Array, transpose::Bool, cs::String, firstindex::Int, isz::Int, jsz::Int, istride::Int, jstride::Int, cstride::Int, scalei::ScaleInfo)
+function uint32color!(buf::Array{Uint32,2}, A::Array, cs::String, firstindex::Int, isz::Int, jsz::Int, istride::Int, jstride::Int, cstride::Int, scalei::ScaleInfo)
     if cstride == 0
         if cs == "Gray"
-            if !transpose
-                # Note: can't use a single linear index for RHS, because this might be a subarray
-                l = 1
-                for j = 1:jsz
-                    k = firstindex + (j-1)*jstride
-                    for i = 0:istride:(isz-1)*istride
-                        gr = scale(scalei, A[k+i])
-                        buf[l] = rgb24(gr, gr, gr)
-                        l += 1
-                    end
-                end
-            else
-                for j = 1:jsz
-                    k = firstindex + (j-1)*jstride
-                    for i = 1:isz
-                        gr = scale(scalei, A[k+(i-1)*istride])
-                        buf[j,i] = rgb24(gr, gr, gr)
-                    end
+            # Note: can't use a single linear index for RHS, because this might be a subarray
+            l = 1
+            for j = 1:jsz
+                k = firstindex + (j-1)*jstride
+                for i = 0:istride:(isz-1)*istride
+                    gr = scale(scalei, A[k+i])
+                    buf[l] = rgb24(gr, gr, gr)
+                    l += 1
                 end
             end
         else
@@ -286,63 +256,33 @@ function uint32color!(buf::Array{Uint32,2}, A::Array, transpose::Bool, cs::Strin
         end
     else
         if cs == "RGB"
-            if !transpose
-                l = 1
-                for j = 1:jsz
-                    k = firstindex + (j-1)*jstride
-                    for i = 0:istride:(isz-1)*istride
-                        ki = k+i
-                        buf[l] = rgb24(scalei, A[ki], A[ki+cstride], A[ki+2cstride])
-                        l += 1
-                    end
-                end
-            else
-                for j = 1:jsz
-                    k = firstindex + (j-1)*jstride
-                    for i = 1:isz
-                        ki = k+(i-1)*istride
-                        buf[j,i] = rgb24(scalei, A[ki], A[ki+cstride], A[ki+2cstride])
-                    end
+            l = 1
+            for j = 1:jsz
+                k = firstindex + (j-1)*jstride
+                for i = 0:istride:(isz-1)*istride
+                    ki = k+i
+                    buf[l] = rgb24(scalei, A[ki], A[ki+cstride], A[ki+2cstride])
+                    l += 1
                 end
             end
         elseif cs == "ARGB"
-            if !transpose
-                l = 1
-                for j = 1:jsz
-                    k = firstindex + (j-1)*jstride
-                    for i = 0:istride:(isz-1)*istride
-                        ki = k+i
-                        buf[l] = argb32(scalei,A[ki],A[ki+cstride],A[ki+2cstride],A[ki+3cstride])
-                        l += 1
-                    end
-                end
-            else
-                for j = 1:jsz
-                    k = firstindex + (j-1)*jstride
-                    for i = 1:isz
-                        ki = k+(i-1)*istride
-                        buf[j,i] = argb32(scalei,A[ki],A[ki+cstride],A[ki+2cstride],A[ki+3cstride])
-                    end
+            l = 1
+            for j = 1:jsz
+                k = firstindex + (j-1)*jstride
+                for i = 0:istride:(isz-1)*istride
+                    ki = k+i
+                    buf[l] = argb32(scalei,A[ki],A[ki+cstride],A[ki+2cstride],A[ki+3cstride])
+                    l += 1
                 end
             end
         elseif cs == "RGBA"
-            if !transpose
-                l = 1
-                for j = 1:jsz
-                    k = firstindex + (j-1)*jstride
-                    for i = 0:istride:(isz-1)*istride
-                        ki = k+i
-                        buf[l] = argb32(scalei,A[ki+3cstride],A[ki],A[ki+cstride],A[ki+2cstride])
-                        l += 1
-                    end
-                end
-            else
-                for j = 1:jsz
-                    k = firstindex + (j-1)*jstride
-                    for i = 1:isz
-                        ki = k+(i-1)*istride
-                        buf[j,i] = argb32(scalei,A[ki+3cstride],A[ki],A[ki+cstride],A[ki+2cstride])
-                    end
+            l = 1
+            for j = 1:jsz
+                k = firstindex + (j-1)*jstride
+                for i = 0:istride:(isz-1)*istride
+                    ki = k+i
+                    buf[l] = argb32(scalei,A[ki+3cstride],A[ki],A[ki+cstride],A[ki+2cstride])
+                    l += 1
                 end
             end
         else
@@ -352,17 +292,12 @@ function uint32color!(buf::Array{Uint32,2}, A::Array, transpose::Bool, cs::Strin
     return buf
 end
 
-function uint32color(img::Union(StridedArray,AbstractImageDirect), transpose::Bool, scalei::ScaleInfo = scaleinfo(Uint8, img))
-    w, h = widthheight(img)
-    if transpose
-        w, h = h, w
-    end
-    buf = Array(Uint32, w, h)
-    uint32color!(buf, img, transpose, scalei)
+function uint32color(img::Union(StridedArray,AbstractImageDirect), scalei::ScaleInfo = scaleinfo(Uint8, img))
+    sz = size(img)
+    ssz = sz[coords_spatial(img)]
+    buf = Array(Uint32, ssz)
+    uint32color!(buf, img, scalei)
 end
-
-uint32color(img::Union(StridedArray,AbstractImageDirect), scalei::ScaleInfo = scaleinfo(Uint8, img)) =
-    uint32color(img, !isxfirst(img), scalei)
 
 rgb24(r::Uint8, g::Uint8, b::Uint8) = convert(Uint32,r)<<16 | convert(Uint32,g)<<8 | convert(Uint32,b)
 
