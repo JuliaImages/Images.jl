@@ -1,7 +1,19 @@
+# Getting started
+
+For these examples you'll need to install both `Images` and `ImageView`.
+Load the code for these packages with
+
+```julia
+using Images
+using ImageView
+```
+
 ## Image I/O
 
-If you need test images and are connected to the internet, you can retrieve a
-collection by running `readremote.jl` in the `test/` directory. These will be
+You likely have a number of images already at your disposal, but if not you can retrieve a
+collection by running `readremote.jl` in the `test/` directory.
+(This requires an internet connection.)
+These will be
 deposited inside an `Images` directory inside your temporary directory (e.g.,
 `/tmp` on Linux systems).
 
@@ -46,7 +58,6 @@ RGBA Image with:
 julia> display(imgt)
 WindowImage with buffer size 140x105
 ```
-Overall, however, the `display` infrastructure is still quite crude---there is no resizing and no support for putting the image inside a container different from the full window.
 
 ## Working with images: some examples
 

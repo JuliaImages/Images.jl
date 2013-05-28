@@ -49,8 +49,8 @@ In practice, it is assumed that `AbstractImages` have at least two fields,
 called `data` and `properties`. These are the only two fields in the first
 concrete image type, called `Image`:
 
-```
-type Image{T,A<:AbstractArray} <: AbstractImageDirect{T}
+```julia
+type Image{T,N,A<:AbstractArray} <: AbstractImageDirect{T,N}
     data::A
     properties::Dict
 end
@@ -70,8 +70,8 @@ annotate images. More detail about these can be found below.
 
 The only other concrete image type is for indexed images:
 
-```
-type ImageCmap{T,A<:AbstractArray,C<:AbstractArray} <: AbstractImageIndexed{T}
+```julia
+type ImageCmap{T,N,A<:AbstractArray,C<:AbstractArray} <: AbstractImageIndexed{T,N}
     data::A
     cmap::C
     properties::Dict
@@ -88,7 +88,7 @@ Assignment, `sub`, and `slice` work similarly. In other words, an
 
 If you are indexing over an extended region and want to get back an `Image`,
 rather than a value or an `Array`, then you
-will want to use `refim`, `subim`, and `sliceim`. For the first two, the
+will want to use `getindexim`, `subim`, and `sliceim`. For the first two, the
 resulting image will share everything but the `data` field with the original
 image; if you make modifications in one, the other will also be affected. For
 `sliceim`, because it can change the dimensionality some adjustments to
@@ -171,8 +171,5 @@ Despite the fact that this allows the color channel to be any one of the array
 dimensions, it is hardly any more complicated than its predecessor which
 assumed that the third dimension corresponded to color.
 
-Other examples showing how to generalize array-based code can be found in both
-`algorithms.jl` and `core.jl`. Yet other examples are in `display.jl` and
-`io.jl`; these tend to be more complex because either they are heavily optimized
-for efficiency and/or because of the needs of interoperating with external
-packages/disk files.
+Other examples showing how to generalize array-based code can be found in
+`algorithms.jl`, `core.jl`, and `io.jl`.
