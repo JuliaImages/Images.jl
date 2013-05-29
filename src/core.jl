@@ -368,12 +368,12 @@ colorspace{T<:Union(Int32,Uint32)}(img::AbstractMatrix{T}) = "RGB24"
 colorspace(img::AbstractMatrix) = "Gray"
 colorspace{T}(img::AbstractArray{T,3}) = (size(img, defaultarraycolordim) == 3) ? "RGB" : error("Cannot infer colorspace of Array, use an AbstractImage type")
 colorspace(img::AbstractImage{Bool}) = "Binary"
-colorspace(img::AbstractImage) = get(img.properties, "colorspace", "Unknown")
+colorspace{T}(img::AbstractImage{T}) = get(img.properties, "colorspace", "Unknown")
 
 colordim(img::AbstractMatrix) = 0
 colordim{T}(img::AbstractArray{T,3}) = (size(img, defaultarraycolordim) == 3) ? 3 : error("Cannot infer colordim of Array, use an AbstractImage type")
-colordim(img::AbstractImageDirect) = get(img, "colordim", 0)
-colordim(img::AbstractImageIndexed) = 0
+colordim{T}(img::AbstractImageDirect{T}) = get(img, "colordim", 0)
+colordim{T}(img::AbstractImageIndexed{T}) = 0
 
 timedim(img) = get(img, "timedim", 0)
 
@@ -386,7 +386,7 @@ limits(img::AbstractImageIndexed) = @get img "limits" (min(img.cmap), max(img.cm
 
 pixelspacing{T}(img::AbstractArray{T,3}) = (size(img, defaultarraycolordim) == 3) ? [1.0,1.0] : error("Cannot infer pixelspacing of Array, use an AbstractImage type")
 pixelspacing(img::AbstractMatrix) = [1.0,1.0]
-pixelspacing(img::AbstractImage) = @get img "pixelspacing" _pixelspacing(img)
+pixelspacing{T}(img::AbstractImage{T}) = @get img "pixelspacing" _pixelspacing(img)
 _pixelspacing(img::AbstractImage) = ones(sdims(img))
 
 spatialorder(img::AbstractImage) = @get img "spatialorder" _spatialorder(img)
