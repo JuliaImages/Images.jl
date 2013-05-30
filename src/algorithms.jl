@@ -2,6 +2,10 @@
 # Some algorithms, like IIR filtering, benefit from something like this
 # (currently mapslices is just too slow, and would benefit from an in-place syntax)
 
+# Note: this is not GC-safe. Unfortunately, holding a reference to the
+# parent array inside the SubVector object seems to force construction,
+# and that makes it slow. So you need to manually hold the parent while
+# using SubArray.
 immutable SubVector{T} <: AbstractArray{T,1}
     ptr::Ptr{T}
     stride::Int
@@ -138,6 +142,15 @@ scale{T,S<:Number}(scalei::ScaleNone{T}, val::S) = convert(T, val)
 scale{T<:Integer,S<:FloatingPoint}(scalei::ScaleNone{T}, val::S) = convert(T, round(val))
 scale(scalei::ScaleNone{Uint8}, val::Uint16) = (val>>>8) & 0xff
 scale(scalei::ScaleNone{Uint8}, val::Uint16) = (val>>>8) & 0xff
+scale(scalei::ScaleNone{Uint32}, val::RGB) = convert(Uint32, convert(RGB24, clip(val)))
+
+clip(v::RGB) = RGB(min(1.0,v.r),min(1.0,v.g),min(1.0,v.b))
+function clip!(A::Array{RGB})
+    for i = 1:length(A)
+        A[i] = clip(A[i])
+    end
+    A
+end
 
 convert{I<:AbstractImageDirect}(::Type{I}, img::Union(StridedArray,AbstractImageDirect)) = scale(ScaleNone{eltype(I)}(), img)
 
@@ -179,7 +192,7 @@ end
 function scale{To<:Integer,From<:Number}(scalei::ScaleMinMax{To,From}, val::From)
     # Clip to range min:max and subtract min
     t::From = (val > scalei.min) ? ((val < scalei.max) ? val-scalei.min : scalei.max-scalei.min) : zero(From)
-    convert(To, ifloor(scalei.s*t))
+    convert(To, iround(scalei.s*t))
 end
 
 function scale{To<:Number,From<:Number}(scalei::ScaleMinMax{To,From}, val::From)
@@ -204,13 +217,68 @@ function scaleinfo{To<:Unsigned,From<:FloatingPoint}(::Type{To}, img::AbstractAr
     end
 end
 
-scaleminmax{To}(::Type{To}, img::AbstractArray, mn::Number, mx::Number) = ScaleMinMax{To,eltype(img)}(mn, mx, typemax(To)/(mx-mn))
+scaleminmax{To<:Integer,From}(::Type{To}, img::AbstractArray{From}, mn::Number, mx::Number) = ScaleMinMax{To,From}(convert(From,mn), convert(From,mx), typemax(To)/(mx-mn))
+scaleminmax{To<:FloatingPoint,From}(::Type{To}, img::AbstractArray{From}, mn::Number, mx::Number) = ScaleMinMax{To,From}(convert(From,mn), convert(From,mx), 1/(mx-mn))
 scaleminmax{To}(::Type{To}, img::AbstractArray) = scaleminmax(To, img, min(img), max(img))
 scaleminmax(img::AbstractArray) = scaleminmax(Uint8, img)
 scaleminmax(img::AbstractArray, mn::Number, mx::Number) = scaleminmax(Uint8, img, mn, mx)
 
 sc(img::AbstractArray) = scale(scaleminmax(img), img)
 sc(img::AbstractArray, mn::Number, mx::Number) = scale(scaleminmax(img, mn, mx), img)
+
+#### Overlay AbstractArray implementation ####
+length(o::Overlay) = isempty(o.channels) ? 0 : length(o.channels[1])
+size(o::Overlay) = isempty(o.channels) ? (0,) : size(o.channels[1])
+size(o::Overlay, d::Integer) = isempty(o.channels) ? 0 : size(o.channels[1],d)
+eltype(o::Overlay) = RGB
+
+similar{T}(o::Overlay, ::Type{T}, sz) = Array(T, sz)
+
+function getindex(o::Overlay, indexes::Integer...)
+    rgb = RGB(0,0,0)
+    for i = 1:length(o.channels)
+        if o.visible[i]
+            rgb += scale(o.scalei[i], o.channels[i][indexes...])*o.colors[i]
+        end
+    end
+    clip(rgb)
+end
+
+function getindex(o::Overlay, indexes...)
+    rgb = fill(RGB(0,0,0), map(length, indexes))
+    for i = 1:length(o.channels)
+        if o.visible[i]
+            tmp = scale(o.scalei[i], o.channels[i][indexes...])
+            accumulate!(rgb, tmp, o.colors[i])
+        end
+    end
+    clip!(rgb)
+end
+
+getindex(o::Overlay, indexes::(AbstractVector...)) = getindex(o, indexes...)
+
+setindex!(o::Overlay, x, indexes...) = error("Overlays are read-only")
+
+# Identical to getindex except it saves a call to each array's getindex
+function convert(::Type{Array{RGB}}, o::Overlay)
+    rgb = fill(RGB(0,0,0), size(o))
+    for i = 1:length(o.channels)
+        if o.visible[i]
+            tmp = scale(o.scalei[i], o.channels[i])
+            accumulate!(rgb, tmp, o.colors[i])
+        end
+    end
+    clip!(rgb)
+end
+
+function accumulate!(rgb::Array{RGB}, A::Array{Float64}, color::RGB)
+    for j = 1:length(rgb)
+        rgb[j] += A[j]*color
+    end
+end
+
+(*)(f::Float64, c::RGB) = RGB(f*c.r, f*c.g, f*c.b)
+(+)(a::RGB, b::RGB) = RGB(a.r+b.r, a.g+b.g, a.b+b.b)
 
 #### Converting 2d image to uint32 color ####
 function uint32color!{T,N,A<:StridedArray}(buf::Array{Uint32,2}, img::Union(StridedArray,Image{T,N,A}), scalei::ScaleInfo = scaleinfo(Uint8, img))
@@ -225,7 +293,6 @@ function uint32color!{T,N,A<:StridedArray}(buf::Array{Uint32,2}, img::Union(Stri
         @show size(buf)
         @show w
         @show h
-        @show transpose
         error("Output buffer is of the wrong size")
     end
     # Check to see whether we can do a direct copy
@@ -298,6 +365,30 @@ function uint32color(img::Union(StridedArray,AbstractImageDirect), scalei::Scale
     buf = Array(Uint32, ssz)
     uint32color!(buf, img, scalei)
 end
+
+# Overlays
+function uint32color!{N}(buf::Array{Uint32,N}, img::Union(Overlay,Image{RGB,N,Overlay}))
+    if size(buf) != size(img)
+        error("Output buffer has the wrong size")
+    end
+    rgb = convert(Array{RGB}, data(img))
+    for i = 1:length(buf)
+        buf[i] = convert(Uint32, convert(RGB24, rgb[i]))
+    end
+end
+
+function uint32color!{N,O<:Overlay,I}(buf::Array{Uint32,N}, img::Union(SubArray{RGB,N,O,I},Image{RGB,N,SubArray{RGB,N,O,I}}))
+    if size(buf) != size(img)
+        error("Output buffer has the wrong size")
+    end
+    A = data(img)
+    O = parent(A)
+    rgb = O[A.indexes]
+    for i = 1:length(buf)
+        buf[i] = convert(Uint32, convert(RGB24, rgb[i]))
+    end
+end
+
 
 rgb24(r::Uint8, g::Uint8, b::Uint8) = convert(Uint32,r)<<16 | convert(Uint32,g)<<8 | convert(Uint32,b)
 
@@ -623,6 +714,8 @@ end
 
 imfilter(img, filter) = imfilter(img, filter, "replicate", 0)
 imfilter(img, filter, border) = imfilter(img, filter, border, 0)
+
+# imfilter{S,T<:FloatingPoint}(img::AbstractArray{S}, filter::Matrix{T}, args...) = imfilter(copy!(similar(img, T), img), filter, args...)
 
 # IIR filtering of Gaussians
 # See

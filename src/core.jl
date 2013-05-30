@@ -23,6 +23,44 @@ end
 ImageCmap{A<:AbstractArray,C<:AbstractArray}(data::A, cmap::C, props::Dict) = ImageCmap{eltype(data),ndims(data),A,C}(data, cmap, props)
 ImageCmap{A<:AbstractArray,C<:AbstractArray}(data::A, cmap::C) = ImageCmap(data, cmap, Dict{String,Any}())
 
+# Dispatch-based scaling/clipping/type conversion
+abstract ScaleInfo{T}
+
+# An array type for colorized overlays of grayscale images
+type Overlay{AT<:(AbstractArray...), N} <: AbstractArray{RGB,N}
+    channels::AT   # this holds the grayscale arrays
+    colors::Vector{RGB}
+    scalei::Vector{ScaleInfo}
+    visible::BitArray
+end
+
+function Overlay(channels::(AbstractArray...), colors::(ColorValue...), clim)
+    n = length(channels)
+    if length(colors) != n || length(clim) != n
+        error("Mismatch in number of channels")
+    end
+    sz = size(channels[1])
+    for i = 2:n
+        if size(channels[i]) != sz
+            error("All arrays must have the same size")
+        end
+    end
+    for i = 1:n
+        if length(clim[i]) != 2
+            error("clim must be a 2-vector")
+        end
+    end
+    N = ndims(channels[1])
+    col = Array(RGB, n)
+    scalei = Array(ScaleInfo, n)
+    for i = 1:n
+        col[i] = convert(RGB, colors[i])
+        scalei[i] = scaleminmax(Float64, channels[i], clim[i][1], clim[i][2])
+    end
+    AT = ntuple(n, i->typeof(channels[i]))
+    Overlay{AT,N}(channels, col, scalei, trues(n))
+end
+
 #### Core operations ####
 
 eltype{T}(img::AbstractImage{T}) = T
@@ -287,7 +325,6 @@ function rerange!(img::AbstractImage, sd::SliceData, I::(RangeIndex...,))
     img
 end
 
-
 const emptyset = Set()
 function show(io::IO, img::AbstractImageDirect)
     IT = typeof(img)
@@ -306,6 +343,17 @@ data(img::AbstractImage) = img.data
 min(img::AbstractImageDirect) = min(img.data)
 max(img::AbstractImageDirect) = max(img.data)
 # min/max deliberately not defined for AbstractImageIndexed
+
+# Overlays
+eltype{T}(o::Overlay{T}) = T
+eltype{T}(::Type{Overlay{T}}) = T
+ndims{T,N}(o::Overlay{T,N}) = N
+ndims{T,N}(::Type{Overlay{T,N}}) = N
+
+size(o::Overlay) = size(o.channels[1])
+size(o::Overlay, i::Integer) = size(o.channels[1], i)
+
+show(io::IO, o::Overlay) = print(io, summary(o), " with colors ", o.colors)
 
 #### Properties ####
 
@@ -650,9 +698,3 @@ function named2dimindexes(img::AbstractImage, dimnames::String...)
     dimindexes
 end
 
-
-
-#### Additional support types ####
-
-# Dispatch-based scaling/clipping/type conversion
-abstract ScaleInfo{T}

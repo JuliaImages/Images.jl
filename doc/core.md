@@ -64,6 +64,7 @@ just an `Array`), a custom type that stores additional information about
 seamlessly presents views of a large number of separate files. If you have a
 suitably-defined `AbstractArray` type, you can probably use `Image` without
 needing to create alternative `AbstractImageDirect` types.
+One concrete example is the color `Overlay` [type](overlays.md).
 
 `properties` is a dictionary, usually with `String` keys, that allows you to
 annotate images. More detail about these can be found below.

@@ -68,9 +68,10 @@ Detailed documentation about the design of the library
 and the available functions
 can be found in the `doc/` directory. Here are some of the topics available:
 
-- [Getting started](doc/usage.md)
+- [Getting started](doc/usage.md), a short demonstration
 - The [core](doc/core.md), i.e., the representation of images
 - [I/O](doc/extendingIO.md) and custom image file formats
+- [Overlays](doc/overlays.md), a type for combining multiple grayscale arrays into a single color array
 
 ## Status/TODOs
 

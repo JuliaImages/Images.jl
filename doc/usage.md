@@ -22,7 +22,10 @@ Read an image from a file:
 julia> img = imread("rose.png")
 RGB Image with:
   data: 3x70x46 Uint8 Array
-  properties: ["colordim"=>1,"spatialorder"=>["x", "y"],"colorspace"=>"RGB"]
+  properties:
+    colordim: 1
+    spatialorder: ["x", "y"]
+    colorspace: RGB
 ```
 Note that the image was loaded in "non-permuted" form, i.e., following the direct representation on disk. If you prefer to work with plain arrays, you can convert it:
 ```
@@ -44,26 +47,16 @@ The image file type is inferred from the extension.
 The most direct approach is the `display` command:
 ```
 julia> display(img)
-WindowImage with buffer size 70x46
 ```
-This shows the image in its own window, with no border, at native resolution. Alternatively, you can use an external viewer with the `imshow` command.
-
-`display` even works with transparency:
-```
-julia> imgt = imread("autumn_leaves.png")
-RGBA Image with:
-  data: 4x140x105 Uint16 Array
-  properties: ["colordim"=>1,"spatialorder"=>["x", "y"],"colorspace"=>"RGBA"]
-
-julia> display(imgt)
-WindowImage with buffer size 140x105
-```
+For further information see the [ImageView](https://github.com/timholy/ImageView.jl) documentation.
 
 ## Working with images: some examples
 
 Here's a short example that may help you get started:
 ```
 using Images
+using ImageView
+using Color
 img = float64(imread("peppers.png"))  # an RGB image (you can pick anything)
 h = ones(7,7)/49;                     # a boxcar smoothing filter
 imgf = imfilter(img, h)
@@ -72,4 +65,15 @@ display(imgf)
 clp = ClipMinMax(Uint8, 0.0, 255.0)
 imgc = scale(clp,3img)                # generate an oversaturated image
 display(imgc)
+imgp = permutedims(img,[2,3,1])       # so we don't have to call squeeze() next
+O = Overlay((imgp["color",2],imgp["color",1]),(RGB(0,0,1),RGB(1,1,0)),((0,255),(0,255)))
+display(O,xy=["y","x"])
 ```
+
+![raw](figures/peppers1.jpg)
+
+![filtered](figures/peppers2.jpg)
+
+![saturated](figures/peppers3.jpg)
+
+![overlay](figures/peppers4.jpg)
