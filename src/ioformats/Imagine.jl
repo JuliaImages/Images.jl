@@ -3,13 +3,6 @@ module Imagine
 using Images
 using Units
 
-# require("utilities.jl")
-# using MatlabTools
-# using Utilities
-
-type ImagineFile <: Images.ImageFileType end
-add_image_file_format(".imagine", b"IMAGINE", ImagineFile)
-
 import Images.imread
 
 function imread{S<:IO}(s::S, ::Type{ImagineFile})

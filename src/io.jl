@@ -481,7 +481,7 @@ function imread{S<:IO}(stream::S, ::Type{PPMBinary})
     else
         error("Image file may be corrupt. Are there really more than 16 bits in this image?")
     end
-    Image(dat, ["colormap" => "RGB", "colordim" => 1, "storageorder" => ["c", "x", "y"], "limits" => (0,maxval)])
+    Image(dat, ["colorspace" => "RGB", "colordim" => 1, "storageorder" => ["c", "x", "y"], "limits" => (0,maxval)])
 end
 
 function imread{S<:IO}(stream::S, ::Type{PGMBinary})
@@ -504,7 +504,7 @@ function imread{S<:IO}(stream::S, ::Type{PGMBinary})
     else
         error("Image file may be corrupt. Are there really more than 16 bits in this image?")
     end
-    Image(dat, ["colormap" => "Gray", "storageorder" => ["x", "y"], "limits" => (0,maxval)])
+    Image(dat, ["colorspace" => "Gray", "storageorder" => ["x", "y"], "limits" => (0,maxval)])
 end
 
 function imread{S<:IO}(stream::S, ::Type{PBMBinary})
@@ -765,10 +765,18 @@ end
 type Dummy <: ImageFileType; end
 add_image_file_format(".dummy", b"Dummy Image", Dummy, "dummy.jl")
 
+# NRRD image format
+type NRRDFile <: ImageFileType end
+add_image_file_format(".nrrd", b"NRRD", NRRDFile, "nrrd.jl")
+
 # Andor Technologies SIF file format  
 type AndorSIF <: Images.ImageFileType end
 add_image_file_format(".sif", b"Andor Technology Multi-Channel File", AndorSIF, "SIF.jl")
 
 # Imagine file format (http://holylab.wustl.edu, "Software" tab)
-type ImagineFile <: Images.ImageFileType end
+type ImagineFile <: ImageFileType end
 add_image_file_format(".imagine", b"IMAGINE", ImagineFile, "Imagine.jl")
+
+# PCO b16 image format
+type B16File <: ImageFileType end
+add_image_file_format(".b16", b"PCO-", B16File, "b16.jl")
