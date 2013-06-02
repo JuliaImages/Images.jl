@@ -176,6 +176,6 @@ function imread{S<:IO}(stream::S, ::Type{Images.AndorSIF})
     offset = position(stream) # start of the actual pixel data, 32-bit float, little-endian
 
     pixels = read(stream, Float32, width, height, frames)
-    prop = {"colorspace" => "Gray", "spatialorder" => "yxt", "ixon" => ixon, "suppress" => Set("ixon")}
+    prop = {"colorspace" => "Gray", "spatialorder" => ["y", "x", "t"], "ixon" => ixon, "suppress" => Set("ixon")}
     Image(pixels, prop)
 end

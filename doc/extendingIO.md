@@ -71,10 +71,10 @@ actual pixel data:
 ```
 
 Finally, we wrap up by setting the properties, including the new
-`ixon` collection, and return the `Image`:
+`ixon` collection with suppressed printing, and return the `Image`:
 
 ```julia
-    prop = {"colorspace" => "Gray", "spatialorder" => "yxt", "ixon" => ixon}
+    prop = {"colorspace" => "Gray", "spatialorder" => ["y", "x", "t"], "ixon" => ixon, "suppress" => Set("ixon")}
     Image(pixels, prop)
 end # imread()
 ```
