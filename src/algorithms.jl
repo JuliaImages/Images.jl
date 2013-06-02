@@ -140,7 +140,7 @@ type ScaleNone{T} <: ScaleInfo{T}; end
 scale{T<:Number}(scalei::ScaleNone{T}, val::T) = val
 scale{T,S<:Number}(scalei::ScaleNone{T}, val::S) = convert(T, val)
 scale{T<:Integer,S<:FloatingPoint}(scalei::ScaleNone{T}, val::S) = convert(T, round(val))
-scale(scalei::ScaleNone{Uint8}, val::Uint16) = convert(Uint8, (val>>>8) & 0xff)
+scale(scalei::ScaleNone{Uint8}, val::Uint16) = convert(Uint8, val>>>8)
 scale(scalei::ScaleNone{Uint32}, val::RGB) = convert(Uint32, convert(RGB24, clip(val)))
 
 clip(v::RGB) = RGB(min(1.0,v.r),min(1.0,v.g),min(1.0,v.b))
