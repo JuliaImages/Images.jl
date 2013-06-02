@@ -231,6 +231,11 @@ size(o::Overlay) = isempty(o.channels) ? (0,) : size(o.channels[1])
 size(o::Overlay, d::Integer) = isempty(o.channels) ? 0 : size(o.channels[1],d)
 eltype(o::Overlay) = RGB
 
+similar(o::Overlay) = Array(RGB, size(o))
+similar(o::Overlay, ::NTuple{0}) = Array(RGB, size(o))
+similar{T}(o::Overlay, ::Type{T}) = Array(T, size(o))
+similar{T}(o::Overlay, ::Type{T}, sz::Int64) = Array(T, sz)
+similar{T}(o::Overlay, ::Type{T}, sz::Int64...) = Array(T, sz)
 similar{T}(o::Overlay, ::Type{T}, sz) = Array(T, sz)
 
 function getindex(o::Overlay, indexes::Integer...)
