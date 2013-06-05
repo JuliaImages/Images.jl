@@ -47,6 +47,7 @@ function add_image_file_format{ImageType<:ImageFileType}(ext::ByteString, magic:
     push!(filesrc, filecode)
 end
 add_image_file_format{ImageType<:ImageFileType}(ext::ByteString, magic::Vector{Uint8}, ::Type{ImageType}) = add_image_file_format(ext, magic, ImageType, "")
+add_image_file_format{ImageType<:ImageFileType}(ext::ByteString, ::Type{ImageType}, filecode::ASCIIString) = add_image_file_format(ext, b"", ImageType, filecode)
 
 # Define our fallback file format now, because we need it in generic imread.
 # This has no extension (and is not added to the database), because it is always used as a stream.
@@ -103,6 +104,9 @@ function image_decode_magic{S<:IO}(stream::S, magicbuf::Vector{Uint8}, candidate
         push!(magicbuf, read(stream, Uint8))
     end
     for i in candidates
+        if length(filemagic[i]) == 0
+            continue
+        end
         ret = ccall(:memcmp, Int32, (Ptr{Uint8}, Ptr{Uint8}, Int), magicbuf, filemagic[i], min(length(filemagic[i]), length(magicbuf)))
         if ret == 0
             return i
