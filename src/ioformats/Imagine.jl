@@ -5,8 +5,8 @@ using Units
 
 import Images.imread
 
-function imread{S<:IO}(s::S, ::Type{ImagineFile})
-    h = parse_header(s, ImagineFile)
+function imread{S<:IO}(s::S, ::Type{Images.ImagineFile})
+    h = parse_header(s, Images.ImagineFile)
     filename = s.name[7:end-1]
     basename, ext = splitext(filename)
     camfilename = basename*".cam"
@@ -128,7 +128,7 @@ const field_parser_list = {
 }
 const field_key_dict = (String=>Function)[field_parser_list[i,1] => field_parser_list[i,2] for i = 1:size(field_parser_list,1)]
 
-function parse_header(s::IOStream, ::Type{ImagineFile})
+function parse_header(s::IOStream, ::Type{Images.ImagineFile})
     headerdict = Dict{ASCIIString, Any}()
     for this_line = eachline(s)
         this_line = strip(this_line)
