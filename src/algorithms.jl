@@ -216,9 +216,27 @@ function scaleinfo{To<:Unsigned,From<:FloatingPoint}(::Type{To}, img::AbstractAr
     end
 end
 
+minfinite(A::AbstractArray) = min(A)
+function minfinite{T<:FloatingPoint}(A::AbstractArray{T})
+    ret = nan(T)
+    for a in A
+        ret = isfinite(a) ? (ret < a ? ret : a) : ret
+    end
+    ret
+end
+
+maxfinite(A::AbstractArray) = max(A)
+function maxfinite{T<:FloatingPoint}(A::AbstractArray{T})
+    ret = nan(T)
+    for a in A
+        ret = isfinite(a) ? (ret > a ? ret : a) : ret
+    end
+    ret
+end
+
 scaleminmax{To<:Integer,From}(::Type{To}, img::AbstractArray{From}, mn::Number, mx::Number) = ScaleMinMax{To,From}(convert(From,mn), convert(From,mx), typemax(To)/(mx-mn))
 scaleminmax{To<:FloatingPoint,From}(::Type{To}, img::AbstractArray{From}, mn::Number, mx::Number) = ScaleMinMax{To,From}(convert(From,mn), convert(From,mx), 1/(mx-mn))
-scaleminmax{To}(::Type{To}, img::AbstractArray) = scaleminmax(To, img, min(img), max(img))
+scaleminmax{To}(::Type{To}, img::AbstractArray) = scaleminmax(To, img, minfinite(img), maxfinite(img))
 scaleminmax(img::AbstractArray) = scaleminmax(Uint8, img)
 scaleminmax(img::AbstractArray, mn::Number, mx::Number) = scaleminmax(Uint8, img, mn, mx)
 
