@@ -174,12 +174,23 @@ function parse_header(s::IOStream, ::Type{Images.ImagineFile})
                     @assert length(substrs) == 2
                     k2 = strip(substrs[1])
                     func = field_key_dict[k2]
-                    thisdict[k2] = func(strip(substrs[2]))
+                    v2 = strip(substrs[2])
+                    try
+                        thisdict[k2] = func(v2)
+                    catch err
+                        println("Error processing key ", k2, " with value ", v2)
+                        rethrow(err)
+                    end
                 end
                 headerdict[k] = thisdict
             else
                 func = field_key_dict[k]
-                headerdict[k] = func(v)
+                try
+                    headerdict[k] = func(v)
+                catch err
+                    println("Error processing key ", k, " with value ", v)
+                    rethrow(err)
+                end
             end
         end
     end
