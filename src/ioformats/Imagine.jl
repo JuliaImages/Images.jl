@@ -83,12 +83,29 @@ for l in bitname_table
 end
 parse_bittypename(s::ASCIIString) = bitname_dict[lowercase(s)]
 
+function float64_or_empty(s::ASCIIString)
+    if isempty(s)
+        return NaN
+    else
+        return float64(s)
+    end
+end
+
+function parse_quantity_or_empty(s::ASCIIString)
+    if isempty(s)
+        return Quantity(SINone, Unknown, NaN)
+    else
+        return parse_quantity(s)
+    end
+end
+
 # Read and parse a *.imagine file (an Imagine header file)
 const compound_fields = {"piezo", "binning"}
 const field_parser_list = {
     "header version"               float64;
     "app version"                  identity;
     "date and time"                identity;
+    "rig"                          identity;
     "byte order"                   parse_endian;
     "stimulus file content"        identity;  # stimulus info parsed separately
     "comment"                      identity;
@@ -96,6 +113,7 @@ const field_parser_list = {
     "image data file"              identity;
     "start position"               parse_quantity;
     "stop position"                parse_quantity;
+    "bidirection"                  x->bool(int(x));
     "output scan rate"             x->parse_quantity(x, false);
     "nscans"                       int;
     "channel list"                 parse_vector_int;
@@ -112,12 +130,13 @@ const field_parser_list = {
     "number of frames requested"   int;
     "nStacks"                      int;
     "idle time between stacks"     parse_quantity;
-    "pre amp gain"                 float64;
-    "EM gain"                      float64;
+    "pre amp gain"                 float64_or_empty;
+    "EM gain"                      float64_or_empty;
+    "gain"                         float64_or_empty;
     "exposure time"                parse_quantity;
-    "vertical shift speed"         parse_quantity;
+    "vertical shift speed"         parse_quantity_or_empty;
     "vertical clock vol amp"       float64;
-    "readout rate"                 parse_quantity;
+    "readout rate"                 parse_quantity_or_empty;
     "pixel order"                  identity;
     "frame index offset"           int;
     "frames per stack"             int;
@@ -130,6 +149,7 @@ const field_parser_list = {
     "hend"                         int;
     "vstart"                       int;
     "vend"                         int;
+    "angle from horizontal (deg)"  float64_or_empty;
 }
 const field_key_dict = (String=>Function)[field_parser_list[i,1] => field_parser_list[i,2] for i = 1:size(field_parser_list,1)]
 
