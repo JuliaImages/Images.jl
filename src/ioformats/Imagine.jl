@@ -5,6 +5,8 @@ using Units
 
 import Images.imread
 
+export imagine2nrrd
+
 function imread{S<:IO}(s::S, ::Type{Images.ImagineFile})
     h = parse_header(s, Images.ImagineFile)
     filename = s.name[7:end-1]
@@ -52,6 +54,7 @@ abstract Endian
 type LittleEndian <: Endian; end
 type BigEndian <: Endian; end
 const endian_dict = Dict(("l", "b"), (LittleEndian, BigEndian))
+const nrrd_endian_dict = Dict((LittleEndian, BigEndian), ("little","big"))
 parse_endian(s::ASCIIString) = endian_dict[lowercase(s)]
 
 function parse_vector_int(s::String)
@@ -195,6 +198,44 @@ function parse_header(s::IOStream, ::Type{Images.ImagineFile})
         end
     end
     return headerdict
+end
+
+function imagine2nrrd(sheader::IO, h::Dict{ASCIIString, Any}, datafilename = nothing)
+    println(sheader, "NRRD0001")
+    T = h["pixel data type"]
+    if T<:FloatingPoint
+        println(sheader, "type: ", (T == Float32) ? "float" : "double")
+    else
+        println(sheader, "type: ", lowercase(string(T)))
+    end
+    sz = [h["image width"], h["image height"], h["frames per stack"], h["nStacks"]]
+    kinds = ["space", "space", "space", "time"]
+    if sz[end] == 1
+        sz = sz[1:3]
+        kinds = kinds[[1,2,4]]
+    end
+    println(sheader, "dimension: ", length(sz))
+    print(sheader, "sizes:")
+    for z in sz
+        print(sheader, " ", z)
+    end
+    print(sheader, "\nkinds:")
+    for k in kinds
+        print(sheader, " ", k)
+    end
+    print(sheader, "\n")
+    println(sheader, "encoding: raw")
+    println(sheader, "endian: ", nrrd_endian_dict[h["byte order"]])
+    if isa(datafilename, String)
+        println(sheader, "data file: ", datafilename)
+    end
+    sheader
+end
+
+function imagine2nrrd(nrrdname::String, h::Dict{ASCIIString, Any}, datafilename = nothing)
+    sheader = open(nrrdname, "w")
+    imagine2nrrd(sheader, h, datafilename)
+    close(sheader)
 end
 
 end
