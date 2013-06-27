@@ -474,14 +474,14 @@ function coords_spatial(img)
     cd = colordim(img)
     sd = timedim(img)
     if cd > sd
-        delete!(ind, cd)
+        splice!(ind, cd)
         if sd > 0
-            delete!(ind, sd)
+            splice!(ind, sd)
         end
     elseif sd > cd
-        delete!(ind, sd)
+        splice!(ind, sd)
         if cd > 0
-            delete!(ind, cd)
+            splice!(ind, cd)
         end
     end
     ind
