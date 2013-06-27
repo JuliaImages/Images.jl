@@ -116,6 +116,7 @@ export # types
     sadn,
     sc,
     scale,
+    scaledefault,
     scaleinfo,
     scaleminmax,
     sobel,

@@ -216,6 +216,20 @@ function scaleinfo{To<:Unsigned,From<:FloatingPoint}(::Type{To}, img::AbstractAr
     end
 end
 
+scaledefault{T<:Unsigned}(img::AbstractArray{T}) = limits(img)
+function scaledefault{T<:FloatingPoint}(img::AbstractArray{T})
+    l = limits(img)
+    if isinf(l[1]) || isinf(l[2])
+        if isa(l, Tuple)
+            l = (0.0,255.0)
+        else
+            l[1] = 0
+            l[2] = 255
+        end
+    end
+    l
+end
+
 minfinite(A::AbstractArray) = min(A)
 function minfinite{T<:FloatingPoint}(A::AbstractArray{T})
     ret = nan(T)
