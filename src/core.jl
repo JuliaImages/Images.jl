@@ -187,7 +187,27 @@ slice(img::AbstractImage, I::RangeIndex...) = slice(img.data, I...)
 slice(img::AbstractImage, dimname::String, ind::RangeIndex, nameind::RangeIndex...) = slice(img.data, named2coords(img, dimname, ind, nameind...)...)
 
 # getindexim, subim, and sliceim return an Image. The first two share properties, the last requires a copy.
-getindexim{T<:Real}(img::AbstractImage, I::Union(Real,AbstractArray{T})...) = share(img, getindex(img.data, I...))
+function getindexim{T<:Real}(img::AbstractImage, I::Union(Real,AbstractArray{T})...)
+    ret = copy(img, data(img)[I...])
+    cd = colordim(img)
+    nd = ndims(ret)
+    if cd > nd
+        ret["colordim"] = 0
+        ret["colorspace"] = "Gray"
+    end
+    td = timedim(img)
+    if td > nd
+        ret["timedim"] = 0
+    end
+    sp = spatialproperties(img)
+    for p in sp
+        val = ret[p]
+        if length(val) > nd
+            ret[p] = val[1:nd]
+        end
+    end
+    ret
+end
 
 getindexim{T<:Real}(img::AbstractImage, dimname::String, ind::Union(Real,AbstractArray{T}), nameind...) = getindexim(img, named2coords(img, dimname, ind, nameind...)...)
 

@@ -41,6 +41,7 @@ export # types
     colorspace,
     coords_spatial,
     data,
+    getindexim,
     height,
     isdirect,
     isxfirst,
