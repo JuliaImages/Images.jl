@@ -14,22 +14,31 @@ function imread{S<:IO}(s::S, ::Type{Images.ImagineFile})
     camfilename = basename*".cam"
     T = h["pixel data type"]
     sz = [h["image width"], h["image height"], h["frames per stack"], h["nStacks"]]
+	if sz[4] == 1
+	    sz = sz[1:3]
+	end
+	havez = length(sz) == 4
     # Check that the file size is consistent with the expected size
     if !isfile(camfilename)
         warn("Cannot open ", camfilename)
         data = Array(T, sz[1], sz[2], sz[3], 0)
     else
         fsz = filesize(camfilename)
-        if fsz != sizeof(T)*prod(sz)
+		n_stacks = sz[end]
+        if fsz != sizeof(T)*prod(int64(sz))  # guard against overflow on 32bit
             warn("Size of image file is different from expected value")
-            n_stacks = ifloor(fsz / sizeof(T) / prod(sz[1:3]))
-            if n_stacks < sz[4]
-                println("Truncating to ", n_stacks, " stacks")
-            end
-            sz[4] = n_stacks
+            n_stacks = ifloor(fsz / sizeof(T) / prod(sz[1:end-1]))
+		end
+		if sizeof(T)*prod(int64(sz[1:end-1]))*n_stacks > typemax(Uint)
+			warn("File size is too big to mmap on 32bit")
+			n_stacks = ifloor(fsz / sizeof(T) / typemax(Uint))
+		end
+		if n_stacks < sz[end]
+			println("Truncating to ", n_stacks, length(sz) == 4 ? " stacks" : " frames")
+            sz[end] = n_stacks
         end
         sc = open(camfilename, "r")
-        data = mmap_array(T, ntuple(4, i->sz[i]), sc)
+        data = mmap_array(T, ntuple(length(sz), i->sz[i]), sc)
     end
     um_per_pixel = h["um per pixel"]
     if !(um_per_pixel > 0)
@@ -41,10 +50,11 @@ function imread{S<:IO}(s::S, ::Type{Images.ImagineFile})
     pstart = convert(u, h["piezo"]["stop position"])
     pstop = convert(u, h["piezo"]["start position"])
     dz = abs(pstart.value - pstop.value)/sz[3]
-    Image(data, ["spatialorder" => ["x", "l", "z"],
-                 "timedim" => 4,
+	
+    Image(data, ["spatialorder" => havez ? ["x", "l", "z"] : ["x", "l"],
+                 "timedim" => havez ? 4 : 3,
                  "colorspace" => "Gray",
-                 "pixelspacing" => [um_per_pixel, um_per_pixel, dz],
+                 "pixelspacing" => havez ? [um_per_pixel, um_per_pixel, dz] : [um_per_pixel, um_per_pixel],
                  "limits" => (uint16(0), uint16(2^h["original image depth"]-1)),
                  "imagineheader" => h,
                  "suppress" => Set("imagineheader")])
