@@ -11,8 +11,8 @@ type Image{T,N,A<:AbstractArray} <: AbstractImageDirect{T,N}
     data::A
     properties::Dict
 end
-Image{A<:AbstractArray}(data::A, props::Dict) = Image{eltype(data),ndims(data),A}(data,props)
-Image{A<:AbstractArray}(data::A) = Image(data,Dict{String,Any}())
+Image(data::AbstractArray, props::Dict) = Image{eltype(data),ndims(data),typeof(data)}(data,props)
+Image(data::AbstractArray) = Image(data,Dict{String,Any}())
 
 # Indexed image (colormap)
 type ImageCmap{T,N,A<:AbstractArray,C<:AbstractArray} <: AbstractImageIndexed{T,N}
@@ -20,8 +20,8 @@ type ImageCmap{T,N,A<:AbstractArray,C<:AbstractArray} <: AbstractImageIndexed{T,
     cmap::C
     properties::Dict
 end
-ImageCmap{A<:AbstractArray,C<:AbstractArray}(data::A, cmap::C, props::Dict) = ImageCmap{eltype(data),ndims(data),A,C}(data, cmap, props)
-ImageCmap{A<:AbstractArray,C<:AbstractArray}(data::A, cmap::C) = ImageCmap(data, cmap, Dict{String,Any}())
+ImageCmap(data::AbstractArray, cmap::AbstractArray, props::Dict) = ImageCmap{eltype(data),ndims(data),typeof(data),typeof(cmap)}(data, cmap, props)
+ImageCmap(data::AbstractArray, cmap::AbstractArray) = ImageCmap(data, cmap, Dict{String,Any}())
 
 # Dispatch-based scaling/clipping/type conversion
 abstract ScaleInfo{T}
@@ -78,35 +78,35 @@ copy(img::AbstractImage) = deepcopy(img)
 # copy, replacing the data
 copy(img::AbstractArray, data::AbstractArray) = data
 
-copy{A<:AbstractArray}(img::Image, data::A) = Image(data, copy(img.properties))
+copy(img::AbstractImageDirect, data::AbstractArray) = Image(data, copy(img.properties))
 
-copy{A<:AbstractArray}(img::ImageCmap, data::A) = ImageCmap(data, copy(img.cmap), copy(img.properties))
+copy(img::AbstractImageIndexed, data::AbstractArray) = ImageCmap(data, copy(img.cmap), copy(img.properties))
 
 # Provide new data but reuse the properties & cmap
 share(img::AbstractArray, data::AbstractArray) = data
 
-share{A<:AbstractArray}(img::Image, data::A) = Image(data, img.properties)
+share(img::AbstractImageDirect, data::AbstractArray) = Image(data, img.properties)
 
-share{A<:AbstractArray}(img::ImageCmap, data::A) = ImageCmap(data, img.cmap, img.properties)
+share(img::AbstractImageIndexed, data::AbstractArray) = ImageCmap(data, img.cmap, img.properties)
 
 # similar
-similar(img::Image) = Image(similar(img.data), copy(img.properties))
-similar(img::Image, ::NTuple{0}) = Image(similar(img.data), copy(img.properties))
+similar(img::AbstractImageDirect) = Image(similar(img.data), copy(img.properties))
+similar(img::AbstractImageDirect, ::NTuple{0}) = Image(similar(img.data), copy(img.properties))
 
-similar(img::Image, dims::Dims) = Image(similar(img.data, dims), copy(img.properties))
+similar(img::AbstractImageDirect, dims::Dims) = Image(similar(img.data, dims), copy(img.properties))
 
-similar{T}(img::Image, ::Type{T}) = Image(similar(img.data, T), copy(img.properties))
+similar{T}(img::AbstractImageDirect, ::Type{T}) = Image(similar(img.data, T), copy(img.properties))
 
-similar{T}(img::Image, ::Type{T}, dims::Dims) = Image(similar(img.data, T, dims), copy(img.properties))
+similar{T}(img::AbstractImageDirect, ::Type{T}, dims::Dims) = Image(similar(img.data, T, dims), copy(img.properties))
 
-similar(img::ImageCmap) = ImageCmap(similar(img.data), copy(img.cmap), copy(img.properties))
-similar(img::ImageCmap, ::NTuple{0}) = ImageCmap(similar(img.data), copy(img.cmap), copy(img.properties))
+similar(img::AbstractImageIndexed) = ImageCmap(similar(img.data), copy(img.cmap), copy(img.properties))
+similar(img::AbstractImageIndexed, ::NTuple{0}) = ImageCmap(similar(img.data), copy(img.cmap), copy(img.properties))
 
-similar{T}(img::ImageCmap, dims::Dims) = ImageCmap(similar(img.data, dims), copy(img.cmap), copy(img.properties))
+similar{T}(img::AbstractImageIndexed, dims::Dims) = ImageCmap(similar(img.data, dims), copy(img.cmap), copy(img.properties))
 
-similar{T}(img::ImageCmap, ::Type{T}) = ImageCmap(similar(img.data, T), copy(img.cmap), copy(img.properties))
+similar{T}(img::AbstractImageIndexed, ::Type{T}) = ImageCmap(similar(img.data, T), copy(img.cmap), copy(img.properties))
 
-similar{T}(img::ImageCmap, ::Type{T}, dims::Dims) = ImageCmap(similar(img.data, T, dims), copy(img.cmap), copy(img.properties))
+similar{T}(img::AbstractImageIndexed, ::Type{T}, dims::Dims) = ImageCmap(similar(img.data, T, dims), copy(img.cmap), copy(img.properties))
 
 # convert
 convert{I<:AbstractImageDirect}(::Type{I}, img::I) = img
