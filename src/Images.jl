@@ -49,6 +49,7 @@ export # types
     limits,
     nimages,
     pixelspacing,
+    properties,
     refim,
     rerange!,
     reslice!,

@@ -393,6 +393,15 @@ show(io::IO, o::Overlay) = print(io, summary(o), " with colors ", o.colors)
 #     meaning (horizontal and vertical, respectively, irrespective of storage order).
 #     If supplied, you must have one entry per spatial dimension.
 
+properties(img::AbstractArray) = [
+    "colorspace" => colorspace(img),
+    "colordim" => colordim(img),
+    "timedim" => timedim(img),
+    "limits" => limits(img),
+    "pixelspacing" => pixelspacing(img),
+    "spatialorder" => spatialorder(img)]
+properties(img::AbstractImage) = img.properties
+
 haskey(a::AbstractArray, k::String) = false
 haskey(img::AbstractImage, k::String) = haskey(img.properties, k)
 
