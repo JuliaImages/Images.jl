@@ -5,7 +5,7 @@
 # Note: this is not GC-safe. Unfortunately, holding a reference to the
 # parent array inside the SubVector object seems to force construction,
 # and that makes it slow. So you need to manually hold the parent while
-# using SubArray.
+# using SubVector.
 immutable SubVector{T} <: AbstractArray{T,1}
     ptr::Ptr{T}
     stride::Int
@@ -505,6 +505,54 @@ function imadjustintensity{T}(img::AbstractArray{T}, range)
     tmp[tmp .> 1] = 1
     tmp[tmp .< 0] = 0
     out = tmp
+end
+
+function red{T<:ColorValue}(img::AbstractArray{T})
+    out = Array(Float64, size(img))
+    for i = 1:length(img)
+        out[i] = convert(RGB, img[i]).r
+    end
+    out
+end
+
+function red(img::AbstractArray)
+    if colorspace(img) == "RGB" || colorspace(img) == "RGBA"
+        ret = sliceim(img, "color", 1)
+    else
+        error("Not yet implemented")
+    end
+end
+
+function green{T<:ColorValue}(img::AbstractArray{T})
+    out = Array(Float64, size(img))
+    for i = 1:length(img)
+        out[i] = convert(RGB, img[i]).g
+    end
+    out
+end
+
+function green(img::AbstractArray)
+    if colorspace(img) == "RGB" || colorspace(img) == "RGBA"
+        ret = sliceim(img, "color", 2)
+    else
+        error("Not yet implemented")
+    end
+end
+
+function blue{T<:ColorValue}(img::AbstractArray{T})
+    out = Array(Float64, size(img))
+    for i = 1:length(img)
+        out[i] = convert(RGB, img[i]).b
+    end
+    out
+end
+
+function blue(img::AbstractArray)
+    if colorspace(img) == "RGB" || colorspace(img) == "RGBA"
+        ret = sliceim(img, "color", 3)
+    else
+        error("Not yet implemented")
+    end
 end
 
 # FIXME
