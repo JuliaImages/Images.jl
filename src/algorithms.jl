@@ -151,8 +151,6 @@ function clip!(A::Array{RGB})
     A
 end
 
-convert{I<:AbstractImageDirect}(::Type{I}, img::Union(StridedArray,AbstractImageDirect)) = scale(ScaleNone{eltype(I)}(), img)
-
 type BitShift{T,N} <: ScaleInfo{T} end
 
 scale{T,N}(scalei::BitShift{T,N}, val::Integer) = convert(T, val>>>N)
@@ -216,6 +214,15 @@ function scaleinfo{To<:Unsigned,From<:FloatingPoint}(::Type{To}, img::AbstractAr
     end
 end
 
+function scaleinfo(::Type{RGB}, img::AbstractArray)
+    l = limits(img)
+    if !isinf(l[1]) && !isinf(l[2])
+        return ScaleMinMax{Float64,eltype(img)}(l[1],l[2],1.0/(l[2]-l[1]))
+    else
+        return ScaleNone{Float64}()
+    end
+end
+
 scaledefault{T<:Unsigned}(img::AbstractArray{T}) = limits(img)
 function scaledefault{T<:FloatingPoint}(img::AbstractArray{T})
     l = limits(img)
@@ -256,6 +263,41 @@ scaleminmax(img::AbstractArray, mn::Number, mx::Number) = scaleminmax(Uint8, img
 
 sc(img::AbstractArray) = scale(scaleminmax(img), img)
 sc(img::AbstractArray, mn::Number, mx::Number) = scale(scaleminmax(img, mn, mx), img)
+
+convert{I<:AbstractImageDirect}(::Type{I}, img::Union(StridedArray,AbstractImageDirect)) = scale(ScaleNone{eltype(I)}(), img)
+
+function convert(::Type{Image{RGB}}, img::Union(StridedArray,AbstractImageDirect))
+    cs = colorspace(img)
+    if !(cs == "RGB" || cs == "RGBA")
+        error("Only RGB and RGBA colorspaces supported currently")
+    end
+    scalei = scaleinfo(RGB, img)
+    cd = colordim(img)
+    d = data(img)
+    p = parent(d)
+    sz = size(img)
+    szout = sz[setdiff(1:ndims(img), cd)]
+    dout = Array(RGB, szout)
+    if colordim(img) == 1
+        s = stride(d,2)
+        for i in 0:length(dout)-1
+            dout[i+1] = RGB(scale(scalei,d[i*s+1]), scale(scalei,d[i*s+2]), scale(scalei,d[i*s+3]))
+        end
+    elseif cd == ndims(img)
+        s = stride(d,cd)
+        for i in 1:length(dout)
+            dout[i] = RGB(scale(scalei,d[i]), scale(scalei,d[i+s]), scale(scalei,d[i+2s]))
+        end
+    else
+        error("Not yet implemented")
+    end
+    p = properties(img)
+    delete!(p, "colordim")
+    delete!(p, "limits")
+    delete!(p, "colorspace")
+    Image(dout, p)
+end
+
 
 #### Overlay AbstractArray implementation ####
 length(o::Overlay) = isempty(o.channels) ? 0 : length(o.channels[1])
@@ -317,6 +359,22 @@ end
 (+)(a::RGB, b::RGB) = RGB(a.r+b.r, a.g+b.g, a.b+b.b)
 
 #### Converting 2d image to uint32 color ####
+function uint32color!{T<:ColorValue,N,A<:StridedArray}(buf::Array{Uint32,2}, img::Union(StridedArray,Image{T,N,A}))
+    assert2d(img)
+    firstindex, spsz, spstride, csz, cstride = iterate_spatial(img)
+    isz, jsz = spsz
+    istride, jstride = spstride
+    A = parent(img)
+    w, h = isz, jsz
+    if size(buf, 1) != w || size(buf, 2) != h
+        @show size(buf)
+        @show w
+        @show h
+        error("Output buffer is of the wrong size")
+    end
+    uint32color!(buf, A, firstindex, isz, jsz, istride, jstride)
+end
+
 function uint32color!{T,N,A<:StridedArray}(buf::Array{Uint32,2}, img::Union(StridedArray,Image{T,N,A}), scalei::ScaleInfo = scaleinfo(Uint8, img))
     assert2d(img)
     cs = colorspace(img)
@@ -339,6 +397,18 @@ function uint32color!{T,N,A<:StridedArray}(buf::Array{Uint32,2}, img::Union(Stri
         end
     end
     uint32color!(buf, A, cs, firstindex, isz, jsz, istride, jstride, cstride, scalei)
+end
+
+function uint32color!{T<:ColorValue}(buf::Array{Uint32,2}, A::Array{T}, firstindex::Int, isz::Int, jsz::Int, istride::Int, jstride::Int)
+    l = 1
+    for j = 1:jsz
+        k = firstindex + (j-1)*jstride
+        for i = k:istride:k+(isz-1)*istride
+            buf[l] = uint32(convert(RGB24, A[i]))
+            l += 1
+        end
+    end
+    buf
 end
 
 function uint32color!(buf::Array{Uint32,2}, A::Array, cs::String, firstindex::Int, isz::Int, jsz::Int, istride::Int, jstride::Int, cstride::Int, scalei::ScaleInfo)

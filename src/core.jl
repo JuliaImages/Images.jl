@@ -438,6 +438,9 @@ isdirect(img::AbstractArray) = true
 isdirect(img::AbstractImageDirect) = true
 isdirect(img::AbstractImageIndexed) = false
 
+colorspace{C<:ColorValue}(img::AbstractMatrix{C}) = string(C)
+colorspace{C<:ColorValue}(img::AbstractArray{C,3}) = string(C)
+colorspace{C<:ColorValue}(img::Union(Array{C},SubArray{C},Image{C})) = string(C)
 colorspace(img::AbstractMatrix{Bool}) = "Binary"
 colorspace(img::AbstractArray{Bool}) = "Binary"
 colorspace(img::AbstractArray{Bool,3}) = "Binary"
@@ -445,12 +448,15 @@ colorspace{T<:Union(Int32,Uint32)}(img::AbstractMatrix{T}) = "RGB24"
 colorspace(img::AbstractMatrix) = "Gray"
 colorspace{T}(img::AbstractArray{T,3}) = (size(img, defaultarraycolordim) == 3) ? "RGB" : error("Cannot infer colorspace of Array, use an AbstractImage type")
 colorspace(img::AbstractImage{Bool}) = "Binary"
-colorspace{T}(img::AbstractImage{T}) = get(img.properties, "colorspace", "Unknown")
+colorspace(img::AbstractImage) = get(img.properties, "colorspace", "Unknown")
 
+colordim{C<:ColorValue}(img::AbstractMatrix{C}) = 0
+colordim{C<:ColorValue}(img::AbstractArray{C,3}) = 0
+colordim{C<:ColorValue}(img::Union(Array{C},SubArray{C},Image{C})) = 0
 colordim(img::AbstractMatrix) = 0
 colordim{T}(img::AbstractArray{T,3}) = (size(img, defaultarraycolordim) == 3) ? 3 : error("Cannot infer colordim of Array, use an AbstractImage type")
-colordim{T}(img::AbstractImageDirect{T}) = get(img, "colordim", 0)
-colordim{T}(img::AbstractImageIndexed{T}) = 0
+colordim(img::AbstractImageDirect) = get(img, "colordim", 0)
+colordim(img::AbstractImageIndexed) = 0
 
 timedim(img) = get(img, "timedim", 0)
 

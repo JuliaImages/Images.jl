@@ -89,6 +89,8 @@ function imread(filename::String)
     end
 end
 
+imread{C<:ColorValue}(filename::String, ::Type{C}) = imread(filename, ImageMagick, C)
+
 # Identify via magic bytes
 function image_decode_magic{S<:IO}(stream::S, magicbuf::Vector{Uint8}, candidates::AbstractVector{Int})
     maxlen = 0
@@ -173,7 +175,8 @@ function imread(filename::String, ::Type{ImageMagick})
         sz = (w, h)
         spatialorder = ["x", "y"]
     end
-    prop = ["colorspace" => colorspace, "spatialorder" => spatialorder]
+    T = typedict[bitdepth]
+    prop = ["colorspace" => colorspace, "spatialorder" => spatialorder, "limits" => (zero(T), typemax(T))]
     # Extract the data
     isdirect = true   # haven't figured out how to get indexed image data yet
     if isdirect
@@ -182,11 +185,11 @@ function imread(filename::String, ::Type{ImageMagick})
             # TODO: figure out how to directly extract GrayAlpha
             cmd = `convert $filename -depth $bitdepth gray:-`
             stream, _ = readsfrom(cmd)
-            data = read(stream, typedict[bitdepth], sz...)
+            data = read(stream, T, sz...)
             if hasalpha
                 cmd = `convert $filename -alpha extract -depth $bitdepth gray:-`
                 stream, _ = readsfrom(cmd)
-                alpha = read(stream, typedict[bitdepth], sz...)
+                alpha = read(stream, T, sz...)
                 data = cat(ndims(data)+1, data, alpha)
                 prop["colordim"] = ndims(data)
             end
@@ -194,7 +197,7 @@ function imread(filename::String, ::Type{ImageMagick})
             cmd = `convert $filename -depth $bitdepth $colorspace:-`
             stream, _ = readsfrom(cmd)
             nchannels = length(colorspace)
-            data = read(stream, typedict[bitdepth], nchannels, sz...)
+            data = read(stream, T, nchannels, sz...)
             prop["colordim"] = 1
         end
         return Image(data, prop)
@@ -210,6 +213,8 @@ function imread(filename::String, ::Type{ImageMagick})
         return ImageCmap(data, [], prop)
     end
 end
+
+imread{C<:ColorValue}(filename::String, ::Type{ImageMagick}, ::Type{C}) = convert(Image{C}, imread(filename, ImageMagick))
 
 function imwrite(img, filename::String, ::Type{ImageMagick})
     cs = colorspace(img)
@@ -485,7 +490,7 @@ function imread{S<:IO}(stream::S, ::Type{PPMBinary})
     else
         error("Image file may be corrupt. Are there really more than 16 bits in this image?")
     end
-    Image(dat, ["colorspace" => "RGB", "colordim" => 1, "storageorder" => ["c", "x", "y"], "limits" => (0,maxval)])
+    Image(dat, ["colorspace" => "RGB", "colordim" => 1, "storageorder" => ["c", "x", "y"], "limits" => (zero(eltype(dat)),maxval)])
 end
 
 function imread{S<:IO}(stream::S, ::Type{PGMBinary})
@@ -508,7 +513,7 @@ function imread{S<:IO}(stream::S, ::Type{PGMBinary})
     else
         error("Image file may be corrupt. Are there really more than 16 bits in this image?")
     end
-    Image(dat, ["colorspace" => "Gray", "storageorder" => ["x", "y"], "limits" => (0,maxval)])
+    Image(dat, ["colorspace" => "Gray", "storageorder" => ["x", "y"], "limits" => (zero(eltype(dat)),maxval)])
 end
 
 function imread{S<:IO}(stream::S, ::Type{PBMBinary})
