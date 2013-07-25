@@ -176,9 +176,13 @@ function imread{S<:IO}(stream::S, ::Type{Images.AndorSIF})
     offset = position(stream) # start of the actual pixel data, 32-bit float, little-endian
 
     pixels = read(stream, Float32, width, height, frames)
-    prop = {"colorspace" => "Gray", "spatialorder" => ["y", "x"], "ixon" => ixon, "suppress" => Set("ixon")}
+    prop = {"colorspace" => "Gray",
+            "spatialorder" => ["y", "x"],
+            "ixon" => ixon,
+            "suppress" => Set("ixon"),
+            "pixelspacing" => [1, 1]}
     if frames > 1
         prop["timedim"] = 3
     end
-    Image(pixels, prop)
+    Image(float64(pixels), prop)
 end
