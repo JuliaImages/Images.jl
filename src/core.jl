@@ -61,6 +61,17 @@ function Overlay(channels::(AbstractArray...), colors::(ColorValue...), clim)
     Overlay{AT,N}(channels, col, scalei, trues(n))
 end
 
+# Returns the overlay as an image, if possible
+function OverlayImage(channels::(AbstractArray...), colors::(ColorValue...), clim)
+    ovr = Overlay(channels, colors, clim)
+    for i = 1:length(channels)
+        if isa(channels[i], AbstractImage)
+            return Image(ovr, copy(properties(channels[i])))
+        end
+    end
+    ovr
+end
+
 #### Core operations ####
 
 eltype{T}(img::AbstractImage{T}) = T

@@ -489,7 +489,7 @@ function uint32color!{N,O<:Overlay,I}(buf::Array{Uint32,N}, img::Union(SubArray{
     end
     A = data(img)
     O = parent(A)
-    rgb = O[A.indexes]
+    rgb = O[A.indexes...]
     for i = 1:length(buf)
         buf[i] = convert(Uint32, convert(RGB24, rgb[i]))
     end

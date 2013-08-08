@@ -23,6 +23,7 @@ export # types
     ClipMax,
     ClipMinMax,
     Overlay,
+    OverlayImage,
     ScaleInfo,
     ScaleMinMax,
     ScaleNone,
