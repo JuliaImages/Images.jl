@@ -111,6 +111,7 @@ export # types
     imdog,
     imedge,
     imfilter,
+    imfilter_gaussian,
     imgaussiannoise,
     imlaplacian,
     imlineardiffusion,
