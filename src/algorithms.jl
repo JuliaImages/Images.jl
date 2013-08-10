@@ -304,6 +304,7 @@ length(o::Overlay) = isempty(o.channels) ? 0 : length(o.channels[1])
 size(o::Overlay) = isempty(o.channels) ? (0,) : size(o.channels[1])
 size(o::Overlay, d::Integer) = isempty(o.channels) ? 0 : size(o.channels[1],d)
 eltype(o::Overlay) = RGB
+nchannels(o::Overlay) = length(o.channels)
 
 similar(o::Overlay) = Array(RGB, size(o))
 similar(o::Overlay, ::NTuple{0}) = Array(RGB, size(o))
@@ -314,7 +315,7 @@ similar{T}(o::Overlay, ::Type{T}, sz) = Array(T, sz)
 
 function getindex(o::Overlay, indexes::Integer...)
     rgb = RGB(0,0,0)
-    for i = 1:length(o.channels)
+    for i = 1:nchannels(o)
         if o.visible[i]
             rgb += scale(o.scalei[i], o.channels[i][indexes...])*o.colors[i]
         end
@@ -323,8 +324,14 @@ function getindex(o::Overlay, indexes::Integer...)
 end
 
 function getindex(o::Overlay, indexes...)
-    rgb = fill(RGB(0,0,0), map(length, indexes))
-    for i = 1:length(o.channels)
+    len = [length(i) for i in indexes]
+    n = length(len)
+    while len[n] == 1
+        pop!(len)
+        n -= 1
+    end
+    rgb = fill(RGB(0,0,0), len...)
+    for i = 1:nchannels(o)
         if o.visible[i]
             tmp = scale(o.scalei[i], o.channels[i][indexes...])
             accumulate!(rgb, tmp, o.colors[i])
