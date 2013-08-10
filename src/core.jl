@@ -66,7 +66,9 @@ function OverlayImage(channels::(AbstractArray...), colors::(ColorValue...), cli
     ovr = Overlay(channels, colors, clim)
     for i = 1:length(channels)
         if isa(channels[i], AbstractImage)
-            return Image(ovr, copy(properties(channels[i])))
+            prop = copy(properties(channels[i]))
+            delete!(prop, "colorspace")
+            return Image(ovr, prop)
         end
     end
     ovr
