@@ -127,10 +127,14 @@ end
 
 function scale{T}(scalei::ScaleInfo{T}, img::Union(StridedArray,AbstractImageDirect))
     out = similar(img, T)
-    dout = data(out)
+    scale!(out, scalei, img)
+end
+
+function scale!{T}(out, scalei::ScaleInfo{T}, img::Union(StridedArray,AbstractImageDirect))
     dimg = data(img)
+    dout = data(out)
     for i = 1:length(dimg)
-        dout[i] = scale(scalei, dimg[i])
+        dout[i] = scale(scalei, dimg[i])  # FIXME subarrays?
     end
     out
 end
