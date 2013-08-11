@@ -27,38 +27,45 @@ ImageCmap(data::AbstractArray, cmap::AbstractArray) = ImageCmap(data, cmap, Dict
 abstract ScaleInfo{T}
 
 # An array type for colorized overlays of grayscale images
-type Overlay{AT<:(AbstractArray...), N} <: AbstractArray{RGB,N}
+type Overlay{AT<:(AbstractArray...),N,SIT<:(ScaleInfo...)} <: AbstractArray{RGB,N}
     channels::AT   # this holds the grayscale arrays
     colors::Vector{RGB}
-    scalei::Vector{ScaleInfo}
-    visible::BitArray
-end
+    scalei::SIT
+    visible::BitVector
 
-function Overlay(channels::(AbstractArray...), colors::(ColorValue...), clim)
-    n = length(channels)
-    if length(colors) != n || length(clim) != n
-        error("Mismatch in number of channels")
-    end
-    sz = size(channels[1])
-    for i = 2:n
-        if size(channels[i]) != sz
-            error("All arrays must have the same size")
+    function Overlay(channels::(AbstractArray...), colors, scalei::(ScaleInfo...), visible::BitVector)
+        nc = length(channels)
+        for i = 1:nc
+            if ndims(channels[i]) != N
+                error("All arrays must have the same dimensionality")
+            end
         end
+        sz = size(channels[1])
+        for i = 2:nc
+            if size(channels[i]) != sz
+                error("All arrays must have the same size")
+            end
+        end
+        if length(colors) != nc || length(scalei) != nc || length(visible) != nc
+            error("All input must have the same length")
+        end
+        new(channels, [convert(RGB, c) for c in colors], scalei, visible)
     end
+end
+Overlay(channels::(AbstractArray...), colors, scalei::(ScaleInfo...), visible::BitVector) =
+    Overlay{typeof(channels),ndims(channels[1]),typeof(scalei)}(channels,colors,scalei,visible)
+Overlay(channels::(AbstractArray...), colors, scalei::(ScaleInfo...)) =
+    Overlay{typeof(channels),ndims(channels[1]),typeof(scalei)}(channels,colors,scalei,trues(length(channels)))
+
+function Overlay(channels::(AbstractArray...), colors, clim)
+    n = length(channels)
     for i = 1:n
         if length(clim[i]) != 2
             error("clim must be a 2-vector")
         end
     end
-    N = ndims(channels[1])
-    col = Array(RGB, n)
-    scalei = Array(ScaleInfo, n)
-    for i = 1:n
-        col[i] = convert(RGB, colors[i])
-        scalei[i] = scaleminmax(Float64, channels[i], clim[i][1], clim[i][2])
-    end
-    AT = ntuple(n, i->typeof(channels[i]))
-    Overlay{AT,N}(channels, col, scalei, trues(n))
+    scalei = ntuple(n, i->scaleminmax(Float64, channels[i], clim[i][1], clim[i][2]))
+    Overlay{typeof(channels),ndims(channels[1]),typeof(scalei)}(channels, colors, scalei, trues(n))
 end
 
 # Returns the overlay as an image, if possible
