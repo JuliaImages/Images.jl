@@ -229,14 +229,9 @@ function getindexim{T<:Real}(img::AbstractImage, I::Union(Real,AbstractArray{T})
     ret
 end
 
-# Version with Colon support
-getindexim(img::AbstractImage, I...) = getindexim(img, ntuple(length(I), i-> isa(I[i], Colon) ? (1:size(img,i)) : I[i])...)
-
 getindexim(img::AbstractImage, dimname::String, ind::Union(Real,AbstractArray), nameind...) = getindexim(img, named2coords(img, dimname, ind, nameind...)...)
 
 subim(img::AbstractImage, I::RangeIndex...) = share(img, sub(img.data, I...))
-
-subim(img::AbstractImage, I...) = subim(img, ntuple(length(I), i-> isa(I[i], Colon) ? (1:size(img,i)) : I[i])...)
 
 subim(img::AbstractImage, dimname::String, ind::RangeIndex, nameind...) = subim(img, named2coords(img, dimname, ind, nameind...)...)
 
@@ -285,11 +280,15 @@ function sliceim(img::AbstractImage, I::RangeIndex...)
     ret
 end
 
-sliceim(img::AbstractImage, I...) = sliceim(img, ntuple(length(I), i-> isa(I[i], Colon) ? (1:size(img,i)) : I[i])...)
-
 sliceim(img::AbstractImage, dimname::String, ind::RangeIndex, nameind...) = subim(img, named2coords(img, dimname, ind, nameind...)...)
 
 sliceim(img::AbstractImage, dimname::String, ind::RangeIndex, nameind...) = sliceim(img, named2coords(img, dimname, ind, nameind...)...)
+
+# Support colon indexes
+getindexim(img::AbstractImage, I...) = getindexim(img, ntuple(length(I), i-> isa(I[i], Colon) ? (1:size(img,i)) : I[i])...)
+subim(img::AbstractImage, I...) = subim(img, ntuple(length(I), i-> isa(I[i], Colon) ? (1:size(img,i)) : I[i])...)
+sliceim(img::AbstractImage, I...) = sliceim(img, ntuple(length(I), i-> isa(I[i], Colon) ? (1:size(img,i)) : I[i])...)
+
 
 # We'll frequently want to pull out different 2d slices from the same image, so here's a type and set of functions making that easier.
 # We deliberately do not require the user to specify the full list of new slicing/ranging parameters, as often we'll want to change some aspects (e.g., z-slice) but not others (e.g., color coordinates)
@@ -371,6 +370,7 @@ function rerange!(img::AbstractImage, sd::SliceData, I::(RangeIndex...,))
     rerange!(img.data, sd, I...)
     img
 end
+
 
 const emptyset = Set()
 function show(io::IO, img::AbstractImageDirect)

@@ -2,6 +2,7 @@ module Images
 
 using Color
 using Grid
+using Cartesian
 
 importall Base
 import Base.Graphics: width, height
