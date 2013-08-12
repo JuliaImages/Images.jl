@@ -88,6 +88,7 @@ eltype{T}(::Type{AbstractImage{T}}) = T
 
 size(img::AbstractImage) = size(img.data)
 size(img::AbstractImage, i::Integer) = size(img.data, i)
+size(img::AbstractImage, dimname::String) = size(img.data, named2dimension(img, dimname))
 
 ndims(img::AbstractImage) = ndims(img.data)
 
@@ -714,20 +715,7 @@ function named2coords(img::AbstractImage, nameind...)
     so = spatialorder(img)
     for i = 1:2:length(nameind)
         dimname = nameind[i]
-        local n
-        if dimname == "color"
-            n = colordim(img)
-        elseif dimname == "t"
-            n = timedim(img)
-        else
-            n = 0
-            for j = 1:length(so)
-                if dimname == so[j]
-                    n = j
-                    break
-                end
-            end
-        end
+        n = named2dimension(img, dimname, so)
         if n == 0
             error("There is no dimension called ", dimname)
         end
@@ -736,24 +724,40 @@ function named2coords(img::AbstractImage, nameind...)
     tuple(c...)
 end
 
+function named2dimension(img::AbstractImage, dimname, so = spatialorder(img))
+    local n
+    if dimname == "color"
+        n = colordim(img)
+    elseif dimname == "t"
+        n = timedim(img)
+    else
+        cd = colordim(img)
+        td = timedim(img)
+        matched = false
+        j = 1
+        n = 1
+        while j <= length(so)
+            while n == cd || n == td
+                n += 1
+            end
+            if dimname == so[j]
+                matched = true
+                break
+            end
+            n += 1
+            j += 1
+        end
+        if !matched; n = 0; end
+    end
+    n
+end
+
 function named2dimindexes(img::AbstractImage, dimnames::String...)
     so = spatialorder(img)
     dimindexes = Array(Int, length(dimnames))
     for i = 1:length(dimnames)
         dimname = dimnames[i]
-        n = 0
-        if dimname == "color"
-            n = colordim(img)
-        elseif dimname == "t"
-            n = timedim(img)
-        else
-            for j = 1:length(so)
-                if dimname == so[j]
-                    n = j
-                    break
-                end
-            end
-        end
+        n = named2dimension(img, dimname, so)
         if n == 0
             error("There is no dimension called ", dimname)
         end
