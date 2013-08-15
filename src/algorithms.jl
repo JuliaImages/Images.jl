@@ -568,14 +568,25 @@ for N = 1:5
 end
 
 
-rgb24(r::Uint8, g::Uint8, b::Uint8) = convert(Uint32,r)<<16 | convert(Uint32,g)<<8 | convert(Uint32,b)
+function rgb24(r::Uint8, g::Uint8, b::Uint8)
+    ret::Uint32
+    ret = convert(Uint32,r)<<16 | convert(Uint32,g)<<8 | convert(Uint32,b)
+end
 
-argb32(a::Uint8, r::Uint8, g::Uint8, b::Uint8) = convert(Uint32,a)<<24 | convert(Uint32,r)<<16 | convert(Uint32,g)<<8 | convert(Uint32,b)
+function argb32(a::Uint8, r::Uint8, g::Uint8, b::Uint8)
+    ret::Uint32
+    ret = convert(Uint32,a)<<24 | convert(Uint32,r)<<16 | convert(Uint32,g)<<8 | convert(Uint32,b)
+end
 
-rgb24{T}(scalei::ScaleInfo{Uint8}, r::T, g::T, b::T) = convert(Uint32,scale(scalei,r))<<16 | convert(Uint32,scale(scalei,g))<<8 | convert(Uint32,scale(scalei,b))
+function rgb24{T}(scalei::ScaleInfo{Uint8}, r::T, g::T, b::T)
+    ret::Uint32
+    ret = convert(Uint32,scale(scalei,r))<<16 | convert(Uint32,scale(scalei,g))<<8 | convert(Uint32,scale(scalei,b))
+end
 
-argb32{T}(scalei::ScaleInfo{Uint8}, a::T, r::T, g::T, b::T) = convert(Uint32,scale(scalei,a))<<24 | convert(Uint32,scale(scalei,r))<<16 | convert(Uint32,scale(scalei,g))<<8 | convert(Uint32,scale(scalei,b))
-
+function argb32{T}(scalei::ScaleInfo{Uint8}, a::T, r::T, g::T, b::T)
+    ret::Uint32
+    convert(Uint32,scale(scalei,a))<<24 | convert(Uint32,scale(scalei,r))<<16 | convert(Uint32,scale(scalei,g))<<8 | convert(Uint32,scale(scalei,b))
+end
 
 #### Color palettes ####
 
