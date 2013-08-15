@@ -29,6 +29,7 @@ img = imread(file)
 @assert eltype(img) == Uint8
 outname = joinpath(writedir, "pencil_tile.tif")
 imwrite(img, outname)
+sleep(0.2)
 imgc = imread(outname)
 @assert img.data == imgc.data
 
