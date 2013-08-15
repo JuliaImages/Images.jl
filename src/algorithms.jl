@@ -389,12 +389,13 @@ function uint32color!(buf::Array{Uint32}, img, args...)
     cd = colordim(img)
     if cd != 0
         Ivec = RangeIndex[ I... ]
-        @show Ivec[cd]
         Ivec[cd] = 1:1
         _uint32color!(buf, p, tuple(Ivec...), colorspace(img), stride(p, cd), args...)
-        return buf
+    elseif colorspace(img) == "RGB24"
+        _uint32color_rgb24!(buf, p, I, args...)
+    else
+        _uint32color!(buf, p, I, args...)
     end
-    _uint32color!(buf, p, I, args...)
     buf
 end
 
@@ -407,6 +408,7 @@ for N = 1:4
             end
             k = 0
             @forindexes $N o i I A begin
+                val = A[oA]
                 buf[k+=1] = convert(RGB24, val)
             end
             buf
@@ -439,6 +441,21 @@ for N = 1:4
     end
 end
 
+for N = 1:4
+    @eval begin
+        function _uint32color_rgb24!{T}(buf::Array{Uint32}, A::AbstractArray{T,$N}, I, scalei::ScaleInfo = scaleinfo(Uint8, A))
+            if length(I) != $N
+                error("Indexes must match the dimensionality of the array")
+            end
+            k = 0
+            @forindexes $N o i I A begin
+                buf[k+=1] = A[oA]
+            end
+            buf
+        end
+    end
+end
+
 # Arrays where one dimension encodes color or transparency
 for N = 2:5
     @eval begin
@@ -450,7 +467,7 @@ for N = 2:5
             if cs == "GrayAlpha"
                 @forindexes $N o i I A begin
                     gr = A[oA]
-                    buf[k+=1] = argb32(scalei, gr, gr, gr)
+                    buf[k+=1] = argb32(scalei, A[oA+cstride], gr, gr, gr)
                 end
             elseif cs == "RGB"
                 @forindexes $N o i I A begin
