@@ -492,7 +492,7 @@ end
 
 parent(O::Overlay) = O
 translate_indexes(A::AbstractArray, I...) = I
-translate_indexes(S::SubArray, I...) = Base.translate_indexes(S, I...)
+translate_indexes(S::SubArray, I...) = tuple(Base.translate_indexes(S, I...)...)
 
 iterable(A::AbstractArray) = true
 
@@ -511,10 +511,11 @@ function uint32color_overlay!(buf::Array{Uint32}, A::Overlay, I)
     uint32color_overlay!(buf, p[A.visible], pI[A.visible], A.colors[A.visible], A.scalei[A.visible])
     buf
 end
-uint32color_overlay!{T}(buf::Array{Uint32}, channels::NTuple{0}, I, colors::Vector{RGB}, scalei) = buf
+# uint32color_overlay!{T}(buf::Array{Uint32}, channels::NTuple{0}, I, colors::Vector{RGB}, scalei) = buf
+uint32color_overlay!{T}(buf::Array{Uint32}, channels::(AbstractArray...), I::NTuple{0}, colors::Vector{RGB}, scalei) = buf
 for N = 1:5
     @eval begin
-        function uint32color_overlay!{T}(buf::Array{Uint32}, channels::(AbstractArray{T,$N}...), I, colors::Vector{RGB}, scalei)
+        function uint32color_overlay!(buf::Array{Uint32}, channels::(AbstractArray...), I::(NTuple{$N}...), colors::Vector{RGB}, scalei)
             if length(I[1]) != $N
                 error("Indexes must match the dimensionality of the arrays")
             end
