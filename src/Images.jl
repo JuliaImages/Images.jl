@@ -1,11 +1,13 @@
 module Images
 
 using Color
-using Grid
 using Cartesian
 
 importall Base
 import Base.Graphics: width, height
+
+# We'll use Grid's Counter, but don't need the rest of it
+include(joinpath(Pkg.dir(),"Grid","src","counter.jl"))
 
 include("core.jl")
 include("config.jl")
