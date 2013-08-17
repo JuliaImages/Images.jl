@@ -416,10 +416,16 @@ for N = 1:4
     end
 end
 
+function _uint32color!(buf::Array{Uint32}, A::AbstractArray, I) 
+    si = scaleinfo(Uint8, A)
+    _uint32color!(buf, A, I, si)
+end
+
 # Grayscale arrays
+# Note: for an explanation of TI, see julia issue #4090
 for N = 1:4
     @eval begin
-        function _uint32color!{T}(buf::Array{Uint32}, A::AbstractArray{T,$N}, I, scalei::ScaleInfo = scaleinfo(Uint8, A))
+        function _uint32color!{T,TI}(buf::Array{Uint32}, A::AbstractArray{T,$N}, I::TI, scalei::ScaleInfo)
             if length(I) != $N
                 error("Indexes must match the dimensionality of the array")
             end
@@ -443,7 +449,7 @@ end
 
 for N = 1:4
     @eval begin
-        function _uint32color_rgb24!{T}(buf::Array{Uint32}, A::AbstractArray{T,$N}, I, scalei::ScaleInfo = scaleinfo(Uint8, A))
+        function _uint32color_rgb24!{T,TI}(buf::Array{Uint32}, A::AbstractArray{T,$N}, I::TI)
             if length(I) != $N
                 error("Indexes must match the dimensionality of the array")
             end
@@ -459,7 +465,7 @@ end
 # Arrays where one dimension encodes color or transparency
 for N = 2:5
     @eval begin
-        function _uint32color!{T}(buf::Array{Uint32}, A::AbstractArray{T,$N}, I, cs::String, cstride::Int, scalei::ScaleInfo = scaleinfo(Uint8, A))
+        function _uint32color!{T,TI}(buf::Array{Uint32}, A::AbstractArray{T,$N}, I::TI, cs::String, cstride::Int, scalei::ScaleInfo = scaleinfo(Uint8, A))
             if length(I) != $N
                 error("Indexes must match the dimensionality of the array")
             end
