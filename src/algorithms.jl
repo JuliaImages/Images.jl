@@ -511,8 +511,7 @@ function uint32color_overlay!(buf::Array{Uint32}, A::Overlay, I)
     uint32color_overlay!(buf, p[A.visible], pI[A.visible], A.colors[A.visible], A.scalei[A.visible])
     buf
 end
-# uint32color_overlay!{T}(buf::Array{Uint32}, channels::NTuple{0}, I, colors::Vector{RGB}, scalei) = buf
-uint32color_overlay!{T}(buf::Array{Uint32}, channels::(AbstractArray...), I::NTuple{0}, colors::Vector{RGB}, scalei) = buf
+uint32color_overlay!(buf::Array{Uint32}, channels::(AbstractArray...), I::NTuple{0}, colors::Vector{RGB}, scalei) = buf
 for N = 1:5
     @eval begin
         function uint32color_overlay!(buf::Array{Uint32}, channels::(AbstractArray...), I::(NTuple{$N}...), colors::Vector{RGB}, scalei)
