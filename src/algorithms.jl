@@ -366,6 +366,17 @@ function accumulate!(rgb::Array{RGB}, A::Array{Float64}, color::RGB)
     end
 end
 
+for N = 1:4
+    @eval begin
+        function accumulate!{T}(rgb::Array{RGB,$N}, A::AbstractArray{T,$N}, color::RGB, scalei::ScaleInfo)
+            k = 0
+            @inbounds @nloops $N i A begin
+                rgb[k+=1] += scale(scalei, (@nref $N A i))*color
+            end
+        end
+    end
+end
+
 (*)(f::Float64, c::RGB) = RGB(f*c.r, f*c.g, f*c.b)
 (+)(a::RGB, b::RGB) = RGB(a.r+b.r, a.g+b.g, a.b+b.b)
 
@@ -381,20 +392,23 @@ function uint32color(img, args...)
 end
 
 function uint32color!(buf::Array{Uint32}, img, args...)
-    p = parent(data(img))
-    I = parentindexes(data(img))
-    if isa(p, Overlay)
-        return uint32color_overlay!(buf, p, I)
-    end
-    cd = colordim(img)
-    if cd != 0
-        Ivec = RangeIndex[ I... ]
-        Ivec[cd] = 1:1
-        _uint32color!(buf, p, tuple(Ivec...), colorspace(img), stride(p, cd), args...)
-    elseif colorspace(img) == "RGB24"
-        _uint32color_rgb24!(buf, p, I, args...)
+    dat = data(img)
+    cdim = colordim(img)
+    if cdim != 0
+        sz = size(img)
+        if size(buf) != tuple(sz[1:cdim-1]..., sz[cdim+1:end]...)
+            error("Size mismatch")
+        end
+        _uint32color!(buf, dat, colorspace(img), cdim, args...)
     else
-        _uint32color!(buf, p, I, args...)
+        if size(buf) != size(img)
+            error("Size mismatch")
+        end
+        if colorspace(img) == "RGB24"
+            _uint32color_rgb24!(buf, dat, args...)
+        else
+            _uint32color_gray!(buf, dat, args...)
+        end
     end
     buf
 end
@@ -402,13 +416,14 @@ end
 # ColorValue arrays
 for N = 1:4
     @eval begin
-        function _uint32color!{C<:ColorValue}(buf::Array{Uint32}, A::Array{C,$N}, I)
-            if length(I) != $N
-                error("Indexes must match the dimensionality of the array")
+        function uint32color!{C<:ColorValue}(buf::Array{Uint32}, img::AbstractArray{C,$N})
+            if size(buf) != size(img)
+                error("Size mismatch")
             end
+            dat = data(img)
             k = 0
-            @forindexes $N o i I A begin
-                val = A[oA]
+            @inbounds @nloops $N i dat begin
+                val = @nref $N dat i
                 buf[k+=1] = convert(RGB24, val)
             end
             buf
@@ -416,46 +431,28 @@ for N = 1:4
     end
 end
 
-function _uint32color!(buf::Array{Uint32}, A::AbstractArray, I) 
-    si = scaleinfo(Uint8, A)
-    _uint32color!(buf, A, I, si)
-end
-
 # Grayscale arrays
-# Note: for an explanation of TI, see julia issue #4090
 for N = 1:4
     @eval begin
-        function _uint32color!{T,TI}(buf::Array{Uint32}, A::AbstractArray{T,$N}, I::TI, scalei::ScaleInfo)
-            if length(I) != $N
-                error("Indexes must match the dimensionality of the array")
-            end
-            if !iterable(A) # It's better to write your own _uint32color! method, but this can be easy
-                tmp = A[I...]
-                for k = 1:length(tmp)
-                    gr = scale(scalei, tmp[k])
-                    buf[k] = rgb24(gr, gr, gr)
-                end
-            else
-                k = 0
-                @forindexes $N o i I A begin
-                    gr = scale(scalei, A[oA])
-                    buf[k+=1] = rgb24(gr, gr, gr)
-                end
+        function _uint32color_gray!{T}(buf::Array{Uint32}, A::AbstractArray{T,$N}, scalei::ScaleInfo = scaleinfo(Uint8, A))
+            k = 0
+            @inbounds @nloops $N i A begin
+                val = @nref $N A i
+                gr = scale(scalei, val)
+                buf[k+=1] = rgb24(gr, gr, gr)
             end
             buf
         end
     end
 end
 
+# RGB24 arrays (just a copy operation)
 for N = 1:4
     @eval begin
-        function _uint32color_rgb24!{T,TI}(buf::Array{Uint32}, A::AbstractArray{T,$N}, I::TI)
-            if length(I) != $N
-                error("Indexes must match the dimensionality of the array")
-            end
+        function _uint32color_rgb24!{T}(buf::Array{Uint32}, A::AbstractArray{T,$N})
             k = 0
-            @forindexes $N o i I A begin
-                buf[k+=1] = A[oA]
+            @inbounds @nloops $N i A begin
+                buf[k+=1] = @nref $N A i
             end
             buf
         end
@@ -463,29 +460,38 @@ for N = 1:4
 end
 
 # Arrays where one dimension encodes color or transparency
-for N = 2:5
+for N = 1:5
     @eval begin
-        function _uint32color!{T,TI}(buf::Array{Uint32}, A::AbstractArray{T,$N}, I::TI, cs::String, cstride::Int, scalei::ScaleInfo = scaleinfo(Uint8, A))
-            if length(I) != $N
-                error("Indexes must match the dimensionality of the array")
-            end
+        function _uint32color!{T}(buf::Array{Uint32}, A::AbstractArray{T,$N}, cs::String, cdim::Int, scalei::ScaleInfo = scaleinfo(Uint8, A))
             k = 0
             if cs == "GrayAlpha"
-                @forindexes $N o i I A begin
-                    gr = A[oA]
-                    buf[k+=1] = argb32(scalei, A[oA+cstride], gr, gr, gr)
+                @inbounds @nloops $N i d->(d==cdim)?1:(1:size(A,d)) begin
+                    gr = @nref $N A i
+                    alpha = @nrefshift $N A i d->(d==cdim)?1:0
+                    buf[k+=1] = argb32(scalei, alpha, gr, gr, gr)
                 end
             elseif cs == "RGB"
-                @forindexes $N o i I A begin
-                    buf[k+=1] = rgb24(scalei, A[oA], A[oA+cstride], A[oA+2cstride])
+                @inbounds @nloops $N i d->(d==cdim)?1:(1:size(A,d)) begin
+                    r = @nref $N A i
+                    g = @nrefshift $N A i d->(d==cdim)?1:0
+                    b = @nrefshift $N A i d->(d==cdim)?2:0
+                    buf[k+=1] = rgb24(scalei, r, g, b)
                 end
             elseif cs == "ARGB"
-                @forindexes $N o i I A begin
-                    buf[k+=1] = argb32(scalei, A[oA], A[oA+cstride], A[oA+2cstride], A[oA+3cstride])
+                @inbounds @nloops $N i d->(d==cdim)?1:(1:size(A,d)) begin
+                    a = @nref $N A i
+                    r = @nrefshift $N A i d->(d==cdim)?1:0
+                    g = @nrefshift $N A i d->(d==cdim)?2:0
+                    b = @nrefshift $N A i d->(d==cdim)?3:0
+                    buf[k+=1] = argb32(scalei, a, r, g, b)
                 end
             elseif cs == "RGBA"
-                @forindexes $N o i I A begin
-                    buf[k+=1] = argb32(scalei, A[oA+3cstride], A[oA], A[oA+cstride], A[oA+2cstride])
+                @inbounds @nloops $N i d->(d==cdim)?1:(1:size(A,d)) begin
+                    r = @nref $N A i
+                    g = @nrefshift $N A i d->(d==cdim)?1:0
+                    b = @nrefshift $N A i d->(d==cdim)?2:0
+                    a = @nrefshift $N A i d->(d==cdim)?3:0
+                    buf[k+=1] = argb32(scalei, a, r, g, b)
                 end
             else
                 error("colorspace ", cs, " not yet supported")
@@ -495,82 +501,22 @@ for N = 2:5
 end
 
 # Overlays
-
-parent(O::Overlay) = O
-translate_indexes(A::AbstractArray, I...) = I
-translate_indexes(S::SubArray, I...) = tuple(Base.translate_indexes(S, I...)...)
-
-iterable(A::AbstractArray) = true
-
-# function uint32color!{T,N}(buf::Array{Uint32}, img::Union(O, Image{T,N,O}))
-#     A = data(img)
-#     n = nchannels(A)
-#     p = ntuple(n, i -> parent(A.channels[i]))
-#     pI = ntuple(n, i -> parentindexes(A.channels[i]))
-#     uint32color_overlay!(buf, p[A.visible], pI[A.visible], A.colors[A.visible], A.scalei[A.visible])
-# end
-# A complexity here is that we may need to do index translation, if it's an Overlay of SubArrays
-function uint32color_overlay!(buf::Array{Uint32}, A::Overlay, I)
-    n = nchannels(A)
-    p = ntuple(n, i -> parent(data(A.channels[i])))
-    pI = ntuple(n, i -> translate_indexes(data(A.channels[i]), I...))
-    uint32color_overlay!(buf, p[A.visible], pI[A.visible], A.colors[A.visible], A.scalei[A.visible])
-    buf
-end
-uint32color_overlay!(buf::Array{Uint32}, channels::(AbstractArray...), I::NTuple{0}, colors::Vector{RGB}, scalei) = buf
-for N = 1:5
-    @eval begin
-        function uint32color_overlay!(buf::Array{Uint32}, channels::(AbstractArray...), I::(NTuple{$N}...), colors::Vector{RGB}, scalei)
-            if length(I[1]) != $N
-                error("Indexes must match the dimensionality of the arrays")
-            end
-            k = 0
-            if length(channels) > 3 || any([!iterable(c) for c in channels])
-                rgb = fill(RGB(0,0,0), size(buf))
-                for i = 1:length(channels)
-                    tmp = scale(scalei[i], channels[i][I[i]...])
-                    col = colors[i]
-                    for k = 1:length(tmp)
-                        rgb[k] += tmp[k]*col
-                    end
-                end
-                clip!(rgb)
-                for i = 1:length(buf)
-                    buf[i] = convert(Uint32, convert(RGB24, rgb[i]))
-                end
-                return
-            else
-                # Faster (non-allocating) versions for common cases
-                A = channels[1]
-                AI = I[1]
-                rgbA = colors[1]
-                sA = scalei[1]
-                if length(channels) == 1
-                    @forindexes $N o i AI A begin
-                        buf[k+=1] = uint32(convert(RGB24, scale(sA, A[oA])*rgbA))
-                    end
-                else
-                    B = channels[2]
-                    BI = I[2]
-                    rgbB = colors[2]
-                    sB = scalei[2]
-                    if length(channels) == 2
-                        @forindexes $N o i AI A BI B begin
-                            buf[k+=1] = uint32(convert(RGB24, scale(sA, A[oA])*rgbA + scale(sB, B[oB])*rgbB))
-                        end
-                    else
-                        C = channels[3]
-                        CI = I[3]
-                        rgbC = colors[3]
-                        sC = scalei[3]
-                        @forindexes $N o i AI A BI B CI C begin
-                            buf[k+=1] = uint32(convert(RGB24, scale(sA, A[oA])*rgbA + scale(sB, B[oB])*rgbB + scale(sC, C[oC])*rgbC))
-                        end
-                    end
-                end
-            end
+function uint32color!{O<:Overlay,T,N}(buf::Array{Uint32}, img::Union(Overlay, Image{T,N,O}, SubArray{T,N,O}, Image{T,N,SubArray{T,N,O}}))
+    if size(buf) != size(img)
+        error("Size mismatch")
+    end
+    rgb = fill(RGB(0,0,0), size(buf))
+    dat = data(img)
+    for i = 1:nchannels(dat)
+        if dat.visible[i]
+            accumulate!(rgb, dat.channels[i], dat.colors[i], dat.scalei[i])
         end
     end
+    clip!(rgb)
+    for i = 1:length(buf)
+        buf[i] = convert(RGB24, rgb[i])
+    end
+    buf
 end
 
 
