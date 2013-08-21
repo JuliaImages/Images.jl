@@ -192,7 +192,7 @@ delete!(img::AbstractImage, propname::String) = delete!(img.properties, propname
 # getindex, sub, and slice return a value or AbstractArray, not an Image
 getindex(img::AbstractImage, i::Real) = getindex(img.data, i)
 
-getindex(img::AbstractImage, I::Union(Real,AbstractArray)...) = getindex(img.data, I...)
+getindex(img::AbstractImage, I::Union(Real,AbstractVector)...) = getindex(img.data, I...)
 
 # getindex{T<:Real}(img::AbstractImage, dimname::String, ind::Union(Real,AbstractArray{T}), nameind...) = getindex(img.data, named2coords(img, dimname, ind, nameind...)...)
 getindex(img::AbstractImage, dimname::ASCIIString, ind, nameind...) = getindex(img.data, named2coords(img, dimname, ind, nameind...)...)

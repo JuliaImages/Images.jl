@@ -327,7 +327,11 @@ function getindex(o::Overlay, indexes::Integer...)
     clip(rgb)
 end
 
-function getindex(o::Overlay, indexes...)
+# Fix ambiguity warning
+getindex(o::Overlay, i::Real) = getindex_overlay(o, i)
+getindex(o::Overlay, indexes::Union(Real,AbstractVector)...) = getindex_overlay(o, indexes...)
+
+function getindex_overlay(o::Overlay, indexes::Union(Real,AbstractVector)...)
     len = [length(i) for i in indexes]
     n = length(len)
     while len[n] == 1
@@ -346,6 +350,7 @@ end
 
 getindex(o::Overlay, indexes::(AbstractVector...)) = getindex(o, indexes...)
 
+setindex!(o::Overlay, x, index::Real) = error("Overlays are read-only")
 setindex!(o::Overlay, x, indexes...) = error("Overlays are read-only")
 
 # Identical to getindex except it saves a call to each array's getindex
