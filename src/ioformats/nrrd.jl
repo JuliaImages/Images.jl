@@ -155,6 +155,65 @@ function imread{S<:IO}(stream::S, ::Type{Images.NRRDFile})
     img
 end
 
+function imwrite(img, sheader::IO, ::Type{Images.NRRDFile}, props::Dict = Dict{ASCIIString,Any}())
+    println(sheader, "NRRD0001")
+    # Write the datatype
+    T = get(props, "type", eltype(data(img)))
+    if T<:FloatingPoint
+        println(sheader, "type: ", (T == Float32) ? "float" : "double")
+    else
+        println(sheader, "type: ", lowercase(string(T)))
+    end
+    # Extract size and kinds
+    sz = get(props, "sizes", size(img))
+    kinds = ["space" for i = 1:length(sz)]
+    td = timedim(img)
+    if td != 0
+        kinds[td] = "time"
+    end
+    cd = colordim(img)
+    if cd != 0
+        if colorspace(img) == "RGB"
+            kinds[cd] = "RGB-color"
+        elseif size(img, cd) == 3
+            kinds[cd] = "3-color"
+        else
+            kinds[cd] = "list"
+        end
+    end
+    kinds = get(props, "kinds", kinds)
+    # Write size and kinds
+    println(sheader, "dimension: ", length(sz))
+    print(sheader, "sizes:")
+    for z in sz
+        print(sheader, " ", z)
+    end
+    print(sheader, "\nkinds:")
+    for k in kinds
+        print(sheader, " ", k)
+    end
+    print(sheader, "\n")
+    println(sheader, "encoding: ", get(props, "encoding", "raw"))
+    println(sheader, "endian: ", get(props, "endian", ENDIAN_BOM == 0x04030201 ? "little" : "big"))
+    ps = get(props, "pixelspacing", pixelspacing(img))
+    print(sheader, "spacings:")
+    for x in ps
+        print(sheader, " ", x)
+    end
+    print(sheader,"\n")
+    datafilename = get(props, "datafile", "")
+    if isempty(datafilename)
+        datafilename = get(props, "data file", "")
+    end
+    if isempty(datafilename)
+        write(sheader, "\n")
+        write(sheader, data(img))
+    else
+        println(sheader, "data file: ", datafilename)
+    end
+    sheader
+end
+
 function parse_vector_int(s::String)
     ss = split(s, r"[ ,;]", false)
     v = Array(Int, length(ss))
