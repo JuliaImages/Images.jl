@@ -117,7 +117,7 @@ function image_decode_magic{S<:IO}(stream::S, magicbuf::Vector{Uint8}, candidate
     return -1
 end
 
-function imwrite(img, filename::String)
+function imwrite(img, filename::String, args...)
     _, ext = splitext(filename)
     ext = lowercase(ext)
     if haskey(fileext, ext)
@@ -127,13 +127,19 @@ function imwrite(img, filename::String)
         if !filesrcloaded[index]
             loadformat(index)
         end
-        imwrite(img, filename, filetype[index])
+        imwrite(img, filename, filetype[index], args...)
     elseif have_imagemagick
         # Fall back on ImageMagick
         imwrite(img, filename, ImageMagick)
     else
         error("Do not know how to write file ", filename)
     end
+end
+
+function imwrite{T<:ImageFileType}(img, filename::String, ::Type{T}, args...)
+    s = open(filename, "w")
+    imwrite(img, s, T, args...)
+    close(s)
 end
 
 #### Implementation of specific formats ####
