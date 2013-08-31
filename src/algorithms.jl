@@ -506,15 +506,18 @@ for N = 1:5
 end
 
 # Overlays
-function uint32color!{O<:Overlay,T,N}(buf::Array{Uint32}, img::Union(Overlay, Image{T,N,O}, SubArray{T,N,O}, Image{T,N,SubArray{T,N,O}}))
+_wrap(A::Array, B::AbstractArray) = B
+_wrap(S::SubArray, B::AbstractArray) = sub(B, S.indexes...)
+function uint32color!{O<:Overlay,N,IT<:(RangeIndex...,)}(buf::Array{Uint32}, img::Union(Overlay, Image{RGB,N,O}, SubArray{RGB,N,O,IT}, Image{RGB,N,SubArray{RGB,N,O,IT}}))
     if size(buf) != size(img)
         error("Size mismatch")
     end
     rgb = fill(RGB(0,0,0), size(buf))
     dat = data(img)
-    for i = 1:nchannels(dat)
-        if dat.visible[i]
-            accumulate!(rgb, dat.channels[i], dat.colors[i], dat.scalei[i])
+    p = parent(dat)
+    for i = 1:nchannels(p)
+        if p.visible[i]
+            accumulate!(rgb, _wrap(dat, data(p.channels[i])), p.colors[i], p.scalei[i])
         end
     end
     clip!(rgb)
