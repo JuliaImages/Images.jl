@@ -65,6 +65,16 @@ function imread{S<:IO}(stream::S, ::Type{Images.NRRDFile})
     if header["encoding"] == "raw"
         # Use memory-mapping for large files
         if prod(sz) > 10^8
+            fn = stream2name(sdata)
+            datalen = div(filesize(fn) - position(sdata), sizeof(T))
+            strds = [1,cumprod(sz)]
+            k = length(sz)
+            sz[k] = div(datalen, strds[k])
+            while sz[k] == 0 && k > 1
+                pop!(sz)
+                k -= 1
+                sz[k] = div(datalen, strds[k])
+            end
             A = mmap_array(T, tuple(sz...), sdata, position(sdata))
             if haskey(header, "endian")
                 if header["endian"] != myendian()
@@ -139,6 +149,14 @@ function parse_vector_int(s::String)
         v[i] = int(ss[i])
     end
     return v
+end
+
+function stream2name(s::IO)
+    name = s.name
+    if !beginswith(name, "<file ")
+        error("stream name ", name, " doesn't fit expected pattern")
+    end
+    name[7:end-1]
 end
 
 end
