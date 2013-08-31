@@ -700,11 +700,19 @@ function showdictlines(io::IO, dict::Dict, suppress::Set)
         if k == "suppress"
             continue
         end
-        if !contains(suppress, k)
-            print(io, "\n    ", k, ": ", v)
+        if !in(k, suppress)
+            print(io, "\n    ", k, ": ")
+            printdictval(io, v)
         else
             print(io, "\n    ", k, ": <suppressed>")
         end
+    end
+end
+
+printdictval(io::IO, v) = print(io, v)
+function printdictval(io::IO, v::Vector)
+    for i = 1:length(v)
+        print(io, " ", v[i])
     end
 end
 

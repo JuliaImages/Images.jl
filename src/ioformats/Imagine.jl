@@ -178,7 +178,7 @@ function parse_header(s::IOStream, ::Type{Images.ImagineFile})
             end
             k = this_line[1:m.offset-1]
             v = this_line[m.offset+1:end]
-            if contains(compound_fields, k)
+            if in(k, compound_fields)
                 thisdict = Dict{ASCIIString, Any}()
                 # Split on semicolon
                 strs = split(v, r";")

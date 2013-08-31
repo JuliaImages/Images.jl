@@ -470,7 +470,7 @@ function parse_netpbm_size(stream::IO)
 end
 
 function parse_netpbm_maxval(stream::IO)
-    eatwspace_comment(stream, '#')
+    skipchars(stream, isspace, linecomment='#')
     maxvalline = strip(readline(stream))
     parseint(maxvalline)
 end

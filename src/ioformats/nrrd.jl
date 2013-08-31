@@ -96,7 +96,7 @@ function imread{S<:IO}(stream::S, ::Type{Images.NRRDFile})
             k = kinds[i]
             if k == "time"
                 props["timedim"] = i
-            elseif contains(("list","3-color","4-color"), k)
+            elseif in(k, ("list","3-color","4-color"))
                 props["colordim"] = i
             elseif k == "RGB-color"
                 props["colordim"] = i
