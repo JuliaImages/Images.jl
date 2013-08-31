@@ -35,7 +35,7 @@ end
 
 function imread{S<:IO}(stream::S, ::Type{Images.NRRDFile})
     version = ascii(read(stream, Uint8, 4))
-    eatwspace(stream)
+    skipchars(stream,isspace)
     header = Dict{ASCIIString, ASCIIString}()
     comments = Array(ASCIIString, 0)
     line = strip(readline(stream))
@@ -58,7 +58,7 @@ function imread{S<:IO}(stream::S, ::Type{Images.NRRDFile})
         sdata = open(header["datafile"])
     end
     # Parse properties and read the data
-    sz = parse_vector_int(header["size"])
+    sz = parse_vector_int(header["sizes"])
     T = typedict[header["type"]]
     props = Dict{ASCIIString, Any}()
     local A
