@@ -133,6 +133,19 @@ function imread{S<:IO}(stream::S, ::Type{Images.NRRDFile})
         end
         props["limits"] = (mn, mx)
     end
+    if haskey(header, "spacings")
+        ps = parse_vector_float(header["spacings"])
+        keep = trues(length(ps))
+        cd = get(props, "colordim", 0)
+        if 1 <= cd <= length(keep)
+            keep[cd] = false
+        end
+        td = get(props, "timedim", 0)
+        if 1 <= td <= length(keep)
+            keep[td] = false
+        end
+        props["pixelspacing"] = ps[keep]
+    end
     if !isempty(comments)
         props["comments"] = comments
     end
@@ -147,6 +160,15 @@ function parse_vector_int(s::String)
     v = Array(Int, length(ss))
     for i = 1:length(ss)
         v[i] = int(ss[i])
+    end
+    return v
+end
+
+function parse_vector_float(s::String)
+    ss = split(s, r"[ ,;]", false)
+    v = Array(Float64, length(ss))
+    for i = 1:length(ss)
+        v[i] = float(ss[i])
     end
     return v
 end
