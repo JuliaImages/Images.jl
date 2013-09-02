@@ -259,8 +259,8 @@ function maxfinite{T<:FloatingPoint}(A::AbstractArray{T})
     ret
 end
 
-scaleminmax{To<:Integer,From}(::Type{To}, img::AbstractArray{From}, mn::Number, mx::Number) = ScaleMinMax{To,From}(convert(From,mn), convert(From,mx), typemax(To)/(mx-mn))
-scaleminmax{To<:FloatingPoint,From}(::Type{To}, img::AbstractArray{From}, mn::Number, mx::Number) = ScaleMinMax{To,From}(convert(From,mn), convert(From,mx), 1/(mx-mn))
+scaleminmax{To<:Integer,From}(::Type{To}, img::AbstractArray{From}, mn::Number, mx::Number) = ScaleMinMax{To,From}(convert(From,mn), convert(From,mx), float64(typemax(To)/(mx-mn)))
+scaleminmax{To<:FloatingPoint,From}(::Type{To}, img::AbstractArray{From}, mn::Number, mx::Number) = ScaleMinMax{To,From}(convert(From,mn), convert(From,mx), 1.0/(mx-mn))
 scaleminmax{To}(::Type{To}, img::AbstractArray) = scaleminmax(To, img, minfinite(img), maxfinite(img))
 scaleminmax(img::AbstractArray) = scaleminmax(Uint8, img)
 scaleminmax(img::AbstractArray, mn::Number, mx::Number) = scaleminmax(Uint8, img, mn, mx)
