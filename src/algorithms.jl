@@ -382,7 +382,7 @@ for N = 1:4
     end
 end
 
-(*)(f::Float64, c::RGB) = RGB(f*c.r, f*c.g, f*c.b)
+(*)(f::FloatingPoint, c::RGB) = RGB(f*c.r, f*c.g, f*c.b)
 (+)(a::RGB, b::RGB) = RGB(a.r+b.r, a.g+b.g, a.b+b.b)
 
 #### Converting images to uint32 color ####
