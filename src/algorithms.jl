@@ -227,6 +227,17 @@ function scaleinfo(::Type{RGB}, img::AbstractArray)
     end
 end
 
+# Multiplies by a scaling factor and then clips to the range [-1,1].
+# Intended for positive/negative coloring
+type ScaleSigned <: ScaleInfo{Float64}
+    s::Float64
+end
+
+function scale(scalei::ScaleSigned, val::Real)
+    sval::Float64 = scalei.s*val
+    return sval>1.0 ? 1.0 : (sval<-1.0 ? -1.0 : sval)
+end
+
 scaledefault{T<:Unsigned}(img::AbstractArray{T}) = limits(img)
 function scaledefault{T<:FloatingPoint}(img::AbstractArray{T})
     l = limits(img)
@@ -525,6 +536,27 @@ function uint32color!{O<:Overlay,N,IT<:(RangeIndex...,)}(buf::Array{Uint32}, img
         buf[i] = convert(RGB24, rgb[i])
     end
     buf
+end
+
+# Signed grayscale arrays colorized magenta (positive) and green (negative
+for N = 1:4
+    @eval begin
+        function _uint32color_gray!{T}(buf::Array{Uint32}, A::AbstractArray{T,$N}, scalei::ScaleSigned)
+            k = 0
+            @inbounds @nloops $N i A begin
+                val = @nref $N A i
+                gr = scale(scalei, val)
+                if gr >= 0
+                    gr8 = iround(Uint8, 255.0*gr)
+                    buf[k+=1] = rgb24(gr8, 0x00, gr8)
+                else
+                    gr8 = iround(Uint8, -255.0*gr)
+                    buf[k+=1] = rgb24(0x00, gr8, 0x00)
+                end
+            end
+            buf
+        end
+    end
 end
 
 
