@@ -148,10 +148,6 @@ function writemime(stream::IO, ::MIME"image/png", img::AbstractImageDirect)
     scalei = scaleinfo(typedict[bitdepth], img)
     cmd = imagemagick_write_cmd(img, "png:-")
     ostream, istream, proc = readandwrite(cmd)
-    # For now, convert to direct
-    if isa(img, AbstractImageIndexed)
-        img = convert(Image, img)
-    end
     if beginswith(cs, "Gray")
         writegray(istream, img, scalei)
     else
