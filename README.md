@@ -60,7 +60,9 @@ It's helpful to have ImageMagick installed on your system, as this relies on it 
 
 ## Image viewing
 
-All code for the display of images has been moved to [ImageView](https://github.com/timholy/ImageView.jl).
+If you're using the IJulia notebook, images will be displayed [automatically](http://htmlpreview.github.com/?https://github.com/timholy/Images.jl/blob/master/ImagesDemo.html).
+
+Julia code for the display of images has been moved to [ImageView](https://github.com/timholy/ImageView.jl).
 
 ## Documentation ##
 
