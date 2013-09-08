@@ -86,7 +86,6 @@ The central core seems to be in fairly good shape, with new utility functions st
 - A framework for generic I/O,
   using the magic bytes of the file,
   is already in place. Several custom image formats already employ it.
-- Image writing does not yet support transparency, but works otherwise. Reading supports transparency for RGB images.
 - TIFF reading can be found at https://github.com/rephorm/TIFF.jl
   and should be incorporated.
 
