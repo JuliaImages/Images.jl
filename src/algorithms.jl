@@ -581,7 +581,7 @@ end
 
 function argb32{T}(scalei::ScaleInfo{Uint8}, a::T, r::T, g::T, b::T)
     ret::Uint32
-    convert(Uint32,scale(scalei,a))<<24 | convert(Uint32,scale(scalei,r))<<16 | convert(Uint32,scale(scalei,g))<<8 | convert(Uint32,scale(scalei,b))
+    ret = convert(Uint32,scale(scalei,a))<<24 | convert(Uint32,scale(scalei,r))<<16 | convert(Uint32,scale(scalei,g))<<8 | convert(Uint32,scale(scalei,b))
 end
 
 #### Color palettes ####
