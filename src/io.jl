@@ -269,9 +269,6 @@ function imagemagick_write_cmd(img, filename::String)
         if !(csparsed == "rgb" || csparsed == "rgba")
             error("Output format ", csparsed, " not recognized")
         end
-        if csparsed == "rgba"
-            error("ImageMagick doesn't do the right thing here, sorry")
-        end
         return `convert -size $(w)x$(h) -depth $bitdepth $csparsed:- $filename`
     end
 end
