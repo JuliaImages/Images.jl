@@ -142,6 +142,26 @@ function imwrite{T<:ImageFileType}(img, filename::String, ::Type{T}, args...)
     close(s)
 end
 
+function writemime(stream::IO, ::MIME"image/png", img::AbstractImageDirect)
+    cs = colorspace(img)
+    bitdepth = 8*sizeof(eltype(img))
+    scalei = scaleinfo(typedict[bitdepth], img)
+    cmd = imagemagick_write_cmd(img, "png:-")
+    ostream, istream, proc = readandwrite(cmd)
+    # For now, convert to direct
+    if isa(img, AbstractImageIndexed)
+        img = convert(Image, img)
+    end
+    if beginswith(cs, "Gray")
+        writegray(istream, img, scalei)
+    else
+        writecolor(istream, img, scalei)
+    end
+    close(istream)
+    b = readbytes(ostream)
+    write(stream, b)
+end
+
 #### Implementation of specific formats ####
 
 ## ImageMagick's convert ##
@@ -222,7 +242,10 @@ end
 
 imread{C<:ColorValue}(filename::String, ::Type{ImageMagick}, ::Type{C}) = convert(Image{C}, imread(filename, ImageMagick))
 
-function imwrite(img, filename::String, ::Type{ImageMagick})
+function imagemagick_write_cmd(img, filename::String)
+    if filename == "-"
+        filename = "png:-"
+    end
     cs = colorspace(img)
     bitdepth = 8*sizeof(eltype(img))
     csout = cs
@@ -238,40 +261,41 @@ function imwrite(img, filename::String, ::Type{ImageMagick})
     if eltype(img) <: FloatingPoint
         bitdepth = 8  # TODO?: allow this to be specified
     end
-    T = typedict[bitdepth]
-    scalei = scaleinfo(typedict[bitdepth], img)
     w, h = widthheight(img)
-    local cmd
+    if beginswith(cs, "Gray")
+        if cs == "GrayAlpha"
+            error("Not yet implemented")
+            # Need to figure out how to write separate channels to the file twice
+        end
+        return `convert -size $(w)x$(h) -depth $bitdepth gray: $filename`
+    else
+        csparsed = lowercase(csout)
+        if !(csparsed == "rgb" || csparsed == "rgba")
+            error("Output format ", csparsed, " not recognized")
+        end
+        if csparsed == "rgba"
+            error("ImageMagick doesn't do the right thing here, sorry")
+        end
+        return `convert -size $(w)x$(h) -depth $bitdepth $csparsed:- $filename`
+    end
+end
+
+function imwrite(img, filename::String, ::Type{ImageMagick})
+    cs = colorspace(img)
+    bitdepth = 8*sizeof(eltype(img))
+    scalei = scaleinfo(typedict[bitdepth], img)
+    cmd = imagemagick_write_cmd(img, filename)
+    stream, proc = writesto(cmd)
     # For now, convert to direct
     if isa(img, AbstractImageIndexed)
         img = convert(Image, img)
     end
-    if true # isdirect(img)
-        if cs[1:min(4,length(cs))] == "Gray"
-            if cs == "GrayAlpha"
-                error("Not yet implemented")
-                # Need to figure out how to write separate channels to the file twice
-            end
-            cmd = `convert -size $(w)x$(h) -depth $bitdepth gray: $filename`
-            stream, proc = writesto(cmd)
-            spawn(cmd)
-            writegray(stream, img, scalei)
-            close(stream)
-        else
-            csparsed = lowercase(csout)
-            if !(csparsed == "rgb" || csparsed == "rgba")
-                error("Output format ", csparsed, " not recognized")
-            end
-            if csparsed == "rgba"
-                error("ImageMagick doesn't do the right thing here, sorry")
-            end
-            cmd = `convert -size $(w)x$(h) -depth $bitdepth $csparsed:- $filename`
-            stream, proc = writesto(cmd)
-            spawn(cmd)
-            writecolor(stream, img, scalei)
-            close(stream)
-        end
+    if beginswith(cs, "Gray")
+        writegray(stream, img, scalei)
+    else
+        writecolor(stream, img, scalei)
     end
+    close(stream)
 end
 
 # Write grayscale values in horizontal-major order
