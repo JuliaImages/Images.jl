@@ -550,12 +550,16 @@ for N = 1:4
             @inbounds @nloops $N i A begin
                 val = @nref $N A i
                 gr = scale(scalei, val)
-                if gr >= 0
-                    gr8 = iround(Uint8, 255.0*gr)
-                    buf[k+=1] = rgb24(gr8, 0x00, gr8)
+                if isfinite(gr)
+                    if gr >= 0
+                        gr8 = iround(Uint8, 255.0*gr)
+                        buf[k+=1] = rgb24(gr8, 0x00, gr8)
+                    else
+                        gr8 = iround(Uint8, -255.0*gr)
+                        buf[k+=1] = rgb24(0x00, gr8, 0x00)
+                    end
                 else
-                    gr8 = iround(Uint8, -255.0*gr)
-                    buf[k+=1] = rgb24(0x00, gr8, 0x00)
+                    buf[k+=1] = zero(Uint32)
                 end
             end
             buf
