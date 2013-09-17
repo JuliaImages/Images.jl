@@ -30,6 +30,7 @@ export # types
     ScaleInfo,
     ScaleMinMax,
     ScaleNone,
+    ScaleSigned,
     SliceData,
 
     # constants
@@ -47,6 +48,7 @@ export # types
     coords_spatial,
     data,
     getindexim,
+    grayim,
     height,
     isdirect,
     isxfirst,

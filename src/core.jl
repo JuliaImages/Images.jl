@@ -23,6 +23,9 @@ end
 ImageCmap(data::AbstractArray, cmap::AbstractArray, props::Dict) = ImageCmap{eltype(data),ndims(data),typeof(data),typeof(cmap)}(data, cmap, props)
 ImageCmap(data::AbstractArray, cmap::AbstractArray) = ImageCmap(data, cmap, Dict{String,Any}())
 
+# Convenience constructors
+grayim{T}(A::AbstractArray{T,3}) = Image(A, (ASCIIString=>Any)["colorspace"=>"Gray", "spatialorder"=>["x","y","z"]])
+
 # Dispatch-based scaling/clipping/type conversion
 abstract ScaleInfo{T}
 
