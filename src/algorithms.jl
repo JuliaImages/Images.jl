@@ -1,99 +1,3 @@
-#### 1d SubArrays ####
-# Some algorithms, like IIR filtering, benefit from something like this
-# (currently mapslices is just too slow, and would benefit from an in-place syntax)
-
-# Note: this is not GC-safe. Unfortunately, holding a reference to the
-# parent array inside the SubVector object seems to force construction,
-# and that makes it slow. So you need to manually hold the parent while
-# using SubVector.
-immutable SubVector{T} <: AbstractArray{T,1}
-    ptr::Ptr{T}
-    stride::Int
-    len::Int
-end
-
-SubVector{T}(A::Array{T}, firstindex::Integer, strd::Integer, len::Integer) = SubVector{T}(convert(Ptr{T}, A) + (firstindex - 1)*sizeof(T), int(strd), int(len))
-
-function SubVector{T}(A::Array{T}, indexes::RangeIndex...)
-    n = 0
-    for i in indexes
-        n += !isa(i, Int)
-    end
-    if n > 1
-        error("Must be 1-dimensional")
-    end
-    firstindex = 1
-    strd = 0
-    len = 1
-    pstride = 1
-    for j = 1:length(indexes)
-        i = indexes[j]
-        if min(i) < 1 || max(i) > size(A, j)
-            error(BoundsError)
-        end
-        if isa(i, Int)
-            firstindex += (i-1)*pstride
-        else
-            strd = pstride * step(i)
-            len = length(i)
-            firstindex += (first(i)-1)*pstride
-        end
-        pstride *= size(A,j)
-    end
-    SubVector(A, firstindex, strd, len)
-end
-
-function SubVector{T}(s::SubVector{T}, index::RangeIndex)
-    if min(index) < 1 || max(index) > length(s)
-        error(BoundsError)
-    end
-    ptr = s.ptr + (first(index)-1)*s.stride*sizeof(T)
-    strd = s.stride * step(index)
-    len = length(index)
-    SubVector{T}(ptr, strd, len)
-end
-
-# Functions needed to support SubVector as an AbstractArray
-ndims(s::SubVector) = 1
-length(s::SubVector) = s.len
-size(s::SubVector) = (s.len,)
-size(s::SubVector, d::Integer) = (d == 1) ? s.len : 1
-eltype{T}(s::SubVector{T}) = T
-
-similar{T}(s::SubVector, ::Type{T}, sz::NTuple{1, Int}) = Array(T, sz)
-function similar{T}(s::SubVector, ::Type{T}, sz::Dims)
-    n = 0
-    for len in sz
-        n += (len > 1)
-    end
-    if n > 1
-        error("Requested type is not a vector")
-    end
-    Array(T, sz)
-end
-
-unsafe_load(s::SubVector, i::Integer) = unsafe_load(s.ptr, (i-1)*s.stride + 1)
-
-function getindex(s::SubVector, i::Integer)
-    if 1 <= i <= length(s)
-        return unsafe_load(s, i)
-    else
-        error(BoundsError)
-    end
-end
-
-unsafe_store!{T}(s::SubVector{T}, x, i::Integer) = unsafe_store!(s.ptr, x, (i-1)*s.stride + 1)
-
-function setindex!{T}(s::SubVector{T}, x, i::Integer)
-    xT = convert(T, x)
-    if 1 <= i <= length(s)
-        unsafe_store!(s, xT, i)
-    else
-        error(BoundsError)
-    end
-    xT
-end
-
 #### Math with images ####
 
 (+)(img::AbstractImageDirect, n::Number) = share(img, data(img)+n)
@@ -106,6 +10,7 @@ end
 (-)(n::Number, img::AbstractImageDirect) = share(img, n-data(img))
 (-)(img::AbstractImageDirect, A::BitArray) = share(img, data(img)-A)
 (-)(img::AbstractImageDirect, A::AbstractArray) = share(img, data(img)-data(A))
+# (-)(A::AbstractArray, img::AbstractImageDirect) = share(img, data(A) - data(img))
 (.-)(img::AbstractImageDirect, A::BitArray) = share(img, data(img).-A)
 (.-)(img::AbstractImageDirect, A::AbstractArray) = share(img, data(img).-data(A))
 (*)(img::AbstractImageDirect, n::Number) = share(img, data(img)*n)
@@ -965,41 +870,43 @@ imfilter(img, filter, border) = imfilter(img, filter, border, 0)
 # (in Triggs & Sdika notation) to zero.
 # Note these two papers use different sign conventions for the coefficients.
 
-function imfilter_gaussian{T<:FloatingPoint}(img::AbstractArray{T}, sigma::Vector)
-    A = data(img)
+function imfilter_gaussian{T<:FloatingPoint}(img::AbstractArray{T}, sigma::Vector; emit_warning = true)
+    A = copy(data(img))
     nanflag = isnan(A)
     hasnans = any(nanflag)
     if hasnans
-        A = copy(A)
         A[nanflag] = 0
     end
     validpixels = convert(Array{T}, !nanflag)
-    ret = imfilter_gaussian(A, validpixels, sigma)
+    ret = imfilter_gaussian!(A, validpixels, sigma; emit_warning=emit_warning)
     if hasnans
-        ret[nanflag] = NaN
+        ret[nanflag] = nan(T)
     end
     share(img, ret)
 end
 
-function imfilter_gaussian{T<:Integer}(img::AbstractArray{T}, sigma::Vector)
+function imfilter_gaussian{T<:Integer}(img::AbstractArray{T}, sigma::Vector; emit_warning = true)
     A = convert(Array{Float64}, data(img))
-    validpixels = convert(Array{Float64}, trues(size(A)))
-    ret = imfilter_gaussian(A, validpixels, sigma)
+    validpixels = ones(size(A))
+    ret = imfilter_gaussian!(A, validpixels, sigma; emit_warning=emit_warning)
     share(img, convert(Array{T}, round(ret)))
 end
 
-function imfilter_gaussian{T<:FloatingPoint}(data::Array{T}, validpixels::Array{T}, sigma::Vector)
+function imfilter_gaussian!{T<:FloatingPoint}(data::Array{T}, validpixels::Array{T}, sigma::Vector; emit_warning = true)
     nd = ndims(data)
     if length(sigma) != nd
         error("Dimensionality mismatch")
     end
-    numerator = _imfilter_gaussian_subvector(data, sigma)
-    denominator = _imfilter_gaussian_subvector(validpixels, sigma)
-    return numerator./denominator
+    _imfilter_gaussian!(data, sigma, emit_warning=emit_warning)
+    _imfilter_gaussian!(validpixels, sigma, emit_warning=false)
+    for i = 1:length(data)
+        data[i] /= validpixels[i]
+    end
+    return data
 end
 
-function iir_gaussian_coefficients(T::Type, sigma::Number)
-    if sigma < 1
+function iir_gaussian_coefficients(T::Type, sigma::Number; emit_warning = true)
+    if sigma < 1 && emit_warning
         warn("sigma is too small for accuracy")
     end
     m0 = convert(T,1.16680)
@@ -1021,59 +928,10 @@ function iir_gaussian_coefficients(T::Type, sigma::Number)
     return a, B, M
 end
 
-function filtfb(y, a, B, M)
-    x = convert(Array{eltype(y)}, y)
-    filtfb!(x, a, B, M)
-end
-
-function filtfb!{T}(x::AbstractArray{T}, a::Array{T}, B::T, M::Array{T})
-    a1 = a[1]
-    a2 = a[2]
-    a3 = a[3]
-    x[2] -= a1*x[1]
-    x[3] -= a1*x[2] + a2*x[1]
-    for i = 4:length(x)
-        x[i] -= a1*x[i-1] + a2*x[i-2] + a3*x[i-3]
-    end
-    vstart = M*x[end:-1:end-2]
-    x[end] = vstart[1]
-    x[end-1] -= a1*x[end]   + a2*vstart[2] + a3*vstart[3]
-    x[end-2] -= a1*x[end-1] + a2*x[end]    + a3*vstart[2]
-    for i = length(x)-3:-1:1
-        x[i] -= a1*x[i+1] + a2*x[i+2] + a3*x[i+3]
-    end
-    for i = 1:length(x)
-        x[i] *= B
-    end
-    x
-end
-
-function _imfilter_gaussian{T<:FloatingPoint}(A::AbstractArray{T}, sigma::Vector)
+function _imfilter_gaussian!{T<:FloatingPoint}(A::Array{T}, sigma::Vector; emit_warning = true)
     nd = ndims(A)
-    local Aout
-    for d = 1:nd
-        if sigma[d] == 0
-            continue
-        end
-        if size(A, d) < 3
-            error("All filtered dimensions must be of size 3 or larger")
-        end
-        a, B, M = iir_gaussian_coefficients(T, sigma[d])
-        func = y -> filtfb(y, a, B, M)
-        if d == 1
-            Aout = mapslices(func, A, 1)
-        else
-            Aout = mapslices(func, Aout, d)
-        end
-    end
-    Aout
-end
-
-function _imfilter_gaussian_subvector{T<:FloatingPoint}(A::Array{T}, sigma::Vector)
-    nd = ndims(A)
-    Aout = copy(A)
     szA = [size(A)...]
-    indexes = Array(RangeIndex, nd)
+    strdsA = [strides(A)...]
     for d = 1:nd
         if sigma[d] == 0
             continue
@@ -1081,17 +939,91 @@ function _imfilter_gaussian_subvector{T<:FloatingPoint}(A::Array{T}, sigma::Vect
         if size(A, d) < 3
             error("All filtered dimensions must be of size 3 or larger")
         end
-        a, B, M = iir_gaussian_coefficients(T, sigma[d])
-        notd = setdiff([1:nd], d)
-        indexes[d] = 1:size(A, d)
-        for c in Counter(szA[notd])
-            indexes[notd] = c
-            s = SubVector(Aout, indexes...)
-            filtfb!(s, a, B, M)
+        a, B, M = iir_gaussian_coefficients(T, sigma[d], emit_warning=emit_warning)
+        a1 = a[1]
+        a2 = a[2]
+        a3 = a[3]
+        n1 = size(A,1)
+        if d == 1
+            x = zeros(T, 3)
+            vstart = zeros(T, 3)
+            szhat = szA[2:end]
+            strdshat = strdsA[2:end]
+            if isempty(szhat)
+                szhat = [1]
+                strdshat = [1]
+            end
+            @forcartesian c szhat begin
+                coloffset = offset(c, strdshat)
+                A[2+coloffset] -= a1*A[1+coloffset]
+                A[3+coloffset] -= a1*A[2+coloffset] + a2*A[1+coloffset]
+                for i = 4:n1
+                    A[i+coloffset] -= a1*A[i-1+coloffset] + a2*A[i-2+coloffset] + a3*A[i-3+coloffset]
+                end
+                copytail!(x, A, coloffset, 1, n1)
+                A_mul_B(vstart, M, x)
+                A[n1+coloffset] = vstart[1]
+                A[n1-1+coloffset] -= a1*vstart[1]   + a2*vstart[2] + a3*vstart[3]
+                A[n1-2+coloffset] -= a1*A[n1-1+coloffset] + a2*vstart[1] + a3*vstart[2]
+                for i = n1-3:-1:1
+                    A[i+coloffset] -= a1*A[i+1+coloffset] + a2*A[i+2+coloffset] + a3*A[i+3+coloffset]
+                end
+            end
+        else
+            x = Array(T, 3, n1)
+            vstart = similar(x)
+            restdims = setdiff(1:nd, [1,d])
+            szhat = szA[restdims]
+            szd = szA[d]
+            strdshat = strdsA[restdims]
+            strdd = strdsA[d]
+            if isempty(szhat)
+                szhat = [1]
+                strdshat = [1]
+            end
+            @forcartesian c szhat begin
+                coloffset = offset(c, strdshat)  # offset for the remaining dimensions
+                for i = 1:n1 A[i+strdd+coloffset] -= a1*A[i+coloffset] end
+                for i = 1:n1 A[i+2strdd+coloffset] -= a1*A[i+strdd+coloffset] + a2*A[i+coloffset] end
+                for j = 3:szd-1
+                    for i = 1:n1 A[i+j*strdd+coloffset] -= a1*A[i+(j-1)*strdd+coloffset] + a2*A[i+(j-2)*strdd+coloffset] + a3*A[i+(j-3)*strdd+coloffset] end
+                end
+                copytail!(x, A, coloffset, strdd, szd)
+                A_mul_B(vstart, M, x)
+                for i = 1:n1 A[i+(szd-1)*strdd+coloffset] = vstart[1,i] end
+                for i = 1:n1 A[i+(szd-2)*strdd+coloffset] -= a1*vstart[1,i]   + a2*vstart[2,i] + a3*vstart[3,i] end
+                for i = 1:n1 A[i+(szd-3)*strdd+coloffset] -= a1*A[i+(szd-2)*strdd+coloffset] + a2*vstart[1,i] + a3*vstart[2,i] end
+                for j = szd-4:-1:0
+                    for i = 1:n1 A[i+j*strdd+coloffset] -= a1*A[i+(j+1)*strdd+coloffset] + a2*A[i+(j+2)*strdd+coloffset] + a3*A[i+(j+3)*strdd+coloffset] end
+                end
+            end
+        end
+        for i = 1:length(A)
+            A[i] *= B
         end
     end
-    Aout
+    A
 end
+
+function offset(c::Vector{Int}, strds::Vector{Int})
+    o = 0
+    for i = 1:length(c)
+        o += (c[i]-1)*strds[i]
+    end
+    o
+end
+
+function copytail!(dest, A, coloffset, strd, len)
+    for j = 1:3
+        for i = 1:size(dest, 2)
+            tmp = A[i + coloffset + (len-j)*strd]
+            dest[j,i] = tmp
+        end
+    end
+    dest
+end
+
+
 
 
 function imlineardiffusion{T}(img::Array{T,2}, dt::FloatingPoint, iterations::Integer)
