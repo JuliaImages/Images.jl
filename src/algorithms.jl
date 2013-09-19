@@ -303,7 +303,9 @@ for N = 1:4
 end
 
 (*)(f::FloatingPoint, c::RGB) = RGB(f*c.r, f*c.g, f*c.b)
+(.*)(f::AbstractArray, c::RGB) = [x*c for x in f]
 (+)(a::RGB, b::RGB) = RGB(a.r+b.r, a.g+b.g, a.b+b.b)
+convert(Uint32, c::ColorValue) = convert(RGB24, c).color
 
 #### Converting images to uint32 color ####
 # This is the crucial operation in image display
