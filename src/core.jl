@@ -132,6 +132,14 @@ similar{T}(img::AbstractImageIndexed, ::Type{T}) = ImageCmap(similar(img.data, T
 
 similar{T}(img::AbstractImageIndexed, ::Type{T}, dims::Dims) = ImageCmap(similar(img.data, T, dims), copy(img.cmap), copy(img.properties))
 
+# copy properties
+function copy!(imgdest::AbstractImage, imgsrc::AbstractImage, props::ASCIIString...)
+    for p in props
+        imgdest[p] = imgsrc[p]
+    end
+    imgdest
+end
+
 # convert
 convert{I<:AbstractImageDirect}(::Type{I}, img::I) = img
 convert{I<:AbstractImageIndexed}(::Type{I}, img::I) = img
