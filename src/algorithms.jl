@@ -338,6 +338,16 @@ function uint32color!(buf::Array{Uint32}, img, args...)
     buf
 end
 
+# Indexed images (colormaps)
+function uint32color!(buf::Array{Uint32}, img::AbstractImageIndexed)
+    dat = data(img)
+    cmap = img.cmap
+    for i = 1:length(buf)
+        buf[i] = convert(Uint32, cmap[dat[i]])
+    end
+    buf
+end
+
 # ColorValue arrays
 for N = 1:4
     @eval begin

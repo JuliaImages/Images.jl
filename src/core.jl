@@ -501,6 +501,11 @@ colorspace(img::AbstractMatrix) = "Gray"
 # colorspace{T}(img::AbstractArray{T,3}) = (size(img, defaultarraycolordim) == 3) ? "RGB" : error("Cannot infer colorspace of Array, use an AbstractImage type")
 colorspace{T}(img::AbstractArray{T,3}) = (size(img, defaultarraycolordim) == 3) ? "RGB" : 0
 colorspace(img::AbstractImage{Bool}) = "Binary"
+colorspace{T,N,A<:AbstractArray,C<:ColorValue}(img::ImageCmap{T,N,A,Array{C,1}}) = string(C)
+colorspace(img::AbstractImageIndexed) = @get img "colorspace" csinfer(eltype(img.cmap))
+colorspace{T}(img::AbstractImageIndexed{T,2}) = @get img "colorspace" csinfer(eltype(img.cmap))
+csinfer{C<:ColorValue}(::Type{C}) = string(C)
+csinfer(C) = "Unknown"
 colorspace(img::AbstractImage) = get(img.properties, "colorspace", "Unknown")
 
 colordim{C<:ColorValue}(img::AbstractVector{C}) = 0
