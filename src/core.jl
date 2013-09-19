@@ -414,6 +414,19 @@ size(o::Overlay, i::Integer) = size(o.channels[1], i)
 
 show(io::IO, o::Overlay) = print(io, summary(o), " with colors ", o.colors)
 
+function squeeze(img::AbstractImage, dims)
+    imgret = copy(img, squeeze(data(img), dims))
+    td = timedim(img)
+    if td > 0 && in(td, dims)
+        imgret["timedim"] = 0
+    end
+    cd = colordim(img)
+    if cd > 0 && in(cd, dims)
+        imgret["colordim"] = 0
+    end
+    imgret
+end
+
 #### Properties ####
 
 # Generic programming with images uses properties to obtain information. The strategy is to define a particular property name, and then write an accessor function of the same name. The accessor function provides default behavior for plain arrays and when the property is not defined. Alternatively, use get(img, "propname", default) or haskey(img, "propname") to define your own default behavior.
