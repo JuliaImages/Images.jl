@@ -118,6 +118,7 @@ export # types
     imedge,
     imfilter,
     imfilter_gaussian,
+    imfilter_gaussian!,
     imgaussiannoise,
     imlaplacian,
     imlineardiffusion,

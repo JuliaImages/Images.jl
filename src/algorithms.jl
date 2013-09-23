@@ -305,7 +305,7 @@ end
 (*)(f::FloatingPoint, c::RGB) = RGB(f*c.r, f*c.g, f*c.b)
 (.*)(f::AbstractArray, c::RGB) = [x*c for x in f]
 (+)(a::RGB, b::RGB) = RGB(a.r+b.r, a.g+b.g, a.b+b.b)
-convert(Uint32, c::ColorValue) = convert(RGB24, c).color
+convert(::Type{Uint32}, c::ColorValue) = convert(RGB24, c).color
 
 #### Converting images to uint32 color ####
 # This is the crucial operation in image display
@@ -871,7 +871,7 @@ imfilter(img, filter, border) = imfilter(img, filter, border, 0)
 
 # imfilter{S,T<:FloatingPoint}(img::AbstractArray{S}, filter::Matrix{T}, args...) = imfilter(copy!(similar(img, T), img), filter, args...)
 
-# IIR filtering of Gaussians
+# IIR filtering with Gaussians
 # See
 #  Young, van Vliet, and van Ginkel, "Recursive Gabor Filtering",
 #    IEEE TRANSACTIONS ON SIGNAL PROCESSING, VOL. 50: 2798-2805.
@@ -887,14 +887,14 @@ function imfilter_gaussian{T<:FloatingPoint}(img::AbstractArray{T}, sigma::Vecto
     nanflag = isnan(A)
     hasnans = any(nanflag)
     if hasnans
-        A[nanflag] = 0
+        A[nanflag] = zero(T)
     end
     validpixels = convert(Array{T}, !nanflag)
-    ret = imfilter_gaussian!(A, validpixels, sigma; emit_warning=emit_warning)
+    imfilter_gaussian!(A, validpixels, sigma; emit_warning=emit_warning)
     if hasnans
-        ret[nanflag] = nan(T)
+        A[nanflag] = nan(T)
     end
-    share(img, ret)
+    share(img, A)
 end
 
 function imfilter_gaussian{T<:Integer}(img::AbstractArray{T}, sigma::Vector; emit_warning = true)
@@ -904,6 +904,8 @@ function imfilter_gaussian{T<:Integer}(img::AbstractArray{T}, sigma::Vector; emi
     share(img, convert(Array{T}, round(ret)))
 end
 
+# This version is in-place, and destructive
+# Any NaNs have to already be removed from data (and marked in validpixels)
 function imfilter_gaussian!{T<:FloatingPoint}(data::Array{T}, validpixels::Array{T}, sigma::Vector; emit_warning = true)
     nd = ndims(data)
     if length(sigma) != nd
