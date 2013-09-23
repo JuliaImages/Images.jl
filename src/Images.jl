@@ -13,6 +13,7 @@ include("core.jl")
 include("config.jl")
 include("iterator.jl")
 include("io.jl")
+include("scaling.jl")
 include("algorithms.jl")
 
 export # types
