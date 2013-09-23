@@ -14,6 +14,7 @@ include("config.jl")
 include("iterator.jl")
 include("io.jl")
 include("scaling.jl")
+include("labeledarrays.jl")
 include("algorithms.jl")
 
 export # types
@@ -26,6 +27,7 @@ export # types
     ClipMin,
     ClipMax,
     ClipMinMax,
+    LabeledArray,
     Overlay,
     OverlayImage,
     ScaleInfo,
