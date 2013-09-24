@@ -708,10 +708,10 @@ function imfilter_gaussian{T<:FloatingPoint}(img::AbstractArray{T}, sigma::Vecto
 end
 
 function imfilter_gaussian{T<:Integer}(img::AbstractArray{T}, sigma::Vector; emit_warning = true)
-    A = convert(Array{Float64}, data(img))
+    A = float64(data(img))
     validpixels = ones(size(A))
     ret = imfilter_gaussian!(A, validpixels, sigma; emit_warning=emit_warning)
-    share(img, convert(Array{T}, round(ret)))
+    share(img, truncround(T, ret))
 end
 
 # This version is in-place, and destructive

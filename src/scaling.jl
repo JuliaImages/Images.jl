@@ -1,5 +1,16 @@
 #### Scaling/clipping/type conversion ####
 
+truncround{T<:Integer}(::Type{T}, val::T) = val
+truncround{T<:Integer}(::Type{T}, val::Integer) = val > typemax(T) ? typemax(T) : (val < typemin(T) ? typemin(T) : val)
+truncround{T<:Integer,F<:FloatingPoint}(::Type{T}, val::F) = val > convert(F,typemax(T)) ? typemax(T) : (val < convert(F,typemin(T)) ? typemin(T) : iround(T, val))
+function truncround{T<:Integer}(::Type{T}, A::AbstractArray)
+    X = similar(A, T)
+    for i = 1:length(A)
+        X[i] = truncround(T, A[i])
+    end
+    X
+end
+
 function scale{T}(scalei::ScaleInfo{T}, img::Union(StridedArray,AbstractImageDirect))
     out = similar(img, T)
     scale!(out, scalei, img)
