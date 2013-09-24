@@ -754,8 +754,8 @@ end
 
 function _imfilter_gaussian!{T<:FloatingPoint}(A::Array{T}, sigma::Vector; emit_warning = true)
     nd = ndims(A)
-    szA = [size(A)...]
-    strdsA = [strides(A)...]
+    szA = [size(A,i) for i = 1:nd]
+    strdsA = [stride(A,i) for i = 1:nd]
     for d = 1:nd
         if sigma[d] == 0
             continue
@@ -768,11 +768,12 @@ function _imfilter_gaussian!{T<:FloatingPoint}(A::Array{T}, sigma::Vector; emit_
         a2 = a[2]
         a3 = a[3]
         n1 = size(A,1)
+        keepdims = [false,trues(nd-1)]
         if d == 1
             x = zeros(T, 3)
             vstart = zeros(T, 3)
-            szhat = szA[2:end]
-            strdshat = strdsA[2:end]
+            szhat = szA[keepdims]
+            strdshat = strdsA[keepdims]
             if isempty(szhat)
                 szhat = [1]
                 strdshat = [1]
@@ -796,10 +797,10 @@ function _imfilter_gaussian!{T<:FloatingPoint}(A::Array{T}, sigma::Vector; emit_
         else
             x = Array(T, 3, n1)
             vstart = similar(x)
-            restdims = setdiff(1:nd, [1,d])
-            szhat = szA[restdims]
+            keepdims[d] = false
+            szhat = szA[keepdims]
             szd = szA[d]
-            strdshat = strdsA[restdims]
+            strdshat = strdsA[keepdims]
             strdd = strdsA[d]
             if isempty(szhat)
                 szhat = [1]
