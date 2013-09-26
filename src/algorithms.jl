@@ -698,19 +698,18 @@ function imfilter_gaussian{T<:FloatingPoint}(img::AbstractArray{T}, sigma::Vecto
     hasnans = any(nanflag)
     if hasnans
         A[nanflag] = zero(T)
-    end
-    validpixels = convert(Array{T}, !nanflag)
-    imfilter_gaussian!(A, validpixels, sigma; emit_warning=emit_warning)
-    if hasnans
+        validpixels = convert(Array{T}, !nanflag)
+        imfilter_gaussian!(A, validpixels, sigma; emit_warning=emit_warning)
         A[nanflag] = nan(T)
+    else
+        imfilter_gaussian_no_nans!(A, sigma; emit_warning=emit_warning)
     end
     share(img, A)
 end
 
 function imfilter_gaussian{T<:Integer}(img::AbstractArray{T}, sigma::Vector; emit_warning = true)
     A = float64(data(img))
-    validpixels = ones(size(A))
-    ret = imfilter_gaussian!(A, validpixels, sigma; emit_warning=emit_warning)
+    imfilter_gaussian_no_nans!(A, sigma; emit_warning=emit_warning)
     share(img, truncround(T, ret))
 end
 
@@ -727,6 +726,38 @@ function imfilter_gaussian!{T<:FloatingPoint}(data::Array{T}, validpixels::Array
         data[i] /= validpixels[i]
     end
     return data
+end
+
+# When there are no NaNs, the normalization is separable and hence can be computed far more efficiently
+# This speeds the algorithm by approximately twofold
+function imfilter_gaussian_no_nans!{T<:FloatingPoint}(data::Array{T}, sigma::Vector; emit_warning = true)
+    nd = ndims(data)
+    if length(sigma) != nd
+        error("Dimensionality mismatch")
+    end
+    _imfilter_gaussian!(data, sigma, emit_warning=emit_warning)
+    denom = Array(Vector{T}, nd)
+    for i = 1:nd
+        denom[i] = ones(T, size(data, i))
+        if sigma[i] > 0
+            _imfilter_gaussian!(denom[i], sigma[i:i], emit_warning=false)
+        end
+    end
+    imfgnormalize!(data, denom)
+    return data
+end
+
+for N = 1:5
+    @eval begin
+        function imfgnormalize!{T}(data::Array{T,$N}, denom)
+            @nextract $N denom denom
+            @nloops $N i data begin
+                den = one(T)
+                @nexprs $N d->(den *= denom_d[i_d])
+                (@nref $N data i) /= den
+            end
+        end
+    end
 end
 
 function iir_gaussian_coefficients(T::Type, sigma::Number; emit_warning = true)
