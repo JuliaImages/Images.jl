@@ -1,6 +1,6 @@
 module NRRD
 
-using Images
+using Images, Units
 import Images: imread, imwrite
 
 typedict = [
@@ -36,7 +36,7 @@ end
 function imread{S<:IO}(stream::S, ::Type{Images.NRRDFile})
     version = ascii(read(stream, Uint8, 4))
     skipchars(stream,isspace)
-    header = Dict{ASCIIString, ASCIIString}()
+    header = Dict{ASCIIString, UTF8String}()
     comments = Array(ASCIIString, 0)
     line = strip(readline(stream))
     while !isempty(line)
@@ -144,7 +144,30 @@ function imread{S<:IO}(stream::S, ::Type{Images.NRRDFile})
         if 1 <= td <= length(keep)
             keep[td] = false
         end
-        props["pixelspacing"] = ps[keep]
+        if haskey(header, "space units")
+            ustrs = split(header["space units"], " ")
+            if length(ustrs) != length(ps)
+                warn("space units parsing did not agree with spacings")
+                @show u
+                @show ps
+                props["pixelspacing"] = ps[keep]
+            else
+                u = Array(Quantity, 0)
+                for i = 1:length(ustrs)
+                    if keep[i]
+                        try
+                            utmp = ps[i]*parse_quantity("1 "*ustrs[i][2:end-1])
+                            push!(u, utmp)
+                        catch
+                            push!(u, Quantity(SINone, Unknown, ps[i]))
+                        end
+                    end
+                end
+                props["pixelspacing"] = u
+            end
+        else
+            props["pixelspacing"] = ps[keep]
+        end
     end
     if !isempty(comments)
         props["comments"] = comments
@@ -197,10 +220,26 @@ function imwrite(img, sheader::IO, ::Type{Images.NRRDFile}, props::Dict = Dict{A
     println(sheader, "endian: ", get(props, "endian", ENDIAN_BOM == 0x04030201 ? "little" : "big"))
     ps = get(props, "pixelspacing", pixelspacing(img))
     print(sheader, "spacings:")
+    printunits = false
     for x in ps
-        print(sheader, " ", x)
+        if isa(x, Quantity)
+            printunits = true
+            print(sheader, " ", x.value)
+        else
+            print(sheader, " ", x)
+        end
     end
     print(sheader,"\n")
+    if printunits
+        print(sheader, "space units:")
+        for x in ps
+            print(sheader," \"")
+            pshow(sheader,prefix(x))
+            pshow(sheader,base(x))
+            print(sheader,"\"")
+        end
+        print(sheader, "\n")
+    end
     datafilename = get(props, "datafile", "")
     if isempty(datafilename)
         datafilename = get(props, "data file", "")
