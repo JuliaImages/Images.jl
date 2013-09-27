@@ -562,7 +562,7 @@ function _imfilter{T}(img::StridedMatrix{T}, filter::Matrix{T}, border::String, 
     A = zeros(T, si[1]+sf[1]-1, si[2]+sf[2]-1)
     s1, s2 = int((sf[1]-1)/2), int((sf[2]-1)/2)
     # correlation instead of convolution
-    filter = fliplr(fliplr(filter).')
+    filter = rot180(filter)
     mid1 = s1+1:s1+si[1]
     mid2 = s2+1:s2+si[2]
     left = 1:s2
@@ -617,8 +617,8 @@ function _imfilter{T}(img::StridedMatrix{T}, filter::Matrix{T}, border::String, 
     if separable
         # conv2 isn't suitable for this (kernel center should be the actual center of the kernel)
         #C = conv2(U[:,1]*sqrt(S[1]), vec(Vt[1,:])*sqrt(S[1]), A)
-        x = U[:,1]*sqrt(S[1])
-        y = vec(Vt[1,:])*sqrt(S[1])
+        y = U[:,1]*sqrt(S[1])
+        x = vec(Vt[1,:])*sqrt(S[1])
         sa = size(A)
         m = length(y)+sa[1]
         n = length(x)+sa[2]
@@ -665,7 +665,7 @@ function imfilter{T}(img::AbstractArray{T}, filter::Matrix{T}, border::String, v
         A = _imfilter(data(img), filter, border, value)
     else
         A = similar(data(img))
-        coords = Any[map(i->1:i, size(img))...]
+        coords = RangeIndex[1:size(img,i) for i = 1:ndims(img)]
         for i = 1:size(img, cd)
             coords[cd] = i
             simg = slice(img, coords...)

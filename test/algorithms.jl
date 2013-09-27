@@ -1,8 +1,8 @@
-import Images
-using Color
+import Images, Color, Base.Test
 
-all_close(ar::Images.AbstractImage, v) = all(abs(Images.data(ar)-v) .< sqrt(eps(v)))
-all_close(ar, v) = all(abs(ar-v) .< sqrt(eps(v)))
+# Comparison of each element in arrays with scalars
+approx_equal(ar::Images.AbstractImage, v) = all(abs(Images.data(ar)-v) .< sqrt(eps(v)))
+approx_equal(ar, v) = all(abs(ar-v) .< sqrt(eps(v)))
 
 # arithmetic
 img = convert(Images.Image, zeros(3,3))
@@ -32,27 +32,22 @@ imgs = Images.imadjustintensity(img, [])
 mnA = min(A)
 @assert Images.ssd(imgs, (A-mnA)/(mxA-mnA)) < eps()
 
-# SubVector
-A = reshape(1:48, 8, 6)
-s = Images.SubVector(A, 1:3:8, 2)
-@assert s[2] == A[4,2]
-@assert s == A[1:3:8, 2]
-s = Images.SubVector(A, 2:3:8, 2)
-@assert s == A[2:3:8, 2]
-s = Images.SubVector(A, 4, 3:6)
-@assert s == vec(A[4, 3:6])
-s[1] = 0
-@assert A[4,3] == 0
-ss = Images.SubVector(s, 4:-2:2)
-@assert ss == [44,28]
-
 # filtering
-@assert all_close(Images.imfilter(ones(4,4), ones(3,3)), 9.0)
-@assert all_close(Images.imfilter(ones(3,3), ones(3,3)), 9.0)
-@assert all_close(Images.imfilter(ones(3,3), [1 1 1;1 0.0 1;1 1 1]), 8.0)
-
+@assert approx_equal(Images.imfilter(ones(4,4), ones(3,3)), 9.0)
+@assert approx_equal(Images.imfilter(ones(3,3), ones(3,3)), 9.0)
+@assert approx_equal(Images.imfilter(ones(3,3), [1 1 1;1 0.0 1;1 1 1]), 8.0)
 img = convert(Images.Image, ones(4,4))
-@assert all_close(Images.imfilter(img, ones(3,3)), 9.0)
+@assert approx_equal(Images.imfilter(img, ones(3,3)), 9.0)
+A = zeros(5,5,3); A[3,3,[1,3]] = 1
+@assert colordim(A) == 3
+h = [0   0.5 0;
+     0.2 1.0 0.2;
+     0   0.5 0]
+hpad = zeros(5,5); hpad[2:4,2:4] = h
+Af = Images.imfilter(A, h)
+@test_approx_eq Af cat(3, hpad, zeros(5,5), hpad)
+Aimg = permutedims(convert(Images.Image, A), [3,1,2])
+@test_approx_eq Images.imfilter(Aimg, h) permutedims(Af, [3,1,2])
 
 # color conversion
 gray = linspace(0.0,1.0,5) # a 1-dimensional image
