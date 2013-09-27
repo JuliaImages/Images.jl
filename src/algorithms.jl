@@ -1053,29 +1053,3 @@ function imROF{T}(img::Array{T,3}, lambda::Number, iterations::Integer)
     end
     return out
 end
-
-
-# Conversions
-
-# function convert(cs::String, img::Image) # FIXME
-#     local ret
-#     if cs == "ARGB"
-#         if colorspace(img) == "RGBA"
-#             cd = colordim(img)
-#             if cd == 0
-#                 error("Not yet supported")
-#             end
-#             c = Any[map(i->1:i, size(img))...]
-#             c[cd] = [4,1,2,3]
-#             ret = copy(img, img[c...])
-#             ret.properties["colorspace"] = cs
-#         end
-#     end
-#     ret
-# end
-#
-# function uint8(img::Image) # FIXME
-#     l = limits(img)
-#     r = l[2]/0xff
-#     copy(img, uint8(ifloor(img.data/r)))
-# end

@@ -12,7 +12,7 @@ Here `gray1` and `gray2` are the arrays representing individual "channels" of in
 (You can choose any RGB value you want, it doesn't have to be a "pure" RGB channel.)
 Finally, `clim1` and `clim2` represent the intensity-scaling applied to each image; setting `clim1 = (400,3000)` would send any values in `gray1` less than 400 to black, and any values bigger than 3000 to red, with other values between encoded linearly.
 
-You can see a concrete example [here](usage.md).
+You can see a concrete example [here](usage.md#working-with-images-some-examples).
 
 An `Overlay` also has a field, `visible`, that can be used to turn individual grayscale images on and off. For example, to turn off the first (red) channel above, you could say `O.visible[1] = false`.
 

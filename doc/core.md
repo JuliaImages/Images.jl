@@ -10,8 +10,12 @@ called "vertical-major". This ordering is inspired by the column/row index order
 of matrices and the desire to have a displayed image look like what one sees
 when a matrix is written out in text.
 
-If you're working with RGB color, you can use a third dimension, of size 3, or
-alternatively encode your images as either `Uint32` or `Int32` and work with
+If you're working with RGB color, your best approach is to encode color as a
+`ColorValue`, as defined in the `Color` package.
+That package provides many utility functions for analyzing and manipulating
+colors.
+Alternatively, you can use a third dimension (often of size 3) or
+encode your images as either `Uint32` or `Int32` and work with
 24-bit color. (If you need to use `Uint32` simply to store pixel intensities,
 you should not use plain arrays.)
 
@@ -61,18 +65,21 @@ is the basis for a great deal of customizability: `data` might be a plain
 `Array` stored in memory, a `SubArray`, a memory-mapped array (which is still
 just an `Array`), a custom type that stores additional information about
 "missing data" (like bad pixels or dropped frames), or a custom type that
-seamlessly presents views of a large number of separate files. If you have a
+seamlessly presents views of a large number of separate files.
+One concrete example in the Images codebase is the color `Overlay` [type](overlays.md).
+If you have a
 suitably-defined `AbstractArray` type, you can probably use `Image` without
 needing to create alternative `AbstractImageDirect` types.
-One concrete example is the color `Overlay` [type](overlays.md).
 
-`properties` is a dictionary, usually with `String` keys, that allows you to
-annotate images. More detail about these can be found below.
+
+`properties` is a dictionary, with `String` keys, that allows you to
+annotate images. More detail about this point can be found below.
 
 The only other concrete image type is for indexed images:
 
 ```julia
-type ImageCmap{T,N,A<:AbstractArray,C<:AbstractArray} <: AbstractImageIndexed{T,N}
+type ImageCmap{T,N,A<:AbstractArray,C<:AbstractArray} <:
+AbstractImageIndexed{T,N}
     data::A
     cmap::C
     properties::Dict
@@ -83,8 +90,10 @@ The `data` array here just encodes the index used to look up the color in the
 
 ## Addressing image data
 
-For any valid image type, `data(img)` returns the array that corresponds to the image.
-This works when `img` is a plain `Array` (in which case no operation is performed) as well as for an `Image` (in which case it returns `img.data`).
+For any valid image type, `data(img)` returns the array that corresponds to the
+image.
+This works when `img` is a plain `Array` (in which case no operation is
+performed) as well as for an `Image` (in which case it returns `img.data`).
 This is our first example of how to write generic algorithms.
 
 If `img` is an `Image`, then `img[i,j]` looks up the value `img.data[i,j]`.
@@ -99,8 +108,10 @@ image; if you make modifications in one, the other will also be affected. For
 `sliceim`, because it can change the dimensionality some adjustments to
 `properties` are needed; in this case a copy is made.
 
-One of the properties (see below) that you can grant to images is `spatialorder`, which provides a name for each spatial dimension in the image.
-Using this feature, you can cut out regions or slices from images in the following ways:
+One of the properties (see below) that you can grant to images is
+`spatialorder`, which provides a name for each spatial dimension in the image.
+Using this feature, you can cut out regions or slices from images in the
+following ways:
 
 ```julia
 A = img["x", 200:400, "y", 500:700]
@@ -163,18 +174,22 @@ following way:
 ```
 function imfilter{T}(img::AbstractArray{T}, filter::Matrix{T}, border::String,
 value)
-    assert2d(img)      # Julia's imfilter was written for 2d images, so enforce this
+    assert2d(img)      # Julia's imfilter was written for 2d images, so enforce
+this
     cd = colordim(img) # find out which dimension corresponds to color, if any
     local A
     if cd == 0         # no explicit array dimension for color
         A = _imfilter(data(img), filter, border, value)
     else
         A = similar(data(img))                    # allocate the output
-        coords = Any[map(i->1:i, size(img))...]   # indexes covering the whole array
+        coords = RangeIndex[1:size(img,i) for i = 1:ndims(img)]   # indexes covering the whole
+array
         for i = 1:size(img, cd)
-            coords[cd] = i                        # slice along the color dimension
+            coords[cd] = i                        # slice along the color
+dimension
             simg = slice(img, coords...)
-            tmp = _imfilter(simg, filter, border, value)   # filter this color channel
+            tmp = _imfilter(simg, filter, border, value)   # filter this color
+channel
             A[coords...] = tmp[:]                 # store the result
         end
     end

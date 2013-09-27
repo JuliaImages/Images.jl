@@ -73,30 +73,8 @@ can be found in the `doc/` directory. Here are some of the topics available:
 - [Getting started](doc/usage.md), a short demonstration
 - The [core](doc/core.md), i.e., the representation of images
 - [I/O](doc/extendingIO.md) and custom image file formats
+- [Function reference](doc/function_reference.md)
 - [Overlays](doc/overlays.md), a type for combining multiple grayscale arrays into a single color array
-
-## Status/TODOs
-
-### Data representation:
-
-The central core seems to be in fairly good shape, with new utility functions still being added.
-
-### I/O
-
-- A framework for generic I/O,
-  using the magic bytes of the file,
-  is already in place. Several custom image formats already employ it.
-- TIFF reading can be found at https://github.com/rephorm/TIFF.jl
-  and should be incorporated.
-
-### Algorithms
-
-Most algorithms have been ported to work with `Image` types.
-The glaring
-exception are the colorspace conversion tools, which still assume `Array`s.
-Looking for volunteers here,
-since the maintainer doesn't use them at all.
-The best plan may be to eliminate them in preference for the tools available in [Color.jl](https://github.com/JuliaLang/Color.jl).
 
 # Credits
 

@@ -1,9 +1,52 @@
+## Image I/O
+
+`Images` supports a number of image file formats. Popular formats such as PNG,
+JPEG, and TIFF are currently loaded and saved via
+[ImageMagick](http://www.imagemagick.org/script/index.php).
+
+`Images` also supports a number of formats used more typically for scientific
+work:
+
+- [NRRD](http://teem.sourceforge.net/nrrd/), "nearly raw raster data" which
+despite its name allows for considerable metadata. This is perhaps the best
+current default choice of formats.
+- SIF, a file format used by Andor Technology for
+their scientific CCD cameras
+- [B16](http://www.pco.de/links/), a format used by PCO/Cooke cameras
+- [Imagine](http://holylab.wustl.edu/), a format used for 4D (3 spatial dimensions + time) imaging
+
+Finally, [HDF5](https://github.com/timholy/HDF5.jl) and JLD can also be used to
+store images.
+
+To read an image, one typically says
+```
+img = imread("filename.fmt")
+```
+and to write,
+```
+imwrite(img, "filename.fmt")
+```
+When using ImageMagick, by default this encodes color data as a dimension of the
+array. You can alternately say
+```
+using Color
+img = imread("filename.fmt",RGB)
+```
+and the image will be imported as an array of RGB values.
+
+You can read from streams and control format this way:
+```
+img = imread(stream, Images.NRRDFile)
+```
+would load an image from a stream, interpreting it as having NRRD format. The
+stream should already be advanced past the format's magic bytes.
+
+
 ## Extending Image I/O
 
-It is not difficult to extend the Images library to handle custom
-image files.  For an example, here are the essential steps for code
-that reads a `.sif` file, a file format used by Andor Technology for
-their scientific CCD cameras.
+It is not difficult to extend the `Images` library to handle custom
+image files.  For an example, here are the essential steps to set up
+support for a `.sif` file.
 
 ### Implementation for personal use
 
@@ -33,7 +76,8 @@ import Images.imread
 function imread{S<:IO}(stream::S, ::Type{AndorSIF})
     seek(stream, 0)
     l = strip(readline(stream))
-    l == "Andor Technology Multi-Channel File" || error("Not an Andor file: " * l)
+    l == "Andor Technology Multi-Channel File" || error("Not an Andor file: " *
+l)
 ```
 
 When this imread is called, the magic bytes have already been read
@@ -74,7 +118,8 @@ Finally, we wrap up by setting the properties, including the new
 `ixon` collection with suppressed printing, and return the `Image`:
 
 ```julia
-    prop = {"colorspace" => "Gray", "spatialorder" => ["y", "x", "t"], "ixon" => ixon, "suppress" => Set("ixon")}
+    prop = {"colorspace" => "Gray", "spatialorder" => ["y", "x", "t"], "ixon" =>
+ixon, "suppress" => Set("ixon")}
     Image(pixels, prop)
 end # imread()
 ```
@@ -87,7 +132,8 @@ Images' `io.jl`:
 
 ```julia
 type AndorSIF <: ImageFileType end
-add_image_file_format(".sif", b"Andor Technology Multi-Channel File", AndorSIF, "SIF.jl")
+add_image_file_format(".sif", b"Andor Technology Multi-Channel File", AndorSIF,
+"SIF.jl")
 ```
 
 Note that we've added one more argument to this function, the
