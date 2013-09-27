@@ -1,4 +1,5 @@
-import Images, Color, Base.Test
+import Images
+using Color, Base.Test
 
 # Comparison of each element in arrays with scalars
 approx_equal(ar::Images.AbstractImage, v) = all(abs(Images.data(ar)-v) .< sqrt(eps(v)))
@@ -39,7 +40,7 @@ mnA = min(A)
 img = convert(Images.Image, ones(4,4))
 @assert approx_equal(Images.imfilter(img, ones(3,3)), 9.0)
 A = zeros(5,5,3); A[3,3,[1,3]] = 1
-@assert colordim(A) == 3
+@assert Images.colordim(A) == 3
 h = [0   0.5 0;
      0.2 1.0 0.2;
      0   0.5 0]

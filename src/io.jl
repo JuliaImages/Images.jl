@@ -16,13 +16,24 @@ filetype = Array(Any, 0)
 filesrcloaded = Array(Bool, 0)
 filesrc = Array(String, 0)
 
-function loadformat(index::Int)
+function _loadformat(index::Int)
     filename = joinpath("ioformats", filesrc[index])
     if !isfile(filename)
         filename = joinpath(Pkg.dir(), "Images", "src", "ioformats", filesrc[index])
     end
     include(filename)
     filesrcloaded[index] = true
+end
+function loadformat{FileType<:ImageFileType}(::Type{FileType})
+    indx = find(filetype .== FileType)
+    if length(indx) == 1
+        _loadformat(indx[1])
+    elseif isempty(indx)
+        error("File format ", FileType, " not found")
+    else
+        error("File format ", FileType, " is entered multiple times")
+    end
+    nothing
 end
 
 function add_image_file_format{ImageType<:ImageFileType}(ext::ByteString, magic::Vector{Uint8}, ::Type{ImageType}, filecode::ASCIIString)
@@ -66,7 +77,7 @@ function imread(filename::String)
             # Position to end of this type's magic bytes
             seek(stream, length(filemagic[index]))
             if !filesrcloaded[index]
-                loadformat(index)
+                _loadformat(index)
             end
             return imread(stream, filetype[index])
         end
@@ -76,7 +87,7 @@ function imread(filename::String)
     if index > 0
         seek(stream, length(filemagic[index]))
         if !filesrcloaded[index]
-            loadformat(index)
+            _loadformat(index)
         end
         return imread(stream, filetype[index])
     end
@@ -125,7 +136,7 @@ function imwrite(img, filename::String, args...)
         candidates = fileext[ext]
         index = candidates[1]  # TODO?: use options, don't default to first
         if !filesrcloaded[index]
-            loadformat(index)
+            _loadformat(index)
         end
         imwrite(img, filename, filetype[index], args...)
     elseif have_imagemagick

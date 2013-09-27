@@ -82,6 +82,7 @@ export # types
     add_image_file_format,
     imread,
     imwrite,
+    loadformat,
     
     # iterator functions
     first_index,
