@@ -557,73 +557,83 @@ function ncc{T}(A::AbstractArray{T}, B::AbstractArray{T})
     return dot(Am,Bm)/(norm(Am)*norm(Bm))
 end
 
+function padarray{T,n}(img::AbstractArray{T,n}, prepad::Vector{Int}, postpad::Vector{Int}, border::String, value::T)
+    I = Array(Vector{Int}, n)
+    for d = 1:n
+        M = size(img, d)
+        I[d] = [(1 - prepad[d]):(M + postpad[d])]
+        if border == "value"
+            I[d] = int((I[d] .>= 1) & (I[d] .<= M))
+        elseif border == "replicate"
+            I[d] = min(max(I[d], 1), M)
+        elseif border == "circular"
+            I[d] = 1 + mod(I[d] - 1, M)
+        elseif border == "symmetric"
+            I[d] = [1:M, M:-1:1][1 + mod(I[d] - 1, 2 * M)]
+        elseif border == "reflect"
+            I[d] = [1:M, M-1:-1:2][1 + mod(I[d] - 1, 2 * M - 2)]
+        else
+            error("unknown border condition")
+        end
+    end
+
+    if border == "value"
+        A = Array(T, map(length, I)...)
+        fill!(A, value)
+        A[map(x->map(bool, x), I)...] = img
+    else
+        A = img[I...]
+    end
+
+    return A
+end
+
+padarray{T,n}(img::AbstractArray{T,n}, padding) = padarray(img, padding, padding, "replicate", zero(T))
+padarray{T,n}(img::AbstractArray{T,n}, padding::Vector{Int}, border::String) = padarray(img, padding, padding, border, zero(T))
+padarray{T,n}(img::AbstractArray{T,n}, padding::Vector{Int}, value::T) = padarray(img, padding, padding, "value", value)
+
+function padarray{T,n}(img::AbstractArray{T,n}, padding::Vector{Int}, border::String, direction::String)
+    if direction == "both"
+        return padarray(img, padding, padding, border, zero(T))
+    elseif direction == "pre"
+        return padarray(img, padding, 0 * padding, border, zero(T))
+    elseif direction == "post"
+        return padarray(img, 0 * padding, padding, border, zero(T))
+    end
+end
+
+function padarray{T,n}(img::AbstractArray{T,n}, padding::Vector{Int}, value::T, direction::String)
+    if direction == "both"
+        return padarray(img, padding, padding, "value", value)
+    elseif direction == "pre"
+        return padarray(img, padding, 0 * padding, "value", value)
+    elseif direction == "post"
+        return padarray(img, 0 * padding, padding, "value", value)
+    end
+end
+
 function _imfilter{T}(img::StridedMatrix{T}, filter::Matrix{T}, border::String, value)
     si, sf = size(img), size(filter)
-    A = zeros(T, si[1]+sf[1]-1, si[2]+sf[2]-1)
-    s1, s2 = int((sf[1]-1)/2), int((sf[2]-1)/2)
+    fw = iceil(([sf...] - 1) / 2)
+    A = padarray(img, fw, fw, border, convert(T, value))
     # correlation instead of convolution
     filter = rot180(filter)
-    mid1 = s1+1:s1+si[1]
-    mid2 = s2+1:s2+si[2]
-    left = 1:s2
-    right = size(A,2)-s2+1:size(A,2)
-    top = 1:s1
-    bot = size(A,1)-s1+1:size(A,1)
-    if border == "replicate"
-        A[mid1, mid2] = img
-        A[mid1, left] = repmat(img[:,1], 1, s2)
-        A[mid1, right] = repmat(img[:,end], 1, s2)
-        A[top, mid2] = repmat(img[1,:], s1, 1)
-        A[bot, mid2] = repmat(img[end,:], s1, 1)
-        A[top, left] = fliplr(fliplr(img[top, left])')
-        A[bot, left] = img[end-s1+1:end, left]'
-        A[top, right] = img[top, end-s2+1:end]'
-        A[bot, right] = flipud(fliplr(img[end-s1+1:end, end-s2+1:end]))'
-    elseif border == "circular"
-        A[mid1, mid2] = img
-        A[mid1, left] = img[:, end-s2+1:end]
-        A[mid1, right] = img[:, left]
-        A[top, mid2] = img[end-s1+1:end, :]
-        A[bot, mid2] = img[top, :]
-        A[top, left] = img[end-s1+1:end, end-s2+1:end]
-        A[bot, left] = img[top, end-s2+1:end]
-        A[top, right] = img[end-s1+1:end, left]
-        A[bot, right] = img[top, left]
-    elseif border == "mirror"
-        A[mid1, mid2] = img
-        A[mid1, left] = fliplr(img[:, left])
-        A[mid1, right] = fliplr(img[:, end-s2+1:end])
-        A[top, mid2] = flipud(img[top, :])
-        A[bot, mid2] = flipud(img[end-s1+1:end, :])
-        A[top, left] = fliplr(fliplr(img[top, left])')
-        A[bot, left] = img[end-s1+1:end, left]'
-        A[top, right] = img[top, end-s2+1:end]'
-        A[bot, right] = flipud(fliplr(img[end-s1+1:end, end-s2+1:end]))'
-    elseif border == "value"
-        A += value
-        A[mid1, mid2] = img
-    else
-        error("wrong border treatment")
-    end
     # check if separable
-#     U, S, Vt = svdt(filter)
     SVD = svdfact(filter)
     U, S, Vt = SVD[:U], SVD[:S], SVD[:Vt]
-    separable = true;
+    separable = true
     for i = 2:length(S)
-        # assumption that <10^-7 \approx 0
-        separable = separable && (abs(S[i]) < 1e-7)
+        separable &= (abs(S[i]) < sqrt(eps(T)))
     end
     if separable
         # conv2 isn't suitable for this (kernel center should be the actual center of the kernel)
-        #C = conv2(U[:,1]*sqrt(S[1]), vec(Vt[1,:])*sqrt(S[1]), A)
         y = U[:,1]*sqrt(S[1])
         x = vec(Vt[1,:])*sqrt(S[1])
         sa = size(A)
         m = length(y)+sa[1]
         n = length(x)+sa[2]
         B = zeros(T, m, n)
-        B[int(length(x)/2)+1:sa[1]+int(length(x)/2),int(length(y)/2)+1:sa[2]+int(length(y)/2)] = A
+        B[int(length(y)/2)+1:sa[1]+int(length(y)/2),int(length(x)/2)+1:sa[2]+int(length(x)/2)] = A
         yp = zeros(T, m)
         halfy = int((m-length(y)-1)/2)
         yp[halfy+1:halfy+length(y)] = y
@@ -653,7 +663,7 @@ function _imfilter{T}(img::StridedMatrix{T}, filter::Matrix{T}, border::String, 
         end
     end
     sc = size(C)
-    out = share(img, C[int(sc[1]/2-si[1]/2):int(sc[1]/2+si[1]/2)-1, int(sc[2]/2-si[2]/2):int(sc[2]/2+si[2]/2)-1])
+    out = C[int(sc[1]/2-si[1]/2):int(sc[1]/2+si[1]/2)-1, int(sc[2]/2-si[2]/2):int(sc[2]/2+si[2]/2)-1]
 end
 
 # imfilter for multi channel images
