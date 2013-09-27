@@ -167,8 +167,9 @@ sc(img::AbstractArray) = scale(scaleminmax(img), img)
 sc(img::AbstractArray, mn::Number, mx::Number) = scale(scaleminmax(img, mn, mx), img)
 
 convert{I<:AbstractImageDirect}(::Type{I}, img::Union(StridedArray,AbstractImageDirect)) = scale(ScaleNone{eltype(I)}(), img)
+convert{Cdest<:ColorValue,Csrc<:ColorValue}(::Type{Image{Cdest}}, img::Union(StridedArray{Csrc},AbstractImageDirect{Csrc})) = share(img, convert(Array{Cdest}, data(img)))
 
-function convert(::Type{Image{RGB}}, img::Union(StridedArray,AbstractImageDirect))
+function convert{C<:ColorValue,T<:Union(Integer,FloatingPoint)}(::Type{Image{C}}, img::Union(StridedArray{T},AbstractImageDirect{T}))
     cs = colorspace(img)
     if !(cs == "RGB" || cs == "RGBA")
         error("Only RGB and RGBA colorspaces supported currently")
@@ -179,16 +180,18 @@ function convert(::Type{Image{RGB}}, img::Union(StridedArray,AbstractImageDirect
     p = parent(d)
     sz = size(img)
     szout = sz[setdiff(1:ndims(img), cd)]
-    dout = Array(RGB, szout)
+    dout = Array(C, szout)
     if colordim(img) == 1
         s = stride(d,2)
         for i in 0:length(dout)-1
-            dout[i+1] = RGB(scale(scalei,d[i*s+1]), scale(scalei,d[i*s+2]), scale(scalei,d[i*s+3]))
+            tmp = RGB(scale(scalei,d[i*s+1]), scale(scalei,d[i*s+2]), scale(scalei,d[i*s+3]))
+            dout[i+1] = convert(C, tmp)
         end
     elseif cd == ndims(img)
         s = stride(d,cd)
         for i in 1:length(dout)
-            dout[i] = RGB(scale(scalei,d[i]), scale(scalei,d[i+s]), scale(scalei,d[i+2s]))
+            tmp = RGB(scale(scalei,d[i]), scale(scalei,d[i+s]), scale(scalei,d[i+2s]))
+            dout[i] = convert(C, tmp)
         end
     else
         error("Not yet implemented")
