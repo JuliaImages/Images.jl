@@ -1072,10 +1072,18 @@ function imROF{T}(img::Array{T,2}, lambda::Number, iterations::Integer)
 end
 
 # ROF Model for color images
-function imROF{T}(img::Array{T,3}, lambda::Number, iterations::Integer)
-    out = zeros(T, size(img))
-    for i = 1:size(img, 3)
-        out[:,:,i] = imROF(img[:,:,i], lambda, iterations)
+function imROF(img::AbstractArray, lambda::Number, iterations::Integer)
+    cd = colordim(img)
+    local out
+    if cd != 0
+        out = similar(img)
+        for i = size(img, cd)
+            imsl = img["color", i]
+            outsl = slice(out, "color", i)
+            copy!(outsl, imROF(imsl, lambda, iterations)
+        end
+    else
+        out = share(img, imROF(data(img), lambda, iterations))
     end
-    return out
+    out
 end
