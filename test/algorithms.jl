@@ -7,13 +7,26 @@ approx_equal(ar, v) = all(abs(ar-v) .< sqrt(eps(v)))
 
 # arithmetic
 img = convert(Images.Image, zeros(3,3))
+@assert limits(img) == (0,1)
 img2 = (img + 3)/2
 @assert all(img2 .== 1.5)
+@assert limits(img2) == (1.5,2.0)
 img3 = 2img2
 @assert all(img3 .== 3)
 img3 = copy(img2)
 img3[img2 .< 4] = -1
 @assert all(img3 .== -1)
+img = convert(Images.Image, rand(3,4))
+A = rand(3,4)
+img2 = img .* A
+@assert all(data(img2) == data(img).*A)
+@assert limits(img2) == (0,1)
+img2 = convert(Images.Image, A)
+img2 -= 0.5
+img3 = 2img .* img2
+@assert limits(img3) == (-1, 1)
+img2 = img ./ A
+@assert limits(img2) == (0, Inf)
 
 # scaling, ssd
 img = convert(Images.Image, fill(typemax(Uint16), 3, 3))

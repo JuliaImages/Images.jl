@@ -1,30 +1,51 @@
 #### Math with images ####
 
-(+)(img::AbstractImageDirect, n::Number) = share(img, data(img)+n)
-(+)(n::Number, img::AbstractImageDirect) = share(img, data(img)+n)
-(+)(img::AbstractImageDirect, A::BitArray) = share(img, data(img)+A)
-(+)(img::AbstractImageDirect, A::AbstractArray) = share(img, data(img)+data(A))
-(.+)(img::AbstractImageDirect, A::BitArray) = share(img, data(img).+A)
-(.+)(img::AbstractImageDirect, A::AbstractArray) = share(img, data(img).+data(A))
-(-)(img::AbstractImageDirect, n::Number) = share(img, data(img)-n)
-(-)(n::Number, img::AbstractImageDirect) = share(img, n-data(img))
-(-)(img::AbstractImageDirect, A::BitArray) = share(img, data(img)-A)
-(-)(img::AbstractImageDirect, A::AbstractArray) = share(img, data(img)-data(A))
-# (-)(A::AbstractArray, img::AbstractImageDirect) = share(img, data(A) - data(img))
-(.-)(img::AbstractImageDirect, A::BitArray) = share(img, data(img).-A)
-(.-)(img::AbstractImageDirect, A::AbstractArray) = share(img, data(img).-data(A))
-(*)(img::AbstractImageDirect, n::Number) = share(img, data(img)*n)
-(*)(n::Number, img::AbstractImageDirect) = share(img, data(img)*n)
-(/)(img::AbstractImageDirect, n::Number) = share(img, data(img)/n)
-(.*)(img1::AbstractImageDirect, img2::AbstractImageDirect) = share(img1, data(img1).*data(img2))
-(.*)(img::AbstractImageDirect, A::BitArray) = share(img, data(img).*A)
-(.*)(A::BitArray, img::AbstractImageDirect) = share(img, data(img).*A)
-(.*)(img::AbstractImageDirect, A::AbstractArray) = share(img, data(img).*A)
-(.*)(A::AbstractArray, img::AbstractImageDirect) = share(img, data(img).*A)
-(./)(img::AbstractImageDirect, A::BitArray) = share(img, data(img)./A)
-(./)(img1::AbstractImageDirect, img2::AbstractImageDirect) = share(img, data(img1)./data(img2))
-(./)(img::AbstractImageDirect, A::AbstractArray) = share(img, data(img)./A)
-# (./)(A::AbstractArray, img::AbstractImageDirect) = share(img, A./data(img))
+(+)(img::AbstractImageDirect, n::Number) = limadj(copy(img, data(img)+n), limplus(limits(img), n))
+(+)(n::Number, img::AbstractImageDirect) = limadj(copy(img, data(img)+n), limplus(limits(img), n))
+(+)(img::AbstractImageDirect, A::BitArray) = limadj(copy(img, data(img)+A), limplus(limits(img), Bool))
+(+)(img::AbstractImageDirect, A::AbstractArray) = limadj(copy(img, data(img)+data(A)), limplus(limits(img), limits(A)))
+(.+)(img::AbstractImageDirect, A::BitArray) = limadj(copy(img, data(img).+A), limplus(limits(img), Bool))
+(.+)(img::AbstractImageDirect, A::AbstractArray) = limadj(copy(img, data(img).+data(A)), limplus(limits(img), limits(A)))
+(-)(img::AbstractImageDirect, n::Number) = limadj(copy(img, data(img)-n), limminus(limits(img), n))
+(-)(n::Number, img::AbstractImageDirect) = limadj(copy(img, n-data(img)), limminus(n, limits(img)))
+(-)(img::AbstractImageDirect, A::BitArray) = limadj(copy(img, data(img)-A), limminus(limits(img), Bool))
+(-)(img::AbstractImageDirect, A::AbstractArray) = limadj(copy(img, data(img)-data(A)), limminus(limits(img), limits(A)))
+# (-)(A::AbstractArray, img::AbstractImageDirect) = limadj(copy(img, data(A) - data(img)), limminus(limits(A), limits(img)))
+(.-)(img::AbstractImageDirect, A::BitArray) = limadj(copy(img, data(img).-A), limminus(limits(img), Bool))
+(.-)(img::AbstractImageDirect, A::AbstractArray) = limadj(copy(img, data(img).-data(A)), limminus(limits(img), limits(A)))
+(*)(img::AbstractImageDirect, n::Number) = limadj(copy(img, data(img)*n), limtimes(limits(img), n))
+(*)(n::Number, img::AbstractImageDirect) = limadj(copy(img, data(img)*n), limtimes(limits(img), n))
+(/)(img::AbstractImageDirect, n::Number) = limadj(copy(img, data(img)/n), limdivide(limits(img), n))
+(.*)(img1::AbstractImageDirect, img2::AbstractImageDirect) = limadj(copy(img1, data(img1).*data(img2)), limtimes(limits(img1), limits(img2)))
+(.*)(img::AbstractImageDirect, A::BitArray) = limadj(copy(img, data(img).*A), limtimes(limits(img), Bool))
+(.*)(A::BitArray, img::AbstractImageDirect) = limadj(copy(img, data(img).*A), limtimes(limits(img), Bool))
+(.*)(img::AbstractImageDirect, A::AbstractArray) = limadj(copy(img, data(img).*A), limtimes(limits(img), limits(A)))
+(.*)(A::AbstractArray, img::AbstractImageDirect) = limadj(copy(img, data(img).*A), limtimes(limits(img), limits(A)))
+(./)(img::AbstractImageDirect, A::BitArray) = limadj(copy(img, data(img)./A), limdivide(limits(img), Bool))  # needed to avoid ambiguity warning
+(./)(img1::AbstractImageDirect, img2::AbstractImageDirect) = limadj(copy(img, data(img1)./data(img2)), limdivide(limits(img1), limits(img2)))
+(./)(img::AbstractImageDirect, A::AbstractArray) = limadj(copy(img, data(img)./A), limdivide(limits(img), limits(A)))
+# (./)(A::AbstractArray, img::AbstractImageDirect) = limadj(copy(img, A./data(img))
+
+function limadj(img::AbstractImageDirect, newlim)
+    img["limits"] = newlim
+    img
+end
+
+limplus(a::Tuple, n::Number) = a[1]+n, a[2]+n
+limplus(a::Tuple, ::Type{Bool}) = a[1], a[2]+1
+limplus(a::Tuple, b::Tuple) = a[1]+b[1], a[2]+b[2]
+limminus(a::Tuple, n::Number) = a[1]-n, a[2]-n
+limminus(n::Number, a::Tuple) = n-a[2], n-a[1]
+limminus(a::Tuple, ::Type{Bool}) = a[1]-1, a[2]
+limminus(a::Tuple, b::Tuple) = a[1]-b[2], a[2]-b[1]
+limtimes(a::Tuple, n::Number) = n > 0 ? (a[1]*n, a[2]*n) : (a[2]*n, a[1]*n)
+limtimes(a::Tuple, ::Type{Bool}) = min(a[1], false*a[1]), max(a[2], false*a[2])
+limtimes(a::Tuple, b::Tuple) = min(a[1]*b[1],a[1]*b[2],a[2]*b[1],a[2]*b[2]), max(a[1]*b[1],a[1]*b[2],a[2]*b[1],a[2]*b[2])
+limdivide(a::Tuple, n::Number) = n > 0 ? (a[1]/n, a[2]/n) : (a[2]/n, a[1]/n)
+limdivide(a::Tuple, ::Type{Bool}) = min(a[1],a[1]/0), max(a[2],a[2]/0)
+limdivide(a::Tuple, b::Tuple) = min(a[1]/b[1],a[1]/b[2],a[2]/b[1],a[2]/b[2]), max(a[1]/b[1],a[1]/b[2],a[2]/b[1],a[2]/b[2])
+
+# Logical operations
 (.<)(img::AbstractImageDirect, n::Number) = data(img) .< n
 (.>)(img::AbstractImageDirect, n::Number) = data(img) .> n
 (.<)(img::AbstractImageDirect, A::AbstractArray) = data(img) .< A
@@ -996,6 +1017,9 @@ end
 
 function imstretch{T}(img::AbstractArray{T}, m::Number, slope::Number)
     assert_scalar_color(img)
+    if limits(img) != (0,1)
+        warn("Image limits ", limits(img), " are not (0,1)")
+    end
     share(img, 1./(1 + (m./(data(img) + eps(T))).^slope))
 end
 

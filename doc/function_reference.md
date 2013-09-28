@@ -193,7 +193,13 @@ limits(img)
 Returns the value of the `limits` property, or infers the limits from the data
 type (e.g., `Uint8`) where necessary. For example, if you're using a 14-bit
 camera and encoding the values with `Uint16`, you can set the limits property to
-`(0x0000, 0x3fff)`.
+`(0x0000, 0x3fff)`. One exception to the type-limits default rule is for plain
+`Array`s with floating-point type, which by convention will return `(0,1)`.
+However, for `Image` floating-point types, the default is `(-Inf, Inf)`.
+
+Note that there is no guarantee that the image values
+fall within the stated limits; this is intended as a "hint"
+and is used particularly for setting default contrast when images are displayed.
 
 ```
 pixelspacing(img)
