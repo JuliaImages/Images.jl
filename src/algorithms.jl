@@ -203,10 +203,11 @@ end
 for N = 1:4
     @eval begin
         function _uint32color_gray!{T}(buf::Array{Uint32}, A::AbstractArray{T,$N}, scalei::ScaleInfo = scaleinfo(Uint8, A))
+            scalei_t = take(scalei, A)
             k = 0
             @inbounds @nloops $N i A begin
                 val = @nref $N A i
-                gr = scale(scalei, val)
+                gr = scale(scalei_t, val)
                 buf[k+=1] = rgb24(gr, gr, gr)
             end
             buf
@@ -231,19 +232,20 @@ end
 for N = 1:5
     @eval begin
         function _uint32color!{T}(buf::Array{Uint32}, A::AbstractArray{T,$N}, cs::String, cdim::Int, scalei::ScaleInfo = scaleinfo(Uint8, A))
+            scalei_t = take(scalei, A)
             k = 0
             if cs == "GrayAlpha"
                 @inbounds @nloops $N i d->(d==cdim)?1:(1:size(A,d)) begin
                     gr = @nref $N A i
                     alpha = @nrefshift $N A i d->(d==cdim)?1:0
-                    buf[k+=1] = argb32(scalei, alpha, gr, gr, gr)
+                    buf[k+=1] = argb32(scalei_t, alpha, gr, gr, gr)
                 end
             elseif cs == "RGB"
                 @inbounds @nloops $N i d->(d==cdim)?1:(1:size(A,d)) begin
                     r = @nref $N A i
                     g = @nrefshift $N A i d->(d==cdim)?1:0
                     b = @nrefshift $N A i d->(d==cdim)?2:0
-                    buf[k+=1] = rgb24(scalei, r, g, b)
+                    buf[k+=1] = rgb24(scalei_t, r, g, b)
                 end
             elseif cs == "ARGB"
                 @inbounds @nloops $N i d->(d==cdim)?1:(1:size(A,d)) begin
@@ -251,7 +253,7 @@ for N = 1:5
                     r = @nrefshift $N A i d->(d==cdim)?1:0
                     g = @nrefshift $N A i d->(d==cdim)?2:0
                     b = @nrefshift $N A i d->(d==cdim)?3:0
-                    buf[k+=1] = argb32(scalei, a, r, g, b)
+                    buf[k+=1] = argb32(scalei_t, a, r, g, b)
                 end
             elseif cs == "RGBA"
                 @inbounds @nloops $N i d->(d==cdim)?1:(1:size(A,d)) begin
@@ -259,7 +261,7 @@ for N = 1:5
                     g = @nrefshift $N A i d->(d==cdim)?1:0
                     b = @nrefshift $N A i d->(d==cdim)?2:0
                     a = @nrefshift $N A i d->(d==cdim)?3:0
-                    buf[k+=1] = argb32(scalei, a, r, g, b)
+                    buf[k+=1] = argb32(scalei_t, a, r, g, b)
                 end
             else
                 error("colorspace ", cs, " not yet supported")

@@ -30,6 +30,7 @@ export # types
     LabeledArray,
     Overlay,
     OverlayImage,
+    ScaleAutoMinMax,
     ScaleInfo,
     ScaleMinMax,
     ScaleNone,
@@ -57,8 +58,9 @@ export # types
     isxfirst,
     isyfirst,
     limits,
-    minfinite,
+    maxabsfinite,
     maxfinite,
+    minfinite,
     nimages,
     pixelspacing,
     properties,
@@ -110,6 +112,19 @@ export # types
     uint32color!,
     ycbcr2rgb,
     
+    # Scaling of intensity
+    climdefault,
+    float32sc,
+    float64sc,
+    sc,
+    scale,
+    scaleinfo,
+    scaleminmax,
+    scalesigned,
+    uint8sc,
+    uint16sc,
+    uint32sc,
+
     # algorithms
     backdiffx,
     backdiffy,
@@ -134,16 +149,12 @@ export # types
     prewitt,
     sad,
     sadn,
-    sc,
-    scale,
-    scaledefault,
-    scaleinfo,
-    scaleminmax,
     sobel,
     ssd,
     ssdn
 
-@deprecate cairoRGB uint32color!
-@deprecate refim    getindexim
+@deprecate cairoRGB     uint32color!
+@deprecate refim        getindexim
+@deprecate scaledefault climdefault
 
 end
