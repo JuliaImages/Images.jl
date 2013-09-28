@@ -1137,7 +1137,7 @@ extr(order::Ordering, x::ColorValue, y::ColorValue, z::ColorValue) = extr(order,
 # On input, A should be 0 or 1. On output it will be the labeled array, where regions are labeled by the specified connectivity
 
 # Connectivity for an arbitrary neighborhood
-label_components(A::Union(BitArray, Array{Bool}), connectivity) = label_components!(convert(Array{Int}, A), connectivity)
+label_components(A::Union(BitArray, Array{Bool}), connectivity=1:ndims(A)) = label_components!(convert(Array{Int}, A), connectivity)
 
 for N = 1:4
     @eval begin
@@ -1189,7 +1189,7 @@ end
 # region = [1,3] if you want connectivity along axes 1 and 3 but not 2
 for N = 1:4
     @eval begin
-        function label_components!(A::Array{Int,$N}, region::Union(Tuple, Vector{Int}))
+        function label_components!(A::Array{Int,$N}, region::Union(Tuple, AbstractVector{Int}))
             usedim = falses($N)
             usedim[region] = true
             @nextract $N usedim usedim
