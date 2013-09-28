@@ -1186,10 +1186,13 @@ for N = 1:4
 end
 
 # A faster version for 4-connectivity (2d) and 6-connectivity (3d)
-# connectivity = (true, false, true) if you want connectivity along axes 1 and 3 but not 2
+# region = [1,3] if you want connectivity along axes 1 and 3 but not 2
 for N = 1:4
     @eval begin
-        function label_components!(A::Array{Int,$N}, connectivity::NTuple{$N,Bool})
+        function label_components!(A::Array{Int,$N}, region::Union(Tuple, Vector{Int}))
+            usedim = falses($N)
+            usedim[region] = true
+            @nextract $N usedim usedim
             # Step 0: map each non-zero pixel to itself
             for i = 1:length(A)
                 if A[i] > 0
@@ -1197,7 +1200,6 @@ for N = 1:4
                 end
             end
             # Step 1: associate each pixel with its connected-neighbor of lowest index
-            @nextract $N usedim connectivity
             @nloops $N i A begin
                 minindex = @nref $N A i
                 if minindex > 0             # not a background pixel

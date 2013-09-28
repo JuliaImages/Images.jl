@@ -126,7 +126,10 @@ A = [true  true  false true;
      true  false true  true]
 lbltarget = [1 1 0 2;
              1 0 2 2]
-@assert Images.label_components(A, (true, true)) == lbltarget
+lbltarget1 = [1 2 0 4;
+              1 0 3 4]
+@assert Images.label_components(A, [1,2]) == lbltarget
+@assert Images.label_components(A, [1]) == lbltarget1
 connectivity = [false true  false;
                 true  false true;
                 false true  false]
