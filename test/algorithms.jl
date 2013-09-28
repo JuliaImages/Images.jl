@@ -120,3 +120,18 @@ Ag = [0 0 0 0;
       0 0 0 0;
       0 0 0 0.6]
 @assert Ae == cat(3, Ar, Ag, zeros(4,4))
+
+# label_components
+A = [true  true  false true;
+     true  false true  true]
+lbltarget = [1 1 0 2;
+             1 0 2 2]
+@assert Images.label_components(A, (true, true)) == lbltarget
+connectivity = [false true  false;
+                true  false true;
+                false true  false]
+@assert Images.label_components(A, connectivity) == lbltarget
+connectivity = trues(3,3)
+lbltarget2 = [1 1 0 1;
+              1 0 1 1]
+@assert Images.label_components(A, connectivity) == lbltarget2

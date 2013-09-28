@@ -106,7 +106,7 @@ properties of `img`.
 sub(img, i, j, k, ...)
 sub(img, "x", 100:200, "y", 400:600)
 slice(img, i, j, k, ...)
-sub(img, "x", 15, "y", 400:600)
+slice(img, "x", 15, "y", 400:600)
 ```
 returns a `SubArray` of image data, with the ordinary meanings of `sub` and
 `slice`.
@@ -283,7 +283,7 @@ spatialorder(ImageType)
 ```
 Returns the storage order of the _spatial_ coordinates of the image, e.g.,
 `["y", "x"]`. The second version works on a type, e.g., `Matrix`. See
-`storageorder`, `timedim` and `colordim` for related properties.
+`storageorder`, `timedim`, and `colordim` for related properties.
 
 <br />
 ```
@@ -674,3 +674,31 @@ sad(img1, img2)
 sadn(img1, img2)
 ```
 sum and mean of `abs(img1-img2)`.
+
+### Morphological operations
+
+```
+dilate(img, [region])
+erode(img, [region])
+```
+perform a max-filter and min-filter, respectively, over nearest-neighbors. The
+default is 8-connectivity in 2d, 27-connectivity in 3d, etc. You can specify the
+list of dimensions that you want to include in the connectivity, e.g., region =
+[1,2] would exclude the third dimension from filtering.
+
+<br />
+```
+label_components(tf, connectivity)
+```
+Find the connected components in a binary array `tf`. There are two forms that
+`connectivity` can take:
+it can be a boolean array of the same dimensionality as `tf`, of size 1 or 3
+along each dimension. Each entry in the array determines whether a given
+neighbor is used for connectivity analyses. The second form is specific for
+connectivity to just the nearest neighbors (4-connectivity in 2d and
+6-connectivity in 3d): you can provide a list of the form
+`(true,false,true)`---with one entry per dimension---to indicate whether
+nearest-neighbors along a particular axis are used to determine connectivity.
+
+The output is an integer array, where 0 is used for background pixels, and each
+connected region gets a different integer index.

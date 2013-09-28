@@ -1091,6 +1091,7 @@ end
 
 ### Morphological operations
 
+# Erode and dilate support 3x3 regions only (and higher-dimensional generalizations).
 dilate(img::AbstractArray, region=coords_spatial(img)) = dilate!(copy(img), region)
 erode(img::AbstractArray, region=coords_spatial(img)) = erode!(copy(img), region)
 
@@ -1132,3 +1133,143 @@ extr(order::Ordering, x::RGB, y::RGB, z::RGB) = RGB(extr(order, x.r, y.r, z.r), 
 
 extr(order::Ordering, x::ColorValue, y::ColorValue) = extr(order, convert(RGB, x), convert(RGB, y))
 extr(order::Ordering, x::ColorValue, y::ColorValue, z::ColorValue) = extr(order, convert(RGB, x), convert(RGB, y), convert(RGB, z))
+
+# On input, A should be 0 or 1. On output it will be the labeled array, where regions are labeled by the specified connectivity
+
+# Connectivity for an arbitrary neighborhood
+label_components(A::Union(BitArray, Array{Bool}), connectivity) = label_components!(convert(Array{Int}, A), connectivity)
+
+for N = 1:4
+    @eval begin
+        function label_components!(A::Array{Int,$N}, connectivity::Union(BitArray{$N}, Array{Bool,$N}))
+            for i = 1:$N
+                if size(connectivity, i) != 1 && size(connectivity, i) != 3
+                    error("connectivity must be of size 1 or 3 in each dimension")
+                end
+            end
+            @nextract $N halfwidth d->(halfwidth(size(connectivity,d)))
+            @nextract $N offset d->(1+halfwidth(size(connectivity,d)))
+            # Step 0: map each non-zero pixel to itself
+            for i = 1:length(A)
+                if A[i] > 0
+                    A[i] = i
+                end
+            end
+            # Step 1: associate each pixel with its connected-neighbor of lowest index
+            @nloops $N i A begin
+                minindex = @nref $N A i
+                if minindex > 0               # not a background pixel
+                    @nloops $N j d->(-halfwidth_d:halfwidth_d) begin   # j is the displacement to the neighbor
+                        @nexprs $N d->(k_d=i_d+j_d)
+                        if (@nrefshift $N connectivity j offset)   # if in connectivity pattern
+                            if (@nall $N d->(1<=k_d<=size(A,d)))       # check bounds
+                                nbrindex = @nref $N A k
+                                if nbrindex > 0
+                                    if nbrindex < minindex
+                                        minindex = nbrindex
+                                    else
+                                        A[nbrindex] = minindex
+                                    end
+                                end
+                            end
+                        end
+                    end
+                    (@nref $N A i) = minindex
+                end
+            end
+            # Step 2: iterate the graph until it stops changing
+            flowmap!(A)
+            # Step 3: assign unique labels
+            labelmap!(A)
+        end
+    end
+end
+
+# A faster version for 4-connectivity (2d) and 6-connectivity (3d)
+# connectivity = (true, false, true) if you want connectivity along axes 1 and 3 but not 2
+for N = 1:4
+    @eval begin
+        function label_components!(A::Array{Int,$N}, connectivity::NTuple{$N,Bool})
+            # Step 0: map each non-zero pixel to itself
+            for i = 1:length(A)
+                if A[i] > 0
+                    A[i] = i
+                end
+            end
+            # Step 1: associate each pixel with its connected-neighbor of lowest index
+            @nextract $N usedim connectivity
+            @nloops $N i A begin
+                minindex = @nref $N A i
+                if minindex > 0             # not a background pixel
+                    (@nexprs $N d->begin
+                        if usedim_d            # if in pattern
+                            if i_d>1           # if within bounds
+#                                 _, nbrindex = (@nlinear $N A (d2->(d2==d) ? i_d-1 : i_d2))
+                                nbrindex = @nref $N A (d2->(d2==d) ? i_d-1 : i_d2)
+                                if nbrindex > 0
+                                    if nbrindex < minindex
+                                        minindex = nbrindex
+                                    else
+                                        A[nbrindex] = minindex
+                                    end
+                                end
+                            end
+                            if i_d<size(A,d)   # if within bounds
+                                nbrindex = (@nref $N A (d2->(d2==d) ? i_d+1 : i_d2))
+                                if nbrindex > 0
+                                    if nbrindex < minindex
+                                        minindex = nbrindex
+                                    else
+                                        A[nbrindex] = minindex
+                                    end
+                                end
+                            end
+                        end
+                    end)
+                    (@nref $N A i) = minindex
+                end
+            end
+            # Step 2: iterate the graph until it stops changing
+            flowmap!(A)
+            # Step 3: assign unique labels
+            labelmap!(A)
+        end
+    end
+end
+
+# Converges in at most logN steps
+function flowmap!(map::Array{Int})
+    changed = true
+    while changed
+        changed = false
+        for i = 1:length(map)
+            peak = map[i]
+            if peak > 0
+                next = map[peak]
+                changed |= peak != next
+                map[i] = next
+            end
+        end
+    end
+    map
+end
+
+function labelmap!(map::Array{Int})
+    lbl = zeros(Int, size(map))
+    j = 1
+    for i = 1:length(lbl)
+        if map[i] == i
+            lbl[i] = j
+            j += 1
+        end
+    end
+    for i = 1:length(lbl)
+        m = map[i]
+        if m > 0
+            lbl[i] = lbl[m]
+        end
+    end
+    lbl
+end
+
+halfwidth(i::Integer) = div((i-1),2)

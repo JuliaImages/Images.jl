@@ -8,15 +8,18 @@ JPEG, and TIFF are currently loaded and saved via
 work:
 
 - [NRRD](http://teem.sourceforge.net/nrrd/), "nearly raw raster data" which
-despite its name allows for considerable metadata. This is perhaps the best
-current default choice of formats.
+despite its name allows for considerable metadata. Currently, this is perhaps the best default choice of formats for storing image data.
 - SIF, a file format used by Andor Technology for
 their scientific CCD cameras
 - [B16](http://www.pco.de/links/), a format used by PCO/Cooke cameras
 - [Imagine](http://holylab.wustl.edu/), a format used for 4D (3 spatial dimensions + time) imaging
 
 Finally, [HDF5](https://github.com/timholy/HDF5.jl) and JLD can also be used to
-store images.
+store images. There is an official [HDF5 image standard](http://www.hdfgroup.org/HDF5/doc/ADGuide/ImageSpec.html),
+which we could fairly easily support, but the author's searching has yet to turn
+up an example file that complies with this standard. 
+Many HDF5 images seem to be stored with custom attributes, which fortunately are
+quite easy to parse.
 
 To read an image, one typically says
 ```

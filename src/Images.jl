@@ -151,6 +151,8 @@ export # types
     imROF,
     imstretch,
 #     imthresh,
+    label_components,
+    label_components!,
     ncc,
     prewitt,
     sad,
