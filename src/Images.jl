@@ -1,12 +1,14 @@
 module Images
 
+import Base.Order: Ordering, ForwardOrdering, ReverseOrdering
+import Base.Graphics: width, height
+importall Base
+
 using Color
 using Cartesian
 
-importall Base
-import Base.Graphics: width, height
 
-# We'll use Grid's Counter, but don't need the rest of it
+# We'll use Grid's Counter, but we don't need the rest of it
 include(joinpath(Pkg.dir(),"Grid","src","counter.jl"))
 
 include("core.jl")
@@ -130,6 +132,8 @@ export # types
     # algorithms
     backdiffx,
     backdiffy,
+    dilate,
+    erode,
     forwarddiffx,
     forwarddiffy,
     gaussian2d,

@@ -134,7 +134,8 @@ similar{T}(img::AbstractImageIndexed, ::Type{T}) = ImageCmap(similar(img.data, T
 similar{T}(img::AbstractImageIndexed, ::Type{T}, dims::Dims) = ImageCmap(similar(img.data, T, dims), copy(img.cmap), copy(img.properties))
 
 # copy properties
-function copy!(imgdest::AbstractImage, imgsrc::AbstractImage, props::ASCIIString...)
+function copy!(imgdest::AbstractImage, imgsrc::AbstractImage, prop1::ASCIIString, props::ASCIIString...)
+    imgdest[prop1] = imgsrc[prop1]
     for p in props
         imgdest[p] = imgsrc[p]
     end

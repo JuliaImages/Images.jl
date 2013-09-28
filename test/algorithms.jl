@@ -7,10 +7,10 @@ approx_equal(ar, v) = all(abs(ar-v) .< sqrt(eps(v)))
 
 # arithmetic
 img = convert(Images.Image, zeros(3,3))
-@assert limits(img) == (0,1)
+@assert Images.limits(img) == (0,1)
 img2 = (img + 3)/2
 @assert all(img2 .== 1.5)
-@assert limits(img2) == (1.5,2.0)
+@assert Images.limits(img2) == (1.5,2.0)
 img3 = 2img2
 @assert all(img3 .== 3)
 img3 = copy(img2)
@@ -19,14 +19,14 @@ img3[img2 .< 4] = -1
 img = convert(Images.Image, rand(3,4))
 A = rand(3,4)
 img2 = img .* A
-@assert all(data(img2) == data(img).*A)
-@assert limits(img2) == (0,1)
+@assert all(Images.data(img2) == Images.data(img).*A)
+@assert Images.limits(img2) == (0,1)
 img2 = convert(Images.Image, A)
 img2 -= 0.5
 img3 = 2img .* img2
-@assert limits(img3) == (-1, 1)
+@assert Images.limits(img3) == (-1, 1)
 img2 = img ./ A
-@assert limits(img2) == (0, Inf)
+@assert Images.limits(img2) == (0, Inf)
 
 # scaling, ssd
 img = convert(Images.Image, fill(typemax(Uint16), 3, 3))
@@ -93,3 +93,30 @@ ovr = Images.Overlay((gray, gray), (RGB(1,0,1), RGB(0,1,0)), ((0,1),(0,1)))
 ovr.visible[2] = false
 buf = Images.uint32color(ovr)
 @assert buf == nogreen
+
+# erode/dilate
+A = zeros(4,4,3)
+A[2,2,1] = 0.8
+A[4,4,2] = 0.6
+Ae = Images.erode(A)
+@assert Ae == zeros(size(A))
+Ad = Images.dilate(A)
+Ar = [0.8 0.8 0.8 0;
+      0.8 0.8 0.8 0;
+      0.8 0.8 0.8 0;
+      0 0 0 0]
+Ag = [0 0 0 0;
+      0 0 0 0;
+      0 0 0.6 0.6;
+      0 0 0.6 0.6]
+@assert Ad == cat(3, Ar, Ag, zeros(4,4))
+Ae = Images.erode(Ad)
+Ar = [0.8 0.8 0 0;
+      0.8 0.8 0 0;
+      0 0 0 0;
+      0 0 0 0]
+Ag = [0 0 0 0;
+      0 0 0 0;
+      0 0 0 0;
+      0 0 0 0.6]
+@assert Ae == cat(3, Ar, Ag, zeros(4,4))

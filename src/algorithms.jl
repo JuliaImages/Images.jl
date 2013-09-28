@@ -1080,10 +1080,55 @@ function imROF(img::AbstractArray, lambda::Number, iterations::Integer)
         for i = size(img, cd)
             imsl = img["color", i]
             outsl = slice(out, "color", i)
-            copy!(outsl, imROF(imsl, lambda, iterations)
+            copy!(outsl, imROF(imsl, lambda, iterations))
         end
     else
         out = share(img, imROF(data(img), lambda, iterations))
     end
     out
 end
+
+
+### Morphological operations
+
+dilate(img::AbstractArray, region=coords_spatial(img)) = dilate!(copy(img), region)
+erode(img::AbstractArray, region=coords_spatial(img)) = erode!(copy(img), region)
+
+dilate!(maxfilt, region=coords_spatial(maxfilt)) = extremefilt!(data(maxfilt), Base.Order.Forward, region)
+erode!(minfilt, region=coords_spatial(minfilt)) = extremefilt!(data(minfilt), Base.Order.Reverse, region)
+function extremefilt!(extrfilt::Array, order::Ordering, region=coords_spatial(extrfilt))
+    for d = 1:ndims(extrfilt)
+        if size(extrfilt, d) == 1 || !in(d, region)
+            continue
+        end
+        sz = [size(extrfilt,i) for i = 1:ndims(extrfilt)]
+        s = stride(extrfilt, d)
+        sz[d] = 1
+        @forcartesian i sz begin
+            k = cartesian_linear(extrfilt, i)
+            a2 = extrfilt[k]
+            a3 = extrfilt[k+s]
+            extrfilt[k] = extr(order, a2, a3)
+            for l = 2:size(extrfilt,d)-1
+                k += s
+                a1 = a2
+                a2 = a3
+                a3 = extrfilt[k+s]
+                extrfilt[k] = extr(order, a1, a2, a3)
+            end
+            extrfilt[k+s] = extr(order, a2, a3)
+        end
+    end
+    extrfilt
+end
+
+extr(order::ForwardOrdering, x::Real, y::Real) = max(x,y)
+extr(order::ForwardOrdering, x::Real, y::Real, z::Real) = max(x,y,z)
+extr(order::ReverseOrdering, x::Real, y::Real) = min(x,y)
+extr(order::ReverseOrdering, x::Real, y::Real, z::Real) = min(x,y,z)
+
+extr(order::Ordering, x::RGB, y::RGB) = RGB(extr(order, x.r, y.r), extr(order, x.g, y.g), extr(order, x.b, y.b))
+extr(order::Ordering, x::RGB, y::RGB, z::RGB) = RGB(extr(order, x.r, y.r, z.r), extr(order, x.g, y.g, z.g), extr(order, x.b, y.b, z.b))
+
+extr(order::Ordering, x::ColorValue, y::ColorValue) = extr(order, convert(RGB, x), convert(RGB, y))
+extr(order::Ordering, x::ColorValue, y::ColorValue, z::ColorValue) = extr(order, convert(RGB, x), convert(RGB, y), convert(RGB, z))
