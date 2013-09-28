@@ -78,8 +78,7 @@ annotate images. More detail about this point can be found below.
 The only other concrete image type is for indexed images:
 
 ```julia
-type ImageCmap{T,N,A<:AbstractArray,C<:AbstractArray} <:
-AbstractImageIndexed{T,N}
+type ImageCmap{T,N,A<:AbstractArray,C<:AbstractArray} <: AbstractImageIndexed{T,N}
     data::A
     cmap::C
     properties::Dict
@@ -161,44 +160,44 @@ used; if not, hopefully-reasonable defaults will be chosen.
 
 ## Writing generic algorithms
 
-There are many examples that you can use as a guide. Here we work through the
-example of `imfilter` (in
-`algorithms.jl`), which was originally designed to work on just arrays, and show
-how to convert it into an algorithm that works with most image types.
-(One important limitation is that Julia's `imfilter` algorithm currently works
-only with 2d images; generalizing it to multiple dimensions is a different
-topic.) First, let's assume that we've re-named the old array-based algorithm as
-`_imfilter`. Then a more general variant of `imfilter` can be written in the
-following way:
-
+Let's say you have an algorithm implemented for `Array`s, and you want to extend
+it to work on `Image` types. Let's consider the example of a hypothetical
+`imfilter`, written to perform kernel-based filtering in arbitrary dimensions.
+Let's say your `imfilter` looks like this:
 ```
-function imfilter{T}(img::AbstractArray{T}, filter::Matrix{T}, border::String,
-value)
-    assert2d(img)      # Julia's imfilter was written for 2d images, so enforce
-this
-    cd = colordim(img) # find out which dimension corresponds to color, if any
-    local A
-    if cd == 0         # no explicit array dimension for color
-        A = _imfilter(data(img), filter, border, value)
-    else
-        A = similar(data(img))                    # allocate the output
-        coords = RangeIndex[1:size(img,i) for i = 1:ndims(img)]   # indexes covering the whole
-array
-        for i = 1:size(img, cd)
-            coords[cd] = i                        # slice along the color
-dimension
-            simg = slice(img, coords...)
-            tmp = _imfilter(simg, filter, border, value)   # filter this color
-channel
-            A[coords...] = tmp[:]                 # store the result
-        end
-    end
-    share(img, A)       # output image has the same properties as the input
+function imfilter{T,N}(A::Array{T,N}, kernel::Array{T,N}, options...)
+```
+
+The first step might be to simply provide a version for `AbstractImage` types:
+```
+function imfilter{T,N}(img::AbstractImage{T,N}, kernel::Array{T,N}, options...)
+    out = imfilter(data(img), kernel, options...)
+    share(img, out)
 end
 ```
-Despite the fact that this allows the color channel to be any one of the array
-dimensions, it is hardly any more complicated than its predecessor which
-assumed that the third dimension corresponded to color.
 
-Other examples showing how to generalize array-based code can be found in
-`algorithms.jl`, `core.jl`, and `io.jl`.
+Now let's say you additionally want to allow the user to filter color
+images---where one dimension of the array is used to encode color---but supply a
+filter of dimension `N-1` to be applied to each color channel separately. We
+can implement this version simultaneously for both `Image` types and other array
+types as follows:
+```
+function imfilter{T,N,N1}(img::AbstractArray{T,N}, kernel::Array{T,N1}, options...)
+    cd = colordim(img)
+    if N1 != N - (cd != 0)
+        error("kernel has the wrong dimensionality")
+    end
+    out = similar(img)
+    for i = size(img, cd)
+        imsl = img["color", i]
+        outsl = slice(out, "color", i)
+        copy!(outsl, imfilter(imsl, kernel, options...))
+    end
+    out
+end
+```
+This works no matter which dimension is used to store color. If the user
+supplies an `Array`, s/he will get an `Array` back, and if using an `Image` will
+get an `Image` back with properties inherited from `img`.
+
+Naturally, you can find other examples throughout the source code of `Images`.

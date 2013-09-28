@@ -542,13 +542,17 @@ functions in the corresponding module. See the end of `io.jl` for a list of
 You can perform arithmetic with `Image`s and `ColorValue`s. Algorithms also
 include the following functions:
 
-### Filtering
+### Linear filtering and padding
 
 ```
-imfilter(img, kernel)
+imfilter(img, kernel, [border, value])
 ```
-filters the image with the given (array) kernel. Currently 2d only.
+filters the image with the given (array) kernel, using boundary conditions
+specified by `border` and `value`. See `padarray` below for an explanation of
+the boundary conditions. Default is to use `"replicate"` boundary conditions.
+Currently 2d only.
 
+<br />
 ```
 imfilter_gaussian(img, sigma)
 ```
@@ -557,8 +561,39 @@ one value per array dimension (any number of dimensions are supported), 0
 indicating that no filtering is to occur along that dimension. Uses the Young,
 van Vliet, and van Ginkel IIR-based algorithm to provide fast gaussian filtering
 even with large `sigma`. Edges are handled by "NA" conditions, meaning the
-result is normalized by the number of available pixels, and NaNs are handled
-gracefully.
+result is normalized by the number and weighting of available pixels, and
+missing data (NaNs) are handled likewise.
+
+<br />
+```
+imedge(img, [method], [border])
+```
+Edge-detection filtering. `method` is either `"sobel"` or `"prewitt"`. `border` is any of the boundary conditions specified in `padarray`.
+
+<br />
+```
+forwarddiffx(img)
+backdiffx(img)
+forwarddiffy(img)
+backdiffy(img)
+```
+Forward- and backward finite differencing along the x- and y- axes. The size of
+the image is preserved, so the first (for `backdiff`) or last (for
+`forwarddiff`) row/column will be zero. These currently operate only on matrices
+(2d with scalar color).
+
+<br />
+```
+padarray(img, prepad, postpad, border, value)
+```
+For an `N`-dimensional array, apply padding on both edges. `prepad` and
+`postpad` are vectors of length `N` specifying the number of pixels used to pad
+each dimension. `border` is a string, one of `"value"` (to pad with a specific
+pixel value), `"replicate"` (to repeat the edge value), `"circular"` (periodic
+boundary conditions), `"reflect"` (reflecting boundary conditions, where the
+reflection is centered on edge), and `"symmetric"` (reflecting boundary
+conditions, where the reflection is centered a half-pixel spacing beyond the
+edge, so the edge value gets repeated). Arrays are automatically padded before 
 
 
 ### Filtering kernels
@@ -568,34 +603,66 @@ gaussian2d(sigma, filtersize)
 ```
 returns a kernel for FIR-based Gaussian filtering. See also `imfilter_gaussian`.
 
+<br />
 ```
 imaverage(filtersize)
 ```
 constructs a boxcar-filter of the specified size.
 
+<br />
 ```
 imdog(sigma)
 ```
-creates a difference-of-gaussians kernel (`sigma`s differing by a factor of `sqrt(2)`)
+creates a difference-of-gaussians kernel (`sigma`s differing by a factor of
+`sqrt(2)`)
 
+<br />
 ```
 imlaplacian(filtersize)
 ```
 returns a kernel for laplacian filtering.
 
+<br />
 ```
 imlog(sigma)
 ```
 returns a laplacian-of-gaussian kernel.
 
+<br />
+```
+sobel()
+prewitt()
+```
+Return x- and y- Sobel and Prewitt derivative filters.
+
+### Nonlinear filtering and transformation
+
+```
+imROF(img, lambda, iterations)
+```
+Perform Rudin-Osher-Fatemi (ROF) filtering, more commonly known as Total
+Variation (TV) denoising or TV regularization. `lambda` is the regularization
+coefficient for the derivative, and `iterations` is the number of relaxation
+iterations taken. 2d only.
+
 ### Image statistics
 
+```
+minfinite(img)
+maxfinite(img)
+maxabsfinite(img)
+```
+Return the minimum and maximum value in the image, respectively, ignoring any values that are not finite (Inf or NaN).
+
+<br />
 ```
 ssd(img1, img2)
 ssdn(img1, img2)
 ```
-Sum-of-squared-differences (pixelwise). The second is the mean-of-squared-differences.
+Sum-of-squared-differences (pixelwise). `ssdn` is the
+mean-of-squared-differences (i.e., normalized by `n`, the number of pixels).
 
+<br />
 ```
 sad(img1, img2)
 sadn(img1, img2)
