@@ -609,6 +609,13 @@ function assert_scalar_color(img::AbstractArray)
     end
 end
 
+# Check that the time dimension, if present, is last
+function assert_timedim_last(img::AbstractArray)
+    if 0 < timedim(img) < ndims(img)
+        error("Time dimension is not last")
+    end
+end
+
 # Spatial storage order
 isyfirst(img::AbstractArray) = spatialorder(img)[1] == "y"
 function assert_yfirst(img)

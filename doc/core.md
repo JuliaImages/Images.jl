@@ -196,8 +196,10 @@ function imfilter{T,N,N1}(img::AbstractArray{T,N}, kernel::Array{T,N1}, options.
     out
 end
 ```
-This works no matter which dimension is used to store color. If the user
-supplies an `Array`, s/he will get an `Array` back, and if using an `Image` will
-get an `Image` back with properties inherited from `img`.
+This works no matter which dimension is used to store color, a feat that would
+be essentially impossible to achieve robustly in a generic algorithm if we
+didn't exploit metadata. Note also that if the user supplies an `Array`, s/he
+will get an `Array` back, and if using an `Image` will get an `Image` back with
+properties inherited from `img`.
 
 Naturally, you can find other examples throughout the source code of `Images`.

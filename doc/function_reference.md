@@ -151,14 +151,20 @@ default is always returned.
 ```
 assert2d(img)
 ```
-Triggers an error if the image has a time dimension or more than two spatial
-dimensions.
+Triggers an error if the image has more than two spatial
+dimensions or has a time dimension.
 
 <br />
 ```
 assert_scalar_color(img)
 ```
 Triggers an error if the image uses an array dimension to encode color.
+
+<br />
+```
+assert_timedim_last(img)
+```
+Triggers an error if the image has a time dimension that is not the last dimension.
 
 <br />
 ```

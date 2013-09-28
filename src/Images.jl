@@ -46,7 +46,9 @@ export # types
     # core functions
     assert2d,
     assert_scalar_color,
+    assert_timedim_last,
     assert_xfirst,
+    assert_yfirst,
     colordim,
     colorspace,
     coords_spatial,
