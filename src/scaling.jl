@@ -14,12 +14,12 @@ end
 
 ## scale() for array types
 
-function scale{T}(scalei::ScaleInfo{T}, img::Union(StridedArray,AbstractImageDirect))
+function scale{T}(scalei::ScaleInfo{T}, img::AbstractArray)
     out = similar(img, T)
     scale!(out, scalei, img)
 end
 
-function scale!{T}(out, scalei::ScaleInfo{T}, img::Union(StridedArray,AbstractImageDirect))
+function scale!{T}(out, scalei::ScaleInfo{T}, img::AbstractArray)
     dimg = data(img)
     dout = data(out)
     for i = 1:length(dimg)
@@ -28,7 +28,7 @@ function scale!{T}(out, scalei::ScaleInfo{T}, img::Union(StridedArray,AbstractIm
     out
 end
 
-function scale!{T}(out::AbstractImage, scalei::ScaleInfo{T}, img::Union(StridedArray,AbstractImageDirect))
+function scale!{T}(out::AbstractImage, scalei::ScaleInfo{T}, img::AbstractArray)
     dimg = data(img)
     dout = data(out)
     for i = 1:length(dimg)
