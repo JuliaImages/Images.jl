@@ -1031,7 +1031,7 @@ function imstretch{T}(img::AbstractArray{T}, m::Number, slope::Number)
     share(img, 1./(1 + (m./(data(img) + eps(T))).^slope))
 end
 
-function imedge{T}(img::Array{T}, method::String, border::String)
+function imedge{T}(img::AbstractArray{T}, method::String, border::String)
     # needs more methods
     if method == "sobel"
         s1, s2 = sobel()
@@ -1046,8 +1046,8 @@ function imedge{T}(img::Array{T}, method::String, border::String)
     end
 end
 
-imedge{T}(img::Array{T}, method::String) = imedge(img, method, "replicate")
-imedge{T}(img::Array{T}) = imedge(img, "sobel", "replicate")
+imedge{T}(img::AbstractArray{T}, method::String) = imedge(img, method, "replicate")
+imedge{T}(img::AbstractArray{T}) = imedge(img, "sobel", "replicate")
 
 # forward and backward differences 
 # can be very helpful for discretized continuous models 
