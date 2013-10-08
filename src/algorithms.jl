@@ -156,22 +156,21 @@ function uint32color(img, args...)
 end
 
 function uint32color!(buf::Array{Uint32}, img, args...)
-    dat = data(img)
     cdim = colordim(img)
     if cdim != 0
         sz = size(img)
         if size(buf) != tuple(sz[1:cdim-1]..., sz[cdim+1:end]...)
             error("Size mismatch")
         end
-        _uint32color!(buf, dat, colorspace(img), cdim, args...)
+        _uint32color!(buf, img, colorspace(img), cdim, args...)
     else
         if size(buf) != size(img)
             error("Size mismatch")
         end
         if colorspace(img) == "RGB24"
-            _uint32color_rgb24!(buf, dat, args...)
+            _uint32color_rgb24!(buf, img, args...)
         else
-            _uint32color_gray!(buf, dat, args...)
+            _uint32color_gray!(buf, img, args...)
         end
     end
     buf
