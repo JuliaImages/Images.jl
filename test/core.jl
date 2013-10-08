@@ -92,11 +92,11 @@ reslice!(s, sd, 3)
 @assert s.data == imgd[:,:,3]
 
 # named indexing
-@assert Images.named2dimension(imgd, "color") == 3
-@assert Images.named2dimension(imgd, "y") == 1
-@assert Images.named2dimension(imgd, "z") == 0
+@assert dimindex(imgd, "color") == 3
+@assert dimindex(imgd, "y") == 1
+@assert dimindex(imgd, "z") == 0
 imgdp = permutedims(imgd, [3,1,2])
-@assert Images.named2dimension(imgdp, "y") == 2
+@assert dimindex(imgdp, "y") == 2
 @assert img["y", 2, "x", 4] == B[2,4]
 @assert img["x", 4, "y", 2] == B[2,4]
 chan = imgd["color", 2]

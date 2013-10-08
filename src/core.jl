@@ -101,7 +101,7 @@ eltype{T}(::Type{AbstractImage{T}}) = T
 
 size(img::AbstractImage) = size(img.data)
 size(img::AbstractImage, i::Integer) = size(img.data, i)
-size(img::AbstractImage, dimname::String) = size(img.data, named2dimension(img, dimname))
+size(img::AbstractImage, dimname::String) = size(img.data, dimindex(img, dimname))
 
 ndims(img::AbstractImage) = ndims(img.data)
 
@@ -202,7 +202,7 @@ setindex!(img::AbstractImage, X, i::Real) = setindex!(img.data, X, i)
 
 setindex!{T<:Real}(img::AbstractImage, X, I::Union(Real,AbstractArray{T})...) = setindex!(img.data, X, I...)
 
-setindex!{T<:Real}(img::AbstractImage, X, dimname::String, ind::Union(Real,AbstractArray{T}), nameind...) = setindex!(img.data, X, named2coords(img, dimname, ind, nameind...)...)
+setindex!{T<:Real}(img::AbstractImage, X, dimname::String, ind::Union(Real,AbstractArray{T}), nameind...) = setindex!(img.data, X, coords(img, dimname, ind, nameind...)...)
 
 # Adding a new property via setindex!
 setindex!(img::AbstractImage, X, propname::String) = setindex!(img.properties, X, propname)
@@ -216,18 +216,18 @@ getindex(img::AbstractImage, i::Real) = getindex(img.data, i)
 
 getindex(img::AbstractImage, I::Union(Real,AbstractVector)...) = getindex(img.data, I...)
 
-# getindex{T<:Real}(img::AbstractImage, dimname::String, ind::Union(Real,AbstractArray{T}), nameind...) = getindex(img.data, named2coords(img, dimname, ind, nameind...)...)
-getindex(img::AbstractImage, dimname::ASCIIString, ind, nameind...) = getindex(img.data, named2coords(img, dimname, ind, nameind...)...)
+# getindex{T<:Real}(img::AbstractImage, dimname::String, ind::Union(Real,AbstractArray{T}), nameind...) = getindex(img.data, coords(img, dimname, ind, nameind...)...)
+getindex(img::AbstractImage, dimname::ASCIIString, ind, nameind...) = getindex(img.data, coords(img, dimname, ind, nameind...)...)
 
 getindex(img::AbstractImage, propname::ASCIIString) = getindex(img.properties, propname)
 
 sub(img::AbstractImage, I::RangeIndex...) = sub(img.data, I...)
 
-sub(img::AbstractImage, dimname::String, ind::RangeIndex, nameind::RangeIndex...) = sub(img.data, named2coords(img, dimname, ind, nameind...)...)
+sub(img::AbstractImage, dimname::ASCIIString, ind::RangeIndex, nameind::RangeIndex...) = sub(img.data, coords(img, dimname, ind, nameind...)...)
 
 slice(img::AbstractImage, I::RangeIndex...) = slice(img.data, I...)
 
-slice(img::AbstractImage, dimname::String, ind::RangeIndex, nameind::RangeIndex...) = slice(img.data, named2coords(img, dimname, ind, nameind...)...)
+slice(img::AbstractImage, dimname::ASCIIString, ind::RangeIndex, nameind::RangeIndex...) = slice(img.data, coords(img, dimname, ind, nameind...)...)
 
 # getindexim, subim, and sliceim return an Image. The first two share properties, the last requires a copy.
 function getindexim{T<:Real}(img::AbstractImage, I::Union(Real,AbstractArray{T})...)
@@ -252,11 +252,11 @@ function getindexim{T<:Real}(img::AbstractImage, I::Union(Real,AbstractArray{T})
     ret
 end
 
-getindexim(img::AbstractImage, dimname::String, ind::Union(Real,AbstractArray), nameind...) = getindexim(img, named2coords(img, dimname, ind, nameind...)...)
+getindexim(img::AbstractImage, dimname::ASCIIString, ind::Union(Real,AbstractArray), nameind...) = getindexim(img, coords(img, dimname, ind, nameind...)...)
 
 subim(img::AbstractImage, I::RangeIndex...) = share(img, sub(img.data, I...))
 
-subim(img::AbstractImage, dimname::String, ind::RangeIndex, nameind...) = subim(img, named2coords(img, dimname, ind, nameind...)...)
+subim(img::AbstractImage, dimname::ASCIIString, ind::RangeIndex, nameind...) = subim(img, coords(img, dimname, ind, nameind...)...)
 
 function sliceim(img::AbstractImage, I::RangeIndex...)
     dimmap = Array(Int, ndims(img))
@@ -303,9 +303,9 @@ function sliceim(img::AbstractImage, I::RangeIndex...)
     ret
 end
 
-sliceim(img::AbstractImage, dimname::String, ind::RangeIndex, nameind...) = subim(img, named2coords(img, dimname, ind, nameind...)...)
+sliceim(img::AbstractImage, dimname::String, ind::RangeIndex, nameind...) = subim(img, coords(img, dimname, ind, nameind...)...)
 
-sliceim(img::AbstractImage, dimname::String, ind::RangeIndex, nameind...) = sliceim(img, named2coords(img, dimname, ind, nameind...)...)
+sliceim(img::AbstractImage, dimname::String, ind::RangeIndex, nameind...) = sliceim(img, coords(img, dimname, ind, nameind...)...)
 
 # Support colon indexes
 getindexim(img::AbstractImage, I...) = getindexim(img, ntuple(length(I), i-> isa(I[i], Colon) ? (1:size(img,i)) : I[i])...)
@@ -330,7 +330,7 @@ type SliceData
     end
 end
 
-SliceData(img::AbstractImage, dimname::String, dimnames::String...) = SliceData(img, named2dimindexes(img, dimname, dimnames...)...)
+SliceData(img::AbstractImage, dimname::String, dimnames::String...) = SliceData(img, dimindexes(img, dimname, dimnames...)...)
 
 function _slice(A::AbstractArray, sd::SliceData, I::Int...)
     if length(I) != length(sd.slicedims)
@@ -707,7 +707,7 @@ function permutedims(img::AbstractImage, p::Union(Vector{Int}, (Int...)), spatia
     ret
 end
 
-permutedims{S<:String}(img::AbstractImage, pstr::Union(Vector{S}, (S...)), spatialprops::Vector = spatialproperties(img)) = permutedims(img, named2dimindexes(img, pstr...), spatialprops)
+permutedims{S<:String}(img::AbstractImage, pstr::Union(Vector{S}, (S...)), spatialprops::Vector = spatialproperties(img)) = permutedims(img, dimindexes(img, pstr...), spatialprops)
 
 # Default list of spatial properties possessed by an image
 function spatialproperties(img::AbstractImage)
@@ -770,22 +770,30 @@ end
 # Support indexing via
 #    img["t", 32, "x", 100:400]
 # where anything not mentioned by name is assumed to include the whole range
-function named2coords(img::AbstractImage, nameind...)
-    c = Any[map(i->1:i, size(img))...]
+function coords(img::AbstractImage, dimname::ASCIIString, ind, nameind...)
+    c = Any[1:d for d in size(img)]
     so = spatialorder(img)
+    c[require_dimindex(img, dimname, so)] = ind 
     for i = 1:2:length(nameind)
-        dimname = nameind[i]
-        n = named2dimension(img, dimname, so)
-        if n == 0
-            error("There is no dimension called ", dimname)
-        end
-        c[n] = nameind[i+1]
+        c[require_dimindex(img, nameind[i], so)] = nameind[i+1]
     end
     tuple(c...)
 end
 
-function named2dimension(img::AbstractImage, dimname, so = spatialorder(img))
-    local n
+# Use keyword arguments
+# e.g. coord(x=1:100, y=1:50)
+function coords(img::AbstractImage; kwargs...)
+    c = Any[1:d for d in size(img)]
+    so = spatialorder(img)
+    for (k, v) in kwargs
+        c[require_dimindex(img, string(k), so)] = v
+    end
+    tuple(c...)
+end
+
+
+function dimindex(img::AbstractImage, dimname::ASCIIString, so = spatialorder(img))
+    n::Int = 0
     if dimname == "color"
         n = colordim(img)
     elseif dimname == "t"
@@ -793,36 +801,25 @@ function named2dimension(img::AbstractImage, dimname, so = spatialorder(img))
     else
         cd = colordim(img)
         td = timedim(img)
-        matched = false
         j = 1
-        n = 1
+        tn = 1
         while j <= length(so)
-            while n == cd || n == td
-                n += 1
+            while tn == cd || tn == td
+                tn += 1
             end
             if dimname == so[j]
-                matched = true
+                n = tn
                 break
             end
-            n += 1
+            tn += 1
             j += 1
         end
-        if !matched; n = 0; end
     end
     n
 end
 
-function named2dimindexes(img::AbstractImage, dimnames::String...)
-    so = spatialorder(img)
-    dimindexes = Array(Int, length(dimnames))
-    for i = 1:length(dimnames)
-        dimname = dimnames[i]
-        n = named2dimension(img, dimname, so)
-        if n == 0
-            error("There is no dimension called ", dimname)
-        end
-        dimindexes[i] = n
-    end
-    dimindexes
-end
+
+require_dimindex(img::AbstractImage, dimname, so) = (di = dimindex(img, dimname, so); di > 0 || error("No dimension called ", dimname); di)
+
+dimindexes(img::AbstractImage, dimnames::String...) = Int[dimindex(img, nam, spatialorder(img)) for nam in dimnames]
 
