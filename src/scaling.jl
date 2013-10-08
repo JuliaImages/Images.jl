@@ -139,6 +139,8 @@ scaleminmax(img::AbstractImage, tindex::Integer) = scaleminmax(Uint8, img, tinde
 type ScaleSigned <: ScaleInfo{Float64}
     s::Float64
 end
+ScaleSigned(s::Real) = ScaleSigned(float64(s))
+
 scalesigned(img::AbstractArray) = ScaleSigned(1.0/maxabsfinite(img))
 function scalesigned(img::AbstractImage, tindex::Integer)
     1 <= tindex <= nimages(img) || error("The image does not have a time slice of ", tindex)
@@ -156,6 +158,7 @@ end
 
 # Works only on whole arrays, not values
 type ScaleAutoMinMax{T} <: ScaleInfo{T} end
+ScaleAutoMinMax() = ScaleAutoMinMax{Uint8}()
 
 scale!{T}(out::AbstractImage, scalei::ScaleAutoMinMax{T}, img::Union(StridedArray,AbstractImageDirect)) = scale!(out, take(scalei, img), img)
 scale!{T}(out, scalei::ScaleAutoMinMax{T}, img::Union(StridedArray,AbstractImageDirect)) = scale!(out, take(scalei, img), img)
