@@ -22,7 +22,7 @@
 (.*)(img::AbstractImageDirect, A::AbstractArray) = limadj(copy(img, data(img).*A), limtimes(limits(img), limits(A)))
 (.*)(A::AbstractArray, img::AbstractImageDirect) = limadj(copy(img, data(img).*A), limtimes(limits(img), limits(A)))
 (./)(img::AbstractImageDirect, A::BitArray) = limadj(copy(img, data(img)./A), limdivide(limits(img), Bool))  # needed to avoid ambiguity warning
-(./)(img1::AbstractImageDirect, img2::AbstractImageDirect) = limadj(copy(img, data(img1)./data(img2)), limdivide(limits(img1), limits(img2)))
+(./)(img1::AbstractImageDirect, img2::AbstractImageDirect) = limadj(copy(img1, data(img1)./data(img2)), limdivide(limits(img1), limits(img2)))
 (./)(img::AbstractImageDirect, A::AbstractArray) = limadj(copy(img, data(img)./A), limdivide(limits(img), limits(A)))
 # (./)(A::AbstractArray, img::AbstractImageDirect) = limadj(copy(img, A./data(img))
 
@@ -44,6 +44,12 @@ limtimes(a::Tuple, b::Tuple) = min(a[1]*b[1],a[1]*b[2],a[2]*b[1],a[2]*b[2]), max
 limdivide(a::Tuple, n::Number) = n > 0 ? (a[1]/n, a[2]/n) : (a[2]/n, a[1]/n)
 limdivide(a::Tuple, ::Type{Bool}) = min(a[1],a[1]/0), max(a[2],a[2]/0)
 limdivide(a::Tuple, b::Tuple) = min(a[1]/b[1],a[1]/b[2],a[2]/b[1],a[2]/b[2]), max(a[1]/b[1],a[1]/b[2],a[2]/b[1],a[2]/b[2])
+
+function sum(img::AbstractImageDirect, region)
+    f = prod(size(img)[region...])
+    l = limits(img)
+    limadj(copy(img, sum(data(img), region)), (f*l[1], f*l[2]))
+end
 
 # Logical operations
 (.<)(img::AbstractImageDirect, n::Number) = data(img) .< n
@@ -743,7 +749,7 @@ end
 function imfilter_gaussian{T<:Integer}(img::AbstractArray{T}, sigma::Vector; emit_warning = true)
     A = float64(data(img))
     imfilter_gaussian_no_nans!(A, sigma; emit_warning=emit_warning)
-    share(img, truncround(T, ret))
+    share(img, truncround(T, A))
 end
 
 # This version is in-place, and destructive
