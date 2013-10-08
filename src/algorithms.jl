@@ -463,28 +463,37 @@ function blue(img::AbstractArray)
     end
 end
 
-# FIXME
-function rgb2gray{T}(img::Array{T,3})
-    n, m = size(img)
-    wr, wg, wb = 0.30, 0.59, 0.11
-    out = Array(T, n, m)
-    if ndims(img)==3 && size(img,3)==3
-        for i=1:n, j=1:m
-            out[i,j] = wr*img[i,j,1] + wg*img[i,j,2] + wb*img[i,j,3]
+for N = 1:4
+    N1 = N-1
+    @eval begin
+        function rgb2gray{T}(img::AbstractArray{T,$N})
+            cs = colorspace(img)
+            if cs == "Gray"
+                return img
+            end
+            if cs != "RGB"
+                error("Color space of image is $cs, not RGB")
+            end
+            cd = colordim(img)
+            cstrd = stride(img, cd)
+            sz = [size(img,d) for d=1:$N]
+            sz[cd] = 1
+            szs = sz[setdiff(1:$N,cd)]
+            out = Array(T, szs...)::Array{T,$N1}
+            wr, wg, wb = 0.30, 0.59, 0.11
+            dat = data(img)
+            indx = 0
+            @nloops $N i d->1:sz[d] begin
+                _, k = @nlinear $N dat i
+                out[indx+=1] = truncround(T,wr*dat[k] + wg*dat[k+cstrd] + wb*dat[k+2cstrd])
+            end
+            p = properties(img)
+            p["colorspace"] = "Gray"
+            p["colordim"] = 0
+            Image(out, p)
         end
-    elseif is(eltype(img),Int32) || is(eltype(img),Uint32)
-        for i=1:n, j=1:m
-            p = img[i,j]
-            out[i,j] = wr*redval(p) + wg*greenval(p) + wb*blueval(p)
-        end
-    else
-        error("unsupported array type")
     end
-    out
 end
-
-# FIXME
-rgb2gray{T}(img::Array{T,2}) = img
 
 function sobel()
     f = [1.0 2.0 1.0; 0.0 0.0 0.0; -1.0 -2.0 -1.0]
