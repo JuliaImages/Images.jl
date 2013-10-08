@@ -6,13 +6,22 @@ abstract AbstractImage{T,N} <: AbstractArray{T,N}         # image with metadata
 abstract AbstractImageDirect{T,N} <: AbstractImage{T,N}   # each pixel has own value/color
 abstract AbstractImageIndexed{T,N} <: AbstractImage{T,N}  # indexed images (i.e., lookup table)
 
+# converts keyword argument to a dictionary
+function kwargs2dict(kwargs)
+    d = (ASCIIString=>Any)[]
+    for (k, v) in kwargs
+        d[string(k)] = v
+    end
+    return d
+end
+
 # Direct image (e.g., grayscale, RGB)
 type Image{T,N,A<:AbstractArray} <: AbstractImageDirect{T,N}
     data::A
     properties::Dict
 end
 Image(data::AbstractArray, props::Dict) = Image{eltype(data),ndims(data),typeof(data)}(data,props)
-Image(data::AbstractArray) = Image(data,Dict{String,Any}())
+Image(data::AbstractArray; kwargs...) = Image(data, kwargs2dict(kwargs))
 
 # Indexed image (colormap)
 type ImageCmap{T,N,A<:AbstractArray,C<:AbstractArray} <: AbstractImageIndexed{T,N}
@@ -21,11 +30,11 @@ type ImageCmap{T,N,A<:AbstractArray,C<:AbstractArray} <: AbstractImageIndexed{T,
     properties::Dict
 end
 ImageCmap(data::AbstractArray, cmap::AbstractArray, props::Dict) = ImageCmap{eltype(data),ndims(data),typeof(data),typeof(cmap)}(data, cmap, props)
-ImageCmap(data::AbstractArray, cmap::AbstractArray) = ImageCmap(data, cmap, Dict{String,Any}())
+ImageCmap(data::AbstractArray, cmap::AbstractArray; kwargs...) = ImageCmap(data, cmap, kwargs2dict(kwargs))
 
 # Convenience constructors
-grayim{T}(A::AbstractArray{T,2}) = Image(A, (ASCIIString=>Any)["colorspace"=>"Gray", "spatialorder"=>["x","y"]])
-grayim{T}(A::AbstractArray{T,3}) = Image(A, (ASCIIString=>Any)["colorspace"=>"Gray", "spatialorder"=>["x","y","z"]])
+grayim{T}(A::AbstractArray{T,2}) = Image(A; colorspace="Gray", spatialorder=["x","y"])
+grayim{T}(A::AbstractArray{T,3}) = Image(A; colorspace="Gray", spatialorder=["x","y","z"])
 
 # Dispatch-based scaling/clipping/type conversion
 abstract ScaleInfo{T}
