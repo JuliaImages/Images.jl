@@ -567,16 +567,20 @@ end
 
 # indices of spatial coordinates
 function coords_spatial(img)
-    ind = [1:ndims(img)]
+    nd = ndims(img)
     cd = colordim(img)
-    sd = timedim(img)
-    if cd > sd
+    td = timedim(img)
+    if cd > nd || td > nd
+        error("Properties are inconsistent with the array dimensionality")
+    end
+    ind = [1:nd]
+    if cd > td
         splice!(ind, cd)
-        if sd > 0
-            splice!(ind, sd)
+        if td > 0
+            splice!(ind, td)
         end
-    elseif sd > cd
-        splice!(ind, sd)
+    elseif td > cd
+        splice!(ind, td)
         if cd > 0
             splice!(ind, cd)
         end
