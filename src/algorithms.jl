@@ -140,6 +140,7 @@ end
 
 (*)(f::FloatingPoint, c::RGB) = RGB(f*c.r, f*c.g, f*c.b)
 (*)(f::Uint8, c::RGB) = (f/255)*c
+(/)(c::RGB, f::Real) = (1.0/f)*c
 (.*)(f::AbstractArray, c::RGB) = [x*c for x in f]
 (+)(a::RGB, b::RGB) = RGB(a.r+b.r, a.g+b.g, a.b+b.b)
 convert(::Type{Uint32}, c::ColorValue) = convert(RGB24, c).color
