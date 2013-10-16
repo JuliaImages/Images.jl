@@ -410,8 +410,8 @@ end
 data(img::AbstractArray) = img
 data(img::AbstractImage) = img.data
 
-min(img::AbstractImageDirect) = min(img.data)
-max(img::AbstractImageDirect) = max(img.data)
+minimum(img::AbstractImageDirect) = minimum(img.data)
+maximum(img::AbstractImageDirect) = maximum(img.data)
 # min/max deliberately not defined for AbstractImageIndexed
 
 # Overlays
@@ -536,7 +536,7 @@ limits{T<:Integer}(img::AbstractArray{T}) = typemin(T), typemax(T)
 limits{T<:FloatingPoint}(img::AbstractArray{T}) = zero(T), one(T)
 limits(img::AbstractImage{Bool}) = 0,1
 limits{T}(img::AbstractImageDirect{T}) = get(img, "limits", (typemin(T), typemax(T)))
-limits(img::AbstractImageIndexed) = @get img "limits" (min(img.cmap), max(img.cmap))
+limits(img::AbstractImageIndexed) = @get img "limits" (minimum(img.cmap), maximum(img.cmap))
 
 pixelspacing{T}(img::AbstractArray{T,3}) = (size(img, defaultarraycolordim) == 3) ? [1.0,1.0] : error("Cannot infer pixelspacing of Array, use an AbstractImage type")
 pixelspacing(img::AbstractMatrix) = [1.0,1.0]

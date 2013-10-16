@@ -34,16 +34,16 @@ scalei = Images.scaleinfo(Uint8, img)
 img8 = scale(scalei, img)
 @assert all(img8 .== typemax(Uint8))
 A = randn(3,3)
-mxA = max(A)
+mxA = maximum(A)
 offset = 30.0
 img = convert(Images.Image, A + offset)
 scalei = Images.ScaleMinMax{Uint8, Float64}(offset, offset+mxA, 100/mxA)
 imgs = scale(scalei, img)
-@assert min(imgs) == 0
-@assert max(imgs) == 100
+@assert minimum(imgs) == 0
+@assert maximum(imgs) == 100
 @assert eltype(imgs) == Uint8
 imgs = Images.imadjustintensity(img, [])
-mnA = min(A)
+mnA = minimum(A)
 @assert Images.ssd(imgs, (A-mnA)/(mxA-mnA)) < eps()
 
 # filtering

@@ -198,7 +198,7 @@ function climdefault{T<:FloatingPoint}(img::AbstractArray{T})
     l
 end
 
-minfinite(A::AbstractArray) = min(A)
+minfinite(A::AbstractArray) = minimum(A)
 function minfinite{T<:FloatingPoint}(A::AbstractArray{T})
     ret = nan(T)
     for a in A
@@ -207,7 +207,7 @@ function minfinite{T<:FloatingPoint}(A::AbstractArray{T})
     ret
 end
 
-maxfinite(A::AbstractArray) = max(A)
+maxfinite(A::AbstractArray) = maximum(A)
 function maxfinite{T<:FloatingPoint}(A::AbstractArray{T})
     ret = nan(T)
     for a in A

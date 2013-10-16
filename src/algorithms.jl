@@ -356,7 +356,7 @@ function lut(pal::Vector, a)
 end
 
 function indexedcolor(data, pal)
-    mn = min(data); mx = max(data)
+    mn = minimum(data); mx = maximum(data)
     indexedcolor(data, pal, mx-mn, (mx+mn)/2)
 end
 
@@ -406,7 +406,7 @@ alphaval(p)   = (p>>>24)&0xff
 function imadjustintensity{T}(img::AbstractArray{T}, range)
     assert_scalar_color(img)
     if length(range) == 0
-        range = [min(img) max(img)]
+        range = [minimum(img) maximum(img)]
     elseif length(range) == 1
         error("incorrect range")
     end
