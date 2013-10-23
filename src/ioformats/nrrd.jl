@@ -1,6 +1,6 @@
 module NRRD
 
-using Images, Units
+using Images, Units, GZip
 import Images: imread, imwrite
 
 typedict = [
@@ -52,17 +52,35 @@ function imread{S<:IO}(stream::S, ::Type{Images.NRRDFile})
         line = strip(readline(stream))
     end
     sdata = stream
+    gzipped = header["encoding"] == "gzip"
+    const nrrdgztmp = joinpath(tempdir(),string(tempname(),".gz"))
     if haskey(header, "data file")
-        sdata = open(header["data file"])
+        if gzipped
+          sdata = gzopen(header["data file"],"r")
+        else
+          sdata = open(header["data file"])
+        end
     elseif haskey(header, "datafile")
-        sdata = open(header["datafile"])
+        if gzipped
+          sdata = gzopen(header["datafile"],"r")
+        else
+          sdata = open(header["datafile"])
+        end
+    elseif gzipped
+        tmpfd = open(nrrdgztmp,"w")
+        while !eof(stream)
+          buf = readbytes(stream,10^8)
+          write(tmpfd,buf)
+        end
+        close(tmpfd)
+        sdata = gzopen(nrrdgztmp,"r")
     end
     # Parse properties and read the data
     sz = parse_vector_int(header["sizes"])
     T = typedict[header["type"]]
     props = Dict{ASCIIString, Any}()
     local A
-    if header["encoding"] == "raw"
+    if header["encoding"] == "raw" || gzipped
         # Use memory-mapping for large files
         if prod(sz) > 10^8
             fn = stream2name(sdata)
@@ -87,6 +105,12 @@ function imread{S<:IO}(stream::S, ::Type{Images.NRRDFile})
                 if header["endian"] != myendian()
                     A = bswap(A)
                 end
+            end
+            if gzipped 
+              # note: leaving tmp file if memory mapped gzip
+              #   if this causes problems, use a separate 
+              #   nrrd data file (header["datafile"]=filename)
+              rm(nrrdgztmp)
             end
         end
     else
