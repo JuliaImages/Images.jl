@@ -89,6 +89,8 @@ function imread{S<:IO}(stream::S, ::Type{Images.NRRDFile})
                 end
             end
         end
+    else
+      error("\"", header["encoding"], "\" encoding not supported.")
     end
     if haskey(header, "kinds")
         kinds = split(header["kinds"], " ")
