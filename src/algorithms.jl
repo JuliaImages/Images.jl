@@ -210,9 +210,10 @@ for N = 1:4
     @eval begin
         function _uint32color_gray!{T}(buf::Array{Uint32}, A::AbstractArray{T,$N}, scalei::ScaleInfo = scaleinfo(Uint8, A))
             scalei_t = take(scalei, A)
+            Adat = data(A)
             k = 0
             @inbounds @nloops $N i A begin
-                val = @nref $N A i
+                val = @nref $N Adat i
                 gr = scale(scalei_t, val)
                 buf[k+=1] = rgb24(gr, gr, gr)
             end
@@ -226,8 +227,9 @@ for N = 1:4
     @eval begin
         function _uint32color_rgb24!{T}(buf::Array{Uint32}, A::AbstractArray{T,$N})
             k = 0
-            @inbounds @nloops $N i A begin
-                buf[k+=1] = @nref $N A i
+            Adat = data(A)
+            @inbounds @nloops $N i Adat begin
+                buf[k+=1] = @nref $N Adat i
             end
             buf
         end
@@ -240,33 +242,34 @@ for N = 1:5
         function _uint32color!{T}(buf::Array{Uint32}, A::AbstractArray{T,$N}, cs::String, cdim::Int, scalei::ScaleInfo = scaleinfo(Uint8, A))
             scalei_t = take(scalei, A)
             k = 0
+            Adat = data(A)
             if cs == "GrayAlpha"
-                @inbounds @nloops $N i d->(d==cdim)?1:(1:size(A,d)) begin
-                    gr = @nref $N A i
-                    alpha = @nrefshift $N A i d->(d==cdim)?1:0
+                @inbounds @nloops $N i d->(d==cdim)?1:(1:size(Adat,d)) begin
+                    gr = @nref $N Adat i
+                    alpha = @nrefshift $N Adat i d->(d==cdim)?1:0
                     buf[k+=1] = argb32(scalei_t, alpha, gr, gr, gr)
                 end
             elseif cs == "RGB"
-                @inbounds @nloops $N i d->(d==cdim)?1:(1:size(A,d)) begin
-                    r = @nref $N A i
-                    g = @nrefshift $N A i d->(d==cdim)?1:0
-                    b = @nrefshift $N A i d->(d==cdim)?2:0
+                @inbounds @nloops $N i d->(d==cdim)?1:(1:size(Adat,d)) begin
+                    r = @nref $N Adat i
+                    g = @nrefshift $N Adat i d->(d==cdim)?1:0
+                    b = @nrefshift $N Adat i d->(d==cdim)?2:0
                     buf[k+=1] = rgb24(scalei_t, r, g, b)
                 end
             elseif cs == "ARGB"
-                @inbounds @nloops $N i d->(d==cdim)?1:(1:size(A,d)) begin
-                    a = @nref $N A i
-                    r = @nrefshift $N A i d->(d==cdim)?1:0
-                    g = @nrefshift $N A i d->(d==cdim)?2:0
-                    b = @nrefshift $N A i d->(d==cdim)?3:0
+                @inbounds @nloops $N i d->(d==cdim)?1:(1:size(Adat,d)) begin
+                    a = @nref $N Adat i
+                    r = @nrefshift $N Adat i d->(d==cdim)?1:0
+                    g = @nrefshift $N Adat i d->(d==cdim)?2:0
+                    b = @nrefshift $N Adat i d->(d==cdim)?3:0
                     buf[k+=1] = argb32(scalei_t, a, r, g, b)
                 end
             elseif cs == "RGBA"
-                @inbounds @nloops $N i d->(d==cdim)?1:(1:size(A,d)) begin
-                    r = @nref $N A i
-                    g = @nrefshift $N A i d->(d==cdim)?1:0
-                    b = @nrefshift $N A i d->(d==cdim)?2:0
-                    a = @nrefshift $N A i d->(d==cdim)?3:0
+                @inbounds @nloops $N i d->(d==cdim)?1:(1:size(Adat,d)) begin
+                    r = @nref $N Adat i
+                    g = @nrefshift $N Adat i d->(d==cdim)?1:0
+                    b = @nrefshift $N Adat i d->(d==cdim)?2:0
+                    a = @nrefshift $N Adat i d->(d==cdim)?3:0
                     buf[k+=1] = argb32(scalei_t, a, r, g, b)
                 end
             else
@@ -303,8 +306,9 @@ for N = 1:4
     @eval begin
         function _uint32color_gray!{T}(buf::Array{Uint32}, A::AbstractArray{T,$N}, scalei::ScaleSigned)
             k = 0
-            @inbounds @nloops $N i A begin
-                val = @nref $N A i
+            Adat = data(A)
+            @inbounds @nloops $N i Adat begin
+                val = @nref $N Adat i
                 gr = scale(scalei, val)
                 if isfinite(gr)
                     if gr >= 0
