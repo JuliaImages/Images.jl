@@ -157,6 +157,7 @@ export # types
     label_components,
     label_components!,
     ncc,
+    padarray,
     prewitt,
     sad,
     sadn,
