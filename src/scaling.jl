@@ -165,6 +165,7 @@ scale!{T}(out, scalei::ScaleAutoMinMax{T}, img::Union(StridedArray,AbstractImage
 
 take(scalei::ScaleInfo, img::AbstractArray) = scalei
 take{T}(scalei::ScaleAutoMinMax{T}, img::AbstractArray) = scaleminmax(T, img)
+take{To,From}(scalei::ScaleMinMax{To}, img::AbstractArray{From}) = ScaleMinMax(To, convert(From, scalei.min), convert(From, scalei.max), scalei.s)
 
 
 ## ScaleInfo defaults
