@@ -2,6 +2,7 @@ module NRRD
 
 using Images, Units
 import Images: imread, imwrite
+import Zlib
 
 typedict = [
     "signed char" => Int8,
@@ -57,14 +58,17 @@ function imread{S<:IO}(stream::S, ::Type{Images.NRRDFile})
     elseif haskey(header, "datafile")
         sdata = open(header["datafile"])
     end
+    if header["encoding"] == "gzip"
+        sdata = Zlib.Reader(sdata)
+    end
     # Parse properties and read the data
     sz = parse_vector_int(header["sizes"])
     T = typedict[header["type"]]
     props = Dict{ASCIIString, Any}()
     local A
-    if header["encoding"] == "raw"
+    if header["encoding"] == "raw" || header["encoding"] == "gzip"
         # Use memory-mapping for large files
-        if prod(sz) > 10^8
+        if prod(sz) > 10^8 && header["encoding"] != "gzip"
             fn = stream2name(sdata)
             datalen = div(filesize(fn) - position(sdata), sizeof(T))
             strds = [1,cumprod(sz)]
