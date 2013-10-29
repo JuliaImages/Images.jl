@@ -1,4 +1,5 @@
 include("core.jl")
 include("algorithms.jl")
-include("readremote.jl")
+include("io.jl")
 include("readnrrd.jl")
+include("readremote.jl")

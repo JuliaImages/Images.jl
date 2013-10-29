@@ -249,13 +249,13 @@ end
 
 imread{C<:ColorValue}(filename::String, ::Type{ImageMagick}, ::Type{C}) = convert(Image{C}, imread(filename, ImageMagick))
 
-function imagemagick_write_cmd(img, filename::String)
+function imagemagick_write_cmd(img, filename::String, scalei::ScaleInfo)
     if filename == "-"
         filename = "png:-"
     end
     cs = colorspace(img)
-    bitdepth = 8*sizeof(eltype(img))
     csout = cs
+    bitdepth = 8*sizeof(scale(scalei, img[1]))
     if cs == "RGB24"
         csout = "rgb"
         bitdepth = 8
@@ -264,9 +264,6 @@ function imagemagick_write_cmd(img, filename::String)
         bitdepth = 8
     elseif cs == "ARGB"
         csout = "rgba"
-    end
-    if eltype(img) <: FloatingPoint
-        bitdepth = 8  # TODO?: allow this to be specified
     end
     w, h = widthheight(img)
     if beginswith(cs, "Gray")
@@ -286,9 +283,8 @@ end
 
 function imwrite(img, filename::String, ::Type{ImageMagick})
     cs = colorspace(img)
-    bitdepth = 8*sizeof(eltype(img))
-    scalei = scaleinfo(typedict[bitdepth], img)
-    cmd = imagemagick_write_cmd(img, filename)
+    scalei = scaleinfo(img)
+    cmd = imagemagick_write_cmd(img, filename, scalei)
     stream, proc = writesto(cmd)
     # For now, convert to direct
     if isa(img, AbstractImageIndexed)
