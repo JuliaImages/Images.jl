@@ -170,7 +170,13 @@ take{To,From}(scalei::ScaleMinMax{To}, img::AbstractArray{From}) = ScaleMinMax(T
 
 ## ScaleInfo defaults
 
-scaleinfo{T}(img::AbstractArray{T}) = scaleinfo(Uint8, img)
+function scaleinfo{T}(img::AbstractArray{T})
+    cs = colorspace(img)
+    if cs == "RGB24" || cs == "ARGB32"
+        return ScaleNone{T}()
+    end
+    scaleinfo(Uint8, img)
+end
 scaleinfo{T<:Unsigned}(::Type{T}, img::AbstractArray{T}) = ScaleNone{T}()
 scaleinfo{T<:Signed}(::Type{T}, img::AbstractArray{T}) = ScaleNone{T}()
 scaleinfo{To<:FloatingPoint,From}(::Type{To}, img::AbstractArray{From}) = ScaleNone{To}()
