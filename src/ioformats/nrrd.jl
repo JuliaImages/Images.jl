@@ -2,6 +2,7 @@ module NRRD
 
 using Images, Units
 import Images: imread, imwrite
+import Zlib
 
 typedict = [
     "signed char" => Int8,
@@ -57,36 +58,37 @@ function imread{S<:IO}(stream::S, ::Type{Images.NRRDFile})
     elseif haskey(header, "datafile")
         sdata = open(header["datafile"])
     end
+    if header["encoding"] == "gzip"
+        sdata = Zlib.Reader(sdata)
+    end
     # Parse properties and read the data
     sz = parse_vector_int(header["sizes"])
     T = typedict[header["type"]]
     props = Dict{ASCIIString, Any}()
     local A
-    if header["encoding"] == "raw"
+    if header["encoding"] == "raw" && prod(sz) > 10^8
         # Use memory-mapping for large files
-        if prod(sz) > 10^8
-            fn = stream2name(sdata)
-            datalen = div(filesize(fn) - position(sdata), sizeof(T))
-            strds = [1,cumprod(sz)]
-            k = length(sz)
+        fn = stream2name(sdata)
+        datalen = div(filesize(fn) - position(sdata), sizeof(T))
+        strds = [1,cumprod(sz)]
+        k = length(sz)
+        sz[k] = div(datalen, strds[k])
+        while sz[k] == 0 && k > 1
+            pop!(sz)
+            k -= 1
             sz[k] = div(datalen, strds[k])
-            while sz[k] == 0 && k > 1
-                pop!(sz)
-                k -= 1
-                sz[k] = div(datalen, strds[k])
+        end
+        A = mmap_array(T, tuple(sz...), sdata, position(sdata))
+        if haskey(header, "endian")
+            if header["endian"] != myendian()
+                props["bswap"] = true
             end
-            A = mmap_array(T, tuple(sz...), sdata, position(sdata))
-            if haskey(header, "endian")
-                if header["endian"] != myendian()
-                    props["bswap"] = true
-                end
-            end
-        else
-            A = read(sdata, T, sz...)
-            if haskey(header, "endian")
-                if header["endian"] != myendian()
-                    A = bswap(A)
-                end
+        end
+    elseif header["encoding"] == "raw" || header["encoding"] == "gzip"
+        A = read(sdata, T, sz...)
+        if haskey(header, "endian")
+            if header["endian"] != myendian()
+                A = bswap(A)
             end
         end
     else
