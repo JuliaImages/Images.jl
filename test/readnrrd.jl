@@ -19,7 +19,6 @@ img = imread(joinpath(Pkg.dir(), "Images", "test", "io", "small.nrrd"))
 @assert eltype(img) == Float32
 outname = joinpath(writedir, "small.nrrd")
 imwrite(img, outname)
-sleep(0.2)
 imgc = imread(outname)
 @assert img.data == imgc.data
 
@@ -32,6 +31,5 @@ img = imread(joinpath(Pkg.dir(), "Images", "test", "io", "smallgz.nrrd"))
 @assert eltype(img) == Float32
 outname = joinpath(writedir, "smallgz.nrrd")
 imwrite(img, outname)
-sleep(0.2)
 imgc = imread(outname)
 @assert img.data == imgc.data
