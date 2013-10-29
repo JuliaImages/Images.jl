@@ -401,6 +401,11 @@ function show(io::IO, img::AbstractImageDirect)
     print(io, colorspace(img), " ", IT.name, " with:\n  data: ", summary(img.data), "\n  properties:")
     showdictlines(io, img.properties, get(img, "suppress", emptyset))
 end
+function writemime{T}(io::IO, ::MIME"text/plain", img::AbstractImageDirect{T,1})
+    IT = typeof(img)
+    print(io, colorspace(img), " ", IT.name, " with:\n  data: ", summary(img.data), "\n  properties:")
+    showdictlines(io, img.properties, get(img, "suppress", emptyset))
+end
 function show(io::IO, img::AbstractImageIndexed)
     IT = typeof(img)
     print(io, colorspace(img), " ", IT.name, " with:\n  data: ", summary(img.data), "\n  cmap: ", summary(img.cmap), "\n  properties:")
