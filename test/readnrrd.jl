@@ -12,7 +12,7 @@ end
 
 
 # Gray, raw
-img = imread("../test/small.nrrd")
+img = imread(joinpath(Pkg.dir(), "Images", "test", "io", "small.nrrd"))
 @assert colorspace(img) == "Gray"
 @assert ndims(img) == 3
 @assert colordim(img) == 0
@@ -25,7 +25,7 @@ imgc = imread(outname)
 
 
 # Gray, compressed (gzip)
-img = imread("../test/smallgz.nrrd")
+img = imread(joinpath(Pkg.dir(), "Images", "test", "io", "smallgz.nrrd"))
 @assert colorspace(img) == "Gray"
 @assert ndims(img) == 3
 @assert colordim(img) == 0
@@ -35,34 +35,3 @@ imwrite(img, outname)
 sleep(0.2)
 imgc = imread(outname)
 @assert img.data == imgc.data
-
-
-# RGB
-#file = getfile("rose.png")
-#img = imread(file)
-#@assert colorspace(img) == "RGB"
-#@assert ndims(img) == 3
-#@assert colordim(img) == 1
-#@assert size(img, 1) == 3
-#@assert eltype(img) == Uint8
-#outname = joinpath(writedir, "rose.ppm")
-###imwrite(img, outname)
-#imgc = imread(outname)
-#@assert img.data == imgc.data
-
-# RGBA with 16 bit depth
-#file = getfile("autumn_leaves.png")
-####img = imread(file)
-#@assert colorspace(img) == "RGBA"
-#@assert ndims(img) == 3
-#@assert colordim(img) == 1
-#@assert size(img, 1) == 4
-#@assert eltype(img) == Uint16
-# outname = joinpath(writedir, "autumn_leaves.png")
-# imwrite(img, outname)
-# imgc = imread(outname)
-# @assert img.data == imgc.data
-
-# Indexed
-#file = getfile("present.gif")
-#img = imread(file)
