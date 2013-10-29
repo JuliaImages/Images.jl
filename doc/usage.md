@@ -40,10 +40,7 @@ Writing works similarly:
 ```
 julia> imwrite(img, "rose2.jpg")
 ```
-or, if you've been using an array:
-```
-julia> imwrite(convert(Image, imA), "rose2.jpg")
-```
+If you're using an array, you can also pass it directly to `imwrite`.
 The image file type is inferred from the extension.
 
 ## Image display
