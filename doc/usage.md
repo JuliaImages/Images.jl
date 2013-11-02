@@ -10,12 +10,11 @@ using ImageView
 
 ## Image I/O
 
-You likely have a number of images already at your disposal, but if not you can retrieve a
-collection by running `readremote.jl` in the `test/` directory.
+You likely have a number of images already at your disposal,
+but if not you can retrieve a collection by running `readremote.jl` in the `test/` directory.
 (This requires an internet connection.)
-These will be
-deposited inside an `Images` directory inside your temporary directory (e.g.,
-`/tmp` on Linux systems).
+These will be deposited inside an `Images` directory inside your temporary directory
+(e.g., `/tmp` on Linux systems).
 
 Read an image from a file:
 ```
@@ -27,7 +26,8 @@ RGB Image with:
     spatialorder: ["x", "y"]
     colorspace: RGB
 ```
-Note that the image was loaded in "non-permuted" form, i.e., following the direct representation on disk. If you prefer to work with plain arrays, you can convert it:
+Note that the image was loaded in "non-permuted" form, i.e., following the direct representation on disk.
+If you prefer to work with plain arrays, you can convert it:
 ```
 julia> imA = convert(Array, img);
 
