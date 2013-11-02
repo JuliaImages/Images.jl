@@ -36,7 +36,7 @@ julia> summary(imA)
 ```
 You can see that this permuted the dimensions into the array-canonical order.
 
-Writing works similarly:
+Writing works similarly (and as with all `Images` functions, it accepts both plain arrays and `Image` types):
 ```
 julia> imwrite(img, "rose2.jpg")
 ```
