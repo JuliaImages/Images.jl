@@ -243,33 +243,40 @@ for N = 1:5
             scalei_t = take(scalei, A)
             k = 0
             Adat = data(A)
+            # Because cdim is not known at compile-time, we have to prepare size and step variables
+            cstep = zeros(Int, $N)
+            cstep[cdim] = 1
+            szA = [size(Adat, d) for d = 1:$N]
+            szA[cdim] = 1  # don't loop over color dimension
+            @nextract $N szA szA
+            @nextract $N cstep cstep
             if cs == "GrayAlpha"
-                @inbounds @nloops $N i d->(d==cdim)?1:(1:size(Adat,d)) begin
+                @inbounds @nloops $N i d->(1:szA_d) begin
                     gr = @nref $N Adat i
-                    alpha = @nrefshift $N Adat i d->(d==cdim)?1:0
+                    alpha = @nref $N Adat d->(i_d+cstep_d)
                     buf[k+=1] = argb32(scalei_t, alpha, gr, gr, gr)
                 end
             elseif cs == "RGB"
-                @inbounds @nloops $N i d->(d==cdim)?1:(1:size(Adat,d)) begin
+                @inbounds @nloops $N i d->(1:szA_d) begin
                     r = @nref $N Adat i
-                    g = @nrefshift $N Adat i d->(d==cdim)?1:0
-                    b = @nrefshift $N Adat i d->(d==cdim)?2:0
+                    g = @nref $N Adat d->(i_d+cstep_d)
+                    b = @nref $N Adat d->(i_d+2cstep_d)
                     buf[k+=1] = rgb24(scalei_t, r, g, b)
                 end
             elseif cs == "ARGB"
-                @inbounds @nloops $N i d->(d==cdim)?1:(1:size(Adat,d)) begin
+                @inbounds @nloops $N i d->(1:szA_d) begin
                     a = @nref $N Adat i
-                    r = @nrefshift $N Adat i d->(d==cdim)?1:0
-                    g = @nrefshift $N Adat i d->(d==cdim)?2:0
-                    b = @nrefshift $N Adat i d->(d==cdim)?3:0
+                    r = @nref $N Adat d->(i_d+cstep_d)
+                    g = @nref $N Adat d->(i_d+2cstep_d)
+                    b = @nref $N Adat d->(i_d+3cstep_d)
                     buf[k+=1] = argb32(scalei_t, a, r, g, b)
                 end
             elseif cs == "RGBA"
-                @inbounds @nloops $N i d->(d==cdim)?1:(1:size(Adat,d)) begin
+                @inbounds @nloops $N i d->(1:szA_d) begin
                     r = @nref $N Adat i
-                    g = @nrefshift $N Adat i d->(d==cdim)?1:0
-                    b = @nrefshift $N Adat i d->(d==cdim)?2:0
-                    a = @nrefshift $N Adat i d->(d==cdim)?3:0
+                    g = @nref $N Adat d->(i_d+cstep_d)
+                    b = @nref $N Adat d->(i_d+2cstep_d)
+                    a = @nref $N Adat d->(i_d+3cstep_d)
                     buf[k+=1] = argb32(scalei_t, a, r, g, b)
                 end
             else
