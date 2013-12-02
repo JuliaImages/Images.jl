@@ -44,6 +44,7 @@ end
 type ScaleNone{T} <: ScaleInfo{T}; end
 
 scale{T<:Real}(scalei::ScaleNone{T}, val::T) = val
+scale{T}(scalei::ScaleNone{T}, img::AbstractArray{T}) = img
 scale{T,S<:Real}(scalei::ScaleNone{T}, val::S) = convert(T, val)
 scale{T<:Integer,S<:FloatingPoint}(scalei::ScaleNone{T}, val::S) = iround(T, val)
 
