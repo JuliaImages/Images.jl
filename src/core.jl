@@ -684,6 +684,9 @@ function permutedims(img::AbstractImage, p::Union(Vector{Int}, (Int...)), spatia
     if length(p) != ndims(img)
         error("The permutation must have length equal to the number of dimensions")
     end
+    if issorted(p) && length(p) == ndims(img)
+        return img   # should we return a copy?
+    end
     ip = invperm(p)
     cd = colordim(img)
     sd = timedim(img)
@@ -734,11 +737,13 @@ spatialproperties(img::AbstractVector) = ASCIIString[]  # these are not mutable
 #### Low-level utilities ####
 function permutation(to, from)
     n = length(to)
+    nf = length(from)
     d = Dict(tuple(from...), tuple([1:length(from)]...))
-    ind = Array(Int, n)
+    ind = Array(Int, max(n, nf))
     for i = 1:n
         ind[i] = get(d, to[i], 0)
     end
+    ind[n+1:nf] = n+1:nf
     ind
 end
 
