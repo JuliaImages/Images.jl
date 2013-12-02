@@ -1,5 +1,7 @@
 ##########   I/O   ###########
 
+import .LibMagick
+
 abstract ImageFileType
 
 # Database of image file extension, magic bytes, and file type stubs
@@ -128,7 +130,7 @@ function image_decode_magic{S<:IO}(stream::S, magicbuf::Vector{Uint8}, candidate
     return -1
 end
 
-function imwrite(img, filename::String, args...)
+function imwrite(img, filename::String; kwargs...)
     _, ext = splitext(filename)
     ext = lowercase(ext)
     if haskey(fileext, ext)
@@ -138,18 +140,18 @@ function imwrite(img, filename::String, args...)
         if !filesrcloaded[index]
             _loadformat(index)
         end
-        imwrite(img, filename, filetype[index], args...)
+        imwrite(img, filename, filetype[index]; kwargs...)
     elseif have_imagemagick
         # Fall back on ImageMagick
-        imwrite(img, filename, ImageMagick)
+        imwrite(img, filename, ImageMagick; kwargs...)
     else
         error("Do not know how to write file ", filename)
     end
 end
 
-function imwrite{T<:ImageFileType}(img, filename::String, ::Type{T}, args...)
+function imwrite{T<:ImageFileType}(img, filename::String, ::Type{T}; kwargs...)
     s = open(filename, "w")
-    imwrite(img, s, T, args...)
+    imwrite(img, s, T; kwargs...)
     close(s)
 end
 
@@ -171,84 +173,40 @@ end
 
 #### Implementation of specific formats ####
 
-## ImageMagick's convert ##
-classdict = [
-  "DirectClassGray" => (true, false, "Gray"),
-  "DirectClassGrayMatte" => (true, true, "GrayAlpha"),
-  "DirectClassCMYK" => (true, false, "CMYK"),
-  "DirectClassRGB" => (true, false, "RGB"),
-  "DirectClasssRGB" => (true, false, "RGB"),
-  "DirectClassRGBMatte" => (true, true, "RGBA"),
-  "DirectClasssRGBMatte" => (true, true, "RGBA"),
-  "PseudoClassGray" => (false, false, "Gray"),
-  "PseudoClassRGB" => (false, false, "RGB"),
-  "PseudoClasssRGB" => (false, false, "RGB")
-]
+#### ImageMagick library
 
-tfdict = ["True" => true, "False" => false]
-
-typedict = [8 => Uint8, 16 => Uint16, 32 => Uint32]
+typedict = [1 => Uint8, 8 => Uint8, 16 => Uint16, 32 => Uint32]
 
 function imread(filename::String, ::Type{ImageMagick})
+    wand = LibMagick.MagickWand()
+    LibMagick.readimage(wand, filename)
+    imtype = LibMagick.getimagetype(wand)
     # Determine what we need to know about the image format
-    cmd = `identify -format "%r\n%z\n%w %h %n\n" $filename`
-    stream, _ = readsfrom(cmd)
-    imclass = strip(readline(stream))
-    imclass = replace(imclass, " ", "")  # on some platforms spaces are inserted
-    isdirect, hasalpha, colorspace = classdict[imclass]
-    bitdepth = parseint(strip(readline(stream)))
-    szline = strip(readline(stream))
-    w, h, n = parseints(szline, 3)
-    local sz
-    local spatialorder
+    sz = size(wand)
+    n = LibMagick.getnumberimages(wand)
     if n > 1
-        sz = (w, h, n)
-        spatialorder = ["x", "y", "z"]  # might be time, but user will have to say
-    else
-        sz = (w, h)
-        spatialorder = ["x", "y"]
+        sz = tuple(sz..., n)
     end
-    T = typedict[bitdepth]
-    prop = ["colorspace" => colorspace, "spatialorder" => spatialorder, "limits" => (zero(T), typemax(T))]
-    # Extract the data
-    isdirect = true   # haven't figured out how to get indexed image data yet
-    if isdirect
-        local data
-        if colorspace[1:min(length(colorspace),4)] == "Gray"
-            # TODO: figure out how to directly extract GrayAlpha
-            cmd = `convert $filename -depth $bitdepth gray:-`
-            stream, _ = readsfrom(cmd)
-            data = read(stream, T, sz...)
-            if hasalpha
-                cmd = `convert $filename -alpha extract -depth $bitdepth gray:-`
-                stream, _ = readsfrom(cmd)
-                alpha = read(stream, T, sz...)
-                data = cat(ndims(data)+1, data, alpha)
-                prop["colordim"] = ndims(data)
-            end
-        else
-            cmd = `convert $filename -depth $bitdepth $colorspace:-`
-            stream, _ = readsfrom(cmd)
-            nchannels = length(colorspace)
-            data = read(stream, T, nchannels, sz...)
-            prop["colordim"] = 1
-        end
-        return Image(data, prop)
-    else
-        # Indexed image
-        # Note: this doesn't work, IM doesn't really return the index
-        println("Reading indexed image ", filename)
-#         cmd = `convert $filename -channel Index -separate -depth $bitdepth gray:-`
-        cmd = `convert $filename -channel Index -separate -`
-        stream, _ = readsfrom(cmd)
-        data = read(stream, typedict[bitdepth], sz...)
-#         error("Haven't figured out yet how to get the colormap")
-        return ImageCmap(data, [], prop)
+    havealpha = LibMagick.getimagealphachannel(wand)
+    cs = LibMagick.getimagecolorspace(wand)
+    nc, cs = LibMagick.nchannels(imtype, cs, havealpha)
+    depth = LibMagick.getimagedepth(wand)
+    T = typedict[depth]
+    # Allocate the buffer and get the pixel data
+    buf = (nc > 1) ? Array(T, nc, sz...) : Array(T, sz...)
+    LibMagick.exportimagepixels!(buf, wand, cs)
+    # Set up the properties
+    spatialorder = (n > 1) ? ["x", "y", "z"] : ["x", "y"]
+    prop = ["colorspace" => cs, "spatialorder" => spatialorder, "limits" => (zero(T), typemax(T))]
+    if nc > 1
+        prop["colordim"] = 1
     end
+    Image(buf, prop)
 end
 
 imread{C<:ColorValue}(filename::String, ::Type{ImageMagick}, ::Type{C}) = convert(Image{C}, imread(filename, ImageMagick))
 
+# Save this for writemime
 function imagemagick_write_cmd(img, filename::String, scalei::ScaleInfo)
     if filename == "-"
         filename = "png:-"
@@ -281,21 +239,27 @@ function imagemagick_write_cmd(img, filename::String, scalei::ScaleInfo)
     end
 end
 
-function imwrite(img, filename::String, ::Type{ImageMagick})
-    cs = colorspace(img)
-    scalei = scaleinfo(img)
-    cmd = imagemagick_write_cmd(img, filename, scalei)
-    stream, proc = writesto(cmd)
-    # For now, convert to direct
+function imwrite(img, filename::String, ::Type{ImageMagick}; scalei = ScaleNone{eltype(img)}())
     if isa(img, AbstractImageIndexed)
+        # For now, convert to direct
         img = convert(Image, img)
     end
-    if beginswith(cs, "Gray")
-        writegray(stream, img, scalei)
-    else
-        writecolor(stream, img, scalei)
+    imgw = scale(scalei, img)
+    imgw = permutedims_cannonical(imgw)
+    have_color = colordim(imgw)!=0
+    if ndims(imgw) > 3+have_color
+        error("At most 3 dimensions are supported")
     end
-    close(stream)
+    n = size(imgw, 3+have_color)
+    wand = LibMagick.MagickWand()
+    for i = 1:n
+        if have_color
+            LibMagick.constituteimage(imgw[:,:,:,i], wand, colorspace(img))
+        else
+            LibMagick.constituteimage(imgw[:,:,i], wand, colorspace(img))
+        end
+    end
+    LibMagick.writeimage(wand, filename)
 end
 
 # Write grayscale values in horizontal-major order
@@ -799,6 +763,19 @@ function parseints(line, n)
     
 end
 
+# Permute to a color, horizontal, vertical, ... storage order (with time always last)
+function permutedims_cannonical(img)
+    cd = colordim(img)
+    td = timedim(img)
+    p = spatialpermutation(["x", "y"], img)
+    if cd != 0
+        insert!(p, 1, cd)
+    end
+    if td != 0
+        push!(p, td)
+    end
+    permutedims(img, p)
+end
 
 ### Register formats for later loading here
 type Dummy <: ImageFileType; end

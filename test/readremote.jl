@@ -39,12 +39,13 @@ file = getfile("gamma_rules.png")
 img = imread(file)
 @assert colorspace(img) == "GrayAlpha"
 @assert ndims(img) == 3
-@assert colordim(img) == 3
+@assert colordim(img) == 1
 @assert eltype(img) == Uint8
-# outname = joinpath(writedir, "gamma_rules.png")
-# imwrite(img, outname)
-# imgc = imread(outname)
-# @assert img.data == imgc.data
+outname = joinpath(writedir, "gamma_rules.png")
+imwrite(img, outname)
+sleep(0.2)
+imgc = imread(outname)
+# @assert img.data == imgc.data   # libmagick bug: doesn't write GrayAlpha properly?
 
 # RGB
 file = getfile("rose.png")
@@ -62,15 +63,16 @@ imgc = imread(outname)
 # RGBA with 16 bit depth
 file = getfile("autumn_leaves.png")
 img = imread(file)
-@assert colorspace(img) == "RGBA"
+@assert colorspace(img) == "ARGB"
 @assert ndims(img) == 3
 @assert colordim(img) == 1
 @assert size(img, 1) == 4
 @assert eltype(img) == Uint16
-# outname = joinpath(writedir, "autumn_leaves.png")
-# imwrite(img, outname)
-# imgc = imread(outname)
-# @assert img.data == imgc.data
+outname = joinpath(writedir, "autumn_leaves.png")
+imwrite(img, outname)
+sleep(0.2)
+imgc = imread(outname)
+@assert img.data == imgc.data
 
 # Indexed
 file = getfile("present.gif")
