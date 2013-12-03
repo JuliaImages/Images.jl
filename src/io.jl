@@ -296,6 +296,7 @@ function imwrite(img, filename::String, ::Type{ImageMagick})
         writecolor(stream, img, scalei)
     end
     close(stream)
+    wait(proc)
 end
 
 # Write grayscale values in horizontal-major order
