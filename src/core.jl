@@ -307,6 +307,9 @@ sliceim(img::AbstractImage, dimname::String, ind::RangeIndex, nameind...) = subi
 
 sliceim(img::AbstractImage, dimname::String, ind::RangeIndex, nameind...) = sliceim(img, coords(img, dimname, ind, nameind...)...)
 
+subim(img::AbstractImage, I::AbstractVector...) = error("Indexes must be integers or ranges")
+sliceim(img::AbstractImage, I::AbstractVector...) = error("Indexes must be integers or ranges")
+
 # Support colon indexes
 getindexim(img::AbstractImage, I...) = getindexim(img, ntuple(length(I), i-> isa(I[i], Colon) ? (1:size(img,i)) : I[i])...)
 subim(img::AbstractImage, I...) = subim(img, ntuple(length(I), i-> isa(I[i], Colon) ? (1:size(img,i)) : I[i])...)
