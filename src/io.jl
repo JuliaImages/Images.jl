@@ -820,3 +820,10 @@ add_image_file_format(".imagine", b"IMAGINE", ImagineFile, "Imagine.jl")
 # PCO b16 image format
 type B16File <: ImageFileType end
 add_image_file_format(".b16", b"PCO-", B16File, "b16.jl")
+
+# JPEG image format
+const JPEG_MAGIC = hex2bytes("FFD8")
+type JPEG <: Images.ImageFileType end
+add_image_file_format(".jpeg", JPEG_MAGIC, JPEG)
+add_image_file_format(".jpg", JPEG_MAGIC, JPEG)
+
