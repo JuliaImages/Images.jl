@@ -1,3 +1,5 @@
+module JPEGs
+
 import Images
 import Images: JPEG, Image, imread, imwrite, dimindex, add_image_file_format
 
@@ -6,7 +8,7 @@ const DEFAULT_SUBSAMPLING = "S420"
 
 include("libturbojpeg.jl")
 
-function imread{S<:IO}(stream::S, JPEG;
+function imread{S<:IO}(stream::S, ::Type{JPEG};
                        colorspace = "RGB", jpeg_flags = 0)
 
     # Set some input parameters
@@ -111,4 +113,6 @@ function imwrite(img, sheader::IO, ::Type{JPEG};
         error("Unable to write JPEG image to output stream: ", errmsg)
     end
     tjFree(unsafe_load(jpegbuf))
+end
+
 end
