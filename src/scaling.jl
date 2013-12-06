@@ -170,6 +170,8 @@ take{To,From}(scalei::ScaleMinMax{To}, img::AbstractArray{From}) = ScaleMinMax(T
 
 ## ScaleInfo defaults
 
+scaleinfo{T}(::Type{Any}, img::AbstractArray{T}) = ScaleNone{T}()
+
 function scaleinfo{T}(img::AbstractArray{T})
     cs = colorspace(img)
     if cs == "RGB24" || cs == "ARGB32"
