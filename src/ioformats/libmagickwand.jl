@@ -23,7 +23,8 @@ if !isempty(path)
 end
 
 # Initialize the library
-const libwand = "libMagickWand"
+@unix_only const libwand = "libMagickWand"
+@windows_only const libwand = "CORE_RL_wand_"
 ccall((:MagickWandGenesis, libwand), Void, ())
 
 # Constants
