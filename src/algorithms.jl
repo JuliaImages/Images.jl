@@ -1301,3 +1301,41 @@ function labelmap!(map::Array{Int})
 end
 
 halfwidth(i::Integer) = div((i-1),2)
+
+# phantom images
+
+function shepp_logan(M,N; highContrast=true)
+  # Initially proposed in Shepp, Larry; B. F. Logan (1974). 
+  # "The Fourier Reconstruction of a Head Section". IEEE Transactions on Nuclear Science. NS-21.
+  
+  P = zeros(M,N)
+ 
+  x = linspace(-1,1,M)'
+  y = linspace(1,-1,N)
+ 
+  centerX = [0, 0, 0.22, -0.22, 0, 0, 0, -0.08, 0, 0.06]
+  centerY = [0, -0.0184, 0, 0, 0.35, 0.1, -0.1, -0.605, -0.605, -0.605]
+  majorAxis = [0.69, 0.6624, 0.11, 0.16, 0.21, 0.046, 0.046, 0.046, 0.023, 0.023]
+  minorAxis = [0.92, 0.874, 0.31, 0.41, 0.25, 0.046, 0.046, 0.023, 0.023, 0.046]
+  theta = [0, 0, -18.0, 18.0, 0, 0, 0, 0, 0, 0]
+  
+  # original (CT) version of the phantom
+  grayLevel = [2, -0.98, -0.02, -0.02, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01]
+  
+  if(highContrast)
+    # high contrast (MRI) version of the phantom
+    grayLevel = [1, -0.8, -0.2, -0.2, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
+  end
+
+  for l=1:length(theta)
+    P += grayLevel[l] * (
+           ( (cos(theta[l] / 360*2*pi) * (x - centerX[l]) .+
+              sin(theta[l] / 360*2*pi) * (y - centerY[l])) / majorAxis[l] ).^2 .+
+           ( (sin(theta[l] / 360*2*pi) * (x - centerX[l]) .-
+              cos(theta[l] / 360*2*pi) * (y - centerY[l])) / minorAxis[l] ).^2 .< 1 )
+  end
+
+  return P
+end
+ 
+function shepp_logan(N;highContrast=true) = shepp_logan(N,N;highContrast=highContrast)
