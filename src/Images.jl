@@ -165,6 +165,9 @@ export # types
     ssd,
     ssdn
 
+    # phantoms
+    shepp_logan
+
 @deprecate cairoRGB     uint32color!
 @deprecate refim        getindexim
 @deprecate scaledefault climdefault
