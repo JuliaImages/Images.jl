@@ -1338,4 +1338,4 @@ function shepp_logan(M,N; highContrast=true)
   return P
 end
  
-function shepp_logan(N;highContrast=true) = shepp_logan(N,N;highContrast=highContrast)
+shepp_logan(N;highContrast=true) = shepp_logan(N,N;highContrast=highContrast)

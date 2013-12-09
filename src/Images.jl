@@ -163,7 +163,7 @@ export # types
     sadn,
     sobel,
     ssd,
-    ssdn
+    ssdn,
 
     # phantoms
     shepp_logan
