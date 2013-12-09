@@ -1149,6 +1149,11 @@ function extremefilt!(extrfilt::Array, order::Ordering, region=coords_spatial(ex
     extrfilt
 end
 
+opening(img::AbstractArray, region=coords_spatial(img)) = opening!(copy(img), region)
+opening!(img::AbstractArray, region=coords_spatial(img)) = dilate!(erode!(img, region),region)
+closing(img::AbstractArray, region=coords_spatial(img)) = closing!(copy(img), region)
+closing!(img::AbstractArray, region=coords_spatial(img)) = erode!(dilate!(img, region),region)
+
 extr(order::ForwardOrdering, x::Real, y::Real) = max(x,y)
 extr(order::ForwardOrdering, x::Real, y::Real, z::Real) = max(x,y,z)
 extr(order::ReverseOrdering, x::Real, y::Real) = min(x,y)

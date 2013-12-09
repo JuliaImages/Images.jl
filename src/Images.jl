@@ -137,6 +137,8 @@ export # types
     backdiffy,
     dilate,
     erode,
+    opening,
+    closing,
     forwarddiffx,
     forwarddiffy,
     gaussian2d,
