@@ -121,6 +121,19 @@ Ag = [0 0 0 0;
       0 0 0 0.6]
 @assert Ae == cat(3, Ar, Ag, zeros(4,4))
 
+# opening/closing
+A = zeros(4,4,3)
+A[2,2,1] = 0.8
+A[4,4,2] = 0.6
+Ao = Images.opening(A)
+@assert Ao == zeros(size(A))
+A = zeros(10,10)
+A[4:7,4:7] = 1
+B = copy(A)
+A[5,5] = 0
+Ac = Images.closing(A)
+@assert Ac == B
+
 # label_components
 A = [true  true  false true;
      true  false true  true]

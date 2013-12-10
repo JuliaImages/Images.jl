@@ -686,6 +686,15 @@ default is 8-connectivity in 2d, 27-connectivity in 3d, etc. You can specify the
 list of dimensions that you want to include in the connectivity, e.g., region =
 [1,2] would exclude the third dimension from filtering.
 
+```
+opening(img, [region])
+closing(img, [region])
+```
+perform the `opening` and `closing` morphology operations. `opening` does first 
+`erode` the image and then `dilate` the image. `opening` applies both operations 
+in the oposite way. The region parameter is passed to `erode` and `dilate` and describes
+the kernel size over which these operations are performed.
+
 <br />
 ```
 label_components(tf, [connectivity])
