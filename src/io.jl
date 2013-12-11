@@ -155,20 +155,10 @@ function imwrite{T<:ImageFileType}(img, filename::String, ::Type{T}; kwargs...)
     close(s)
 end
 
-function writemime(stream::IO, ::MIME"image/png", img::AbstractImageDirect)
-    cs = colorspace(img)
-    bitdepth = 8*sizeof(eltype(img))
-    scalei = scaleinfo(typedict[bitdepth], img)
-    cmd = imagemagick_write_cmd(img, "png:-")
-    ostream, istream, proc = readandwrite(cmd)
-    if beginswith(cs, "Gray")
-        writegray(istream, img, scalei)
-    else
-        writecolor(istream, img, scalei)
-    end
-    close(istream)
-    b = readbytes(ostream)
-    write(stream, b)
+function writemime(stream::IO, ::MIME"image/png", img::AbstractImage; scalei = scaleinfo_uint(img))
+    wand = image2wand(img, scalei)
+    blob = LibMagick.getblob(wand, "png")
+    write(stream, blob)
 end
 
 #### Implementation of specific formats ####
@@ -206,40 +196,12 @@ end
 
 imread{C<:ColorValue}(filename::String, ::Type{ImageMagick}, ::Type{C}) = convert(Image{C}, imread(filename, ImageMagick))
 
-# Save this for writemime
-function imagemagick_write_cmd(img, filename::String, scalei::ScaleInfo)
-    if filename == "-"
-        filename = "png:-"
-    end
-    cs = colorspace(img)
-    csout = cs
-    bitdepth = 8*sizeof(scale(scalei, img[1]))
-    if cs == "RGB24"
-        csout = "rgb"
-        bitdepth = 8
-    elseif cs == "ARGB32"
-        csout = "rgba"
-        bitdepth = 8
-    elseif cs == "ARGB"
-        csout = "rgba"
-    end
-    w, h = widthheight(img)
-    if beginswith(cs, "Gray")
-        if cs == "GrayAlpha"
-            error("Not yet implemented")
-            # Need to figure out how to write separate channels to the file twice
-        end
-        return `convert -size $(w)x$(h) -depth $bitdepth gray: $filename`
-    else
-        csparsed = lowercase(csout)
-        if !(csparsed == "rgb" || csparsed == "rgba")
-            error("Output format ", csparsed, " not recognized")
-        end
-        return `convert -size $(w)x$(h) -depth $bitdepth $csparsed:- $filename`
-    end
+function imwrite(img, filename::String, ::Type{ImageMagick}; scalei = scaleinfo_uint(img))
+    wand = image2wand(img, scalei)
+    LibMagick.writeimage(wand, filename)
 end
 
-function imwrite(img, filename::String, ::Type{ImageMagick}; scalei = scaleinfo_uint(img))
+function image2wand(img, scalei)
     if isa(img, AbstractImageIndexed)
         # For now, convert to direct
         img = convert(Image, img)
@@ -259,7 +221,7 @@ function imwrite(img, filename::String, ::Type{ImageMagick}; scalei = scaleinfo_
             LibMagick.constituteimage(imgw[:,:,i], wand, colorspace(img))
         end
     end
-    LibMagick.writeimage(wand, filename)
+    wand
 end
 
 # Write grayscale values in horizontal-major order

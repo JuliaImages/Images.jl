@@ -5,6 +5,7 @@ import Base: error, size
 export MagickWand,
     constituteimage,
     exportimagepixels!,
+    getblob,
     getimagealphachannel,
     getimagecolorspace,
     getimagedepth,
@@ -13,6 +14,7 @@ export MagickWand,
     readimage,
     resetiterator,
     setimagecolorspace,
+    setimageformat,
     writeimage
 
 
@@ -83,7 +85,7 @@ const IMExceptionType = Array(Cint, 1)
 function error(wand::MagickWand)
     pMsg = ccall((:MagickGetException, libwand), Ptr{Uint8}, (Ptr{Void}, Ptr{Cint}), wand.ptr, IMExceptionType)
     msg = bytestring(pMsg)
-    ccall((:MagickRelinquishMemory, libwand), Ptr{Uint8}, (Ptr{Uint8},), pMsg)
+    relinquishmemory(pMsg)
     error(msg)
 end
 
@@ -107,6 +109,15 @@ function constituteimage{T<:Unsigned}(buffer::AbstractArray{T}, wand::MagickWand
     status = ccall((:MagickSetImageDepth, libwand), Cint, (Ptr{Void}, Csize_t), wand.ptr, 8*sizeof(T))
     status == 0 && error(wand)
     nothing
+end
+
+function getblob(wand::MagickWand, format::String)
+    setimageformat(wand, format)
+    len = Array(Csize_t, 1)
+    ptr = ccall((:MagickGetImagesBlob, libwand), Ptr{Uint8}, (Ptr{Void}, Ptr{Csize_t}), wand.ptr, len)
+    blob = pointer_to_array(ptr, int(len[1]))
+    finalizer(blob, relinquishmemory)
+    blob
 end
 
 function pingimage(wand::MagickWand, filename::String)
@@ -172,12 +183,18 @@ function setimagecolorspace(wand::MagickWand, cs::ASCIIString)
     nothing
 end
 
+# set the image format
+function setimageformat(wand::MagickWand, format::ASCIIString)
+    status = ccall((:MagickSetImageFormat, libwand), Cint, (Ptr{Void}, Ptr{Uint8}), wand.ptr, format)
+    status == 0 && error(wand)
+    nothing
+end
+
 # get the pixel depth
 getimagedepth(wand::MagickWand) = int(ccall((:MagickGetImageDepth, libwand), Csize_t, (Ptr{Void},), wand.ptr))
 
 
+relinquishmemory(p) = ccall((:MagickRelinquishMemory, libwand), Ptr{Uint8}, (Ptr{Uint8},), p)
 
-
-fdopen(stream::IO, mode::ByteString = "r") = ccall(:fdopen, Ptr{Void}, (Cint, Ptr{Uint8}), fd(stream), mode)
 
 end
