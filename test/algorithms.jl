@@ -64,6 +64,8 @@ Aimg = permutedims(convert(Images.Image, A), [3,1,2])
 @test_approx_eq Images.imfilter(Aimg, h) permutedims(Af, [3,1,2])
 @assert approx_equal(Images.imfilter(ones(4,4),ones(1,3),"replicate"), 3.0)
 
+@assert approx_equal(Images.imfilter_gaussian(ones(4,4), [5,5]), 1.0)
+
 # color conversion
 gray = linspace(0.0,1.0,5) # a 1-dimensional image
 gray8 = iround(Uint8, 255*gray)

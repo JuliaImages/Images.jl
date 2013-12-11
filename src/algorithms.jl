@@ -876,7 +876,7 @@ function _imfilter_gaussian!{T<:FloatingPoint}(A::Array{T}, sigma::Vector; emit_
                     A[i+coloffset] -= a1*A[i-1+coloffset] + a2*A[i-2+coloffset] + a3*A[i-3+coloffset]
                 end
                 copytail!(x, A, coloffset, 1, n1)
-                A_mul_B(vstart, M, x)
+                A_mul_B!(vstart, M, x)
                 A[n1+coloffset] = vstart[1]
                 A[n1-1+coloffset] -= a1*vstart[1]   + a2*vstart[2] + a3*vstart[3]
                 A[n1-2+coloffset] -= a1*A[n1-1+coloffset] + a2*vstart[1] + a3*vstart[2]
@@ -904,7 +904,7 @@ function _imfilter_gaussian!{T<:FloatingPoint}(A::Array{T}, sigma::Vector; emit_
                     for i = 1:n1 A[i+j*strdd+coloffset] -= a1*A[i+(j-1)*strdd+coloffset] + a2*A[i+(j-2)*strdd+coloffset] + a3*A[i+(j-3)*strdd+coloffset] end
                 end
                 copytail!(x, A, coloffset, strdd, szd)
-                A_mul_B(vstart, M, x)
+                A_mul_B!(vstart, M, x)
                 for i = 1:n1 A[i+(szd-1)*strdd+coloffset] = vstart[1,i] end
                 for i = 1:n1 A[i+(szd-2)*strdd+coloffset] -= a1*vstart[1,i]   + a2*vstart[2,i] + a3*vstart[3,i] end
                 for i = 1:n1 A[i+(szd-3)*strdd+coloffset] -= a1*A[i+(szd-2)*strdd+coloffset] + a2*vstart[1,i] + a3*vstart[2,i] end
