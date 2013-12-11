@@ -719,3 +719,13 @@ The default is `region = 1:ndims(A)`.
 
 The output is an integer array, where 0 is used for background pixels, and each
 connected region gets a different integer index.
+
+### Phantoms
+
+```
+shepp_logan(N,[M]; highContrast=true)
+```
+output the NxM Shepp-Logan phantom, which is a standard test image usually used for comparing image reconstruction 
+algorithms in the field of computed tomography (CT) and magnetic resonance imaging (MRI). If the argument M
+is omitted, the phantom is of size NxN. When setting the keyword argument ``highConstrast` to false, the CT
+version of the phantom is created. Otherwise, the high contrast MRI version is calculated.
