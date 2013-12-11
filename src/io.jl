@@ -239,7 +239,7 @@ function imagemagick_write_cmd(img, filename::String, scalei::ScaleInfo)
     end
 end
 
-function imwrite(img, filename::String, ::Type{ImageMagick}; scalei = ScaleNone{eltype(img)}())
+function imwrite(img, filename::String, ::Type{ImageMagick}; scalei = scaleinfo_uint(img))
     if isa(img, AbstractImageIndexed)
         # For now, convert to direct
         img = convert(Image, img)

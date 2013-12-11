@@ -170,11 +170,9 @@ function convert{ID<:AbstractImageDirect,II<:AbstractImageIndexed}(::Type{ID}, i
 end
 # Convert an Image to an array. We convert the image into the canonical storage order convention for arrays. We restrict this to 2d images because for plain arrays this convention exists only for 2d.
 # In other cases---or if you don't want the storage order altered---just grab the .data field and perform whatever manipulations you need directly.
-function convert{T,N}(::Type{Array{T,N}}, img::AbstractImage)
+function convert{T}(::Type{Array{T}}, img::AbstractImage)
     assert2d(img)
-    if N != ndims(img)
-        error("Number of dimensions of the output do not agree")
-    end
+    dat = convert(Array{T}, data(img))
     # put in canonical storage order
     p = spatialpermutation(spatialorder(Matrix), img)
     p = coords_spatial(img)[p]
@@ -183,12 +181,12 @@ function convert{T,N}(::Type{Array{T,N}}, img::AbstractImage)
         push!(p, cd)
     end
     if issorted(p)
-        return copy(img.data)
+        return dat
     else
-        return permutedims(img.data, p)
+        return permutedims(dat, p)
     end
 end
-convert(::Type{Array}, img::AbstractImage) = convert(Array{eltype(img), ndims(img)}, img)
+convert(::Type{Array}, img::AbstractImage) = convert(Array{eltype(img)}, img)
 
 # Convert an array to an image
 convert(::Type{Image}, A::Array) = Image(A, ["colorspace" => colorspace(A), "colordim" => colordim(A), "spatialorder" => spatialorder(A), "limits" => limits(A)])

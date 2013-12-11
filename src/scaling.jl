@@ -181,21 +181,29 @@ end
 scaleinfo{T<:Unsigned}(::Type{T}, img::AbstractArray{T}) = ScaleNone{T}()
 scaleinfo{T<:Signed}(::Type{T}, img::AbstractArray{T}) = ScaleNone{T}()
 scaleinfo{To<:FloatingPoint,From}(::Type{To}, img::AbstractArray{From}) = ScaleNone{To}()
-function scaleinfo_int{To,From}(::Type{To}, img::AbstractArray{From})
-    l = limits(img)
-    n = max(0, iceil(log2(l[2]/(float64(typemax(To))+1))))
-    BitShift{To, n}()
-end
-scaleinfo{To<:Unsigned,From<:Unsigned}(::Type{To}, img::AbstractArray{From}) = scaleinfo_int(To, img)
-scaleinfo{To<:Signed,From<:Signed}(::Type{To}, img::AbstractArray{From}) = scaleinfo_int(To, img)
-function scaleinfo{To<:Unsigned,From<:FloatingPoint}(::Type{To}, img::AbstractArray{From})
-    l = climdefault(img)
-    ScaleMinMax(To, l[1], l[2], typemax(To)/(l[2]-l[1]))
-end
+scaleinfo{To<:Unsigned,From<:Unsigned}(::Type{To}, img::AbstractArray{From}) = scaleinfo_uint(To, img)
+scaleinfo{To<:Unsigned,From<:Union(Integer,FloatingPoint)}(::Type{To}, img::AbstractArray{From}) = scaleinfo_uint(To, img)
 function scaleinfo(::Type{RGB}, img::AbstractArray)
     l = climdefault(img)
     ScaleMinMax(Float64, l[1], l[2], 1.0/(l[2]-l[1]))
 end
+
+function scaleinfo_uint{To<:Unsigned,From<:Unsigned}(::Type{To}, img::AbstractArray{From})
+    l = limits(img)
+    n = max(0, iceil(log2(l[2]/(float64(typemax(To))+1))))
+    BitShift{To, n}()
+end
+function scaleinfo_uint{To<:Unsigned,From<:Integer}(::Type{To}, img::AbstractArray{From})
+    l = climdefault(img)
+    ScaleMinMax(To, zero(From), l[2], typemax(To)/(l[2]-l[1]))
+end
+function scaleinfo_uint{To<:Unsigned,From<:FloatingPoint}(::Type{To}, img::AbstractArray{From})
+    l = climdefault(img)
+    ScaleMinMax(To, l[1], l[2], typemax(To)/(l[2]-l[1]))
+end
+scaleinfo_uint{From<:Unsigned}(img::AbstractArray{From}) = ScaleNone{From}()
+scaleinfo_uint{From<:Integer}(img::AbstractArray{From}) = scaleinfo_uint(unsigned(From), img)
+scaleinfo_uint{From<:FloatingPoint}(img::AbstractArray{From}) = scaleinfo_uint(Uint8, img)
 
 climdefault{T<:Integer}(img::AbstractArray{T}) = limits(img)
 function climdefault{T<:FloatingPoint}(img::AbstractArray{T})
@@ -205,6 +213,14 @@ function climdefault{T<:FloatingPoint}(img::AbstractArray{T})
     end
     l
 end
+
+unsigned{T<:Unsigned}(::Type{T}) = T
+unsigned(::Type{Bool}) = Uint8
+unsigned(::Type{Int8}) = Uint8
+unsigned(::Type{Int16}) = Uint16
+unsigned(::Type{Int32}) = Uint32
+unsigned(::Type{Int64}) = Uint64
+unsigned(::Type{Int128}) = Uint128
 
 minfinite(A::AbstractArray) = minimum(A)
 function minfinite{T<:FloatingPoint}(A::AbstractArray{T})
