@@ -14,6 +14,7 @@ export MagickWand,
     readimage,
     resetiterator,
     setimagecolorspace,
+    setimagecompression,
     setimageformat,
     writeimage
 
@@ -68,6 +69,9 @@ function nchannels(imtype::String, cs::String, havealpha = false)
 end
 
 channelorder = ["Gray" => "I", "GrayAlpha" => "IA", "RGB" => "RGB", "ARGB" => "ARGB", "CMYK" => "CMYK"]
+
+# Compression
+const NoCompression = 1
 
 type MagickWand
     ptr::Ptr{Void}
@@ -179,6 +183,13 @@ end
 # set the colorspace
 function setimagecolorspace(wand::MagickWand, cs::ASCIIString) 
     status = ccall((:MagickSetImageColorspace, libwand), Cint, (Ptr{Void},Cint), wand.ptr, IMColordict[cs])
+    status == 0 && error(wand)
+    nothing
+end
+
+# set the compression
+function setimagecompression(wand::MagickWand, compression::Integer) 
+    status = ccall((:MagickSetImageCompression, libwand), Cint, (Ptr{Void},Cint), wand.ptr, int32(compression))
     status == 0 && error(wand)
     nothing
 end

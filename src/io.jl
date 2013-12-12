@@ -157,6 +157,7 @@ end
 
 function writemime(stream::IO, ::MIME"image/png", img::AbstractImage; scalei = scaleinfo_uint(img))
     wand = image2wand(img, scalei)
+#     LibMagick.setimagecompression(wand, LibMagick.NoCompression)
     blob = LibMagick.getblob(wand, "png")
     write(stream, blob)
 end
