@@ -29,7 +29,16 @@ end
 @linux_only const libwand = "libMagickWand"
 @windows_only const libwand = "CORE_RL_wand_"
 @osx_only const libwand = "libMagickWand-6.Q16"
-ccall((:MagickWandGenesis, libwand), Void, ())
+have_imagemagick = dlopen_e(libwand) != C_NULL
+
+init() = ccall((:MagickWandGenesis, libwand), Void, ())
+
+if have_imagemagick
+    init()
+else
+    warn("ImageMagick utilities not found. Install for more file format support.")
+end
+
 
 # Constants
 # Storage types
@@ -209,3 +218,5 @@ relinquishmemory(p) = ccall((:MagickRelinquishMemory, libwand), Ptr{Uint8}, (Ptr
 
 
 end
+
+LibMagick.have_imagemagick

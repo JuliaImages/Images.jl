@@ -12,9 +12,8 @@ using Cartesian
 include(joinpath(Pkg.dir(),"Grid","src","counter.jl"))
 
 include("core.jl")
-include("config.jl")
 include("iterator.jl")
-include("ioformats/libmagickwand.jl")
+const have_imagemagick = include("ioformats/libmagickwand.jl")
 include("io.jl")
 include("scaling.jl")
 include("labeledarrays.jl")
