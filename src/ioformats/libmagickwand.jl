@@ -221,12 +221,9 @@ relinquishmemory(p) = ccall((:MagickRelinquishMemory, libwand), Ptr{Uint8}, (Ptr
 function fdopen(s::IO)
     @unix_only FILEp = ccall(:fdopen, Ptr{Void}, (Cint, Ptr{Uint8}), convert(Cint, fd(s)), "r")
     @windows_only FILEp = ccall(:_fdopen, Ptr{Void}, (Cint, Ptr{Uint8}), convert(Cint, fd(s)), "r")
-    if FILEp == 0
-        error("fdopen failed")
-    end
-    ccall(:fseek, Cint, (Ptr{Void}, Clong, Cint), 
-          FILEp, convert(Clong, position(s)), int32(0)) == 0 ||
-          error("fseek failed")
+    systemerror("fdopen failed", FILEp == 0)
+    status = ccall(:fseek, Cint, (Ptr{Void}, Clong, Cint), FILEp, convert(Clong, position(s)), int32(0))
+    systemerror("fseek failed", status == 0)
     FILEp
 end
 
