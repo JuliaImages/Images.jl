@@ -158,9 +158,9 @@ function imwrite(img, filename::String; kwargs...)
 end
 
 function imwrite{T<:ImageFileType}(img, filename::String, ::Type{T}; kwargs...)
-    s = open(filename, "w")
-    imwrite(img, s, T; kwargs...)
-    close(s)
+    open(filename, "w") do s
+        imwrite(img, s, T; kwargs...)
+    end
 end
 
 function writemime(stream::IO, ::MIME"image/png", img::AbstractImage; scalei = scaleinfo_uint(img))
@@ -496,8 +496,9 @@ function imread{S<:IO}(stream::S, ::Type{PBMBinary})
 end
 
 function imwrite(img, filename::String, ::Type{PPMBinary})
-    stream = open(filename, "w")
-    imwrite(img, stream, PPMBinary)
+    open(filename, "w") do stream
+        imwrite(img, stream, PPMBinary)
+    end
 end
 
 function imwrite(img, s::IO, ::Type{PPMBinary})
@@ -519,7 +520,6 @@ function imwrite(img, s::IO, ::Type{PPMBinary})
     scalei = scaleinfo(T, img)
     write(s, "$w $h\n$mx\n")
     writecolor(s, img, scalei)
-    close(s)
 end
 
 # ## PNG ##
