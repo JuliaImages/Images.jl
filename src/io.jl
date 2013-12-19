@@ -69,33 +69,38 @@ type ImageMagick <: ImageFileType end
 function imread(filename::String)
     _, ext = splitext(filename)
     ext = lowercase(ext)
-    stream = open(filename, "r")
-    magicbuf = Array(Uint8, 0)
-    # Use the extension as a hint to determine file type
-    if haskey(fileext, ext)
-        candidates = fileext[ext]
-        index = image_decode_magic(stream, magicbuf, candidates)
-        if index > 0
-            # Position to end of this type's magic bytes
-            seek(stream, length(filemagic[index]))
-            if !filesrcloaded[index]
-                _loadformat(index)
+
+    img = open(filename, "r") do stream
+        # Tries to read the image using a set of potential type candidates.
+        # Returns the image if successful, `nothing` else.
+        function tryread(candidates)
+            if (index = image_decode_magic(stream, candidates)) > 0
+                # Position to end of this type's magic bytes
+                seek(stream, length(filemagic[index]))
+                if !filesrcloaded[index]
+                    _loadformat(index)
+                end
+                imread(stream, filetype[index])
             end
-            return imread(stream, filetype[index])
+        end
+
+        # Use the extension as a hint to determine file type
+        if haskey(fileext, ext) && (img = tryread(fileext[ext])) != nothing
+            return img
+        end
+
+        # Extension wasn't helpful, look at all known magic bytes
+        if (img = tryread(1:length(fileext))) != nothing
+            return img
         end
     end
-    # Extension wasn't helpful, look at all known magic bytes
-    index = image_decode_magic(stream, magicbuf, 1:length(filemagic))
-    if index > 0
-        seek(stream, length(filemagic[index]))
-        if !filesrcloaded[index]
-            _loadformat(index)
-        end
-        return imread(stream, filetype[index])
+
+    if img != nothing
+        return img
     end
+
     # There are no registered readers for this type. Try using ImageMagick if available.
     if have_imagemagick
-        # Fall back on ImageMagick's convert & identify
         return imread(filename, ImageMagick)
     else
         error("Do not know how to read file ", filename)
@@ -105,7 +110,7 @@ end
 imread{C<:ColorValue}(filename::String, ::Type{C}) = imread(filename, ImageMagick, C)
 
 # Identify via magic bytes
-function image_decode_magic{S<:IO}(stream::S, magicbuf::Vector{Uint8}, candidates::AbstractVector{Int})
+function image_decode_magic{S<:IO}(stream::S, candidates::AbstractVector{Int})
     maxlen = 0
     for i in candidates
         len = length(filemagic[i])
@@ -115,8 +120,11 @@ function image_decode_magic{S<:IO}(stream::S, magicbuf::Vector{Uint8}, candidate
     if maxlen == 0 && length(candidates) == 1
         return candidates[1]
     end
-    while length(magicbuf) < maxlen && !eof(stream)
-        push!(magicbuf, read(stream, Uint8))
+
+    magicbuf = zeros(Uint8, maxlen)
+    for i=1:maxlen
+        if eof(stream) break end
+        magicbuf[i] = read(stream, Uint8)
     end
     for i in candidates
         if length(filemagic[i]) == 0
@@ -150,9 +158,9 @@ function imwrite(img, filename::String; kwargs...)
 end
 
 function imwrite{T<:ImageFileType}(img, filename::String, ::Type{T}; kwargs...)
-    s = open(filename, "w")
-    imwrite(img, s, T; kwargs...)
-    close(s)
+    open(filename, "w") do s
+        imwrite(img, s, T; kwargs...)
+    end
 end
 
 function writemime(stream::IO, ::MIME"image/png", img::AbstractImage; scalei = scaleinfo_uint(img))
@@ -488,8 +496,9 @@ function imread{S<:IO}(stream::S, ::Type{PBMBinary})
 end
 
 function imwrite(img, filename::String, ::Type{PPMBinary})
-    stream = open(filename, "w")
-    imwrite(img, stream, PPMBinary)
+    open(filename, "w") do stream
+        imwrite(img, stream, PPMBinary)
+    end
 end
 
 function imwrite(img, s::IO, ::Type{PPMBinary})
@@ -511,7 +520,6 @@ function imwrite(img, s::IO, ::Type{PPMBinary})
     scalei = scaleinfo(T, img)
     write(s, "$w $h\n$mx\n")
     writecolor(s, img, scalei)
-    close(s)
 end
 
 # ## PNG ##

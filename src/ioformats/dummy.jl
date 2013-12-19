@@ -6,7 +6,7 @@ function imread{S<:IO}(stream::S, ::Type{Images.Dummy})
 end
 
 function imwrite(img, filename::String, ::Type{Images.Dummy})
-    stream = open(filename, "w")
-    println(stream, "Dummy Image")
-    close(stream)
+    open(filename, "w") do stream
+        println(stream, "Dummy Image")
+    end
 end
