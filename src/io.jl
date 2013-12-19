@@ -74,8 +74,7 @@ function imread(filename::String)
         # Tries to read the image using a set of potential type candidates.
         # Returns the image if successful, `nothing` else.
         function tryread(candidates)
-            magicbuf = Array(Uint8, 0)
-            if (index = image_decode_magic(stream, magicbuf, candidates)) > 0
+            if (index = image_decode_magic(stream, candidates)) > 0
                 # Position to end of this type's magic bytes
                 seek(stream, length(filemagic[index]))
                 if !filesrcloaded[index]
@@ -111,7 +110,7 @@ end
 imread{C<:ColorValue}(filename::String, ::Type{C}) = imread(filename, ImageMagick, C)
 
 # Identify via magic bytes
-function image_decode_magic{S<:IO}(stream::S, magicbuf::Vector{Uint8}, candidates::AbstractVector{Int})
+function image_decode_magic{S<:IO}(stream::S, candidates::AbstractVector{Int})
     maxlen = 0
     for i in candidates
         len = length(filemagic[i])
@@ -121,8 +120,11 @@ function image_decode_magic{S<:IO}(stream::S, magicbuf::Vector{Uint8}, candidate
     if maxlen == 0 && length(candidates) == 1
         return candidates[1]
     end
-    while length(magicbuf) < maxlen && !eof(stream)
-        push!(magicbuf, read(stream, Uint8))
+
+    magicbuf = zeros(Uint8, maxlen)
+    for i=1:maxlen
+        if eof(stream) break end
+        magicbuf[i] = read(stream, Uint8)
     end
     for i in candidates
         if length(filemagic[i]) == 0
