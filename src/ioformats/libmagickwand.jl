@@ -19,18 +19,16 @@ export MagickWand,
     writeimage
 
 
-# If MAGICK_HOME is defined, add to library search path
-path = get(ENV, "MAGICK_HOME", "")
-if !isempty(path)
-    push!(DL_LOAD_PATH, joinpath(path, "lib"))
-end
+# Find the library
+mpath = get(ENV, "MAGICK_HOME", "") # If MAGICK_HOME is defined, add to library search path
+mpaths = isempty(mpath) ? ASCIIString[] : [mpath, joinpath(mpath, "lib")]
+libnames = ["libMagickWand", "CORE_RL_wand_"]
+suffixes = ["", "-Q16", "-6.Q16", "-Q8"]
+options = ["", "HDRI"]
+const libwand = find_library(vec(libnames.*suffixes'.*reshape(options,(1,1,length(options)))), mpaths)
+have_imagemagick = !isempty(libwand)
 
 # Initialize the library
-@linux_only const libwand = "libMagickWand"
-@windows_only const libwand = "CORE_RL_wand_"
-@osx_only const libwand = "libMagickWand-6.Q16"
-have_imagemagick = dlopen_e(libwand) != C_NULL
-
 init() = ccall((:MagickWandGenesis, libwand), Void, ())
 
 if have_imagemagick
