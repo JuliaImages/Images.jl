@@ -216,6 +216,20 @@ getimagedepth(wand::MagickWand) = int(ccall((:MagickGetImageDepth, libwand), Csi
 
 relinquishmemory(p) = ccall((:MagickRelinquishMemory, libwand), Ptr{Uint8}, (Ptr{Uint8},), p)
 
+# Implementation of fdopen
+# Delete this once 0.3 or greater is common, and use the CFILE mechanism
+function fdopen(s::IO)
+    @unix_only FILEp = ccall(:fdopen, Ptr{Void}, (Cint, Ptr{Uint8}), convert(Cint, fd(s)), modestr(s))
+    @windows_only FILEp = ccall(:_fdopen, Ptr{Void}, (Cint, Ptr{Uint8}), convert(Cint, fd(s)), modestr(s))
+    if FILEp == 0
+        error("fdopen failed")
+    end
+    ccall(:fseek, Cint, (Ptr{Void}, Clong, Cint), 
+          FILEp, convert(Clong, offset), int32(0)) == 0 ||
+          error("fseek failed")
+    FILEp
+end
+
 
 end
 
