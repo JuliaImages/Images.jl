@@ -9,6 +9,7 @@
 (-)(img::AbstractImageDirect, n::Number) = limadj(copy(img, data(img)-n), limminus(limits(img), n))
 (-)(n::Number, img::AbstractImageDirect) = limadj(copy(img, n-data(img)), limminus(n, limits(img)))
 (-)(img::AbstractImageDirect, A::BitArray) = limadj(copy(img, data(img)-A), limminus(limits(img), Bool))
+(-){T}(img::AbstractImageDirect{T,2}, A::Diagonal) = limadj(copy(img, data(img)-A), limminus(limits(img), limits(A))) # fixes an ambiguity warning
 (-)(img::AbstractImageDirect, A::AbstractArray) = limadj(copy(img, data(img)-data(A)), limminus(limits(img), limits(A)))
 # (-)(A::AbstractArray, img::AbstractImageDirect) = limadj(copy(img, data(A) - data(img)), limminus(limits(A), limits(img)))
 (.-)(img::AbstractImageDirect, A::BitArray) = limadj(copy(img, data(img).-A), limminus(limits(img), Bool))
