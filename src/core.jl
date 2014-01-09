@@ -97,7 +97,6 @@ end
 #### Core operations ####
 
 eltype{T}(img::AbstractImage{T}) = T
-eltype{T}(::Type{AbstractImage{T}}) = T
 
 size(img::AbstractImage) = size(img.data)
 size(img::AbstractImage, i::Integer) = size(img.data, i)
@@ -422,7 +421,6 @@ maximum(img::AbstractImageDirect) = maximum(img.data)
 
 # Overlays
 eltype{T}(o::Overlay{T}) = T
-eltype{T}(::Type{Overlay{T}}) = T
 ndims{T,N}(o::Overlay{T,N}) = N
 ndims{T,N}(::Type{Overlay{T,N}}) = N
 
