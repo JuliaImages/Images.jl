@@ -3,7 +3,7 @@ using BinDeps
 @BinDeps.setup
 
 @linux_only begin
-    libwand = library_dependency("libMagickWand")
+    libwand = library_dependency("libMagickWand", aliases=["libMagickWand", "libMagickWand-6.Q16.so.1"])
     provides(AptGet, "libmagickwand4", libwand)
     provides(Yum, "ImageMagick", libwand)
 end
