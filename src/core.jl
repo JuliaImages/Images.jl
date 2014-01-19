@@ -188,7 +188,7 @@ end
 convert(::Type{Array}, img::AbstractImage) = convert(Array{eltype(img)}, img)
 
 # Convert an array to an image
-convert(::Type{Image}, A::Array) = Image(A, ["colorspace" => colorspace(A), "colordim" => colordim(A), "spatialorder" => spatialorder(A), "limits" => limits(A)])
+convert(::Type{Image}, A::StridedArray) = Image(A, ["colorspace" => colorspace(A), "colordim" => colordim(A), "spatialorder" => spatialorder(A), "limits" => limits(A)])
 
 # Indexing. In addition to conventional array indexing, support syntax like
 #    img["x", 100:400, "t", 32]
