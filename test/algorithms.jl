@@ -45,6 +45,11 @@ imgs = scale(scalei, img)
 imgs = Images.imadjustintensity(img, [])
 mnA = minimum(A)
 @assert Images.ssd(imgs, (A-mnA)/(mxA-mnA)) < eps()
+A = reshape(1:9, 3, 3)
+B = scale(ClipMin(Float32, 3), A)
+@assert eltype(B) == Float32 && B == [3 4 7; 3 5 8; 3 6 9]
+B = scale(ClipMax(Uint8, 7), A)
+@assert eltype(B) == Uint8 && B == [1 4 7; 2 5 7; 3 6 7]
 
 # filtering
 @assert approx_equal(Images.imfilter(ones(4,4), ones(3,3)), 9.0)
