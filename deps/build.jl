@@ -6,7 +6,7 @@ using BinDeps
     libnames = ["libMagickWand"]
     suffixes = ["", "-Q16", "-6.Q16", "-Q8"]
     options = ["", "HDRI"]
-    aliases = vec(libnames.*suffixes'.*reshape(options,(1,1,length(options))))
+    aliases = vec(libnames.*transpose(suffixes).*reshape(options,(1,1,length(options))))
     libwand = library_dependency("libMagickWand", aliases=aliases)
     provides(AptGet, "libmagickwand4", libwand)
     provides(Yum, "ImageMagick", libwand)
