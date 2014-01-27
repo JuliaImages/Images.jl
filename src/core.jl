@@ -716,6 +716,15 @@ end
 
 permutedims{S<:String}(img::AbstractImage, pstr::Union(Vector{S}, (S...)), spatialprops::Vector = spatialproperties(img)) = permutedims(img, dimindexes(img, pstr...), spatialprops)
 
+# Define the transpose of a 2d image
+function ctranspose(img::AbstractImage)
+    assert2d(img)
+    s = coords_spatial(img)
+    p = [1:ndims(img)]
+    p[s] = s[2:-1:1]
+    permutedims(img, p)
+end
+
 # Default list of spatial properties possessed by an image
 function spatialproperties(img::AbstractImage)
     if haskey(img, "spatialproperties")
