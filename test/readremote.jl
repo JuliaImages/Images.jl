@@ -57,6 +57,9 @@ img = imread(file)
 outname = joinpath(writedir, "rose.ppm")
 imwrite(img, outname)
 imgc = imread(outname)
+T = eltype(imgc)
+lim = limits(imgc)
+@assert (typeof(lim[1]) == typeof(lim[2]) == T)  # issue #62
 @assert img.data == imgc.data
 
 # RGBA with 16 bit depth
