@@ -456,7 +456,7 @@ function imread{S<:IO}(stream::S, ::Type{PPMBinary})
         error("Image file may be corrupt. Are there really more than 16 bits in this image?")
     end
     T = eltype(dat)
-    Image(dat, ["colorspace" => "RGB", "colordim" => 1, "storageorder" => ["c", "x", "y"], "limits" => (zero(T),convert(T,maxval))])
+    Image(dat, ["colorspace" => "RGB", "colordim" => 1, "spatialorder" => ["x", "y"], "limits" => (zero(T),convert(T,maxval))])
 end
 
 function imread{S<:IO}(stream::S, ::Type{PGMBinary})
@@ -480,7 +480,7 @@ function imread{S<:IO}(stream::S, ::Type{PGMBinary})
         error("Image file may be corrupt. Are there really more than 16 bits in this image?")
     end
     T = eltype(dat)
-    Image(dat, ["colorspace" => "Gray", "storageorder" => ["x", "y"], "limits" => (zero(T),convert(T,maxval))])
+    Image(dat, ["colorspace" => "Gray", "spatialorder" => ["x", "y"], "limits" => (zero(T),convert(T,maxval))])
 end
 
 function imread{S<:IO}(stream::S, ::Type{PBMBinary})
@@ -494,7 +494,7 @@ function imread{S<:IO}(stream::S, ::Type{PBMBinary})
             dat[offset+k, irow] = (tmp>>>(8-k))&0x01
         end
     end
-    Image(dat, ["storageorder" => ["x", "y"]])
+    Image(dat, ["spatialorder" => ["x", "y"]])
 end
 
 function imwrite(img, filename::String, ::Type{PPMBinary})
