@@ -478,7 +478,8 @@ function imread{S<:IO}(stream::S, ::Type{PGMBinary})
     else
         error("Image file may be corrupt. Are there really more than 16 bits in this image?")
     end
-    Image(dat, ["colorspace" => "Gray", "storageorder" => ["x", "y"], "limits" => (zero(eltype(dat)),maxval)])
+    T = eltype(dat)
+    Image(dat, ["colorspace" => "Gray", "storageorder" => ["x", "y"], "limits" => (zero(T),convert(T,maxval))])
 end
 
 function imread{S<:IO}(stream::S, ::Type{PBMBinary})
