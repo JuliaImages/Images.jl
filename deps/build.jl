@@ -24,13 +24,13 @@ end
     end
 end
 
-# @osx_only begin
-#     if Pkg.installed("Homebrew") === nothing
-#             error("Homebrew package not installed, please run Pkg.add(\"Homebrew\")")
-#     end
-#     using Homebrew
-#     libwand = library_dependency("libMagickWand-6.Q16")
-#     provides( Homebrew.HB, "imagemagick", libwand, os = :Darwin )
-# end
+@osx_only begin
+    if Pkg.installed("Homebrew") === nothing
+            error("Homebrew package not installed, please run Pkg.add(\"Homebrew\")")
+    end
+    using Homebrew
+    libwand = library_dependency("libMagickWand-6.Q16")
+    provides( Homebrew.HB, "imagemagick", libwand, os = :Darwin )
+end
 
 @BinDeps.install
