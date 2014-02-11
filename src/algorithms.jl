@@ -752,7 +752,11 @@ imfilter(img, filter, border) = imfilter(img, filter, border, 0)
 # (in Triggs & Sdika notation) to zero.
 # Note these two papers use different sign conventions for the coefficients.
 
-function imfilter_gaussian{T<:FloatingPoint}(img::AbstractArray{T}, sigma::Vector; emit_warning = true)
+# Note: astype is ignored for FloatingPoint input
+function imfilter_gaussian{T<:FloatingPoint}(img::AbstractArray{T}, sigma::Vector; emit_warning = true, astype::Type=Float64)
+    if all(sigma .== 0)
+        return img
+    end
     A = copy(data(img))
     nanflag = isnan(A)
     hasnans = any(nanflag)
@@ -767,10 +771,13 @@ function imfilter_gaussian{T<:FloatingPoint}(img::AbstractArray{T}, sigma::Vecto
     share(img, A)
 end
 
-function imfilter_gaussian{T<:Integer}(img::AbstractArray{T}, sigma::Vector; emit_warning = true)
-    A = float64(data(img))
+function imfilter_gaussian{T<:Integer,TF<:FloatingPoint}(img::AbstractArray{T}, sigma::Vector; emit_warning = true, astype::Type{TF}=Float64)
+    A = convert(Array{astype}, data(img))
+    if all(sigma .== 0)
+        return share(img, A)
+    end
     imfilter_gaussian_no_nans!(A, sigma; emit_warning=emit_warning)
-    share(img, truncround(T, A))
+    share(img, A)
 end
 
 # This version is in-place, and destructive
