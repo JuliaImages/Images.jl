@@ -8,9 +8,6 @@ using Color
 using Cartesian
 
 
-# We'll use Grid's Counter, but we don't need the rest of it
-include(joinpath(Pkg.dir(),"Grid","src","counter.jl"))
-
 include("core.jl")
 include("iterator.jl")
 const have_imagemagick = include("ioformats/libmagickwand.jl")
