@@ -946,8 +946,132 @@ function copytail!(dest, A, coloffset, strd, len)
     dest
 end
 
+### restrict, for reducing the image size by 2-fold
+# This properly anti-aliases. The only "oddity" is that edges tend towards zero under
+# repeated iteration.
+# This implementation is considerably faster than the one in Grid,
+# because it traverses the array in storage order.
+if isdefined(:restrict)
+    import Grid.restrict
+end
 
+function restrict(img, region::Union(Dims, Vector{Int})=coords_spatial(img))
+    A = data(img)
+    for dim in region
+        A = _restrict(A, dim)
+    end
+    share(img, A)
+end
 
+function _restrict(A, dim)
+    if size(A, dim) <= 2
+        return A
+    end
+    out = Array(typeof(A[1]/4+A[2]/2), ntuple(ndims(A), i->i==dim?restrict_size(size(A,dim)):size(A,i)))
+    restrict!(out, A, dim)
+    out
+end
+
+# out should have efficient linear indexing
+for N = 1:5
+    @eval begin
+        function restrict!{T}(out::AbstractArray{T,$N}, A::AbstractArray, dim)
+            if isodd(size(A, dim))
+                half = convert(T, 0.5)
+                quarter = convert(T, 0.25)
+                indx = 0
+                if dim == 1
+                    @nloops $N i d->(d==1 ? (1:1) : (1:size(A,d))) d->(j_d = d==1 ? i_d+1 : i_d) begin
+                        nxt = @nref $N A j
+                        out[indx+=1] = half*(@nref $N A i) + quarter*nxt
+                        for k = 3:2:size(A,1)-2
+                            prv = nxt
+                            i1 = k
+                            j1 = k+1
+                            nxt = @nref $N A j
+                            out[indx+=1] = quarter*(prv+nxt) + half*(@nref $N A i)
+                        end
+                        i1 = size(A,1)
+                        out[indx+=1] = quarter*nxt + half*(@nref $N A i)
+                    end
+                else
+                    strd = stride(out, dim)
+                    # Must initialize the i_dim==1 entries with zero
+                    @nexprs $N d->sz_d=d==dim?1:size(out,d)
+                    @nloops $N i d->(1:sz_d) begin
+                        (@nref $N out i) = 0
+                    end
+                    stride1 = 1
+                    @nexprs $N d->(stride_{d+1} = stride_d*size(out,d))
+                    @nexprs $N d->offset_d = 0
+                    ispeak = true
+                    @nloops $N i d->(d==1?(1:1):(1:size(A,d))) d->(if d==dim; ispeak=isodd(i_d); offset_{d-1} = offset_d+(div(i_d+1,2)-1)*stride_d; else; offset_{d-1} = offset_d+(i_d-1)*stride_d; end) begin
+                        indx = offset0
+                        if ispeak
+                            for k = 1:size(A,1)
+                                i1 = k
+                                out[indx+=1] += half*(@nref $N A i)
+                            end
+                        else
+                            for k = 1:size(A,1)
+                                i1 = k
+                                tmp = quarter*(@nref $N A i)
+                                out[indx+=1] += tmp
+                                out[indx+strd] = tmp
+                            end
+                        end
+                    end
+                end
+            else
+                threeeighths = convert(T, 0.375)
+                oneeighth = convert(T, 0.125)
+                indx = 0
+                if dim == 1
+                    @nloops $N i d->(d==1 ? (1:1) : (1:size(A,d))) d->(j_d = i_d) begin
+                        c = d = zero(T)
+                        for k = 1:size(out,1)-1
+                            a = c
+                            b = d
+                            j1 = 2*k
+                            i1 = j1-1
+                            c = @nref $N A i
+                            d = @nref $N A j
+                            out[indx+=1] = oneeighth*(a+d) + threeeighths*(b+c)
+                        end
+                        out[indx+=1] = oneeighth*c+threeeighths*d
+                    end
+                else
+                    fill!(out, 0)
+                    strd = stride(out, dim)
+                    stride1 = 1
+                    @nexprs $N d->(stride_{d+1} = stride_d*size(out,d))
+                    @nexprs $N d->offset_d = 0
+                    peakfirst = true
+                    @nloops $N i d->(d==1?(1:1):(1:size(A,d))) d->(if d==dim; peakfirst=isodd(i_d); offset_{d-1} = offset_d+(div(i_d+1,2)-1)*stride_d; else; offset_{d-1} = offset_d+(i_d-1)*stride_d; end) begin
+                        indx = offset0
+                        if peakfirst
+                            for k = 1:size(A,1)
+                                i1 = k
+                                tmp = @nref $N A i
+                                out[indx+=1] += threeeighths*tmp
+                                out[indx+strd] += oneeighth*tmp
+                            end
+                        else
+                            for k = 1:size(A,1)
+                                i1 = k
+                                tmp = @nref $N A i
+                                out[indx+=1] += oneeighth*tmp
+                                out[indx+strd] += threeeighths*tmp
+                            end
+                        end
+                    end
+                end        
+            end
+        end
+    end
+end
+
+restrict_size(len::Integer) = isodd(len) ? div(len+1,2) : div(len,2)+1
 
 function imlineardiffusion{T}(img::Array{T,2}, dt::FloatingPoint, iterations::Integer)
     u = img

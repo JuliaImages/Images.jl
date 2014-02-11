@@ -578,6 +578,12 @@ function nimages(img)
     end
 end
 
+# number of array elements used for each pixel/voxel
+function ncolorelem(img)
+    cd = colordim(img)
+    return cd > 0 ? size(img, cd) : 1
+end
+
 # indices of spatial coordinates
 function coords_spatial(img)
     nd = ndims(img)

@@ -7,6 +7,9 @@ importall Base
 using Color
 using Cartesian
 
+if isdefined(module_parent(Images), :Grid)
+    import ..Grid.restrict
+end
 
 include("core.jl")
 include("iterator.jl")
@@ -65,12 +68,14 @@ export # types
     maxabsfinite,
     maxfinite,
     minfinite,
+    ncolorelem,
     nimages,
     pixelspacing,
     properties,
     refim,
     rerange!,
     reslice!,
+    restrict,
     sdims,
     size_spatial,
     share,

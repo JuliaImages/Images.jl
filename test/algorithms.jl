@@ -46,9 +46,9 @@ imgs = Images.imadjustintensity(img, [])
 mnA = minimum(A)
 @assert Images.ssd(imgs, (A-mnA)/(mxA-mnA)) < eps()
 A = reshape(1:9, 3, 3)
-B = scale(ClipMin(Float32, 3), A)
+B = scale(Images.ClipMin(Float32, 3), A)
 @assert eltype(B) == Float32 && B == [3 4 7; 3 5 8; 3 6 9]
-B = scale(ClipMax(Uint8, 7), A)
+B = scale(Images.ClipMax(Uint8, 7), A)
 @assert eltype(B) == Uint8 && B == [1 4 7; 2 5 7; 3 6 7]
 
 # filtering
@@ -70,6 +70,27 @@ Aimg = permutedims(convert(Images.Image, A), [3,1,2])
 @assert approx_equal(Images.imfilter(ones(4,4),ones(1,3),"replicate"), 3.0)
 
 @assert approx_equal(Images.imfilter_gaussian(ones(4,4), [5,5]), 1.0)
+
+# restriction
+A = reshape(1:60, 4, 5, 3)
+B = Images.restrict(A, (1,2))
+@test_approx_eq B cat(3, [ 0.96875  4.625   5.96875;
+                           2.875   10.5    12.875;
+                           1.90625  5.875   6.90625],
+                         [ 8.46875  14.625 13.46875;
+                          17.875    30.5   27.875;
+                           9.40625  15.875 14.40625],
+                         [15.96875  24.625 20.96875;
+                          32.875    50.5   42.875;
+                          16.90625  25.875 21.90625])
+A = reshape(1:60, 5, 4, 3)
+B = Images.restrict(A, (1,2,3))
+@test_approx_eq B cat(3, [ 2.6015625  8.71875 6.1171875;
+                           4.09375   12.875   8.78125;
+                           3.5390625 10.59375 7.0546875],
+                         [10.1015625 23.71875 13.6171875;
+                          14.09375   32.875   18.78125;
+                          11.0390625 25.59375 14.5546875])
 
 # color conversion
 gray = linspace(0.0,1.0,5) # a 1-dimensional image

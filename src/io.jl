@@ -164,7 +164,18 @@ function imwrite{T<:ImageFileType}(img, filename::String, ::Type{T}; kwargs...)
 end
 
 function writemime(stream::IO, ::MIME"image/png", img::AbstractImage; scalei = scaleinfo_uint(img))
-    wand = image2wand(img, scalei)
+    assert2d(img)
+    A = data(img)
+    nc = ncolorelem(img)
+    npix = length(A)/nc
+    while npix > 1e6
+        A = restrict(A, coords_spatial(img))
+        npix = length(A)/nc
+    end
+    if eltype(A) != eltype(img)
+        A = truncround(eltype(img), A)
+    end
+    wand = image2wand(share(img, A), scalei)
 #     LibMagick.setimagecompression(wand, LibMagick.NoCompression)
     blob = LibMagick.getblob(wand, "png")
     write(stream, blob)
