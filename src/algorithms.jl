@@ -666,6 +666,9 @@ function _imfilter{T}(img::StridedMatrix{T}, filter::Matrix{T}, border::String, 
     si, sf = size(img), size(filter)
     fw = iceil(([sf...] - 1) / 2)
     A = padarray(img, fw, fw, border, convert(T, value))
+    if prod(sf) < 10
+        return _imfilter_direct!(Array(T, size(img)), A, filter)
+    end
     # correlation instead of convolution
     filter = rot180(filter)
     # check if separable
@@ -716,20 +719,36 @@ function _imfilter{T}(img::StridedMatrix{T}, filter::Matrix{T}, border::String, 
     out = C[int(sc[1]/2-si[1]/2):int(sc[1]/2+si[1]/2)-1, int(sc[2]/2-si[2]/2):int(sc[2]/2+si[2]/2)-1]
 end
 
+for N = 1:5
+    @eval begin
+        function _imfilter_direct!{T}(B, A::Array{T,$N}, kern::Array{T,$N})
+            @nloops $N i B begin
+                tmp = zero(T)
+                @nloops $N j kern begin
+                    tmp += (@nref $N A d->(i_d+j_d-1))*(@nref $N kern j)
+                end
+                (@nref $N B i) = tmp
+            end
+            B
+        end
+    end
+end
+
 # imfilter for multi channel images
-function imfilter{T}(img::AbstractArray{T}, filter::Matrix{T}, border::String, value)
+function imfilter{T}(img::AbstractArray{T}, filter::Matrix, border::String, value)
     assert2d(img)
     cd = colordim(img)
     local A
+    filterT = convert(Array{T}, filter)
     if cd == 0
-        A = _imfilter(data(img), filter, border, value)
+        A = _imfilter(data(img), filterT, border, value)
     else
         A = similar(data(img))
         coords = RangeIndex[1:size(img,i) for i = 1:ndims(img)]
         for i = 1:size(img, cd)
             coords[cd] = i
             simg = slice(img, coords...)
-            tmp = _imfilter(simg, filter, border, value)
+            tmp = _imfilter(simg, filterT, border, value)
             A[coords...] = tmp[:]
         end
     end
