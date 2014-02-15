@@ -528,7 +528,7 @@ colordim{C<:ColorValue}(img::AbstractMatrix{C}) = 0
 colordim{C<:ColorValue}(img::AbstractArray{C,3}) = 0
 colordim{C<:ColorValue}(img::AbstractImage{C}) = 0
 colordim(img::AbstractMatrix) = 0
-# colordim{T}(img::AbstractArray{T,3}) = (size(img, defaultarraycolordim) == 3) ? 3 : error("Cannot infer colordim of Array, use an AbstractImage type")
+colordim{T}(img::AbstractImageDirect{T,3}) = get(img, "colordim", 0)
 colordim{T}(img::AbstractArray{T,3}) = (size(img, defaultarraycolordim) == 3) ? 3 : 0
 colordim(img::AbstractImageDirect) = get(img, "colordim", 0)
 colordim(img::AbstractImageIndexed) = 0

@@ -47,6 +47,11 @@ img[4] = prev+1
 @assert storageorder(img) == Images.yx
 @assert storageorder(imgd) == [Images.yx, "color"]
 
+A = rand(4,4,3)
+@assert colordim(A) == 3
+Aimg = permutedims(convert(Image, A), [3,1,2])
+@assert colordim(Aimg) == 1
+
 # sub/slice
 s = sub(img, 2, 1:4)
 @assert ndims(s) == 2
