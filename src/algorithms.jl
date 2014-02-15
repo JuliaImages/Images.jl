@@ -662,13 +662,133 @@ function padarray{T,n}(img::AbstractArray{T,n}, padding::Vector{Int}, value::T, 
     end
 end
 
-function _imfilter{T}(img::StridedMatrix{T}, filter::Matrix{T}, border::String, value)
+function prep_kernel(img::AbstractArray, kern::AbstractArray)
+    sc = coords_spatial(img)
+    if ndims(kern) > length(sc)
+        error("""The kernel has $(ndims(kern)) dimensions, more than the $(sdims(img)) spatial dimensions of img.
+                 You'll need to set the dimensions and type of the kernel to be the same as the image.""")
+    end
+    sz = ones(Int, ndims(img))
+    for i = 1:ndims(kern)
+        sz[sc[i]] = size(kern,i)
+    end
+    reshape(kern, sz...)
+end
+
+
+###
+### imfilter
+###
+imfilter(img, kern, border, value) = copy(img, imfilter_inseparable(img, kern, border, value))
+# Do not combine these with the previous using a default value (see the 2d specialization below)
+imfilter(img, filter) = imfilter(img, filter, "replicate", 0)
+imfilter(img, filter, border) = imfilter(img, filter, border, 0)
+
+imfilter_inseparable{T,K,N,M}(img::AbstractArray{T,N}, kern::AbstractArray{K,M}, border::String, value) =
+    imfilter_inseparable(img, prep_kernel(img, kern), border, value)
+
+function imfilter_inseparable{T,K,N}(img::AbstractArray{T,N}, kern::AbstractArray{K,N}, border::String, value)
+    prepad  = [div(size(kern,i)-1, 2) for i = 1:N]
+    postpad = [div(size(kern,i),   2) for i = 1:N]
+    A = padarray(img, prepad, postpad, border, convert(T, value))
+    _imfilter!(Array(typeof(one(T)*one(K)), size(img)), A, data(kern))
+end
+
+# Special case for 2d kernels: check for separability
+function imfilter{T}(img::AbstractArray{T}, kern::AbstractMatrix, border::String, value)
+    sc = coords_spatial(img)
+    if length(sc) < 2
+        imfilter_inseparable(img, kern, border, value)
+    end
+    SVD = svdfact(kern)
+    U, S, Vt = SVD[:U], SVD[:S], SVD[:Vt]
+    separable = true
+    EPS = sqrt(eps(eltype(S)))
+    for i = 2:length(S)
+        separable &= (abs(S[i]) < EPS)
+    end
+    if !separable
+        return imfilter_inseparable(img, kern, border, value)
+    end
+    s = S[1]
+    u,v = U[:,1],Vt[1,:]
+    ss = sqrt(s)
+    sz1 = ones(Int, ndims(img)); sz1[sc[1]] = size(kern, 1)
+    sz2 = ones(Int, ndims(img)); sz2[sc[2]] = size(kern, 2)
+    tmp = imfilter_inseparable(img, reshape(u*ss, sz1...), border, value)
+    copy(img, imfilter_inseparable(tmp, reshape(v*ss, sz2...), border, value))
+end
+
+for N = 1:5
+    @eval begin
+        function _imfilter!{T,K}(B, A::AbstractArray{T,$N}, kern::AbstractArray{K,$N})
+            for i = 1:$N
+                if size(B,i)+size(kern,i) > size(A,i)+1
+                    throw(DimensionMismatch("Output dimensions $(size(B)) and kernel dimensions $(size(kern)) do not agree with size of padded input, $(size(A))"))
+                end
+            end
+            @nloops $N i B begin
+                tmp = zero(T)
+                @inbounds begin
+                    @nloops $N j kern begin
+                        tmp += (@nref $N A d->(i_d+j_d-1))*(@nref $N kern j)
+                    end
+                    (@nref $N B i) = tmp
+                end
+            end
+            B
+        end
+    end
+end
+
+###
+### imfilter_fft
+###
+imfilter_fft(img, kern, border, value) = copy(img, imfilter_fft_inseparable(img, kern, border, value))
+imfilter_fft(img, filter) = imfilter_fft(img, filter, "replicate", 0)
+imfilter_fft(img, filter, border) = imfilter_fft(img, filter, border, 0)
+
+imfilter_fft_inseparable{T,K,N,M}(img::AbstractArray{T,N}, kern::AbstractArray{K,M}, border::String, value) =
+    imfilter_fft_inseparable(img, prep_kernel(img, kern), border, value)
+
+function imfilter_fft_inseparable{T,K,N}(img::AbstractArray{T,N}, kern::AbstractArray{K,N}, border::String, value)
+    prepad  = [div(size(kern,i)-1, 2) for i = 1:N]
+    postpad = [div(size(kern,i),   2) for i = 1:N]
+    fullpad = [nextprod([2,3], size(img,i) + prepad[i] + postpad[i]) - size(img, i) - prepad[i] for i = 1:N]
+    A = padarray(img, prepad, fullpad, border, convert(T, value))
+    krn = zeros(typeof(one(T)*one(K)), size(A))
+    indexesK = ntuple(N, d->[size(krn,d)-prepad[d]+1:size(krn,d),1:size(kern,d)-prepad[d]])
+    krn[indexesK...] = rot180(kern)
+    AF = ifft(fft(A).*fft(krn))
+    out = Array(T, size(img))
+    indexesA = ntuple(N, d->postpad[d]+1:size(img,d)+postpad[d])
+    copyreal!(out, AF, indexesA)
+    out
+end
+
+for N = 1:5
+    @eval begin
+        function copyreal!{T<:Real}(dst::Array{T,$N}, src, I::(Range1{Int}...))
+            @nexprs $N d->(I_d = I[d])
+            @nloops $N i dst d->(j_d = first(I_d)+i_d-1) begin
+                (@nref $N dst i) = real(@nref $N src j)
+            end
+            dst
+        end
+        function copyreal!{T<:Complex}(dst::Array{T,$N}, src, I::(Range1{Int}...))
+            @nexprs $N d->I_d = I[d]
+            @nloops $N i dst d->(j_d = first(I_d)+i_d-1) begin
+                (@nref $N dst i) = @nref $N src j
+            end
+            dst
+        end
+    end
+end
+
+function imfilter_fft_old{T}(img::StridedMatrix{T}, filter::Matrix{T}, border::String, value)
     si, sf = size(img), size(filter)
     fw = iceil(([sf...] - 1) / 2)
     A = padarray(img, fw, fw, border, convert(T, value))
-    if prod(sf) < 10
-        return _imfilter_direct!(Array(T, size(img)), A, filter)
-    end
     # correlation instead of convolution
     filter = rot180(filter)
     # check if separable
@@ -719,46 +839,7 @@ function _imfilter{T}(img::StridedMatrix{T}, filter::Matrix{T}, border::String, 
     out = C[int(sc[1]/2-si[1]/2):int(sc[1]/2+si[1]/2)-1, int(sc[2]/2-si[2]/2):int(sc[2]/2+si[2]/2)-1]
 end
 
-for N = 1:5
-    @eval begin
-        function _imfilter_direct!{T}(B, A::Array{T,$N}, kern::Array{T,$N})
-            @nloops $N i B begin
-                tmp = zero(T)
-                @nloops $N j kern begin
-                    tmp += (@nref $N A d->(i_d+j_d-1))*(@nref $N kern j)
-                end
-                (@nref $N B i) = tmp
-            end
-            B
-        end
-    end
-end
 
-# imfilter for multi channel images
-function imfilter{T}(img::AbstractArray{T}, filter::Matrix, border::String, value)
-    assert2d(img)
-    cd = colordim(img)
-    local A
-    filterT = convert(Array{T}, filter)
-    if cd == 0
-        A = _imfilter(data(img), filterT, border, value)
-    else
-        A = similar(data(img))
-        coords = RangeIndex[1:size(img,i) for i = 1:ndims(img)]
-        for i = 1:size(img, cd)
-            coords[cd] = i
-            simg = slice(img, coords...)
-            tmp = _imfilter(simg, filterT, border, value)
-            A[coords...] = tmp[:]
-        end
-    end
-    share(img, A)
-end
-
-imfilter(img, filter) = imfilter(img, filter, "replicate", 0)
-imfilter(img, filter, border) = imfilter(img, filter, border, 0)
-
-# imfilter{S,T<:FloatingPoint}(img::AbstractArray{S}, filter::Matrix{T}, args...) = imfilter(copy!(similar(img, T), img), filter, args...)
 
 # IIR filtering with Gaussians
 # See

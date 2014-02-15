@@ -1,9 +1,9 @@
 import Images
 using Color, Base.Test
 
-# Comparison of each element in arrays with scalars
-approx_equal(ar::Images.AbstractImage, v) = all(abs(Images.data(ar)-v) .< sqrt(eps(v)))
+# Comparison of each element in arrays with a scalar
 approx_equal(ar, v) = all(abs(ar-v) .< sqrt(eps(v)))
+approx_equal(ar::Images.AbstractImage, v) = approx_equal(Images.data(ar), v)
 
 # arithmetic
 img = convert(Images.Image, zeros(3,3))
@@ -52,6 +52,34 @@ B = scale(Images.ClipMax(Uint8, 7), A)
 @assert eltype(B) == Uint8 && B == [1 4 7; 2 5 7; 3 6 7]
 
 # filtering
+EPS = 1e-14
+for T in (Float64, Int)
+    A = zeros(T,3,3); A[2,2] = 1
+    kern = rand(3,3)
+    @test maximum(abs(Images.imfilter(A, kern) - rot180(kern))) < EPS
+    kern = rand(2,3)
+    @test maximum(abs(Images.imfilter(A, kern)[1:2,:] - rot180(kern))) < EPS
+    kern = rand(3,2)
+    @test maximum(abs(Images.imfilter(A, kern)[:,1:2] - rot180(kern))) < EPS
+end
+for T in (Float64, Int)
+    # Separable kernels
+    A = zeros(T,3,3); A[2,2] = 1
+    kern = rand(3).*rand(3)'
+    @test maximum(abs(Images.imfilter(A, kern) - rot180(kern))) < EPS
+    kern = rand(2).*rand(3)'
+    @test maximum(abs(Images.imfilter(A, kern)[1:2,:] - rot180(kern))) < EPS
+    kern = rand(3).*rand(2)'
+    @test maximum(abs(Images.imfilter(A, kern)[:,1:2] - rot180(kern))) < EPS
+end
+A = zeros(3,3); A[2,2] = 1
+kern = rand(3,3)
+@test maximum(abs(Images.imfilter_fft(A, kern) - rot180(kern))) < EPS
+kern = rand(2,3)
+@test maximum(abs(Images.imfilter_fft(A, kern)[1:2,:] - rot180(kern))) < EPS
+kern = rand(3,2)
+@test maximum(abs(Images.imfilter_fft(A, kern)[:,1:2] - rot180(kern))) < EPS
+
 @assert approx_equal(Images.imfilter(ones(4,4), ones(3,3)), 9.0)
 @assert approx_equal(Images.imfilter(ones(3,3), ones(3,3)), 9.0)
 @assert approx_equal(Images.imfilter(ones(3,3), [1 1 1;1 0.0 1;1 1 1]), 8.0)
@@ -59,14 +87,13 @@ img = convert(Images.Image, ones(4,4))
 @assert approx_equal(Images.imfilter(img, ones(3,3)), 9.0)
 A = zeros(5,5,3); A[3,3,[1,3]] = 1
 @assert Images.colordim(A) == 3
-h = [0   0.5 0;
-     0.2 1.0 0.2;
-     0   0.5 0]
-hpad = zeros(5,5); hpad[2:4,2:4] = h
-Af = Images.imfilter(A, h)
-@test_approx_eq Af cat(3, hpad, zeros(5,5), hpad)
+kern = rand(3,3)
+kernpad = zeros(5,5); kernpad[2:4,2:4] = kern
+Af = Images.imfilter(A, kern)
+
+@test_approx_eq Af cat(3, rot180(kernpad), zeros(5,5), rot180(kernpad))
 Aimg = permutedims(convert(Images.Image, A), [3,1,2])
-@test_approx_eq Images.imfilter(Aimg, h) permutedims(Af, [3,1,2])
+@test_approx_eq Images.imfilter(Aimg, kern) permutedims(Af, [3,1,2])
 @assert approx_equal(Images.imfilter(ones(4,4),ones(1,3),"replicate"), 3.0)
 
 @assert approx_equal(Images.imfilter_gaussian(ones(4,4), [5,5]), 1.0)
