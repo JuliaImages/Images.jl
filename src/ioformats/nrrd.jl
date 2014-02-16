@@ -1,6 +1,6 @@
 module NRRD
 
-using Images, Units
+using Images, SIUnits, SIUnits.ShortUnits
 import Images: imread, imwrite
 import Zlib
 
@@ -156,15 +156,11 @@ function imread{S<:IO}(stream::S, ::Type{Images.NRRDFile})
                 @show ps
                 props["pixelspacing"] = ps[keep]
             else
-                u = Array(Quantity, 0)
+                u = Array(SIUnits.SIQuantity, 0)
                 for i = 1:length(ustrs)
                     if keep[i]
-                        try
-                            utmp = ps[i]*parse_quantity("1 "*ustrs[i][2:end-1])
-                            push!(u, utmp)
-                        catch
-                            push!(u, Quantity(SINone, Unknown, ps[i]))
-                        end
+                        utmp = ps[i]*eval(symbol(ustrs[i][2:end-1]))
+                        push!(u, utmp)
                     end
                 end
                 props["pixelspacing"] = u
@@ -226,7 +222,7 @@ function imwrite(img, sheader::IO, ::Type{Images.NRRDFile}, props::Dict = Dict{A
     print(sheader, "spacings:")
     printunits = false
     for x in ps
-        if isa(x, Quantity)
+        if isa(x, SIUnits.SIQuantity)
             printunits = true
             print(sheader, " ", x.value)
         else
@@ -281,6 +277,25 @@ function stream2name(s::IO)
         error("stream name ", name, " doesn't fit expected pattern")
     end
     name[7:end-1]
+end
+
+_unit_string_dict = ["um" => Micro*Meter, "mm" => Milli*Meter, "s" => Second]
+function parse_quantity(s::String, strict::Bool = true)
+    # Find the last character of the numeric component
+    m = match(r"[0-9\.\+-](?![0-9\.\+-])", s)
+    if m == nothing
+        error("String does not have a 'value unit' structure")
+    end
+    val = float64(s[1:m.offset])
+    ustr = strip(s[m.offset+1:end])
+    if isempty(ustr)
+        if strict
+            error("String does not have a 'value unit' structure")
+        else
+            return val
+        end
+    end
+    val * _unit_string_dict[ustr]
 end
 
 end

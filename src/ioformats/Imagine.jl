@@ -1,11 +1,15 @@
 module Imagine
 
 using Images
-using Units
+using SIUnits, SIUnits.ShortUnits
 
 import Images.imread
+import Base.convert
 
-export imagine2nrrd
+export imagine2nrrd, Micron
+
+Micron = SIUnits.NonSIUnit{typeof(Meter),:µm}()
+convert(::Type{SIUnits.SIQuantity},::typeof(Micron)) = Micro*Meter
 
 function imread{S<:IO}(s::S, ::Type{Images.ImagineFile})
     h = parse_header(s, Images.ImagineFile)
@@ -14,43 +18,37 @@ function imread{S<:IO}(s::S, ::Type{Images.ImagineFile})
     camfilename = basename*".cam"
     T = h["pixel data type"]
     sz = [h["image width"], h["image height"], h["frames per stack"], h["nStacks"]]
-	if sz[4] == 1
-	    sz = sz[1:3]
-	end
-	havez = length(sz) == 4
+    if sz[4] == 1
+        sz = sz[1:3]
+    end
+    havez = length(sz) == 4
     # Check that the file size is consistent with the expected size
     if !isfile(camfilename)
         warn("Cannot open ", camfilename)
         data = Array(T, sz[1], sz[2], sz[3], 0)
     else
         fsz = filesize(camfilename)
-		n_stacks = sz[end]
+        n_stacks = sz[end]
         if fsz != sizeof(T)*prod(int64(sz))  # guard against overflow on 32bit
             warn("Size of image file is different from expected value")
             n_stacks = ifloor(fsz / sizeof(T) / prod(sz[1:end-1]))
-		end
-		if sizeof(T)*prod(int64(sz[1:end-1]))*n_stacks > typemax(Uint)
-			warn("File size is too big to mmap on 32bit")
-			n_stacks = ifloor(fsz / sizeof(T) / typemax(Uint))
-		end
-		if n_stacks < sz[end]
-			println("Truncating to ", n_stacks, length(sz) == 4 ? " stacks" : " frames")
+        end
+        if sizeof(T)*prod(int64(sz[1:end-1]))*n_stacks > typemax(Uint)
+            warn("File size is too big to mmap on 32bit")
+            n_stacks = ifloor(fsz / sizeof(T) / typemax(Uint))
+        end
+        if n_stacks < sz[end]
+            println("Truncating to ", n_stacks, length(sz) == 4 ? " stacks" : " frames")
             sz[end] = n_stacks
         end
         sc = open(camfilename, "r")
         data = mmap_array(T, ntuple(length(sz), i->sz[i]), sc)
     end
-    um_per_pixel = h["um per pixel"]
-    if !(um_per_pixel > 0)
-        if h["camera"] == "DV8285_BV"
-            um_per_pixel = 0.71
-        end
-    end
-    u = Unit(Micro, Meter)
-    pstart = convert(u, h["piezo"]["stop position"])
-    pstop = convert(u, h["piezo"]["start position"])
-    dz = abs(pstart.value - pstop.value)/sz[3]
-	
+    um_per_pixel = h["um per pixel"]*µm
+    pstart = h["piezo"]["stop position"]
+    pstop = h["piezo"]["start position"]
+    dz = abs(pstart - pstop)/sz[3]
+
     Image(data, ["spatialorder" => havez ? ["x", "l", "z"] : ["x", "l"],
                  "timedim" => havez ? 4 : 3,
                  "colorspace" => "Gray",
@@ -106,10 +104,29 @@ end
 
 function parse_quantity_or_empty(s::ASCIIString)
     if isempty(s)
-        return Quantity(SINone, Unknown, NaN)
+        return NaN
     else
         return parse_quantity(s)
     end
+end
+
+_unit_string_dict = ["um" => Micro*Meter, "s" => Second, "us" => Micro*Second, "MHz" => Mega*Hertz]
+function parse_quantity(s::String, strict::Bool = true)
+    # Find the last character of the numeric component
+    m = match(r"[0-9\.\+-](?![0-9\.\+-])", s)
+    if m == nothing
+        error("String does not have a 'value unit' structure")
+    end
+    val = float64(s[1:m.offset])
+    ustr = strip(s[m.offset+1:end])
+    if isempty(ustr)
+        if strict
+            error("String does not have a 'value unit' structure")
+        else
+            return val
+        end
+    end
+    val * _unit_string_dict[ustr]
 end
 
 # Read and parse a *.imagine file (an Imagine header file)
