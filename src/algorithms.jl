@@ -927,7 +927,7 @@ for N = 1:5
     end
 end
 
-function iir_gaussian_coefficients(T::Type, sigma::Number; emit_warning = true)
+function iir_gaussian_coefficients(T::Type, sigma::Number; emit_warning::Bool = true)
     if sigma < 1 && emit_warning
         warn("sigma is too small for accuracy")
     end
@@ -950,7 +950,7 @@ function iir_gaussian_coefficients(T::Type, sigma::Number; emit_warning = true)
     return a, B, M
 end
 
-function _imfilter_gaussian!{T<:FloatingPoint}(A::Array{T}, sigma::Vector; emit_warning = true)
+function _imfilter_gaussian!{T<:FloatingPoint}(A::Array{T}, sigma::Vector; emit_warning::Bool = true)
     nd = ndims(A)
     szA = [size(A,i) for i = 1:nd]
     strdsA = [stride(A,i) for i = 1:nd]

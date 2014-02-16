@@ -99,7 +99,7 @@ Aimg = permutedims(convert(Images.Image, A), [3,1,2])
 @assert approx_equal(Images.imfilter_gaussian(ones(4,4), [5,5]), 1.0)
 
 # restriction
-A = reshape(1:60, 4, 5, 3)
+A = reshape(uint16(1:60), 4, 5, 3)
 B = Images.restrict(A, (1,2))
 @test_approx_eq B cat(3, [ 0.96875  4.625   5.96875;
                            2.875   10.5    12.875;

@@ -19,6 +19,35 @@ include("scaling.jl")
 include("labeledarrays.jl")
 include("algorithms.jl")
 
+init() = LibMagick.init()
+
+function precompile()
+    for T in (Uint8, Uint16, Int, Float32, Float64)
+        Tdiv = typeof(one(T)/2)
+        for N = 2:3
+            precompile(restrict!, (Array{Tdiv, N}, Array{T,N}, Int))
+            precompile(imfilter, (Array{T,N}, Array{Float64,N}))
+            precompile(imfilter, (Array{T,N}, Array{Float64,2}))
+            precompile(imfilter, (Array{T,N}, Array{Float32,N}))
+            precompile(imfilter, (Array{T,N}, Array{Float32,2}))
+        end
+    end
+    for T in (Float32, Float64)
+        for N = 2:3
+            precompile(_imfilter_gaussian!, (Array{T,N}, Vector{Float64}))
+            precompile(_imfilter_gaussian!, (Array{T,N}, Vector{Int}))
+            precompile(imfilter_gaussian_no_nans!, (Array{T,N}, Vector{Float64}))
+            precompile(imfilter_gaussian_no_nans!, (Array{T,N}, Vector{Int}))
+            precompile(fft, (Array{T,N},))
+        end
+    end
+    for T in (Complex{Float32}, Complex{Float64})
+        for N = 2:3
+            precompile(ifft, (Array{T,N},))
+        end
+    end
+end
+
 export # types
     AbstractImage,
     AbstractImageDirect,
@@ -171,6 +200,8 @@ export # types
 
     # phantoms
     shepp_logan
+
+init()
 
 @deprecate cairoRGB     uint32color!
 @deprecate refim        getindexim

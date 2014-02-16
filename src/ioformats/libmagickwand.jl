@@ -29,14 +29,13 @@ const libwand = find_library(vec(libnames.*transpose(suffixes).*reshape(options,
 have_imagemagick = !isempty(libwand)
 
 # Initialize the library
-init() = ccall((:MagickWandGenesis, libwand), Void, ())
-
-if have_imagemagick
-    init()
-else
-    warn("ImageMagick utilities not found. Install for more file format support.")
+function init()
+    if have_imagemagick
+        ccall((:MagickWandGenesis, libwand), Void, ())
+    else
+        warn("ImageMagick utilities not found. Install for more file format support.")
+    end
 end
-
 
 # Constants
 # Storage types
