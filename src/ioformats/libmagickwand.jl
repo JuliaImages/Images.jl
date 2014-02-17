@@ -91,9 +91,27 @@ end
 
 destroymagickwand(wand::MagickWand) = ccall((:DestroyMagickWand, libwand), Ptr{Void}, (Ptr{Void},), wand.ptr)
 
+type PixelWand
+    ptr::Ptr{Void}
+end
+
+function PixelWand()
+    wand = PixelWand(ccall((:NewPixelWand, libwand), Ptr{Void}, ()))
+    finalizer(wand, destroypixelwand)
+    wand
+end
+
+destroypixelwand(wand::PixelWand) = ccall((:DestroyPixelWand, libwand), Ptr{Void}, (Ptr{Void},), wand.ptr)
+
 const IMExceptionType = Array(Cint, 1)
 function error(wand::MagickWand)
     pMsg = ccall((:MagickGetException, libwand), Ptr{Uint8}, (Ptr{Void}, Ptr{Cint}), wand.ptr, IMExceptionType)
+    msg = bytestring(pMsg)
+    relinquishmemory(pMsg)
+    error(msg)
+end
+function error(wand::PixelWand)
+    pMsg = ccall((:PixelGetException, libwand), Ptr{Uint8}, (Ptr{Void}, Ptr{Cint}), wand.ptr, IMExceptionType)
     msg = bytestring(pMsg)
     relinquishmemory(pMsg)
     error(msg)
@@ -185,6 +203,8 @@ nextimage(wand::MagickWand) = ccall((:MagickNextImage, libwand), Cint, (Ptr{Void
 
 resetiterator(wand::MagickWand) = ccall((:MagickResetIterator, libwand), Void, (Ptr{Void},), wand.ptr)
 
+newimage(wand::MagickWand, cols::Integer, rows::Integer, pw::PixelWand) = ccall((:MagickNewImage, libwand), Cint, (Ptr{Void}, Csize_t, Csize_t, Ptr{Void}), wand.ptr, cols, rows, pw.ptr) == 0 && error(wand)
+
 # test whether image has an alpha channel
 getimagealphachannel(wand::MagickWand) = ccall((:MagickGetImageAlphaChannel, libwand), Cint, (Ptr{Void},), wand.ptr) == 1
 
@@ -231,6 +251,7 @@ end
 # get the pixel depth
 getimagedepth(wand::MagickWand) = int(ccall((:MagickGetImageDepth, libwand), Csize_t, (Ptr{Void},), wand.ptr))
 
+pixelsetcolor(wand::PixelWand, colorstr::ByteString) = ccall((:PixelSetColor, libwand), Csize_t, (Ptr{Void},Ptr{Uint8}), wand.ptr, colorstr) == 0 && error(wand)
 
 relinquishmemory(p) = ccall((:MagickRelinquishMemory, libwand), Ptr{Uint8}, (Ptr{Uint8},), p)
 
