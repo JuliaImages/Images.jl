@@ -18,9 +18,9 @@ end
     const OS_ARCH = WORD_SIZE == 64 ? "x86_64" : "x86"
 
     if WORD_SIZE == 32
-            provides(Binaries,URI("http://www.imagemagick.org/download/binaries/ImageMagick-6.7.7-6-Q16-windows-dll.exe"),libwand,os = :Windows)
+        provides(Binaries,URI("http://www.imagemagick.org/download/binaries/ImageMagick-6.8.8-6-Q16-windows-dll.exe"),libwand,os = :Windows)
     else
-            provides(Binaries,URI("http://www.imagemagick.org/download/binaries/ImageMagick-6.7.7-6-Q16-windows-x64-dll.exe"),libwand,os = :Windows)
+        provides(Binaries,URI("http://www.imagemagick.org/download/binaries/ImageMagick-6.8.8-6-Q16-windows-x64-dll.exe"),libwand,os = :Windows)
     end
 end
 
