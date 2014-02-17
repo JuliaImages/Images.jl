@@ -87,8 +87,8 @@ function imread{S<:IO}(stream::S, ::Type{Images.NRRDFile})
     elseif header["encoding"] == "raw" || header["encoding"] == "gzip"
         A = read(sdata, T, sz...)
         if haskey(header, "endian")
-            if header["endian"] != myendian()
-                A = bswap(A)
+            if header["endian"] != myendian() && eltype(A) != Uint8
+                A = reshape([bswap(a) for a in A], size(A))
             end
         end
     else
