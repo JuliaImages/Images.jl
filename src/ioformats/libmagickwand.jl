@@ -100,22 +100,41 @@ function error(wand::MagickWand)
 end
 
 
+function getsize(buffer, colorspace)
+    if colorspace == "Gray"
+        return size(buffer, 1), size(buffer, 2), size(buffer, 3)
+    else
+        return size(buffer, 2), size(buffer, 3), size(buffer, 4)
+    end
+end
 
 function exportimagepixels!{T}(buffer::AbstractArray{T}, wand::MagickWand,  colorspace::ASCIIString; x = 0, y = 0)
-    status = ccall((:MagickExportImagePixels, libwand), Cint, (Ptr{Void}, Cssize_t, Cssize_t, Csize_t, Csize_t, Ptr{Uint8}, Cint, Ptr{Void}), wand.ptr, x, y, size(buffer, 1+(ndims(buffer)>2)), size(buffer, 2+(ndims(buffer)>2)), channelorder[colorspace], storagetype(T), buffer)
-    status == 0 && error(wand)
+    cols, rows, nimages = getsize(buffer, colorspace)
+    p = pointer(buffer)
+    for i = 1:nimages
+        status = ccall((:MagickExportImagePixels, libwand), Cint, (Ptr{Void}, Cssize_t, Cssize_t, Csize_t, Csize_t, Ptr{Uint8}, Cint, Ptr{Void}), wand.ptr, x, y, cols, rows, channelorder[colorspace], storagetype(T), p)
+        status == 0 && error(wand)
+        nextimage(wand)
+        p += sizeof(T)*cols*rows
+    end
     buffer
 end
 
-function importimagepixels{T}(buffer::AbstractArray{T}, wand::MagickWand, colorspace::ASCIIString; x = 0, y = 0)
-    status = ccall((:MagickImportImagePixels, libwand), Cint, (Ptr{Void}, Cssize_t, Cssize_t, Csize_t, Csize_t, Ptr{Uint8}, Cint, Ptr{Void}), wand.ptr, x, y, size(buffer, 1+(ndims(buffer)>2)), size(buffer, 2+(ndims(buffer)>2)), channelorder[colorspace], storagetype(T), buffer)
-    status == 0 && error(wand)
-    nothing
-end
+# function importimagepixels{T}(buffer::AbstractArray{T}, wand::MagickWand, colorspace::ASCIIString; x = 0, y = 0)
+#     cols, rows = getsize(buffer, colorspace)
+#     status = ccall((:MagickImportImagePixels, libwand), Cint, (Ptr{Void}, Cssize_t, Cssize_t, Csize_t, Csize_t, Ptr{Uint8}, Cint, Ptr{Void}), wand.ptr, x, y, cols, rows, channelorder[colorspace], storagetype(T), buffer)
+#     status == 0 && error(wand)
+#     nothing
+# end
 
 function constituteimage{T<:Unsigned}(buffer::AbstractArray{T}, wand::MagickWand, colorspace::ASCIIString; x = 0, y = 0)
-    status = ccall((:MagickConstituteImage, libwand), Cint, (Ptr{Void}, Cssize_t, Cssize_t, Ptr{Uint8}, Cint, Ptr{Void}), wand.ptr, size(buffer, 1+(ndims(buffer)>2)), size(buffer, 2+(ndims(buffer)>2)), channelorder[colorspace], storagetype(T), buffer)
-    status == 0 && error(wand)
+    cols, rows, nimages = getsize(buffer, colorspace)
+    p = pointer(buffer)
+    for i = 1:nimages
+        status = ccall((:MagickConstituteImage, libwand), Cint, (Ptr{Void}, Cssize_t, Cssize_t, Ptr{Uint8}, Cint, Ptr{Void}), wand.ptr, cols, rows, channelorder[colorspace], storagetype(T), p)
+        status == 0 && error(wand)
+        p += sizeof(T)*cols*rows
+    end
     status = ccall((:MagickSetImageDepth, libwand), Cint, (Ptr{Void}, Csize_t), wand.ptr, 8*sizeof(T))
     status == 0 && error(wand)
     nothing
@@ -149,7 +168,7 @@ function readimage(wand::MagickWand, stream::IO)
 end
 
 function writeimage(wand::MagickWand, filename::String)
-    status = ccall((:MagickWriteImage, libwand), Cint, (Ptr{Void}, Ptr{Uint8}), wand.ptr, filename)
+    status = ccall((:MagickWriteImages, libwand), Cint, (Ptr{Void}, Ptr{Uint8}, Cint), wand.ptr, filename, true)
     status == 0 && error(wand)
     nothing
 end
@@ -161,6 +180,8 @@ function size(wand::MagickWand)
 end
 
 getnumberimages(wand::MagickWand) = int(ccall((:MagickGetNumberImages, libwand), Csize_t, (Ptr{Void},), wand.ptr))
+
+nextimage(wand::MagickWand) = ccall((:MagickNextImage, libwand), Cint, (Ptr{Void},), wand.ptr) == 1
 
 resetiterator(wand::MagickWand) = ccall((:MagickResetIterator, libwand), Void, (Ptr{Void},), wand.ptr)
 

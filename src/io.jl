@@ -234,13 +234,8 @@ function image2wand(img, scalei)
     end
     n = size(imgw, 3+have_color)
     wand = LibMagick.MagickWand()
-    for i = 1:n
-        if have_color
-            LibMagick.constituteimage(imgw[:,:,:,i], wand, colorspace(img))
-        else
-            LibMagick.constituteimage(imgw[:,:,i], wand, colorspace(img))
-        end
-    end
+    LibMagick.constituteimage(data(imgw), wand, colorspace(img))
+    LibMagick.resetiterator(wand)
     wand
 end
 
