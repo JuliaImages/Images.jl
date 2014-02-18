@@ -23,8 +23,28 @@ typedict = [
     "unsigned short int" => Uint16,
     "uint16" => Uint16,
     "uint16_t" => Uint16,
+    "int" => Int32,
+    "signed int" => Int32,
+    "int32" => Int32,
+    "int32_t" => Int32,
+    "uint" => Uint32,
+    "unsigned int" => Uint32,
+    "uint32" => Uint32,
+    "uint32_t" => Uint32,
+    "longlong" => Int64,
+    "long long" => Int64,
+    "long long int" => Int64,
+    "signed long long" => Int64,
+    "signed long long int" => Int64,
+    "int64" => Int64,
+    "int64_t" => Int64,
+    "ulonglong" => Uint64,
+    "unsigned long long" => Uint64,
+    "unsigned long long int" => Uint64,
+    "uint64" => Uint64,
+    "uint64_t" => Uint64,
     "float" => Float32,
-    "double" => Float64]  # yet more can be added...
+    "double" => Float64]
 
 function myendian()
     if ENDIAN_BOM == 0x04030201
