@@ -190,6 +190,7 @@ typedict = [1 => Uint8, 8 => Uint8, 16 => Uint16, 32 => Uint32]
 function imread(filename::String, ::Type{ImageMagick})
     wand = LibMagick.MagickWand()
     LibMagick.readimage(wand, filename)
+    LibMagick.resetiterator(wand)
     imtype = LibMagick.getimagetype(wand)
     # Determine what we need to know about the image format
     sz = size(wand)
