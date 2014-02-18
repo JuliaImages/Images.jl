@@ -178,6 +178,7 @@ export # types
     imdog,
     imedge,
     imfilter,
+    imfilter_fft,
     imfilter_gaussian,
     imfilter_gaussian!,
     imgaussiannoise,
