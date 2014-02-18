@@ -12,17 +12,17 @@ using BinDeps
     provides(Yum, "ImageMagick", libwand)
 end
 
-@windows_only begin
-    libwand = library_dependency("CORE_RL_wand_")
-
-    const OS_ARCH = WORD_SIZE == 64 ? "x86_64" : "x86"
-
-    if WORD_SIZE == 32
-        provides(Binaries,URI("http://www.imagemagick.org/download/binaries/ImageMagick-6.8.8-6-Q16-windows-dll.exe"),libwand,os = :Windows)
-    else
-        provides(Binaries,URI("http://www.imagemagick.org/download/binaries/ImageMagick-6.8.8-6-Q16-windows-x64-dll.exe"),libwand,os = :Windows)
-    end
-end
+# @windows_only begin
+#     libwand = library_dependency("CORE_RL_wand_")
+# 
+#     const OS_ARCH = WORD_SIZE == 64 ? "x86_64" : "x86"
+# 
+#     if WORD_SIZE == 32
+#         provides(Binaries,URI("http://www.imagemagick.org/download/binaries/ImageMagick-6.8.8-6-Q16-windows-dll.exe"),libwand,os = :Windows)
+#     else
+#         provides(Binaries,URI("http://www.imagemagick.org/download/binaries/ImageMagick-6.8.8-6-Q16-windows-x64-dll.exe"),libwand,os = :Windows)
+#     end
+# end
 
 @osx_only begin
     if Pkg.installed("Homebrew") === nothing
