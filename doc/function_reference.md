@@ -661,6 +661,16 @@ Variation (TV) denoising or TV regularization. `lambda` is the regularization
 coefficient for the derivative, and `iterations` is the number of relaxation
 iterations taken. 2d only.
 
+### Resizing
+
+```
+restrict(img[, region])
+```
+performs two-fold reduction in size along the dimensions listed in `region`,
+or all spatial coordinates if `region` is not specified.
+It anti-aliases the image as it goes, so is better than a naive summation
+over 2x2 blocks.
+
 ### Image statistics
 
 ```
