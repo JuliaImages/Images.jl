@@ -56,7 +56,7 @@ Install via the package manager,
 Pkg.add("Images")
 ```
 
-It's helpful to have ImageMagick installed on your system, as this relies on it for reading and writing many common image types.
+It's helpful to have ImageMagick installed on your system, as Images relies on it for reading and writing many common image types.
 For most platforms, adding the Images package should install ImageMagick for you automatically.
 If this fails, try installing it [manually](http://www.imagemagick.org/download/binaries/).
 Depending on where it installs, you may need to set the `MAGICK_HOME` environment variable to help Julia find the library (or set your `DL_LOAD_PATH`).

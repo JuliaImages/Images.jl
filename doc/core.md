@@ -177,8 +177,8 @@ end
 ```
 
 Now let's say you additionally want to allow the user to filter color
-images---where one dimension of the array is used to encode color---but supply a
-filter of dimension `N-1` to be applied to each color channel separately. We
+images---where one dimension of the array is used to encode color---with a filter
+of dimension `N-1` applied to each color channel separately. We
 can implement this version simultaneously for both `Image` types and other array
 types as follows:
 ```
@@ -196,10 +196,14 @@ function imfilter{T,N,N1}(img::AbstractArray{T,N}, kernel::Array{T,N1}, options.
     out
 end
 ```
-This works no matter which dimension is used to store color, a feat that would
+There are other ways to achieve a similar effect; if you examine the actual
+implementation of `imfilter`, you'll see that the kernel is reshaped to be
+commensurate with the data array.
+
+These solutions work no matter which dimension is used to store color, a feat that would
 be essentially impossible to achieve robustly in a generic algorithm if we
 didn't exploit metadata. Note also that if the user supplies an `Array`, s/he
 will get an `Array` back, and if using an `Image` will get an `Image` back with
 properties inherited from `img`.
 
-Naturally, you can find other examples throughout the source code of `Images`.
+Naturally, you can find other examples of generic implementations throughout the source code of `Images`.

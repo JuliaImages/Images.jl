@@ -46,7 +46,7 @@ The image file type is inferred from the extension.
 
 The most direct approach is the `display` command:
 ```
-julia> display(img)
+julia> ImageView.display(img)
 ```
 For further information see the [ImageView](https://github.com/timholy/ImageView.jl) documentation.
 
@@ -54,20 +54,18 @@ For further information see the [ImageView](https://github.com/timholy/ImageView
 
 Here's a short example that may help you get started:
 ```
-using Images
-using ImageView
-using Color
-img = float64(imread("peppers.png"))  # an RGB image (you can pick anything)
-h = ones(7,7)/49;                     # a boxcar smoothing filter
-imgf = imfilter(img, h)
-display(img)
-display(imgf)
+using Images, ImageView, Color
+img = imread("peppers.png")           # an RGB image (you can pick anything)
+kern = ones(7,7)/49;                  # a boxcar smoothing filter
+imgf = imfilter(img, kern)
+ImageView.display(img)
+ImageView.display(imgf)
 clp = ClipMinMax(Uint8, 0.0, 255.0)
-imgc = scale(clp,3img)                # generate an oversaturated image
-display(imgc)
+imgc = scale(clp,3*float64(img))      # generate an oversaturated image
+ImageView.display(imgc)
 imgp = permutedims(img,[2,3,1])       # so we don't have to call squeeze() next
 O = Overlay((imgp["color",2],imgp["color",1]),(RGB(0,0,1),RGB(1,1,0)),((0,255),(0,255)))
-display(O,xy=["y","x"])
+ImageView.display(O,xy=["y","x"])
 ```
 
 ![raw](figures/peppers1.jpg)

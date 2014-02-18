@@ -556,7 +556,17 @@ imfilter(img, kernel, [border, value])
 filters the image with the given (array) kernel, using boundary conditions
 specified by `border` and `value`. See `padarray` below for an explanation of
 the boundary conditions. Default is to use `"replicate"` boundary conditions.
-Currently 2d only.
+This uses finite-impulse-response (FIR) filtering, and is fast only for
+relatively small `kernel`s.
+
+<br />
+```
+imfilter_fft(img, kernel, [border, value])
+```
+filters the image with the given (array) kernel, using an FFT algorithm.
+This is slower than `imfilter` for small kernels, but much faster for
+large kernels. For Gaussian blur, an even better choice is
+`imfilter_gaussian`.
 
 <br />
 ```
