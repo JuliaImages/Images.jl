@@ -39,6 +39,7 @@ function imread{S<:IO}(stream::S, ::Type{Images.NRRDFile})
     skipchars(stream,isspace)
     header = Dict{ASCIIString, UTF8String}()
     comments = Array(ASCIIString, 0)
+    # Read until we encounter a blank line, which is the separator between the header and data
     line = strip(readline(stream))
     while !isempty(line)
         if line[1] != '#'
@@ -52,6 +53,7 @@ function imread{S<:IO}(stream::S, ::Type{Images.NRRDFile})
         end
         line = strip(readline(stream))
     end
+    # Check to see whether the data are in an external file
     sdata = stream
     if haskey(header, "data file")
         sdata = open(header["data file"])
@@ -94,14 +96,16 @@ function imread{S<:IO}(stream::S, ::Type{Images.NRRDFile})
     else
       error("\"", header["encoding"], "\" encoding not supported.")
     end
+    # Optional fields
     if haskey(header, "kinds")
         kinds = split(header["kinds"], " ")
         for i = 1:length(kinds)
             k = kinds[i]
             if k == "time"
                 props["timedim"] = i
-            elseif in(k, ("list","3-color","4-color"))
+            elseif in(k, ("3-color","4-color","list","point","vector","covariant-vector","normal","2-vector","3-vector","4-vector","3-gradient","3-normal","scalar","complex","quaternion"))
                 props["colordim"] = i
+                props["colorspace"] = k
             elseif k == "RGB-color"
                 props["colordim"] = i
                 props["colorspace"] = "RGB"
@@ -111,6 +115,8 @@ function imread{S<:IO}(stream::S, ::Type{Images.NRRDFile})
             elseif k == "RGBA-color"
                 props["colordim"] = i
                 props["colorspace"] = "RGBA"
+            elseif contains(k, "matrix")
+                error("matrix types are not yet supported")
             end
         end
     end
