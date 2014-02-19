@@ -57,13 +57,15 @@ Pkg.add("Images")
 ```
 
 It's helpful to have ImageMagick installed on your system, as Images relies on it for reading and writing many common image types.
-For most platforms, adding the Images package should install ImageMagick for you automatically.
+For unix platforms, adding the Images package should install ImageMagick for you automatically.
 If this fails, try installing it [manually](http://www.imagemagick.org/download/binaries/).
 Depending on where it installs, you may need to set the `MAGICK_HOME` environment variable to help Julia find the library (or set your `DL_LOAD_PATH`).
 
 Note that on older RedHat-based distributions, the packaged version of the library may be too old.
 If that is the case, a newer library may be [required](http://dl.nux.ro/rpm/nux-imagemagick.repo).
 You may need to edit the `releasever` parameter to match your installation.
+
+On Windows it is mandatory to have ImageMagick previously installed because the installer requires user interaction so it cannot be done by the package alone. Get the current version from http://www.imagemagick.org/script/binary-releases.php#windows (e.g. ImageMagick-6.8.8-7-Q16-x86-dll.exe) and make sure that the "Install development headers and libraries for C and C++" checkbox is selected. You may choose to let the installer add the installation directory to the system path or provide it separately. In the later case you may add it to your `.juliarc.jl` file as (for example) `push!(Base.DL_LOAD_PATH, "C:/programs/ImageMagick-6.8.8"`)
 
 When manual intervention is necessary, you may need to restart Julia for the necessary changes to take effect.
 
