@@ -196,9 +196,13 @@ convert(::Type{Image}, A::StridedArray) = Image(A, ["colorspace" => colorspace(A
 
 # setindex!
 setindex!(img::AbstractImage, X, i::Real) = setindex!(img.data, X, i)
-
+setindex!{T<:Real}(img::AbstractImage, X, I::Union(Real,AbstractArray{T})) = setindex!(img.data, X, I)
+setindex!{T<:Real}(img::AbstractImage, X, I::Union(Real,AbstractArray{T}), J::Union(Real,AbstractArray{T})) = setindex!(img.data, X, I, J)
+setindex!{T<:Real}(img::AbstractImage, X, I::Union(Real,AbstractArray{T}), J::Union(Real,AbstractArray{T}),
+                   K::Union(Real,AbstractArray{T})) = setindex!(img.data, X, I, J, K)
+setindex!{T<:Real}(img::AbstractImage, X, I::Union(Real,AbstractArray{T}), J::Union(Real,AbstractArray{T}),
+                   K::Union(Real,AbstractArray{T}), L::Union(Real,AbstractArray{T})) = setindex!(img.data, X, I, J, K, L)
 setindex!{T<:Real}(img::AbstractImage, X, I::Union(Real,AbstractArray{T})...) = setindex!(img.data, X, I...)
-
 setindex!{T<:Real}(img::AbstractImage, X, dimname::String, ind::Union(Real,AbstractArray{T}), nameind...) = setindex!(img.data, X, coords(img, dimname, ind, nameind...)...)
 
 # Adding a new property via setindex!
@@ -210,7 +214,12 @@ delete!(img::AbstractImage, propname::String) = delete!(img.properties, propname
 
 # getindex, sub, and slice return a value or AbstractArray, not an Image
 getindex(img::AbstractImage, i::Real) = getindex(img.data, i)
-
+getindex(img::AbstractImage, I::Union(Real,AbstractVector)) = getindex(img.data, I)
+getindex(img::AbstractImage, I::Union(Real,AbstractVector), J::Union(Real,AbstractVector)) = getindex(img.data, I, J)
+getindex(img::AbstractImage, I::Union(Real,AbstractVector), J::Union(Real,AbstractVector),
+            K::Union(Real,AbstractVector)) = getindex(img.data, I, J, K)
+getindex(img::AbstractImage, I::Union(Real,AbstractVector), J::Union(Real,AbstractVector),
+            K::Union(Real,AbstractVector), L::Union(Real,AbstractVector)) = getindex(img.data, I, J, K, L)
 getindex(img::AbstractImage, I::Union(Real,AbstractVector)...) = getindex(img.data, I...)
 
 # getindex{T<:Real}(img::AbstractImage, dimname::String, ind::Union(Real,AbstractArray{T}), nameind...) = getindex(img.data, coords(img, dimname, ind, nameind...)...)
