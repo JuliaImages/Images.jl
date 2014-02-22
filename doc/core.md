@@ -14,7 +14,7 @@ If you're working with RGB color, your best approach is to encode color as a
 `ColorValue`, as defined in the `Color` package.
 That package provides many utility functions for analyzing and manipulating
 colors.
-Alternatively, you can use a third dimension (often of size 3) or
+Alternatively, you can use a third dimension of size 3 or
 encode your images as either `Uint32` or `Int32` and work with
 24-bit color. (If you need to use `Uint32` simply to store pixel intensities,
 you should not use plain arrays.)
@@ -29,6 +29,11 @@ Moreover, most image file formats, cameras, and graphics libraries such as
 Cairo use "horizontal-major" storage of images, and have the color dimension
 first (fastest). This therefore necessitates a
 permutation of the dimensions of the raw data array.
+
+The convention that a `m x n x 3` array implies RGB is also problematic for
+anyone doing 3d imaging, and can result in hard-to-find bugs when the third dimension
+happens to be of size 3. For 3d imaging, the use of an Image type---perhaps converting
+Arrays via `grayim`---is highly recommended.
 
 The conventions for plain arrays are "baked in" via a few simple utility
 functions in the file

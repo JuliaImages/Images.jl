@@ -33,8 +33,11 @@ needed) to put it in standard storage order.
 ```
 grayim(A)
 ```
-creates a 2d or 3d _spatial_ grayscale image, assumed to be in
-"horizontal-major" order (and without permuting any dimensions).
+creates a 2d or 3d _spatial_ grayscale Image from an AbstractArray, assumed to be in
+"horizontal-major" order (and without permuting any dimensions). If you are working
+with 3d grayscale images, usage of this function is strongly recommended as a means
+of disambiguating whether a `m x n x 3` array is to be interpreted as RGB or as
+3d grayscale.
 
 <br />
 ```
