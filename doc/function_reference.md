@@ -35,9 +35,20 @@ grayim(A)
 ```
 creates a 2d or 3d _spatial_ grayscale Image from an AbstractArray, assumed to be in
 "horizontal-major" order (and without permuting any dimensions). If you are working
-with 3d grayscale images, usage of this function is strongly recommended as a means
-of disambiguating whether a `m x n x 3` array is to be interpreted as RGB or as
-3d grayscale.
+with 3d grayscale images, usage of this function is strongly recommended. This can fix
+errors like one of the following:
+```
+ERROR: Wrong number of spatial dimensions for plain Array, use an AbstractImage type
+ERROR: Cannot infer colorspace of Array, use an AbstractImage type
+ERROR: Cannot infer pixelspacing of Array, use an AbstractImage type
+```
+The main reason for such errors---and the reason that `grayim` is recommended---is the
+Matlab-derived convention that a `m x n x 3` array is to be interpreted as RGB.
+One might then say that an `m x n x k` array, for `k` different from 3, could be
+interpreted as grayscale. However, this would lead to difficult-to-track-down surprises
+on the day where `k` happened to be 3 for your grayscale image. Instead, the approach
+taken in `Images.jl` is to throw an error, encouraging users to develop the habit of
+wrapping their 3d grayscale arrays in an unambiguous `Image` type.
 
 <br />
 ```
