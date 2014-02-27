@@ -49,7 +49,7 @@ function imread(filename)
         CGimg = CGImageSourceCreateImageAtIndex(imgsrc, i - 1)
         imagepixels = CopyImagePixels(CGimg)
         pixelptr = CFDataGetBytePtr(imagepixels, Uint16)
-        imbuffer = pointer_to_array(pixelptr, (int(imwidth), int(imheight)), true)
+        imbuffer = pointer_to_array(pixelptr, (int(imwidth), int(imheight)), false)
         myimg[:, :, i] = imbuffer
         CFRelease(imagepixels)
         CGImageRelease(CGimg)
