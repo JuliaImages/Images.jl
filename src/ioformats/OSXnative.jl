@@ -50,7 +50,9 @@ function imread(filename)
     imgout = Array(imgtype, imwidth, imheight, imframes)
     fillimage!(imgout, imgsrc, imwidth, imheight, imframes)
     CFRelease(imgsrc)
-
+    # get rid of that dangling dimension
+    imgout = imframes == 1 ? squeeze(imgout, 3) : imgout
+    
     prop = {"colorspace" => "Gray",
             "spatialorder" => ["x", "y"],
             "pixelspacing" => [1, 1],
