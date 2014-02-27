@@ -12,18 +12,19 @@ function imread(filename)
     imgsrc == C_NULL && error("Could not find file at URL: $filename")
 
     # Get image information
-    imtype = getCFString(CGImageSourceGetType(imgsrc))
     imframes = int(CGImageSourceGetCount(imgsrc))
     dict = CGImageSourceCopyPropertiesAtIndex(imgsrc, 0)
-    tiffdict = CFDictionaryGetValue(dict, "{TIFF}")
-    #CFShow(dict)
-    #CFShow(tiffdict)
     imheight = CFNumberGetValue(CFDictionaryGetValue(dict, "PixelHeight"), Int16)
     imwidth = CFNumberGetValue(CFDictionaryGetValue(dict, "PixelWidth"), Int16)
     pixeldepth = CFNumberGetValue(CFDictionaryGetValue(dict, "Depth"), Int16)
     colormodel = getCFString(CFDictionaryGetValue(dict, "ColorModel"))
-    imagedescription = tiffdict != C_NULL ?
-        getCFString(CFDictionaryGetValue(tiffdict, "ImageDescription")) : nothing
+    imtype = getCFString(CGImageSourceGetType(imgsrc))
+    if imtype == "public.tiff"
+        tiffdict = CFDictionaryGetValue(dict, "{TIFF}")
+        imagedescription = tiffdict != C_NULL ?
+            getCFString(CFDictionaryGetValue(tiffdict, "ImageDescription")) : nothing
+    end
+    CFRelease(dict)
 
 #    i = 0
 #    CGimg = CGImageSourceCreateImageAtIndex(imgsrc, i)
@@ -43,28 +44,38 @@ function imread(filename)
 #    @show width*height
 #    CGImageRelease(CGimg)
 
-    myimg = Array(Uint16, imwidth, imheight, imframes)
+    if pixeldepth == 8
+        imgtype = Uint8
+    elseif pixeldepth == 16
+        imgtype = Uint16
+    end        
+    imgout = Array(imgtype, imwidth, imheight, imframes)
+    fillimage!(imgout, imgsrc, imwidth, imheight, imframes)
+    CFRelease(imgsrc)
 
+    prop = {"colorspace" => "Gray",
+            "spatialorder" => ["x", "y"],
+            "pixelspacing" => [1, 1],
+            "imagedescription" => imagedescription,
+            "suppress" => Set({"imagedescription"})}
+    if imframes > 1
+        prop["timedim"] = 3
+    end
+    
+    Image(imgout, prop)
+end
+
+function fillimage!(myimg, imgsrc, imwidth, imheight, imframes)
     for i in 1:imframes
         CGimg = CGImageSourceCreateImageAtIndex(imgsrc, i - 1)
         imagepixels = CopyImagePixels(CGimg)
-        pixelptr = CFDataGetBytePtr(imagepixels, Uint16)
+        pixelptr = CFDataGetBytePtr(imagepixels, eltype(myimg))
         imbuffer = pointer_to_array(pixelptr, (int(imwidth), int(imheight)), false)
         myimg[:, :, i] = imbuffer
         CFRelease(imagepixels)
         CGImageRelease(CGimg)
     end
-    CFRelease(imgsrc)
-
-    prop = {"colorspace" => "Gray",
-            "spatialorder" => ["x", "y"],
-            "pixelspacing" => [1, 1]}
-    if imframes > 1
-        prop["timedim"] = 3
-    end
-    Image(myimg, prop)
 end
-
 
 ## OSX Framework Wrappers ######################################################
 
