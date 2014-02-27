@@ -122,12 +122,12 @@ function imread{S<:IO}(stream::S, ::Type{Images.AndorSIF})
     # and here is the next string, followed by the length
     # of the following string, with no delimeter in between!
     l = strip(readline(stream))
-    next_str_len = int(l[(next_str_len + 1):])
+    next_str_len = int(l[(next_str_len + 1):end])
     # lather, rinse, repeat...
     l = strip(readline(stream))
-    next_str_len = int(l[(next_str_len + 1):])
+    next_str_len = int(l[(next_str_len + 1):end])
     l = strip(readline(stream))
-    l = l[(next_str_len + 1):]
+    l = l[(next_str_len + 1):end]
     fields = split(l)
     fields[1] == "65538" || error("Unknown version number at image dims record")
     ixon["image_format_left"] = int(fields[2])
@@ -179,7 +179,7 @@ function imread{S<:IO}(stream::S, ::Type{Images.AndorSIF})
     prop = {"colorspace" => "Gray",
             "spatialorder" => ["y", "x"],
             "ixon" => ixon,
-            "suppress" => Set("ixon"),
+            "suppress" => Set({"ixon"}),
             "pixelspacing" => [1, 1]}
     if frames > 1
         prop["timedim"] = 3

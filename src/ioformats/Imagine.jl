@@ -55,7 +55,7 @@ function imread{S<:IO}(s::S, ::Type{Images.ImagineFile})
                  "pixelspacing" => havez ? [um_per_pixel, um_per_pixel, dz] : [um_per_pixel, um_per_pixel],
                  "limits" => (uint16(0), uint16(2^h["original image depth"]-1)),
                  "imagineheader" => h,
-                 "suppress" => Set("imagineheader")])
+                 "suppress" => Set({"imagineheader"})])
 end    
 
 abstract Endian

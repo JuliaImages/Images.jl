@@ -122,7 +122,7 @@ Finally, we wrap up by setting the properties, including the new
 
 ```julia
     prop = {"colorspace" => "Gray", "spatialorder" => ["y", "x", "t"], "ixon" =>
-ixon, "suppress" => Set("ixon")}
+ixon, "suppress" => Set({"ixon"})}
     Image(pixels, prop)
 end # imread()
 ```
