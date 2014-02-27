@@ -19,11 +19,9 @@ function imread(filename)
     pixeldepth = CFNumberGetValue(CFDictionaryGetValue(dict, "Depth"), Int16)
     colormodel = getCFString(CFDictionaryGetValue(dict, "ColorModel"))
     imtype = getCFString(CGImageSourceGetType(imgsrc))
-    if imtype == "public.tiff"
-        tiffdict = CFDictionaryGetValue(dict, "{TIFF}")
-        imagedescription = tiffdict != C_NULL ?
-            getCFString(CFDictionaryGetValue(tiffdict, "ImageDescription")) : nothing
-    end
+    tiffdict = CFDictionaryGetValue(dict, "{TIFF}")
+    imagedescription = tiffdict != C_NULL ?
+        getCFString(CFDictionaryGetValue(tiffdict, "ImageDescription")) : nothing
     CFRelease(dict)
 
 #    i = 0
