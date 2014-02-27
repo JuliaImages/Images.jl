@@ -6,10 +6,11 @@ using Images
 export imread
 
 function imread(filename)
-    myURL = CFURLCreateWithString(fileURL(filename))
+    myURL = CFURLCreateWithFileSystemPath(abspath(filename))
     imgsrc = CGImageSourceCreateWithURL(myURL)
     CFRelease(myURL)
-    
+    imgsrc == C_NULL && error("Could not find file at URL: $filename")
+
     # Get image information
     imtype = getCFString(CGImageSourceGetType(imgsrc))
     imframes = int(CGImageSourceGetCount(imgsrc))
@@ -64,10 +65,6 @@ function imread(filename)
     Image(myimg, prop)
 end
 
-function fileURL(filename::String)
-#    return "file://localhost" * pwd() * filename
-    return "file://localhost/Users/rrock/Documents/RawData/ExVivo/rawdata/test.ome.tif"
-end
 
 ## OSX Framework Wrappers ######################################################
 
@@ -142,7 +139,11 @@ CFGetTypeID(CFTypeRef::Ptr{Void}) = CFTypeRef != C_NULL &&
 CFURLCreateWithString(filename) = 
     ccall(:CFURLCreateWithString, Ptr{Void},
           (Ptr{Void}, Ptr{Void}, Ptr{Void}), C_NULL, NSString(filename), C_NULL)
-    
+
+CFURLCreateWithFileSystemPath(filename::String) =
+    ccall(:CFURLCreateWithFileSystemPath, Ptr{Void},
+          (Ptr{Void}, Ptr{Void}, Cint, Bool), C_NULL, NSString(filename), 0, false)
+
 # CFDictionary
 CFDictionaryGetKeysAndValues(CFDictionaryRef::Ptr{Void}, keys, values) =
     CFDictionaryRef != C_NULL && 
