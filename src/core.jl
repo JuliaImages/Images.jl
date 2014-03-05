@@ -1,8 +1,12 @@
 #### Types and constructors ####
 
+if !isdefined(:StoredArray)
+    const StoredArray = AbstractArray
+end
+
 # Plain arrays can be treated as images. Other types will have
 # metadata associated, make yours a child of one of the following:
-abstract AbstractImage{T,N} <: AbstractArray{T,N}         # image with metadata
+abstract AbstractImage{T,N} <: StoredArray{T,N}         # image with metadata
 abstract AbstractImageDirect{T,N} <: AbstractImage{T,N}   # each pixel has own value/color
 abstract AbstractImageIndexed{T,N} <: AbstractImage{T,N}  # indexed images (i.e., lookup table)
 
@@ -40,7 +44,7 @@ grayim{T}(A::AbstractArray{T,3}) = Image(A; colorspace="Gray", spatialorder=["x"
 abstract ScaleInfo{T}
 
 # An array type for colorized overlays of grayscale images
-type Overlay{AT<:(AbstractArray...),N,SIT<:(ScaleInfo...)} <: AbstractArray{RGB,N}
+type Overlay{AT<:(AbstractArray...),N,SIT<:(ScaleInfo...)} <: StoredArray{RGB,N}
     channels::AT   # this holds the grayscale arrays
     colors::Vector{RGB}
     scalei::SIT
