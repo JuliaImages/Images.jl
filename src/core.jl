@@ -404,21 +404,20 @@ end
 
 
 const emptyset = Set()
-function show(io::IO, img::AbstractImageDirect)
+function showim(io::IO, img::AbstractImageDirect)
     IT = typeof(img)
     print(io, colorspace(img), " ", IT.name, " with:\n  data: ", summary(img.data), "\n  properties:")
     showdictlines(io, img.properties, get(img, "suppress", emptyset))
 end
-function writemime{T}(io::IO, ::MIME"text/plain", img::AbstractImageDirect{T,1})
-    IT = typeof(img)
-    print(io, colorspace(img), " ", IT.name, " with:\n  data: ", summary(img.data), "\n  properties:")
-    showdictlines(io, img.properties, get(img, "suppress", emptyset))
-end
-function show(io::IO, img::AbstractImageIndexed)
+function showim(io::IO, img::AbstractImageIndexed)
     IT = typeof(img)
     print(io, colorspace(img), " ", IT.name, " with:\n  data: ", summary(img.data), "\n  cmap: ", summary(img.cmap), "\n  properties:")
     showdictlines(io, img.properties, get(img, "suppress", emptyset))
 end
+show(io::IO, img::AbstractImageDirect) = showim(io, img)
+writemime(io::IO, ::MIME"text/plain", img::AbstractImageDirect) = showim(io, img)
+show(io::IO, img::AbstractImageIndexed) = showim(io, img)
+writemime(io::IO, ::MIME"text/plain", img::AbstractImageIndexed) = showim(io, img)
 
 data(img::AbstractArray) = img
 data(img::AbstractImage) = img.data
