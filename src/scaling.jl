@@ -260,7 +260,8 @@ end
 sc(img::AbstractArray) = scale(scaleminmax(img), img)
 sc(img::AbstractArray, mn::Real, mx::Real) = scale(scaleminmax(img, mn, mx), img)
 
-convert{I<:AbstractImageDirect}(::Type{I}, img::Union(StridedArray,AbstractImageDirect)) = scale(scaleinfo(eltype(I), img), img)
+convert{I<:AbstractImageDirect}(::Type{I}, img::AbstractImageDirect) = scale(scaleinfo(eltype(I), img), img)
+convert{I<:AbstractImageDirect}(::Type{I}, img::AbstractArray) = Image(scale(scaleinfo(eltype(I), img), img), properties(img))
 
 float32(img::AbstractImageDirect) = scale(scaleinfo(Float32, img), img)
 float64(img::AbstractImageDirect) = scale(scaleinfo(Float64, img), img)
@@ -279,9 +280,9 @@ uint8sc(img::AbstractImageDirect) = scale(scaleinfo(Uint8, img), img)
 uint16sc(img::AbstractImageDirect) = scale(scaleinfo(Uint16, img), img)
 uint32sc(img::AbstractImageDirect) = scale(scaleinfo(Uint32, img), img)
 
-convert{Cdest<:ColorValue,Csrc<:ColorValue}(::Type{Image{Cdest}}, img::Union(StridedArray{Csrc},AbstractImageDirect{Csrc})) = share(img, convert(Array{Cdest}, data(img)))
+convert{Cdest<:ColorValue,Csrc<:ColorValue}(::Type{Image{Cdest}}, img::Union(StoredArray{Csrc},AbstractImageDirect{Csrc})) = share(img, convert(Array{Cdest}, data(img)))
 
-function convert{C<:ColorValue,T<:Union(Integer,FloatingPoint)}(::Type{Image{C}}, img::Union(StridedArray{T},AbstractImageDirect{T}))
+function convert{C<:ColorValue,T<:Union(Integer,FloatingPoint)}(::Type{Image{C}}, img::Union(StoredArray{T},AbstractImageDirect{T}))
     cs = colorspace(img)
     if !(cs == "RGB" || cs == "RGBA")
         error("Only RGB and RGBA colorspaces supported currently")

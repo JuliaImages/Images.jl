@@ -20,25 +20,25 @@ function kwargs2dict(kwargs)
 end
 
 # Direct image (e.g., grayscale, RGB)
-type Image{T,N,A<:AbstractArray} <: AbstractImageDirect{T,N}
+type Image{T,N,A<:StoredArray} <: AbstractImageDirect{T,N}
     data::A
     properties::Dict
 end
-Image(data::AbstractArray, props::Dict) = Image{eltype(data),ndims(data),typeof(data)}(data,props)
-Image(data::AbstractArray; kwargs...) = Image(data, kwargs2dict(kwargs))
+Image(data::StoredArray, props::Dict) = Image{eltype(data),ndims(data),typeof(data)}(data,props)
+Image(data::StoredArray; kwargs...) = Image(data, kwargs2dict(kwargs))
 
 # Indexed image (colormap)
-type ImageCmap{T,N,A<:AbstractArray,C<:AbstractArray} <: AbstractImageIndexed{T,N}
+type ImageCmap{T,N,A<:StoredArray,C<:AbstractArray} <: AbstractImageIndexed{T,N}
     data::A
     cmap::C
     properties::Dict
 end
-ImageCmap(data::AbstractArray, cmap::AbstractArray, props::Dict) = ImageCmap{eltype(data),ndims(data),typeof(data),typeof(cmap)}(data, cmap, props)
-ImageCmap(data::AbstractArray, cmap::AbstractArray; kwargs...) = ImageCmap(data, cmap, kwargs2dict(kwargs))
+ImageCmap(data::StoredArray, cmap::AbstractArray, props::Dict) = ImageCmap{eltype(data),ndims(data),typeof(data),typeof(cmap)}(data, cmap, props)
+ImageCmap(data::StoredArray, cmap::AbstractArray; kwargs...) = ImageCmap(data, cmap, kwargs2dict(kwargs))
 
 # Convenience constructors
-grayim{T}(A::AbstractArray{T,2}) = Image(A; colorspace="Gray", spatialorder=["x","y"])
-grayim{T}(A::AbstractArray{T,3}) = Image(A; colorspace="Gray", spatialorder=["x","y","z"])
+grayim{T}(A::StoredArray{T,2}) = Image(A; colorspace="Gray", spatialorder=["x","y"])
+grayim{T}(A::StoredArray{T,3}) = Image(A; colorspace="Gray", spatialorder=["x","y","z"])
 
 # Dispatch-based scaling/clipping/type conversion
 abstract ScaleInfo{T}
@@ -115,16 +115,16 @@ copy(img::AbstractImage) = deepcopy(img)
 # copy, replacing the data
 copy(img::AbstractArray, data::AbstractArray) = data
 
-copy(img::AbstractImageDirect, data::AbstractArray) = Image(data, copy(img.properties))
+copy(img::AbstractImageDirect, data::StoredArray) = Image(data, copy(img.properties))
 
-copy(img::AbstractImageIndexed, data::AbstractArray) = ImageCmap(data, copy(img.cmap), copy(img.properties))
+copy(img::AbstractImageIndexed, data::StoredArray) = ImageCmap(data, copy(img.cmap), copy(img.properties))
 
 # Provide new data but reuse the properties & cmap
 share(img::AbstractArray, data::AbstractArray) = data
 
-share(img::AbstractImageDirect, data::AbstractArray) = Image(data, img.properties)
+share(img::AbstractImageDirect, data::StoredArray) = Image(data, img.properties)
 
-share(img::AbstractImageIndexed, data::AbstractArray) = ImageCmap(data, img.cmap, img.properties)
+share(img::AbstractImageIndexed, data::StoredArray) = ImageCmap(data, img.cmap, img.properties)
 
 # similar
 similar(img::AbstractImageDirect) = Image(similar(img.data), copy(img.properties))
@@ -190,9 +190,8 @@ function convert{T}(::Type{Array{T}}, img::AbstractImage)
     end
 end
 convert(::Type{Array}, img::AbstractImage) = convert(Array{eltype(img)}, img)
+# See scaling for conversion of Arrays to Images
 
-# Convert an array to an image
-convert{ID<:AbstractImageDirect}(::Type{ID}, A::AbstractArray) = Image(A, ["colorspace" => colorspace(A), "colordim" => colordim(A), "spatialorder" => spatialorder(A), "limits" => limits(A)])
 
 # Indexing. In addition to conventional array indexing, support syntax like
 #    img["x", 100:400, "t", 32]
