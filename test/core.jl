@@ -69,6 +69,12 @@ s = sliceim(imgd, 2, 1:4, 1:3)
 @assert ndims(s) == 2
 @assert sdims(s) == 1
 @assert colordim(s) == 2
+@assert spatialorder(s) == ["x"]
+s = sliceim(imgd, 2:2, 1:4, 1:3)
+@assert ndims(s) == 3
+@assert sdims(s) == 2
+@assert colordim(s) == 3
+@assert spatialorder(s) == ["y","x"]
 
 # reslicing
 D = randn(3,5,4)

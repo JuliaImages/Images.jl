@@ -291,8 +291,7 @@ function sliceim(img::AbstractImage, I::RangeIndex...)
     sp = spatialproperties(img)
     if !isempty(sp)
         c = coords_spatial(img)
-        l = Int[map(length, I[c])...]
-        keep = l .> 1
+        keep = Bool[map(x -> isa(x, AbstractVector), I[c])...]
         if !all(keep)
             for pname in sp
                 p = img.properties[pname]
