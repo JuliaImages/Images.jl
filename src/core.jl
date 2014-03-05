@@ -192,7 +192,7 @@ end
 convert(::Type{Array}, img::AbstractImage) = convert(Array{eltype(img)}, img)
 
 # Convert an array to an image
-convert(::Type{Image}, A::StridedArray) = Image(A, ["colorspace" => colorspace(A), "colordim" => colordim(A), "spatialorder" => spatialorder(A), "limits" => limits(A)])
+convert{ID<:AbstractImageDirect}(::Type{ID}, A::AbstractArray) = Image(A, ["colorspace" => colorspace(A), "colordim" => colordim(A), "spatialorder" => spatialorder(A), "limits" => limits(A)])
 
 # Indexing. In addition to conventional array indexing, support syntax like
 #    img["x", 100:400, "t", 32]
@@ -550,6 +550,7 @@ limits(img::AbstractArray{Bool}) = 0,1
 limits{T<:Integer}(img::AbstractArray{T}) = typemin(T), typemax(T)
 limits{T<:FloatingPoint}(img::AbstractArray{T}) = zero(T), one(T)
 limits(img::AbstractImage{Bool}) = 0,1
+limits{T<:ColorValue}(img::AbstractArray{T}) = 0,1
 limits{T}(img::AbstractImageDirect{T}) = get(img, "limits", (typemin(T), typemax(T)))
 limits(img::AbstractImageIndexed) = @get img "limits" (minimum(img.cmap), maximum(img.cmap))
 
