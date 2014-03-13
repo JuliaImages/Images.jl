@@ -309,7 +309,7 @@ function convert{C<:ColorValue,T<:Union(Integer,FloatingPoint)}(::Type{Image{C}}
     else
         error("Not yet implemented")
     end
-    p = properties(img)
+    p = copy(properties(img))
     delete!(p, "colordim")
     delete!(p, "limits")
     delete!(p, "colorspace")
