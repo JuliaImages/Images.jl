@@ -103,7 +103,7 @@ function imread(filename::String)
     if have_imagemagick
         return imread(filename, ImageMagick)
     else
-        error("Do not know how to read file ", filename)
+        error("Do not know how to read file ", filename, ". Is ImageMagick installed properly? See README.")
     end
 end
 
