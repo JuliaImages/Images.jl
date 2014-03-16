@@ -26,7 +26,7 @@ libnames = ["libMagickWand", "CORE_RL_wand_"]
 suffixes = ["", "-Q16", "-6.Q16", "-Q8"]
 options = ["", "HDRI"]
 const libwand = find_library(vec(libnames.*transpose(suffixes).*reshape(options,(1,1,length(options)))), mpaths)
-have_imagemagick = !isempty(libwand)
+const have_imagemagick = !isempty(libwand)
 
 # Initialize the library
 function init()
