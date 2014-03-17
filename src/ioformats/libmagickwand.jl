@@ -30,12 +30,14 @@ const have_imagemagick = !isempty(libwand)
 
 # Initialize the library
 function init()
+    global libwand
     if have_imagemagick
-        ccall((:MagickWandGenesis, libwand), Void, ())
+        eval(:(ccall((:MagickWandGenesis, $libwand), Void, ())))
     else
         warn("ImageMagick utilities not found. Install for more file format support.")
     end
 end
+
 
 # Constants
 # Storage types
