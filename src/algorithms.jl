@@ -1,21 +1,27 @@
 #### Math with images ####
 
-(+)(img::AbstractImageDirect, n::Number) = limadj(copy(img, data(img)+n), limplus(limits(img), n))
-(+)(n::Number, img::AbstractImageDirect) = limadj(copy(img, data(img)+n), limplus(limits(img), n))
+@deprecate (+)(img::AbstractImageDirect, n::Number) (.+)(img, n)
+@deprecate (+)(n::Number, img::AbstractImageDirect) (.+)(n, img)
+(.+)(img::AbstractImageDirect, n::Number) = limadj(copy(img, data(img).+n), limplus(limits(img), n))
+(.+)(n::Number, img::AbstractImageDirect) = limadj(copy(img, data(img).+n), limplus(limits(img), n))
 (+)(img::AbstractImageDirect, A::BitArray) = limadj(copy(img, data(img)+A), limplus(limits(img), Bool))
 (+)(img::AbstractImageDirect, A::AbstractArray) = limadj(copy(img, data(img)+data(A)), limplus(limits(img), limits(A)))
 (.+)(img::AbstractImageDirect, A::BitArray) = limadj(copy(img, data(img).+A), limplus(limits(img), Bool))
 (.+)(img::AbstractImageDirect, A::AbstractArray) = limadj(copy(img, data(img).+data(A)), limplus(limits(img), limits(A)))
-(-)(img::AbstractImageDirect, n::Number) = limadj(copy(img, data(img)-n), limminus(limits(img), n))
-(-)(n::Number, img::AbstractImageDirect) = limadj(copy(img, n-data(img)), limminus(n, limits(img)))
+@deprecate (-)(img::AbstractImageDirect, n::Number) (.-)(img, n)
+(.-)(img::AbstractImageDirect, n::Number) = limadj(copy(img, data(img).-n), limminus(limits(img), n))
+@deprecate (-)(n::Number, img::AbstractImageDirect) (.-)(n, img)
+(.-)(n::Number, img::AbstractImageDirect) = limadj(copy(img, n.-data(img)), limminus(n, limits(img)))
 (-)(img::AbstractImageDirect, A::BitArray) = limadj(copy(img, data(img)-A), limminus(limits(img), Bool))
 (-){T}(img::AbstractImageDirect{T,2}, A::Diagonal) = limadj(copy(img, data(img)-A), limminus(limits(img), limits(A))) # fixes an ambiguity warning
 (-)(img::AbstractImageDirect, A::AbstractArray) = limadj(copy(img, data(img)-data(A)), limminus(limits(img), limits(A)))
 # (-)(A::AbstractArray, img::AbstractImageDirect) = limadj(copy(img, data(A) - data(img)), limminus(limits(A), limits(img)))
 (.-)(img::AbstractImageDirect, A::BitArray) = limadj(copy(img, data(img).-A), limminus(limits(img), Bool))
 (.-)(img::AbstractImageDirect, A::AbstractArray) = limadj(copy(img, data(img).-data(A)), limminus(limits(img), limits(A)))
-(*)(img::AbstractImageDirect, n::Number) = limadj(copy(img, data(img)*n), limtimes(limits(img), n))
-(*)(n::Number, img::AbstractImageDirect) = limadj(copy(img, data(img)*n), limtimes(limits(img), n))
+(*)(img::AbstractImageDirect, n::Number) = (.*)(img, n)
+(*)(n::Number, img::AbstractImageDirect) = (.*)(n, img)
+(.*)(img::AbstractImageDirect, n::Number) = limadj(copy(img, data(img).*n), limtimes(limits(img), n))
+(.*)(n::Number, img::AbstractImageDirect) = limadj(copy(img, data(img).*n), limtimes(limits(img), n))
 (/)(img::AbstractImageDirect, n::Number) = limadj(copy(img, data(img)/n), limdivide(limits(img), n))
 (.*)(img1::AbstractImageDirect, img2::AbstractImageDirect) = limadj(copy(img1, data(img1).*data(img2)), limtimes(limits(img1), limits(img2)))
 (.*)(img::AbstractImageDirect, A::BitArray) = limadj(copy(img, data(img).*A), limtimes(limits(img), Bool))
@@ -422,7 +428,7 @@ function imadjustintensity{T}(img::AbstractArray{T}, range)
     elseif length(range) == 1
         error("incorrect range")
     end
-    tmp = (img - range[1])/(range[2] - range[1])
+    tmp = (img .- range[1])/(range[2] - range[1])
     tmp[tmp .> 1] = 1
     tmp[tmp .< 0] = 0
     out = tmp
@@ -1566,10 +1572,10 @@ function shepp_logan(M,N; highContrast=true)
 
   for l=1:length(theta)
     P += grayLevel[l] * (
-           ( (cos(theta[l] / 360*2*pi) * (x - centerX[l]) .+
-              sin(theta[l] / 360*2*pi) * (y - centerY[l])) / majorAxis[l] ).^2 .+
-           ( (sin(theta[l] / 360*2*pi) * (x - centerX[l]) .-
-              cos(theta[l] / 360*2*pi) * (y - centerY[l])) / minorAxis[l] ).^2 .< 1 )
+           ( (cos(theta[l] / 360*2*pi) * (x .- centerX[l]) .+
+              sin(theta[l] / 360*2*pi) * (y .- centerY[l])) / majorAxis[l] ).^2 .+
+           ( (sin(theta[l] / 360*2*pi) * (x .- centerX[l]) .-
+              cos(theta[l] / 360*2*pi) * (y .- centerY[l])) / minorAxis[l] ).^2 .< 1 )
   end
 
   return P

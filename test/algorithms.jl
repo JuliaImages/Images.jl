@@ -2,13 +2,13 @@ import Images
 using Color, Base.Test
 
 # Comparison of each element in arrays with a scalar
-approx_equal(ar, v) = all(abs(ar-v) .< sqrt(eps(v)))
+approx_equal(ar, v) = all(abs(ar.-v) .< sqrt(eps(v)))
 approx_equal(ar::Images.AbstractImage, v) = approx_equal(Images.data(ar), v)
 
 # arithmetic
 img = convert(Images.Image, zeros(3,3))
 @assert Images.limits(img) == (0,1)
-img2 = (img + 3)/2
+img2 = (img .+ 3)/2
 @assert all(img2 .== 1.5)
 @assert Images.limits(img2) == (1.5,2.0)
 img3 = 2img2
@@ -22,7 +22,7 @@ img2 = img .* A
 @assert all(Images.data(img2) == Images.data(img).*A)
 @assert Images.limits(img2) == (0,1)
 img2 = convert(Images.Image, A)
-img2 -= 0.5
+img2 = img2 .- 0.5
 img3 = 2img .* img2
 @assert Images.limits(img3) == (-1, 1)
 img2 = img ./ A
@@ -36,7 +36,7 @@ img8 = scale(scalei, img)
 A = randn(3,3)
 mxA = maximum(A)
 offset = 30.0
-img = convert(Images.Image, A + offset)
+img = convert(Images.Image, A .+ offset)
 scalei = Images.ScaleMinMax{Uint8, Float64}(offset, offset+mxA, 100/mxA)
 imgs = scale(scalei, img)
 @assert minimum(imgs) == 0
@@ -44,7 +44,7 @@ imgs = scale(scalei, img)
 @assert eltype(imgs) == Uint8
 imgs = Images.imadjustintensity(img, [])
 mnA = minimum(A)
-@assert Images.ssd(imgs, (A-mnA)/(mxA-mnA)) < eps()
+@assert Images.ssd(imgs, (A.-mnA)/(mxA-mnA)) < eps()
 A = reshape(1:9, 3, 3)
 B = scale(Images.ClipMin(Float32, 3), A)
 @assert eltype(B) == Float32 && B == [3 4 7; 3 5 8; 3 6 9]
