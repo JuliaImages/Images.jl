@@ -5,6 +5,10 @@
 (.+)(img::AbstractImageDirect, n::Number) = limadj(copy(img, data(img).+n), limplus(limits(img), n))
 (.+)(n::Number, img::AbstractImageDirect) = limadj(copy(img, data(img).+n), limplus(limits(img), n))
 (+)(img::AbstractImageDirect, A::BitArray) = limadj(copy(img, data(img)+A), limplus(limits(img), Bool))
+if isdefined(:UniformScaling)
+    (+){Timg,TA<:Number}(img::AbstractImageDirect{Timg,2}, A::UniformScaling{TA}) = limadj(copy(img, data(img)+A), limplus(limits(img), A.λ))
+    (-){Timg,TA<:Number}(img::AbstractImageDirect{Timg,2}, A::UniformScaling{TA}) = limadj(copy(img, data(img)-A), limminus(limits(img), A.λ))
+end
 (+)(img::AbstractImageDirect, A::AbstractArray) = limadj(copy(img, data(img)+data(A)), limplus(limits(img), limits(A)))
 (.+)(img::AbstractImageDirect, A::BitArray) = limadj(copy(img, data(img).+A), limplus(limits(img), Bool))
 (.+)(img::AbstractImageDirect, A::AbstractArray) = limadj(copy(img, data(img).+data(A)), limplus(limits(img), limits(A)))
@@ -26,6 +30,8 @@
 (.*)(img1::AbstractImageDirect, img2::AbstractImageDirect) = limadj(copy(img1, data(img1).*data(img2)), limtimes(limits(img1), limits(img2)))
 (.*)(img::AbstractImageDirect, A::BitArray) = limadj(copy(img, data(img).*A), limtimes(limits(img), Bool))
 (.*)(A::BitArray, img::AbstractImageDirect) = limadj(copy(img, data(img).*A), limtimes(limits(img), Bool))
+(.*)(img::AbstractImageDirect{Bool}, A::BitArray) = limadj(copy(img, data(img).*A), (false,true))
+(.*)(A::BitArray, img::AbstractImageDirect{Bool}) = limadj(copy(img, data(img).*A), (false,true))
 (.*)(img::AbstractImageDirect, A::AbstractArray) = limadj(copy(img, data(img).*A), limtimes(limits(img), limits(A)))
 (.*)(A::AbstractArray, img::AbstractImageDirect) = limadj(copy(img, data(img).*A), limtimes(limits(img), limits(A)))
 (./)(img::AbstractImageDirect, A::BitArray) = limadj(copy(img, data(img)./A), limdivide(limits(img), Bool))  # needed to avoid ambiguity warning
@@ -61,9 +67,11 @@ end
 # Logical operations
 (.<)(img::AbstractImageDirect, n::Number) = data(img) .< n
 (.>)(img::AbstractImageDirect, n::Number) = data(img) .> n
+(.<)(img::AbstractImageDirect{Bool}, A::AbstractArray{Bool}) = data(img) .< A
 (.<)(img::AbstractImageDirect, A::AbstractArray) = data(img) .< A
 (.>)(img::AbstractImageDirect, A::AbstractArray) = data(img) .> A
 (.==)(img::AbstractImageDirect, n::Number) = data(img) .== n
+(.==)(img::AbstractImageDirect{Bool}, A::AbstractArray{Bool}) = data(img) .== A
 (.==)(img::AbstractImageDirect, A::AbstractArray) = data(img) .== A
 
 #### Overlay AbstractArray implementation ####
