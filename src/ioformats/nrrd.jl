@@ -250,7 +250,7 @@ function imwrite(img, sheader::IO, ::Type{Images.NRRDFile}, props::Dict = Dict{A
     for x in ps
         if isa(x, SIUnits.SIQuantity)
             printunits = true
-            print(sheader, " ", x.value)
+            print(sheader, " ", x.val)
         else
             print(sheader, " ", x)
         end
@@ -259,10 +259,7 @@ function imwrite(img, sheader::IO, ::Type{Images.NRRDFile}, props::Dict = Dict{A
     if printunits
         print(sheader, "space units:")
         for x in ps
-            print(sheader," \"")
-            pshow(sheader,prefix(x))
-            pshow(sheader,base(x))
-            print(sheader,"\"")
+            print(sheader," \"", strip(string(SIUnits.unit(x))), "\"")
         end
         print(sheader, "\n")
     end
