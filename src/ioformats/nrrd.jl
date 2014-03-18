@@ -204,7 +204,7 @@ function imread{S<:IO}(stream::S, ::Type{Images.NRRDFile})
     img
 end
 
-function imwrite(img, sheader::IO, ::Type{Images.NRRDFile}, props::Dict = Dict{ASCIIString,Any}())
+function imwrite(img, sheader::IO, ::Type{Images.NRRDFile}; props::Dict = Dict{ASCIIString,Any}())
     println(sheader, "NRRD0001")
     # Write the datatype
     T = get(props, "type", eltype(data(img)))
