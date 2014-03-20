@@ -20,8 +20,12 @@ function imread{S<:IO}(s::S, ::Type{Images.ImagineFile})
     sz = [h["image width"], h["image height"], h["frames per stack"], h["nStacks"]]
     if sz[4] == 1
         sz = sz[1:3]
+        if sz[3] == 1
+            sz = sz[1:2]
+        end
     end
-    havez = length(sz) == 4
+    havez = h["frames per stack"] > 1
+    havet = h["nStacks"] > 1
     # Check that the file size is consistent with the expected size
     if !isfile(camfilename)
         warn("Cannot open ", camfilename)
@@ -49,13 +53,16 @@ function imread{S<:IO}(s::S, ::Type{Images.ImagineFile})
     pstop = h["piezo"]["start position"]
     dz = abs(pstart - pstop)/sz[3]
 
-    Image(data, ["spatialorder" => havez ? ["x", "l", "z"] : ["x", "l"],
-                 "timedim" => havez ? 4 : 3,
-                 "colorspace" => "Gray",
-                 "pixelspacing" => havez ? [um_per_pixel, um_per_pixel, dz] : [um_per_pixel, um_per_pixel],
-                 "limits" => (uint16(0), uint16(2^h["original image depth"]-1)),
-                 "imagineheader" => h,
-                 "suppress" => Set({"imagineheader"})])
+    props = ["spatialorder" => havez ? ["x", "l", "z"] : ["x", "l"],
+             "colorspace" => "Gray",
+             "pixelspacing" => havez ? [um_per_pixel, um_per_pixel, dz] : [um_per_pixel, um_per_pixel],
+             "limits" => (uint16(0), uint16(2^h["original image depth"]-1)),
+             "imagineheader" => h,
+             "suppress" => Set({"imagineheader"})]
+    if havet
+        props["timedim"] = havez ? 4 : 3
+    end
+    Image(data, props)
 end    
 
 abstract Endian
