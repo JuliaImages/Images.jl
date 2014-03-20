@@ -1069,12 +1069,28 @@ if isdefined(:restrict)
     import Grid.restrict
 end
 
+restrict(img, ::()) = img
+
 function restrict(img, region::Union(Dims, Vector{Int})=coords_spatial(img))
     A = data(img)
     for dim in region
         A = _restrict(A, dim)
     end
-    share(img, A)
+    props = copy(properties(img))
+    ps = pixelspacing(img)
+    ind = findin(coords_spatial(img), region)
+    ps[ind] *= 2
+    props["pixelspacing"] = ps
+    Image(A, props)
+end
+
+function restrict{S<:ByteString}(img, region::Union((ByteString...), Vector{S}))
+    so = spatialorder(img)
+    regioni = Int[]
+    for i = 1:length(region)
+        push!(regioni, require_dimindex(img, region[i], so))
+    end
+    restrict(img, regioni)
 end
 
 function _restrict(A, dim)
