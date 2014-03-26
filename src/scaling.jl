@@ -260,6 +260,8 @@ end
 sc(img::AbstractArray) = scale(scaleminmax(img), img)
 sc(img::AbstractArray, mn::Real, mx::Real) = scale(scaleminmax(img, mn, mx), img)
 
+convert{T}(::Type{AbstractImageDirect{T,2}},M::Tridiagonal) = error("Not defined") # prevent ambiguity warning
+
 convert{I<:AbstractImageDirect}(::Type{I}, img::AbstractImageDirect) = scale(scaleinfo(eltype(I), img), img)
 convert{I<:AbstractImageDirect}(::Type{I}, img::AbstractArray) = Image(scale(scaleinfo(eltype(I), img), img), properties(img))
 
