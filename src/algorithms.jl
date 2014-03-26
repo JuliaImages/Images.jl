@@ -1069,9 +1069,9 @@ if isdefined(:restrict)
     import Grid.restrict
 end
 
-restrict(img, ::()) = img
+restrict(img::AbstractImageDirect, ::()) = img
 
-function restrict(img, region::Union(Dims, Vector{Int})=coords_spatial(img))
+function restrict(img::AbstractImageDirect, region::Union(Dims, Vector{Int})=coords_spatial(img))
     A = data(img)
     for dim in region
         A = _restrict(A, dim)
@@ -1083,8 +1083,14 @@ function restrict(img, region::Union(Dims, Vector{Int})=coords_spatial(img))
     props["pixelspacing"] = ps
     Image(A, props)
 end
+function restrict(A::AbstractArray, region::Union(Dims, Vector{Int})=coords_spatial(img))
+    for dim in region
+        A = _restrict(A, dim)
+    end
+    A
+end
 
-function restrict{S<:ByteString}(img, region::Union((ByteString...), Vector{S}))
+function restrict{S<:ByteString}(img::AbstractImageDirect, region::Union((ByteString...), Vector{S}))
     so = spatialorder(img)
     regioni = Int[]
     for i = 1:length(region)
