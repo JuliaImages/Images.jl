@@ -4,6 +4,8 @@ B = rand(1:20,3,5)
 cmap = uint8(repmat(linspace(12,255,20),1,3))
 img = ImageCmap(copy(B),cmap,["colorspace" => "RGB", "pixelspacing" => [2.0, 3.0], "spatialorder" => Images.yx])
 imgd = convert(Image, img)
+@assert eltype(img) == Uint8
+@assert eltype(imgd) == Uint8
 
 # basic information
 @assert size(img) == (3,5)
