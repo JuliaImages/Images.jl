@@ -5,11 +5,28 @@ import Base.Graphics: width, height
 importall Base
 
 using Color
+
+# We need a couple of extra features not present in Color
+immutable RGB8 <: ColorValue
+    r::Uint8
+    g::Uint8
+    b::Uint8
+
+    function RGB8(r::Real, g::Real, b::Real)
+        new(r, g, b)
+    end
+
+    RGB8() = RGB8(0,0,0)
+end
+
+typemin(::Type{RGB}) = RGB(0,0,0)
+typemax(::Type{RGB}) = RGB(1,1,1)
+
 using Cartesian
 
-if isdefined(module_parent(Images), :Grid)
-    import ..Grid.restrict
-end
+# if isdefined(module_parent(Images), :Grid)
+#     import ..Grid.restrict
+# end
 
 include("core.jl")
 include("iterator.jl")

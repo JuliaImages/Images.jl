@@ -235,10 +235,13 @@ function image2wand(img, scalei)
     end
     n = size(imgw, 3+have_color)
     wand = LibMagick.MagickWand()
-    LibMagick.constituteimage(data(imgw), wand, colorspace(img))
+    LibMagick.constituteimage(to_explicit(data(imgw)), wand, colorspace(img))
     LibMagick.resetiterator(wand)
     wand
 end
+
+to_explicit(A::AbstractArray) = A
+to_explicit(A::AbstractArray{RGB8}) = reinterpret(Uint8, A, tuple(3, size(A)...))
 
 # Write grayscale values in horizontal-major order
 function writegray(stream, img, scalei::ScaleInfo)

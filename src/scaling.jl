@@ -49,6 +49,7 @@ scale{T,S<:Real}(scalei::ScaleNone{T}, val::S) = convert(T, val)
 scale{T<:Integer,S<:FloatingPoint}(scalei::ScaleNone{T}, val::S) = iround(T, val)
 
 scale(scalei::ScaleNone{Uint32}, val::RGB) = convert(Uint32, convert(RGB24, val))
+scale(scalei::ScaleNone{RGB8}, val::RGB) = RGB8(iround(Uint8, 255*val.r), iround(Uint8, 255*val.g), iround(Uint8, 255*val.b))
 
 ## BitShift
 
@@ -77,6 +78,7 @@ type ClipMinMax{T,From} <: Clip{T}
 end
 ClipMinMax{T,From}(::Type{T}, min::From, max::From) = ClipMinMax{T,From}(min,max)
 ClipMinMax(::Type{RGB}) = ClipMinMax(Float64,0.0,1.0)
+ClipMinMax(::Type{RGB8}, ::Type{RGB}) = ClipMinMax{RGB8,RGB}(RGB(0,0,0),RGB(1,1,1))
 
 scale{T<:Integer,F<:FloatingPoint}(scalei::ClipMin{T,F}, val::F) = iround(T, max(val, scalei.min))
 scale{T<:Real,F<:Real}(scalei::ClipMin{T,F}, val::F) = convert(T, max(val, scalei.min))
@@ -87,6 +89,7 @@ scale{T<:Real,F<:Real}(scalei::ClipMinMax{T,F}, val::F) = convert(T,min(max(val,
 scale{T<:Integer,F<:FloatingPoint}(scalei::ClipMinMax{T,F}, val::F) = iround(T,min(max(val, scalei.min), scalei.max))
 
 scale(scalei::Clip, v::RGB) = RGB(scale(scalei, v.r), scale(scalei, v.g), scale(scalei, v.b))
+scale(scalei::ClipMinMax{RGB8,RGB}, val::RGB) = RGB8(truncround(Uint8, 255*val.r), truncround(Uint8, 255*val.g), truncround(Uint8, 255*val.b))
 
 clip(v::RGB) = RGB(min(1.0,v.r),min(1.0,v.g),min(1.0,v.b))
 function clip!(A::Array{RGB})
@@ -204,6 +207,7 @@ end
 scaleinfo_uint{From<:Unsigned}(img::AbstractArray{From}) = ScaleNone{From}()
 scaleinfo_uint{From<:Integer}(img::AbstractArray{From}) = scaleinfo_uint(unsigned(From), img)
 scaleinfo_uint{From<:FloatingPoint}(img::AbstractArray{From}) = scaleinfo_uint(Uint8, img)
+scaleinfo_uint(img::AbstractArray{RGB}) = ClipMinMax(RGB8, RGB)
 
 climdefault{T<:Integer}(img::AbstractArray{T}) = limits(img)
 function climdefault{T<:FloatingPoint}(img::AbstractArray{T})
