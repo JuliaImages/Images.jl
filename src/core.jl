@@ -33,7 +33,7 @@ type ImageCmap{T,N,A<:StoredArray,C<:AbstractArray} <: AbstractImageIndexed{T,N}
     cmap::C
     properties::Dict
 end
-ImageCmap(data::StoredArray, cmap::AbstractArray, props::Dict) = ImageCmap{eltype(data),ndims(data),typeof(data),typeof(cmap)}(data, cmap, props)
+ImageCmap(data::StoredArray, cmap::AbstractArray, props::Dict) = ImageCmap{eltype(cmap),ndims(data),typeof(data),typeof(cmap)}(data, cmap, props)
 ImageCmap(data::StoredArray, cmap::AbstractArray; kwargs...) = ImageCmap(data, cmap, kwargs2dict(kwargs))
 
 # Convenience constructors
