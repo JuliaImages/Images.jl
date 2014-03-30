@@ -163,6 +163,10 @@ function imwrite{T<:ImageFileType}(img, filename::String, ::Type{T}; kwargs...)
     end
 end
 
+# only mime writeable to PNG if 2D (used by IJulia for example)
+import Base.mimewritable
+Base.mimewritable(::MIME"image/png", img::AbstractImage) = sdims(img) == 2
+
 function writemime(stream::IO, ::MIME"image/png", img::AbstractImage; scalei = scaleinfo_uint(img))
     assert2d(img)
     A = data(img)
