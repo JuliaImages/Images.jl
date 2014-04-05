@@ -141,7 +141,6 @@ scaleminmax(img::AbstractImage, tindex::Integer) = scaleminmax(Uint8, img, tinde
 type ScaleSigned <: ScaleInfo{Float64}
     s::Float64
 end
-ScaleSigned(s::Real) = ScaleSigned(float64(s))
 
 scalesigned(img::AbstractArray) = ScaleSigned(1.0/maxabsfinite(img))
 function scalesigned(img::AbstractImage, tindex::Integer)
