@@ -2,6 +2,8 @@
 
 An image processing library for [Julia](http://julialang.org/).
 
+[![Status](http://iainnz.github.io/packages.julialang.org/badges/Images_0.3.svg)](http://iainnz.github.io/packages.julialang.org/badges/Images_0.3.svg)
+
 ## Aims
 
 Images are very diverse.
