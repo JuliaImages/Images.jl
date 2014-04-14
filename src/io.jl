@@ -90,7 +90,7 @@ function imread(filename::String)
         end
 
         # Extension wasn't helpful, look at all known magic bytes
-        if (img = tryread(1:length(fileext))) != nothing
+        if (img = tryread(1:length(filemagic))) != nothing
             return img
         end
     end
