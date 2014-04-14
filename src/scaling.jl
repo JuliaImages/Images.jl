@@ -265,8 +265,7 @@ sc(img::AbstractArray, mn::Real, mx::Real) = scale(scaleminmax(img, mn, mx), img
 
 convert{T}(::Type{AbstractImageDirect{T,2}},M::Tridiagonal) = error("Not defined") # prevent ambiguity warning
 
-convert{I<:AbstractImageDirect}(::Type{I}, img::AbstractImageDirect) = scale(scaleinfo(eltype(I), img), img)
-convert{I<:AbstractImageDirect}(::Type{I}, img::AbstractArray) = Image(scale(scaleinfo(eltype(I), img), img), properties(img))
+convert{T,S}(::Type{Image{T}}, img::AbstractImageDirect{S}) = scale(scaleinfo(T, img), img)
 
 float32(img::AbstractImageDirect) = scale(scaleinfo(Float32, img), img)
 float64(img::AbstractImageDirect) = scale(scaleinfo(Float64, img), img)
@@ -285,9 +284,10 @@ uint8sc(img::AbstractImageDirect) = scale(scaleinfo(Uint8, img), img)
 uint16sc(img::AbstractImageDirect) = scale(scaleinfo(Uint16, img), img)
 uint32sc(img::AbstractImageDirect) = scale(scaleinfo(Uint32, img), img)
 
-convert{Cdest<:ColorValue,Csrc<:ColorValue}(::Type{Image{Cdest}}, img::Union(StoredArray{Csrc},AbstractImageDirect{Csrc})) = share(img, convert(Array{Cdest}, data(img)))
+convert{C<:ColorValue}(::Type{Image{C}}, img::Image{C}) = img
+convert{Cdest<:ColorValue,Csrc<:ColorValue}(::Type{Image{Cdest}}, img::Union(AbstractArray{Csrc},AbstractImageDirect{Csrc})) = share(img, convert(Array{Cdest}, data(img)))
 
-function convert{C<:ColorValue,T<:Union(Integer,FloatingPoint)}(::Type{Image{C}}, img::Union(StoredArray{T},AbstractImageDirect{T}))
+function convert{C<:ColorValue,T<:Union(Integer,FloatingPoint)}(::Type{Image{C}}, img::Union(AbstractArray{T},AbstractImageDirect{T}))
     cs = colorspace(img)
     if !(cs == "RGB" || cs == "RGBA")
         error("Only RGB and RGBA colorspaces supported currently")
@@ -295,11 +295,10 @@ function convert{C<:ColorValue,T<:Union(Integer,FloatingPoint)}(::Type{Image{C}}
     scalei = scaleinfo(RGB, img)
     cd = colordim(img)
     d = data(img)
-    p = parent(d)
     sz = size(img)
     szout = sz[setdiff(1:ndims(img), cd)]
     dout = Array(C, szout)
-    if colordim(img) == 1
+    if cd == 1
         s = stride(d,2)
         for i in 0:length(dout)-1
             tmp = RGB(scale(scalei,d[i*s+1]), scale(scalei,d[i*s+2]), scale(scalei,d[i*s+3]))
@@ -320,3 +319,4 @@ function convert{C<:ColorValue,T<:Union(Integer,FloatingPoint)}(::Type{Image{C}}
     delete!(p, "colorspace")
     Image(dout, p)
 end
+

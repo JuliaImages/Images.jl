@@ -155,10 +155,10 @@ function copy!(imgdest::AbstractImage, imgsrc::AbstractImage, prop1::ASCIIString
 end
 
 # convert
-convert{I<:AbstractImageDirect}(::Type{I}, img::I) = img
-convert{I<:AbstractImageIndexed}(::Type{I}, img::I) = img
+convert{T}(::Type{Image{T}}, img::Image{T}) = img
+convert(::Type{Image}, A::AbstractArray) = Image(A, properties(A))
 # Convert an indexed image (cmap) to a direct image
-function convert{ID<:AbstractImageDirect,II<:AbstractImageIndexed}(::Type{ID}, img::II)
+function convert{II<:AbstractImageIndexed}(::Type{Image}, img::II)
     if size(img.cmap, 2) == 1
         data = reshape(img.cmap[img.data[:]], size(img.data))
         prop = img.properties
