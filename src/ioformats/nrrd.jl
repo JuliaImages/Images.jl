@@ -101,7 +101,8 @@ function imread{S<:IO}(stream::S, ::Type{Images.NRRDFile})
     length(sz) == nd || error("parsing of sizes: $(header["sizes"]) is inconsistent with $nd dimensions")
     T = typedict[header["type"]]
     local A
-    if header["encoding"] == "raw" && prod(sz) > 10^8
+    need_bswap = haskey(header, "endian") && header["endian"] != myendian() && sizeof(T) > 1
+    if header["encoding"] == "raw" && prod(sz) > 10^8 && !need_bswap
         # Use memory-mapping for large files
         fn = stream2name(sdata)
         datalen = div(filesize(fn) - position(sdata), sizeof(T))
@@ -114,17 +115,10 @@ function imread{S<:IO}(stream::S, ::Type{Images.NRRDFile})
             sz[k] = div(datalen, strds[k])
         end
         A = mmap_array(T, tuple(sz...), sdata, position(sdata))
-        if haskey(header, "endian")
-            if header["endian"] != myendian()
-                props["bswap"] = true
-            end
-        end
     elseif header["encoding"] == "raw" || header["encoding"] == "gzip"
         A = read(sdata, T, sz...)
-        if haskey(header, "endian")
-            if header["endian"] != myendian() && eltype(A) != Uint8
-                A = reshape([bswap(a) for a in A], size(A))
-            end
+        if need_bswap
+            A = reshape([bswap(a) for a in A], size(A))
         end
     else
       error("\"", header["encoding"], "\" encoding not supported.")
