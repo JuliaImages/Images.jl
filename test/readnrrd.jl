@@ -23,7 +23,7 @@ imwrite(img, outname)
 imgc = imread(outname)
 @assert img.data == imgc.data
 
-img = imread(joinpath(Pkg.dir(), "Images", "test", "io", "units.nrrd"))
+img = imread(joinpath(Pkg.dir(), "Images", "test", "io", "units.nhdr"))
 ps = pixelspacing(img)
 @test_approx_eq ps[1]/(0.1*Milli*Meter) 1
 @test_approx_eq ps[2]/(0.2*Milli*Meter) 1

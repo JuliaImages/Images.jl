@@ -58,13 +58,19 @@ function imread{S<:IO}(stream::S, ::Type{Images.NRRDFile})
     version = ascii(read(stream, Uint8, 4))
     skipchars(stream,isspace)
     header = Dict{ASCIIString, UTF8String}()
+    props = Dict{ASCIIString, Any}()
     comments = Array(ASCIIString, 0)
     # Read until we encounter a blank line, which is the separator between the header and data
     line = strip(readline(stream))
     while !isempty(line)
         if line[1] != '#'
             key, value = split(line, ":")
-            header[key] = strip(value)
+            if !isempty(value) && value[1] == '='
+                # This is a NRRD key/value pair, insert straight into props
+                props[key] = value[2:end]
+            else
+                header[lowercase(key)] = strip(value)
+            end
         else
             cmt = strip(lstrip(line, collect("#")))
             if !isempty(cmt)
@@ -73,20 +79,27 @@ function imread{S<:IO}(stream::S, ::Type{Images.NRRDFile})
         end
         line = strip(readline(stream))
     end
+    # Fields that go straight into the properties dict
+    if haskey(header, "content")
+        props["content"] = header["content"]
+    end
     # Check to see whether the data are in an external file
     sdata = stream
     if haskey(header, "data file")
-        sdata = open(header["data file"])
+        path = dirname(stream2name(sdata))
+        sdata = open(joinpath(path, header["data file"]))
     elseif haskey(header, "datafile")
-        sdata = open(header["datafile"])
+        path = dirname(stream2name(sdata))
+        sdata = open(joinpath(path, header["datafile"]))
     end
     if header["encoding"] == "gzip"
         sdata = Zlib.Reader(sdata)
     end
     # Parse properties and read the data
+    nd = int(header["dimension"])
     sz = parse_vector_int(header["sizes"])
+    length(sz) == nd || error("parsing of sizes: $(header["sizes"]) is inconsistent with $nd dimensions")
     T = typedict[header["type"]]
-    props = Dict{ASCIIString, Any}()
     local A
     if header["encoding"] == "raw" && prod(sz) > 10^8
         # Use memory-mapping for large files
@@ -116,25 +129,32 @@ function imread{S<:IO}(stream::S, ::Type{Images.NRRDFile})
     else
       error("\"", header["encoding"], "\" encoding not supported.")
     end
+    isspatial = trues(nd)
     # Optional fields
     if haskey(header, "kinds")
         kinds = split(header["kinds"], " ")
-        for i = 1:length(kinds)
+        length(kinds) == nd || error("parsing of kinds: $(header["kinds"]) is inconsistent with $nd dimensions")
+        for i = 1:nd
             k = kinds[i]
             if k == "time"
                 props["timedim"] = i
+                isspatial[i] = false
             elseif in(k, ("3-color","4-color","list","point","vector","covariant-vector","normal","2-vector","3-vector","4-vector","3-gradient","3-normal","scalar","complex","quaternion"))
                 props["colordim"] = i
                 props["colorspace"] = k
+                isspatial[i] = false
             elseif k == "RGB-color"
                 props["colordim"] = i
                 props["colorspace"] = "RGB"
+                isspatial[i] = false
             elseif k == "HSV-color"
                 props["colordim"] = i
                 props["colorspace"] = "HSV"
+                isspatial[i] = false
             elseif k == "RGBA-color"
                 props["colordim"] = i
                 props["colorspace"] = "RGBA"
+                isspatial[i] = false
             elseif contains(k, "matrix")
                 error("matrix types are not yet supported")
             end
@@ -165,34 +185,26 @@ function imread{S<:IO}(stream::S, ::Type{Images.NRRDFile})
     end
     if haskey(header, "spacings")
         ps = parse_vector_float(header["spacings"])
-        keep = trues(length(ps))
-        cd = get(props, "colordim", 0)
-        if 1 <= cd <= length(keep)
-            keep[cd] = false
-        end
-        td = get(props, "timedim", 0)
-        if 1 <= td <= length(keep)
-            keep[td] = false
-        end
+        length(ps) == nd || error("parsing of spacings: $(header["spacings"]) is inconsistent with $nd dimensions")
         if haskey(header, "space units")
-            ustrs = split(header["space units"], " ")
-            if length(ustrs) != length(ps)
-                warn("space units parsing did not agree with spacings")
-                @show u
-                @show ps
-                props["pixelspacing"] = ps[keep]
-            else
+            ustrs = parse_vector_strings(header["space units"])
+            length(ustrs) == nd || error("parsing of space units: $(header["space units"]) is inconsistent with $nd dimensions")
+            try
                 u = Array(SIUnits.SIQuantity, 0)
                 for i = 1:length(ustrs)
-                    if keep[i]
-                        utmp = ps[i]*eval(symbol(ustrs[i][2:end-1]))
+                    if isspatial[i]
+                        utmp = ps[i]*eval(symbol(ustrs[i]))
                         push!(u, utmp)
                     end
                 end
                 props["pixelspacing"] = u
+            catch
+                warn("Could not evaluate unit strings")
+                props["pixelspacing"] = ps[isspatial]
+                props["pixelunits"] = ustrs[isspatial]
             end
         else
-            props["pixelspacing"] = ps[keep]
+            props["pixelspacing"] = ps[isspatial]
         end
     end
     if !isempty(comments)
@@ -292,6 +304,11 @@ function parse_vector_float(s::String)
         v[i] = float(ss[i])
     end
     return v
+end
+
+function parse_vector_strings(s::String)
+    (first(s) == '"' && last(s) == '"') || error("Strings must be delimited with quotes")
+    split(s[2:end-1], "\" \"")
 end
 
 function stream2name(s::IO)
