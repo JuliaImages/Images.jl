@@ -5,8 +5,7 @@ type: float
 dimension: 3
 space: left-posterior-superior
 sizes: 10 10 10
-space directions: (1,0,0) (0,1,0) (0,0,1)
-spacings: 0.1 0.2 1
+space directions: (0.1,0,0) (0,0.2,0) (0,0,1)
 space units: "mm" "mm" "mm"
 kinds: domain domain domain
 endian: little

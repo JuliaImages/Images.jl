@@ -46,6 +46,26 @@ typedict = [
     "float" => Float32,
     "double" => Float64]
 
+spacedimdict = [
+    "right-anterior-superior" => 3,
+    "ras" => 3,
+    "left-anterior-superior" => 3,
+    "las" => 3,
+    "left-posterior-superior" => 3,
+    "lps" => 3,
+    "right-anterior-superior-time" => 4,
+    "rast" => 4,
+    "left-anterior-superior-time" => 4,
+    "last" => 4,
+    "left-posterior-superior-time" => 4,
+    "lpst" => 4,
+    "scanner-xyz" => 3,
+    "scanner-xyz-time" => 4,
+    "3d-right-handed" => 3,
+    "3d-left-handed" => 3,
+    "3d-right-handed-time" => 4,
+    "3d-left-handed-time" => 4]
+
 function myendian()
     if ENDIAN_BOM == 0x04030201
         return "little"
@@ -92,7 +112,7 @@ function imread{S<:IO}(stream::S, ::Type{Images.NRRDFile})
         path = dirname(stream2name(sdata))
         sdata = open(joinpath(path, header["datafile"]))
     end
-    if header["encoding"] == "gzip"
+    if in(header["encoding"], ("gzip", "gz"))
         sdata = Zlib.Reader(sdata)
     end
     # Parse properties and read the data
@@ -115,7 +135,7 @@ function imread{S<:IO}(stream::S, ::Type{Images.NRRDFile})
             sz[k] = div(datalen, strds[k])
         end
         A = mmap_array(T, tuple(sz...), sdata, position(sdata))
-    elseif header["encoding"] == "raw" || header["encoding"] == "gzip"
+    elseif header["encoding"] == "raw" || in(header["encoding"], ("gzip", "gz"))
         A = read(sdata, T, sz...)
         if need_bswap
             A = reshape([bswap(a) for a in A], size(A))
@@ -177,37 +197,86 @@ function imread{S<:IO}(stream::S, ::Type{Images.NRRDFile})
         end
         props["limits"] = (mn, mx)
     end
-    if haskey(header, "spacings")
+    if haskey(header, "labels")
+        lbls = parse_vector_strings(header["labels"])
+        props["spatialorder"] = lbls[isspatial]
+    else
+        props["spatialorder"] = [string(char(97+(i+22)%26)) for i = 1:sum(isspatial)]
+    end
+    spacedim = 0
+    if haskey(header, "space")
+        props["space"] = header["space"]
+        spacedim = spacedimdict[lowercase(header["space"])]
+        spacedim == sum(isspatial) || error("spacedim $spacedim disagrees with isspatial=$isspatial")
+    elseif haskey(header, "space dimension")
+        spacedim = int(header["space dimension"])
+        spacedim == sum(isspatial) || error("spacedim $spacedim disagrees with isspatial=$isspatial")
+    end
+    units = Array(SIUnits.SIQuantity, 0)
+    if haskey(header, "space units")
+        ustrs = parse_vector_strings(header["space units"])
+        length(ustrs) == spacedim || error("parsing of space units: $(header["space units"]) is inconsistent with $spacedim space dimensions")
+        for i = 1:spacedim
+            try
+                push!(units, eval(symbol(ustrs[i])))
+            catch
+                evalworked = false
+                warn("Could not evaluate unit string $(ustrs[i])")
+            end
+        end
+        if length(units) < spacedim
+            units = Array(SIUnits.SIQuantity, 0)  # Don't use any units
+            header["spaceunits"] = ustrs          # ...but store the string representation
+        end
+    end
+    if haskey(header, "space directions")
+        # space directions are per-axis, but can be "none"
+        sd = split(header["space directions"], " ")
+        length(sd) == nd || error("parsing of space directions: $(header["space directions"]) is inconsistent with $nd dimensions")
+        sdf = Array(Any, 0)
+        for i = 1:nd
+            if sd[i] == "none"
+                isspatial[i] && error("Dimension $i is spatial, but has space directions \"none\".")
+            else
+                v = parse_vector_float(sd[i][2:end-1])
+                if !isempty(units)
+                    vu = [v[i]*units[i] for i = 1:spacedim]
+                    push!(sdf, vu)
+                else
+                    push!(sdf, v)
+                end
+            end
+        end
+        props["spacedirections"] = sdf
+        # If spacedirections is diagonal, put that into pixelspacing
+        have_pixelspacing = true
+        for i = 1:length(sdf)
+            v = sdf[i]
+            for j = 1:spacedim
+                if i != j
+                    have_pixelspacing &= 0*v[j] == v[j]  # this is units-safe
+                end
+            end
+        end
+        if have_pixelspacing
+            ps = [sdf[i][i] for i = 1:spacedim]
+            props["pixelspacing"] = ps
+        end
+    elseif haskey(header, "spacings")
         ps = parse_vector_float(header["spacings"])
         length(ps) == nd || error("parsing of spacings: $(header["spacings"]) is inconsistent with $nd dimensions")
-        if haskey(header, "space units")
-            ustrs = parse_vector_strings(header["space units"])
-            length(ustrs) == nd || error("parsing of space units: $(header["space units"]) is inconsistent with $nd dimensions")
-            try
-                u = Array(SIUnits.SIQuantity, 0)
-                for i = 1:length(ustrs)
-                    if isspatial[i]
-                        utmp = ps[i]*eval(symbol(ustrs[i]))
-                        push!(u, utmp)
-                    end
-                end
-                props["pixelspacing"] = u
-            catch
-                warn("Could not evaluate unit strings")
-                props["pixelspacing"] = ps[isspatial]
-                props["pixelunits"] = ustrs[isspatial]
-            end
+        pss = ps[isspatial]
+        if !isempty(units)
+            vu = [pss[i]*units[i] for i = 1:spacedim]
+            props["pixelspacing"] = vu
         else
-            props["pixelspacing"] = ps[isspatial]
+            props["pixelspacing"] = pss
         end
     end
     if !isempty(comments)
         props["comments"] = comments
     end
-    img = Image(A, props)
-    spatialorder = ["x", "y", "z"]
-    img.properties["spatialorder"] = spatialorder[1:sdims(img)]
-    img
+    Image(A, props)
 end
 
 function imwrite(img, sheader::IO, ::Type{Images.NRRDFile}; props::Dict = Dict{ASCIIString,Any}())
