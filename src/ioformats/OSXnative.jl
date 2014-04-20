@@ -18,11 +18,13 @@ function imread(filename)
     imwidth = CFNumberGetValue(CFDictionaryGetValue(dict, "PixelWidth"), Int16)
     pixeldepth = CFNumberGetValue(CFDictionaryGetValue(dict, "Depth"), Int16)
     colormodel = getCFString(CFDictionaryGetValue(dict, "ColorModel"))
-    imtype = getCFString(CGImageSourceGetType(imgsrc))
-    tiffdict = CFDictionaryGetValue(dict, "{TIFF}")
-    imagedescription = tiffdict != C_NULL ?
-        getCFString(CFDictionaryGetValue(tiffdict, "ImageDescription")) : nothing
-    CFRelease(dict)
+    @show imtype = getCFString(CGImageSourceGetType(imgsrc))
+    if imtype == "public.tiff"
+        tiffdict = CFDictionaryGetValue(dict, "{TIFF}")
+        imagedescription = tiffdict != C_NULL ?
+            getCFString(CFDictionaryGetValue(tiffdict, "ImageDescription")) : nothing
+        CFRelease(dict)
+    end
 
 #    i = 0
 #    CGimg = CGImageSourceCreateImageAtIndex(imgsrc, i)
@@ -201,7 +203,8 @@ CFNumberGetValue(CFNum::Ptr{Void}, ::Type{Uint8}) =
 CFStringGetCStringPtr(CFStringRef::Ptr{Void}) = 
     ccall(:CFStringGetCStringPtr, Ptr{Uint8}, (Ptr{Void}, Uint16), CFStringRef, 0x0600)
 
-getCFString(CFStr::Ptr{Void}) = bytestring(CFStringGetCStringPtr(CFStr))
+getCFString(CFStr::Ptr{Void}) = CFStringGetCStringPtr(CFStr) != C_NULL ?
+    bytestring(CFStringGetCStringPtr(CFStr)) : ""
 
 # Core Graphics
 # CGImageSource
