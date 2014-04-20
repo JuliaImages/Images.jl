@@ -18,7 +18,7 @@ function imread(filename)
     imwidth = CFNumberGetValue(CFDictionaryGetValue(dict, "PixelWidth"), Int16)
     pixeldepth = CFNumberGetValue(CFDictionaryGetValue(dict, "Depth"), Int16)
     colormodel = getCFString(CFDictionaryGetValue(dict, "ColorModel"))
-    @show imtype = getCFString(CGImageSourceGetType(imgsrc))
+    imtype = getCFString(CGImageSourceGetType(imgsrc))
     # Get image description
     imagedescription = ""
     if imtype == "public.tiff"
@@ -50,26 +50,30 @@ function imread(filename)
         imgtype = Uint8
     elseif pixeldepth == 16
         imgtype = Uint16
-    end        
-    imgout = Array(imgtype, imwidth, imheight, imframes)
-    fillimage!(imgout, imgsrc, imwidth, imheight, imframes)
+    end
+
+    # Fill the array
+    if imframes == 1
+        imgout = Array(imgtype, imwidth, imheight)
+        fillimage!(imgout, imgsrc, imwidth, imheight)
+    else
+        imgout = Array(imgtype, imwidth, imheight, imframes)
+        fillimage!(imgout, imgsrc, imwidth, imheight, imframes)
+    end
     CFRelease(imgsrc)
-    # get rid of that dangling dimension
-    imgout = imframes == 1 ? squeeze(imgout, 3) : imgout
     
-    prop = {"colorspace" => "Gray",
-            "spatialorder" => ["x", "y"],
+    spatialorder = (imframes > 1) ? ["x", "y", "z"] : ["x", "y"]
+    prop = {"colorspace" => colormodel,  # potentially brittle, if mismatch with core types
+            "spatialorder" => spatialorder,
             "pixelspacing" => [1, 1],
+            "limits" => (zero(imgtype), typemax(imgtype)),
             "imagedescription" => imagedescription,
             "suppress" => Set({"imagedescription"})}
-    if imframes > 1
-        prop["timedim"] = 3
-    end
     
     Image(imgout, prop)
 end
 
-function fillimage!(myimg, imgsrc, imwidth, imheight, imframes)
+function fillimage!(myimg, imgsrc, imwidth, imheight, imframes=1)
     for i in 1:imframes
         CGimg = CGImageSourceCreateImageAtIndex(imgsrc, i - 1)
         imagepixels = CopyImagePixels(CGimg)
