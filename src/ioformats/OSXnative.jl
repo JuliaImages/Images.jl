@@ -9,7 +9,8 @@ function imread(filename)
     myURL = CFURLCreateWithFileSystemPath(abspath(filename))
     imgsrc = CGImageSourceCreateWithURL(myURL)
     CFRelease(myURL)
-    imgsrc == C_NULL && error("Could not find file at URL: $filename")
+    #imgsrc == C_NULL && error("Could not create image at URL: $filename")
+    imgsrc == C_NULL && return nothing  # Fall through to imagemagick in io.jl
 
     # Get image information
     imframes = int(CGImageSourceGetCount(imgsrc))
@@ -17,9 +18,14 @@ function imread(filename)
     imheight = CFNumberGetValue(CFDictionaryGetValue(dict, "PixelHeight"), Int16)
     imwidth = CFNumberGetValue(CFDictionaryGetValue(dict, "PixelWidth"), Int16)
     pixeldepth = CFNumberGetValue(CFDictionaryGetValue(dict, "Depth"), Int16)
+    typedict = [8 => Uint8, 16 => Uint16, 32 => Uint32]
+    T = typedict[int(pixeldepth)]
+    # Colormodel is one of: "RGB", "Gray", "CMYK", "Lab"
     colormodel = getCFString(CFDictionaryGetValue(dict, "ColorModel"))
     imtype = getCFString(CGImageSourceGetType(imgsrc))
-    # Get image description
+    alpha, storagedepth = alpha_and_depth(imgsrc)
+
+    # Get image description string
     imagedescription = ""
     if imtype == "public.tiff"
         tiffdict = CFDictionaryGetValue(dict, "{TIFF}")
@@ -28,62 +34,114 @@ function imread(filename)
         CFRelease(dict)
     end
 
-#    i = 0
-#    CGimg = CGImageSourceCreateImageAtIndex(imgsrc, i)
-#    @show CGImageGetAlphaInfo(CGimg)
-#    @show CGImageGetBitmapInfo(CGimg)
-#    @show int(CGImageGetBitsPerComponent(CGimg))
-#    @show int(CGImageGetBitsPerPixel(CGimg))
-#    @show int(CGImageGetBytesPerRow(CGimg))
-#    @show CGImageGetColorSpace(CGimg)
-#    @show CGImageGetDecode(CGimg)
-#    @show CGImageGetRenderingIntent(CGimg)
-#    @show CGImageGetShouldInterpolate(CGimg)
-#    @show CGImageGetTypeID()
-#    @show CFGetTypeID(CGimg)
-#    @show height = int(CGImageGetHeight(CGimg))
-#    @show width = int(CGImageGetWidth(CGimg))
-#    @show width*height
-#    CGImageRelease(CGimg)
-
-    if pixeldepth == 8
-        imgtype = Uint8
-    elseif pixeldepth == 16
-        imgtype = Uint16
-    end
-
-    # Fill the array
-    if imframes == 1
-        imgout = Array(imgtype, imwidth, imheight)
-        fillimage!(imgout, imgsrc, imwidth, imheight)
+    # Allocate the buffer and get the pixel data
+    sz = imframes > 1 ? (imwidth, imheight, imframes) : (imwidth, imheight)
+    buf = (storagedepth > 1) ? Array(T, storagedepth, sz...) : Array(T, sz...)
+    colormodel = colormodel == "Gray" && alpha > 0 ? "GrayAlpha" : colormodel
+    colormodel = colormodel == "RGB"  && alpha > 0 ? "RGBA" : colormodel
+    if colormodel == "Gray"
+        fillgray!(buf, imgsrc)
+    elseif colormodel == "GrayAlpha"
+        fillgrayalpha!(buf, imgsrc)
     else
-        imgout = Array(imgtype, imwidth, imheight, imframes)
-        fillimage!(imgout, imgsrc, imwidth, imheight, imframes)
+        fillcolor!(buf, imgsrc, storagedepth)
     end
     CFRelease(imgsrc)
     
+    # Set the image properties
     spatialorder = (imframes > 1) ? ["x", "y", "z"] : ["x", "y"]
-    prop = {"colorspace" => colormodel,  # potentially brittle, if mismatch with core types
+    prop = {"colorspace" => colormodel,
             "spatialorder" => spatialorder,
             "pixelspacing" => [1, 1],
-            "limits" => (zero(imgtype), typemax(imgtype)),
+            "limits" => (zero(T), typemax(T)),
             "imagedescription" => imagedescription,
             "suppress" => Set({"imagedescription"})}
-    
-    Image(imgout, prop)
+    if colormodel != "Gray"  # Does GrayAlpha count as a colordim??
+        prop["colordim"] = 1
+    end
+
+    Image(buf, prop)
 end
 
-function fillimage!(myimg, imgsrc, imwidth, imheight, imframes=1)
-    for i in 1:imframes
+function alpha_and_depth(imgsrc)
+    # Dividing bits per pixel by bits per component tells us how many
+    # color + alpha slices we have in the file.  Alpha returns the 
+    # index of the alpha channel (I hope).  Right now, we just test if 
+    # it is nonzero, but we could use it later to distinguish RGBA from ARGB
+    CGimg = CGImageSourceCreateImageAtIndex(imgsrc, 0)  # Check only first frame
+    alphacode = CGImageGetAlphaInfo(CGimg)
+    bitspercomponent = CGImageGetBitsPerComponent(CGimg)
+    bitsperpixel = CGImageGetBitsPerPixel(CGimg)
+    CGImageRelease(CGimg)
+    # See https://developer.apple.com/library/mac/documentation/graphicsimaging/reference/CGImage/Reference/reference.html#//apple_ref/doc/uid/TP30000956-CH3g-459700
+    # Returns the channel that contains the alpha values. 
+    # Perhaps not the greatest, but this will do for now.
+    alphadict = [0x00000000 => 0, 0x00000001 => 4, 0x00000002 => 1, 0x00000003 => 4, 
+                 0x00000004 => 1, 0x00000005 => 0, 0x00000006 => 0]
+    alphadict[alphacode], int(div(bitsperpixel, bitspercomponent))
+end
+
+function fillgray!{T}(buffer::AbstractArray{T, 2}, imgsrc)
+    imwidth, imheight = size(buffer, 1), size(buffer, 2)
+    CGimg = CGImageSourceCreateImageAtIndex(imgsrc, 0)
+    imagepixels = CopyImagePixels(CGimg)
+    pixelptr = CFDataGetBytePtr(imagepixels, eltype(buffer))
+    imbuffer = pointer_to_array(pixelptr, (imwidth, imheight), false)
+    buffer[:, :] = imbuffer
+    CFRelease(imagepixels)
+    CGImageRelease(CGimg)
+end
+
+# Image stack
+function fillgray!{T}(buffer::AbstractArray{T, 3}, imgsrc)
+    imwidth, imheight, nimages = size(buffer, 1), size(buffer, 2), size(buffer, 3)
+    for i in 1:nimages
         CGimg = CGImageSourceCreateImageAtIndex(imgsrc, i - 1)
         imagepixels = CopyImagePixels(CGimg)
-        pixelptr = CFDataGetBytePtr(imagepixels, eltype(myimg))
-        imbuffer = pointer_to_array(pixelptr, (int(imwidth), int(imheight)), false)
-        myimg[:, :, i] = imbuffer
+        pixelptr = CFDataGetBytePtr(imagepixels, T)
+        imbuffer = pointer_to_array(pixelptr, (imwidth, imheight), false)
+        buffer[:, :, i] = imbuffer
         CFRelease(imagepixels)
         CGImageRelease(CGimg)
     end
 end
+
+function fillgrayalpha!{T<:Uint8}(buffer::AbstractArray{T, 3}, imgsrc)
+    imwidth, imheight = size(buffer, 2), size(buffer, 3)
+    CGimg = CGImageSourceCreateImageAtIndex(imgsrc, 0)
+    imagepixels = CopyImagePixels(CGimg)
+    pixelptr = CFDataGetBytePtr(imagepixels, Uint16)
+    imbuffer = pointer_to_array(pixelptr, (imwidth, imheight), false)
+    buffer[1, :, :] = imbuffer & 0xff
+    buffer[2, :, :] = div(imbuffer & 0xff00, 256)
+    CFRelease(imagepixels)
+    CGImageRelease(CGimg)
+end
+
+function fillcolor!{T}(buffer::AbstractArray{T, 3}, imgsrc, nc)
+    imwidth, imheight = size(buffer, 2), size(buffer, 3)
+    CGimg = CGImageSourceCreateImageAtIndex(imgsrc, 0)
+    imagepixels = CopyImagePixels(CGimg)
+    pixelptr = CFDataGetBytePtr(imagepixels, T)
+    imbuffer = pointer_to_array(pixelptr, (nc, imwidth, imheight), false)
+    buffer[:, :, :] = imbuffer
+    CFRelease(imagepixels)
+    CGImageRelease(CGimg)
+end
+
+function fillcolor!{T}(buffer::AbstractArray{T, 4}, imgsrc, nc)
+    imwidth, imheight, nimages = size(buffer, 2), size(buffer, 3), size(buffer, 4)
+    for i in 1:nimages
+        CGimg = CGImageSourceCreateImageAtIndex(imgsrc, i - 1)
+        imagepixels = CopyImagePixels(CGimg)
+        pixelptr = CFDataGetBytePtr(imagepixels, T)
+        imbuffer = pointer_to_array(pixelptr, (nc, imwidth, imheight), false)
+        buffer[:, :, :, i] = imbuffer
+        CFRelease(imagepixels)
+        CGImageRelease(CGimg)
+    end
+end
+
 
 ## OSX Framework Wrappers ######################################################
 
@@ -293,9 +351,6 @@ CGDataProviderCopyData(CGDataProviderRef::Ptr{Void}) =
 
 CopyImagePixels(inImage::Ptr{Void}) =
     CGDataProviderCopyData(CGImageGetDataProvider(inImage))
-
-#CFDataGetBytePtr(CFDataRef::Ptr{Void}) =
-#    ccall(:CFDataGetBytePtr, Ptr{Uint8}, (Ptr{Void}, ), CFDataRef)
 
 CFDataGetBytePtr(CFDataRef::Ptr{Void}, T) =
     ccall(:CFDataGetBytePtr, Ptr{T}, (Ptr{Void}, ), CFDataRef)

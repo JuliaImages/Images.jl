@@ -2,9 +2,9 @@ using Images, TestImages
 using Base.Test
 
 img = testimage("autumn_leaves")
-@assert colorspace(img) == "RGB" # but this one has gamma?
-@assert ndims(img) == 2
-@assert colordim(img) == 0
+@assert colorspace(img) == "RGBA"
+@assert ndims(img) == 3
+@assert colordim(img) == 1
 @assert eltype(img) == Uint16
 
 img = testimage("cameraman")
@@ -15,8 +15,8 @@ img = testimage("cameraman")
 
 img = testimage("earth_apollo17")
 @assert colorspace(img) == "RGB"
-@assert ndims(img) == 2
-@assert colordim(img) == 0
+@assert ndims(img) == 3
+@assert colordim(img) == 1
 @assert eltype(img) == Uint8
 
 img = testimage("fabio")
@@ -26,27 +26,27 @@ img = testimage("fabio")
 @assert eltype(img) == Uint8
 
 img = testimage("house")
-@assert colorspace(img) == "Gray"
-@assert ndims(img) == 2
-@assert colordim(img) == 0
+@assert colorspace(img) == "GrayAlpha"
+@assert ndims(img) == 3
+@assert colordim(img) == 1
 @assert eltype(img) == Uint8
 
 img = testimage("jetplane")
-@assert colorspace(img) == "Gray"
-@assert ndims(img) == 2
-@assert colordim(img) == 0
+@assert colorspace(img) == "GrayAlpha"
+@assert ndims(img) == 3
+@assert colordim(img) == 1
 @assert eltype(img) == Uint8
 
 img = testimage("lighthouse")
 @assert colorspace(img) == "RGB"
-@assert ndims(img) == 2
-@assert colordim(img) == 0
+@assert ndims(img) == 3
+@assert colordim(img) == 1
 @assert eltype(img) == Uint8
 
 img = testimage("mandrill")
 @assert colorspace(img) == "RGB"
-@assert ndims(img) == 2
-@assert colordim(img) == 0
+@assert ndims(img) == 3
+@assert colordim(img) == 1
 @assert eltype(img) == Uint8
 
 img = testimage("moonsurface")
@@ -57,6 +57,6 @@ img = testimage("moonsurface")
 
 img = testimage("mountainstream")
 @assert colorspace(img) == "RGB"
-@assert ndims(img) == 2
-@assert colordim(img) == 0
+@assert ndims(img) == 3
+@assert colordim(img) == 1
 @assert eltype(img) == Uint8

@@ -102,7 +102,7 @@ function imread(filename::String)
     end
 
     @osx_only begin
-        @show img = imread(filename, OSXNative)
+        img = imread(filename, OSXNative)
         if img != nothing
             return img
         end
