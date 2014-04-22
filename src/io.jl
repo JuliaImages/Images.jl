@@ -1,6 +1,7 @@
 ##########   I/O   ###########
 
 import .LibMagick
+import .LibOSXNative
 
 abstract ImageFileType
 
@@ -62,9 +63,10 @@ end
 add_image_file_format{ImageType<:ImageFileType}(ext::ByteString, magic::Vector{Uint8}, ::Type{ImageType}) = add_image_file_format(ext, magic, ImageType, "")
 add_image_file_format{ImageType<:ImageFileType}(ext::ByteString, ::Type{ImageType}, filecode::ASCIIString) = add_image_file_format(ext, b"", ImageType, filecode)
 
-# Define our fallback file format now, because we need it in generic imread.
+# Define our fallback file formats now, because we need them in generic imread.
 # This has no extension (and is not added to the database), because it is always used as a stream.
 type ImageMagick <: ImageFileType end
+type OSXNative <: ImageFileType end
 
 function imread(filename::String)
     _, ext = splitext(filename)
@@ -99,6 +101,13 @@ function imread(filename::String)
         return img
     end
 
+    @osx_only begin
+        img = imread(filename, OSXNative)
+        if img != nothing
+            return img
+        end
+    end
+    
     # There are no registered readers for this type. Try using ImageMagick if available.
     if have_imagemagick
         return imread(filename, ImageMagick)
@@ -186,6 +195,10 @@ function writemime(stream::IO, ::MIME"image/png", img::AbstractImage; scalei = s
 end
 
 #### Implementation of specific formats ####
+
+#### OSX Native readers from CoreGraphics
+
+imread(filename::String, ::Type{OSXNative}) = LibOSXNative.imread(filename)
 
 #### ImageMagick library
 
