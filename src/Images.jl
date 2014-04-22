@@ -31,6 +31,7 @@ using Cartesian
 include("core.jl")
 include("iterator.jl")
 const have_imagemagick = include("ioformats/libmagickwand.jl")
+@osx_only include("ioformats/OSXnative.jl")
 include("io.jl")
 include("scaling.jl")
 include("labeledarrays.jl")
