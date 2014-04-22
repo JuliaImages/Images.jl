@@ -65,6 +65,11 @@ Note that on older RedHat-based distributions, the packaged version of the libra
 If that is the case, a newer library may be [required](http://dl.nux.ro/rpm/nux-imagemagick.repo).
 You may need to edit the `releasever` parameter to match your installation.
 
+On Macs, there is now experimental support for reading images using the built-in OS X frameworks.
+For many common image types, this reader will be tried before ImageMagick.  This reader
+is now enabled by default on Macs; if you need to disable it in favor of ImageMagick,
+just comment out line 105 of `src/io.jl`, which reads `img = imread(filename, OSXNative)`.
+
 On Windows it is mandatory to have ImageMagick previously installed because the installer requires user interaction so it cannot be done by the package alone. Get the current version from http://www.imagemagick.org/script/binary-releases.php#windows (e.g. ImageMagick-6.8.8-7-Q16-x86-dll.exe) and make sure that the "Install development headers and libraries for C and C++" checkbox is selected. You may choose to let the installer add the installation directory to the system path or provide it separately. In the later case you may add it to your `.juliarc.jl` file as (for example) `push!(Base.DL_LOAD_PATH, "C:/programs/ImageMagick-6.8.8"`)
 
 When manual intervention is necessary, you may need to restart Julia for the necessary changes to take effect.
