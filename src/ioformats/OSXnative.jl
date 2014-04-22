@@ -14,6 +14,7 @@ function imread(filename)
 
     # Get image information
     imframes = int(CGImageSourceGetCount(imgsrc))
+    imframes == 0 && return nothing  # Not an image?  Fall through to ImageMagick
     dict = CGImageSourceCopyPropertiesAtIndex(imgsrc, 0)
     imheight = CFNumberGetValue(CFDictionaryGetValue(dict, "PixelHeight"), Int16)
     imwidth = CFNumberGetValue(CFDictionaryGetValue(dict, "PixelWidth"), Int16)
