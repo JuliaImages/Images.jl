@@ -7,7 +7,12 @@ Below, `[]` in an argument list means an optional argument.
 ```
 Image(data, [properties])
 ```
-creates a new direct image.
+creates a new direct image. In contrast with `convert` and `grayim`,
+this does not permute the data array or attempt to guess any
+of the `properties`. If `data` encodes color information along one
+of the dimensions of the array (as opposed to using a `ColorValue`
+array, from the `Color.jl` package), be sure to specify the
+`"colordim"` and `"colorspace"` in `properties`.
 
 <br />
 ```
@@ -18,16 +23,18 @@ creates an indexed (colormap) image.
 <br />
 ```
 convert(Image, A)
-convert(Image{HSV}, img)
 convert(Array, img)
+convert(Image{HSV}, img)
 ```
 The first creates a 2d image from an array, setting up default properties. The
-data array is assumed to be in "vertical-major" order, and if color is encoded
-as a dimension of the array it must be the 3rd dimension. The second syntax
-allows you to convert from one colorspace to another.
+data array is assumed to be in "vertical-major" order, and an m-by-n-by-3 array
+will be assumed to encode color along its third dimension.
 
 `convert(Array, img)` works in the opposite direction, permuting dimensions (if
-needed) to put it in standard storage order.
+needed) to put it in Matlab-standard storage order.
+
+The third syntax allows you to convert from one colorspace to another.
+
 
 <br />
 ```
@@ -538,6 +545,9 @@ Reads an image, inferring the format from (1) the magic bytes where possible
 (even if this doesn't agree with the extension name), and (2) otherwise by the
 extension name. The format can also be directly controlled by `FileType`.
 Colorspace conversion upon read is supported.
+
+Note that `imread` will return images in native storage format, e.g., an RGB
+image will have size 3-by-m-by-n with `"colordim"` equal to 1.
 
 <br />
 ```

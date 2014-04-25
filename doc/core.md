@@ -27,8 +27,9 @@ particular `x,y` position. This often catches newcomers (and sometimes even
 old-timers) by surprise. 
 Moreover, most image file formats, cameras, and graphics libraries such as
 Cairo use "horizontal-major" storage of images, and have the color dimension
-first (fastest). This therefore necessitates a
-permutation of the dimensions of the raw data array.
+first (fastest). The native Image type---which allows arbitrary
+ordering of the data array---permits you to use this raw representation directly,
+but when using plain arrays you need to permute the dimensions of the raw data array.
 
 The convention that a `m x n x 3` array implies RGB is also problematic for
 anyone doing 3d imaging, and can result in hard-to-find bugs when the third dimension
