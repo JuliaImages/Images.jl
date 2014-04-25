@@ -10,8 +10,8 @@ using ImageView
 
 ## Image I/O
 
-You likely have a number of images already at your disposal,
-but if not you can retrieve a collection by running `readremote.jl` in the `test/` directory.
+You likely have a number of images already at your disposal; alternatively, install the [TestImages](https://github.com/timholy/TestImages.jl) package.
+You can also retrieve a collection by running `readremote.jl` in the `test/` directory.
 (This requires an internet connection.)
 These will be deposited inside an `Images` directory inside your temporary directory
 (e.g., `/tmp` on Linux systems).
@@ -26,6 +26,12 @@ RGB Image with:
     spatialorder: ["x", "y"]
     colorspace: RGB
 ```
+Let's look at the properties:
+
+- `colordim: 1` indicates that the first dimension of the array is used to store color information
+- `spatialorder: ["x", "y"]` indicates that, after color, the image data are in "horizontal-major" order, meaning that a pixel at spatial location `(x,y)` would be addressed as `img[:,x,y]`. `["y", "x"]` would indicate vertical-major.
+- `colorspace: RGB` indicates that color is represented as an RGB triple
+
 Note that the image was loaded in "non-permuted" form, i.e., following the direct representation on disk.
 If you prefer to work with plain arrays, you can convert it:
 ```
@@ -34,7 +40,7 @@ julia> imA = convert(Array, img);
 julia> summary(imA)
 "46x70x3 Uint8 Array"
 ```
-You can see that this permuted the dimensions into the array-canonical order.
+You can see that this permuted the dimensions into the vertical-major, color-last order typical of Matlab.
 
 Writing works similarly (and as with all `Images` functions, it accepts both plain arrays and `Image` types):
 ```
