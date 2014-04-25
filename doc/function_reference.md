@@ -546,8 +546,10 @@ Reads an image, inferring the format from (1) the magic bytes where possible
 extension name. The format can also be directly controlled by `FileType`.
 Colorspace conversion upon read is supported.
 
-Note that `imread` will return images in native storage format, e.g., an RGB
-image will have size 3-by-m-by-n with `"colordim"` equal to 1.
+Note that imread will return images in native storage format, e.g., a 2D RGB
+image will (for most file formats) have size 3-by-width-by-height with
+`"colordim"` equal to 1. This means that you access the value of pixel
+`(x,y)` by `img[:,x,y]` or `img["x",x,"y",y]`.
 
 <br />
 ```

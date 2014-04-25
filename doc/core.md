@@ -105,6 +105,12 @@ If `img` is an `Image`, then `img[i,j]` looks up the value `img.data[i,j]`.
 Assignment, `sub`, and `slice` work similarly. In other words, for indexing an
 `Image` works just as if you were using plain arrays.
 
+If you load your image data using Image's `imread`, note that the storage order is
+not changed from the on-disk representation. Therefore, a 2D RGB image will
+most likely be stored in color-horizontal-vertical order, meaning that a
+pixel at `(x,y)` is accessed as `img[:,x,y]`. Note that this is quite different
+from Matlab's default representation.
+
 If you are indexing over an extended region and want to get back an `Image`,
 rather than a value or an `Array`, then you
 will want to use `getindexim`, `subim`, and `sliceim`. For the first two, the
