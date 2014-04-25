@@ -40,6 +40,22 @@ ImageCmap(data::StoredArray, cmap::AbstractArray; kwargs...) = ImageCmap(data, c
 grayim{T}(A::StoredArray{T,2}) = Image(A; colorspace="Gray", spatialorder=["x","y"])
 grayim{T}(A::StoredArray{T,3}) = Image(A; colorspace="Gray", spatialorder=["x","y","z"])
 
+function rgbim{T}(A::StoredArray{T,3})
+    if 3 <= size(A, 1) <= 4 && 3 <= size(A, 3) <= 4
+        error("Both first and last dimensions are of size 3 or 4; impossible to guess which is for color. Use the Image constructor directly.")
+    elseif size(A, 1) == 3  # Image as returned by imread for regular 2D RGB images
+        Image(A; colorspace="RGB", colordim=1, spatialorder=["x","y"])
+    elseif size(A, 1) == 4
+        Image(A; colorspace="ARGB", colordim=1, spatialorder=["x","y"])
+    elseif size(A, 3) == 3  # "Matlab"-style image, as returned by converT(Array, im).
+        Image(A; colorspace="RGB", colordim=3, spatialorder=["y","x"])
+    elseif size(A, 3) == 4
+        Image(A; colorspace="ARGB", colordim=3, spatialorder=["y","x"])
+    else
+        error("Neither the first nor the last dimension is of size 3. This doesn't look like an RGB image.")
+    end
+end
+
 # Dispatch-based scaling/clipping/type conversion
 abstract ScaleInfo{T}
 
