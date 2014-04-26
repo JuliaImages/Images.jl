@@ -76,7 +76,7 @@ function nchannels(imtype::String, cs::String, havealpha = false)
     n + havealpha, cs
 end
 
-channelorder = ["Gray" => "I", "GrayAlpha" => "IA", "RGB" => "RGB", "ARGB" => "ARGB", "CMYK" => "CMYK"]
+channelorder = ["Gray" => "I", "GrayAlpha" => "IA", "RGB" => "RGB", "ARGB" => "ARGB", "RGBA" => "RGBA", "CMYK" => "CMYK"]
 
 # Compression
 const NoCompression = 1
