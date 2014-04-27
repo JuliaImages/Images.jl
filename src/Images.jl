@@ -107,6 +107,7 @@ export # types
     dimindexes,
     getindexim,
     grayim,
+    colorim,
     height,
     isdirect,
     isxfirst,
