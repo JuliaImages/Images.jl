@@ -1,4 +1,5 @@
 using Images
+using Base.Test
 
 B = rand(1:20,3,5)
 cmap = uint8(repmat(linspace(12,255,20),1,3))
@@ -152,3 +153,24 @@ imgp = permutedims(imgd, ["x", "y", "color"])
 @assert imgp.data == permutedims(imgd.data, [2,1,3])
 imgp = permutedims(imgd, ("color", "x", "y"))
 @assert imgp.data == permutedims(imgd.data, [3,2,1])
+
+## Convenience constructors
+# colorim
+@test colordim(colorim(rand(Uint8, 3, 5, 5))) == 1
+@test colordim(colorim(rand(Uint8, 5, 5, 3))) == 3
+@test spatialorder(colorim(rand(Uint8, 3, 5, 5))) == ["x", "y"]
+@test spatialorder(colorim(rand(Uint8, 5, 5, 3))) == ["y", "x"]
+@test_throws ErrorException colorim(rand(Uint8, 3, 5, 3))
+
+@test_throws ErrorException colorim(rand(Uint8, 4, 5, 5))
+@test_throws ErrorException colorim(rand(Uint8, 5, 5, 4))
+@test_throws ErrorException colorim(rand(Uint8, 4, 5, 4), "ARGB")
+@test colordim(colorim(rand(Uint8, 4, 5, 5), "RGBA")) == 1
+@test colordim(colorim(rand(Uint8, 4, 5, 5), "ARGB")) == 1
+@test colordim(colorim(rand(Uint8, 5, 5, 4), "RGBA")) == 3
+@test colordim(colorim(rand(Uint8, 5, 5, 4), "ARGB")) == 3
+@test spatialorder(colorim(rand(Uint8, 4, 5, 5), "ARGB")) == ["x", "y"]
+@test spatialorder(colorim(rand(Uint8, 5, 5, 4), "ARGB")) == ["y", "x"]
+
+@test_throws ErrorException colorim(rand(Uint8, 5, 5, 5), "foo")
+@test_throws ErrorException colorim(rand(Uint8, 2, 2, 2), "bar")

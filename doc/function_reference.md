@@ -7,7 +7,7 @@ Below, `[]` in an argument list means an optional argument.
 ```
 Image(data, [properties])
 ```
-creates a new direct image. In contrast with `convert` and `grayim`,
+creates a new direct image. In contrast with `convert`, `grayim` and `colorim`,
 this does not permute the data array or attempt to guess any
 of the `properties`. If `data` encodes color information along one
 of the dimensions of the array (as opposed to using a `ColorValue`
@@ -56,6 +56,19 @@ interpreted as grayscale. However, this would lead to difficult-to-track-down su
 on the day where `k` happened to be 3 for your grayscale image. Instead, the approach
 taken in `Images.jl` is to throw an error, encouraging users to develop the habit of
 wrapping their 3d grayscale arrays in an unambiguous `Image` type.
+
+<br />
+```
+colorim(A, [colorspace])
+```
+Creates a 2d color image from an AbstractArray, auto-detecting which of the first or
+last dimension encodes the color and choosing between "horizontal-" and "vertical-major"
+accordingly. `colorspace` defaults to `"RGB"` but could also be e.g. `"Lab"` or `"HSV"`.
+If the array represents a 4-channel image, the `colorspace` option is mandatory since
+there is no way to automatically distinguish between `"ARGB"` and `"RGBA"`.
+If both the first and last dimensions happen to be of size 3 or 4, it is impossible to
+guess which one represents color and thus an error is generated.
+Thus, if your code should be robust to arbitrary-sized images, prefer using the `Image` constructor directly.
 
 <br />
 ```
