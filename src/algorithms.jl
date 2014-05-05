@@ -595,9 +595,13 @@ end
 imdog() = imdog(0.5)
 
 # laplacian of gaussian
+# Inseparable kernel from Huertas and Medioni, IEEE Trans. Pat. Anal. Mach. Int., 
+# PAMI-8, 651, (1986)
 function imlog(sigma::Number)
-    m = 4*ceil(sigma)+1
-    return [((x^2+y^2-sigma^2)/sigma^4)*exp(-(x^2+y^2)/(2*sigma^2)) for x=-floor(m/2):floor(m/2), y=-floor(m/2):floor(m/2)]
+    m = ceil(8.5sigma)
+    m = m % 2 == 0 ? m + 1 : m
+    return [(1/(2pi*sigma^4))*(2 - (x^2 + y^2)/sigma^2)*exp(-(x^2 + y^2)/(2sigma^2)) 
+            for x=-floor(m/2):floor(m/2), y=-floor(m/2):floor(m/2)]
 end
 
 imlog() = imlog(0.5)
