@@ -160,9 +160,11 @@ images
 - `limits`: (minvalue,maxvalue) for this type of image (e.g., (0,255) for Uint8
 images, even if pixels do not reach these values)
 - `pixelspacing`: the spacing between adjacent pixels along spatial dimensions
-- `spatialorder`: a string naming each spatial dimension, in the storage order
-of
-the data array. Names can be arbitrary, but the choices "x" and "y" have special
+- `spacedirections`: more detailed information about the orientation of array axes
+relative to an external coordinate system (see the [function reference](function_reference.md)).
+- `spatialorder`: a string naming each spatial dimension of the array, in the
+storage order of the data array.
+Names can be arbitrary, but the choices "x" and "y" have special
 meaning (horizontal and vertical, respectively, irrespective of storage order).
 If supplied, you must have one entry per spatial dimension.
 

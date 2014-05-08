@@ -485,6 +485,7 @@ end
 #   limits: (minvalue,maxvalue) for this type of image (e.g., (0,255) for Uint8
 #     images, even if pixels do not reach these values)
 #   pixelspacing: the spacing between adjacent pixels along spatial dimensions
+#   spacedirections: the direction of each array axis in physical space (a vector-of-vectors, one per dimension)
 #   spatialorder: a string naming each spatial dimension, in the storage order of
 #     the data array. Names can be arbitrary, but the choices "x" and "y" have special
 #     meaning (horizontal and vertical, respectively, irrespective of storage order).
@@ -576,7 +577,21 @@ limits(img::AbstractImageIndexed) = @get img "limits" (minimum(img.cmap), maximu
 pixelspacing{T}(img::AbstractArray{T,3}) = (size(img, defaultarraycolordim) == 3) ? [1.0,1.0] : error("Cannot infer pixelspacing of Array, use an AbstractImage type")
 pixelspacing(img::AbstractMatrix) = [1.0,1.0]
 pixelspacing{T}(img::AbstractImage{T}) = @get img "pixelspacing" _pixelspacing(img)
-_pixelspacing(img::AbstractImage) = ones(sdims(img))
+function _pixelspacing(img::AbstractImage)
+    if haskey(img, "spacedirections")
+        sd = img["spacedirections"]
+        return [maximum(abs(sd[i])) for i = 1:length(sd)]
+    end
+    ones(sdims(img))
+end
+
+spacedirections(img::AbstractArray) = @get img "spacedirections" _spacedirections(img)
+function _spacedirections(img::AbstractArray)
+    ps = pixelspacing(img)
+    T = eltype(ps)
+    nd = length(ps)
+    Vector{T}[(tmp = zeros(T, nd); tmp[i] = ps[i]; tmp) for i = 1:nd]
+end
 
 spatialorder(img::AbstractImage) = @get img "spatialorder" _spatialorder(img)
 _spatialorder(img::AbstractImage) = (sdims(img) == 2) ? spatialorder(Matrix) : error("Cannot guess default spatial order for ", sdims(img), "-dimensional images")
@@ -773,6 +788,9 @@ function spatialproperties(img::AbstractImage)
     end
     if haskey(img, "pixelspacing")
         push!(spatialprops, "pixelspacing")
+    end
+    if haskey(img, "spacedirections")
+        push!(spatialprops, "spacedirections")
     end
     spatialprops
 end

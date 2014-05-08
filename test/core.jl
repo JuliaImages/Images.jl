@@ -1,10 +1,11 @@
-using Images
+using Images, SIUnits.ShortUnits
 using Base.Test
 
 B = rand(1:20,3,5)
 cmap = uint8(repmat(linspace(12,255,20),1,3))
 img = ImageCmap(copy(B),cmap,["colorspace" => "RGB", "pixelspacing" => [2.0, 3.0], "spatialorder" => Images.yx])
 imgd = convert(Image, img)
+imgd["pixelspacing"] = [2.0mm, 3.0mm]
 @test eltype(img) == Uint8
 @test eltype(imgd) == Uint8
 
@@ -41,7 +42,9 @@ img[4] = prev+1
 @test limits(img) == (12,255)
 @test limits(imgd) == (0,255)
 @test pixelspacing(img) == [2.0, 3.0]
-@test pixelspacing(imgd) == [2.0, 3.0]
+@test pixelspacing(imgd) == [2.0mm, 3.0mm]
+@test spacedirections(img) == Vector{Float64}[[2.0, 0], [0, 3.0]]
+@test spacedirections(imgd) == Vector{SIUnits.SIQuantity{Float64,1,0,0,0,0,0,0}}[[2.0mm, 0.0mm], [0.0mm, 3.0mm]]
 
 @test sdims(img) == sdims(imgd)
 @test coords_spatial(img) == coords_spatial(imgd)
@@ -134,7 +137,7 @@ s = sliceim(imgd, sd, 2, 1)
 @test widthheight(imgd) == (5,3)
 C = convert(Array, imgd)
 @test C == imgd.data
-imgd.properties["spatialorder"] = ["x", "y"]
+imgd["spatialorder"] = ["x", "y"]
 @test spatialpermutation(Images.xy, imgd) == [1,2]
 @test widthheight(imgd) == (3,5)
 C = convert(Array, imgd)
@@ -153,6 +156,13 @@ imgp = permutedims(imgd, ["x", "y", "color"])
 @test imgp.data == permutedims(imgd.data, [2,1,3])
 imgp = permutedims(imgd, ("color", "x", "y"))
 @test imgp.data == permutedims(imgd.data, [3,2,1])
+@test pixelspacing(imgp) == [3.0mm, 2.0mm]
+imgc = copy(imgd)
+imgc["spacedirections"] = spacedirections(imgc)
+delete!(imgc, "pixelspacing")
+imgp = permutedims(imgc, ["x", "y", "color"])
+@test spacedirections(imgp) == Vector{SIUnits.SIQuantity{Float64,1,0,0,0,0,0,0}}[[0.0mm, 3.0mm],[2.0mm, 0.0mm]]
+@test pixelspacing(imgp) == [3.0mm, 2.0mm]
 
 ## Convenience constructors
 # colorim

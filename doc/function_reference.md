@@ -278,8 +278,23 @@ example, `imgdiff = img1-img2`, where both are `Image`s with `"limits"` set to
 pixelspacing(img)
 ```
 Returns a vector containing the spacing between adjacent pixels along each
-dimension. Defaults to 1. If desired, you can set this property in terms of
-physical [units](https://github.com/timholy/Units.jl).
+dimension. If this property is not set, it will be computed from `"spacedirections"` if present; otherwise
+it defaults to `ones(sdims(img))`. If desired, you can set this property in terms of
+physical [units](https://github.com/loladiro/SIUnits.jl).
+
+<br />
+```
+spacedirections(img)
+```
+Returns a vector-of-vectors, each indicating the displacement between adjacent pixels along each spatial axis
+of the image array, relative to some external coordinate system ("physical coordinates").  For example,
+you could indicate that a photograph was taken with the camera tilted 30-degree relative to vertical using
+```
+img["spacedirections"] = [[0.866025,-0.5],[0.5,0.866025]]
+```
+If not specified, it will be computed from `pixelspacing(img)`, placing the spacing along the "diagonal".
+If desired, you can set this property in terms of
+physical [units](https://github.com/loladiro/SIUnits.jl).
 
 <br />
 ```

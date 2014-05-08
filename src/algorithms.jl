@@ -1211,7 +1211,7 @@ for N = 1:5
     end
 end
 
-restrict_size(len::Integer) = isodd(len) ? div(len+1,2) : div(len,2)+1
+restrict_size(len::Integer) = isodd(len) ? (len+1)>>1 : (len>>1)+1
 
 function imlineardiffusion{T}(img::Array{T,2}, dt::FloatingPoint, iterations::Integer)
     u = img

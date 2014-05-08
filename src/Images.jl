@@ -128,6 +128,7 @@ export # types
     size_spatial,
     share,
     sliceim,
+    spacedirections,
     spatialorder,
     spatialpermutation,
     spatialproperties,
