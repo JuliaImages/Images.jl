@@ -1,6 +1,16 @@
 using Images, SIUnits.ShortUnits
 using Base.Test
 
+if VERSION.minor == 2
+    macro mytest_throws(extype, arg)
+        :(@test_throws $(esc(arg)))
+    end
+else
+    macro mytest_throws(extype, arg)
+        :(@test_throws $(esc(extype)) $(esc(arg)))
+    end
+end
+
 B = rand(1:20,3,5)
 cmap = uint8(repmat(linspace(12,255,20),1,3))
 img = ImageCmap(copy(B),cmap,["colorspace" => "RGB", "pixelspacing" => [2.0, 3.0], "spatialorder" => Images.yx])
@@ -170,17 +180,15 @@ imgp = permutedims(imgc, ["x", "y", "color"])
 @test colordim(colorim(rand(Uint8, 5, 5, 3))) == 3
 @test spatialorder(colorim(rand(Uint8, 3, 5, 5))) == ["x", "y"]
 @test spatialorder(colorim(rand(Uint8, 5, 5, 3))) == ["y", "x"]
-@test_throws ErrorException colorim(rand(Uint8, 3, 5, 3))
-
-@test_throws ErrorException colorim(rand(Uint8, 4, 5, 5))
-@test_throws ErrorException colorim(rand(Uint8, 5, 5, 4))
-@test_throws ErrorException colorim(rand(Uint8, 4, 5, 4), "ARGB")
 @test colordim(colorim(rand(Uint8, 4, 5, 5), "RGBA")) == 1
 @test colordim(colorim(rand(Uint8, 4, 5, 5), "ARGB")) == 1
 @test colordim(colorim(rand(Uint8, 5, 5, 4), "RGBA")) == 3
 @test colordim(colorim(rand(Uint8, 5, 5, 4), "ARGB")) == 3
 @test spatialorder(colorim(rand(Uint8, 4, 5, 5), "ARGB")) == ["x", "y"]
 @test spatialorder(colorim(rand(Uint8, 5, 5, 4), "ARGB")) == ["y", "x"]
-
-@test_throws ErrorException colorim(rand(Uint8, 5, 5, 5), "foo")
-@test_throws ErrorException colorim(rand(Uint8, 2, 2, 2), "bar")
+@mytest_throws ErrorException colorim(rand(Uint8, 3, 5, 3))
+@mytest_throws ErrorException colorim(rand(Uint8, 4, 5, 5))
+@mytest_throws ErrorException colorim(rand(Uint8, 5, 5, 4))
+@mytest_throws ErrorException colorim(rand(Uint8, 4, 5, 4), "ARGB")
+@mytest_throws ErrorException colorim(rand(Uint8, 5, 5, 5), "foo")
+@mytest_throws ErrorException colorim(rand(Uint8, 2, 2, 2), "bar")
