@@ -998,16 +998,16 @@ function _imfilter_gaussian!{T<:FloatingPoint}(A::Array{T}, sigma::Vector; emit_
                 coloffset = offset(c, strdshat)
                 A[2+coloffset] -= a1*A[1+coloffset]
                 A[3+coloffset] -= a1*A[2+coloffset] + a2*A[1+coloffset]
-                for i = 4:n1
-                    A[i+coloffset] -= a1*A[i-1+coloffset] + a2*A[i-2+coloffset] + a3*A[i-3+coloffset]
+                for i = 4+coloffset:n1+coloffset
+                    A[i] -= a1*A[i-1] + a2*A[i-2] + a3*A[i-3]
                 end
                 copytail!(x, A, coloffset, 1, n1)
                 A_mul_B!(vstart, M, x)
                 A[n1+coloffset] = vstart[1]
                 A[n1-1+coloffset] -= a1*vstart[1]   + a2*vstart[2] + a3*vstart[3]
                 A[n1-2+coloffset] -= a1*A[n1-1+coloffset] + a2*vstart[1] + a3*vstart[2]
-                for i = n1-3:-1:1
-                    A[i+coloffset] -= a1*A[i+1+coloffset] + a2*A[i+2+coloffset] + a3*A[i+3+coloffset]
+                for i = n1-3+coloffset:-1:1+coloffset
+                    A[i] -= a1*A[i+1] + a2*A[i+2] + a3*A[i+3]
                 end
             end
         else
@@ -1027,7 +1027,8 @@ function _imfilter_gaussian!{T<:FloatingPoint}(A::Array{T}, sigma::Vector; emit_
                 for i = 1:n1 A[i+strdd+coloffset] -= a1*A[i+coloffset] end
                 for i = 1:n1 A[i+2strdd+coloffset] -= a1*A[i+strdd+coloffset] + a2*A[i+coloffset] end
                 for j = 3:szd-1
-                    for i = 1:n1 A[i+j*strdd+coloffset] -= a1*A[i+(j-1)*strdd+coloffset] + a2*A[i+(j-2)*strdd+coloffset] + a3*A[i+(j-3)*strdd+coloffset] end
+                    jj = j*strdd+coloffset
+                    for i = jj+1:jj+n1 A[i] -= a1*A[i-strdd] + a2*A[i-2strdd] + a3*A[i-3strdd] end
                 end
                 copytail!(x, A, coloffset, strdd, szd)
                 A_mul_B!(vstart, M, x)
@@ -1035,7 +1036,8 @@ function _imfilter_gaussian!{T<:FloatingPoint}(A::Array{T}, sigma::Vector; emit_
                 for i = 1:n1 A[i+(szd-2)*strdd+coloffset] -= a1*vstart[1,i]   + a2*vstart[2,i] + a3*vstart[3,i] end
                 for i = 1:n1 A[i+(szd-3)*strdd+coloffset] -= a1*A[i+(szd-2)*strdd+coloffset] + a2*vstart[1,i] + a3*vstart[2,i] end
                 for j = szd-4:-1:0
-                    for i = 1:n1 A[i+j*strdd+coloffset] -= a1*A[i+(j+1)*strdd+coloffset] + a2*A[i+(j+2)*strdd+coloffset] + a3*A[i+(j+3)*strdd+coloffset] end
+                    jj = j*strdd+coloffset
+                    for i = jj+1:jj+n1 A[i] -= a1*A[i+strdd] + a2*A[i+2strdd] + a3*A[i+3strdd] end
                 end
             end
         end
