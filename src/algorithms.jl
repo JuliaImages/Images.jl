@@ -994,7 +994,7 @@ function _imfilter_gaussian!{T<:FloatingPoint}(A::Array{T}, sigma::Vector; emit_
                 szhat = [1]
                 strdshat = [1]
             end
-            @forcartesian c szhat begin
+            @inbounds @forcartesian c szhat begin
                 coloffset = offset(c, strdshat)
                 A[2+coloffset] -= a1*A[1+coloffset]
                 A[3+coloffset] -= a1*A[2+coloffset] + a2*A[1+coloffset]
@@ -1022,7 +1022,7 @@ function _imfilter_gaussian!{T<:FloatingPoint}(A::Array{T}, sigma::Vector; emit_
                 szhat = [1]
                 strdshat = [1]
             end
-            @forcartesian c szhat begin
+            @inbounds @forcartesian c szhat begin
                 coloffset = offset(c, strdshat)  # offset for the remaining dimensions
                 for i = 1:n1 A[i+strdd+coloffset] -= a1*A[i+coloffset] end
                 for i = 1:n1 A[i+2strdd+coloffset] -= a1*A[i+strdd+coloffset] + a2*A[i+coloffset] end
@@ -1039,7 +1039,7 @@ function _imfilter_gaussian!{T<:FloatingPoint}(A::Array{T}, sigma::Vector; emit_
                 end
             end
         end
-        for i = 1:length(A)
+        @inbounds for i = 1:length(A)
             A[i] *= B
         end
     end
