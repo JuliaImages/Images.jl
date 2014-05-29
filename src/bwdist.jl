@@ -1,4 +1,5 @@
 using Base.Cartesian
+
 # A Cartesian macro that we'll need
 # We need to be able to generate a vector
 # the same way ntuple works
@@ -12,6 +13,12 @@ function _nvect(N::Int,ex)
 end
 
 # Relevant distance functions copied from Distance.jl
+function get_common_len(a::AbstractVector, b::AbstractVector)
+    n = length(a)
+    length(b) == n || throw(DimensionMismatch("The lengths of a and b must match."))
+    return n
+end
+
 function sumsqdiff(a::AbstractVector, b::AbstractVector)
     n = get_common_len(a, b)::Int
     s = 0.
