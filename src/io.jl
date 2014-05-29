@@ -245,17 +245,21 @@ function image2wand(img, scalei)
         img = convert(Image, img)
     end
     imgw = scale(scalei, img)
-    imgw = permutedims_cannonical(imgw)
+    imgw = permutedims_canonical(imgw)
     have_color = colordim(imgw)!=0
     if ndims(imgw) > 3+have_color
         error("At most 3 dimensions are supported")
     end
     n = size(imgw, 3+have_color)
     wand = LibMagick.MagickWand()
-    LibMagick.constituteimage(to_explicit(data(imgw)), wand, colorspace(img))
+    LibMagick.constituteimage(to_explicit(to_contiguous(data(imgw))), wand, colorspace(img))
     LibMagick.resetiterator(wand)
     wand
 end
+
+# Make the data contiguous in memory, this is necessary for imagemagick since it doesn't handle stride.
+to_contiguous(A::AbstractArray) = A
+to_contiguous(A::SubArray) = copy(A)
 
 to_explicit(A::AbstractArray) = A
 to_explicit(A::AbstractArray{RGB8}) = reinterpret(Uint8, A, tuple(3, size(A)...))
@@ -764,7 +768,7 @@ function parseints(line, n)
 end
 
 # Permute to a color, horizontal, vertical, ... storage order (with time always last)
-function permutedims_cannonical(img)
+function permutedims_canonical(img)
     cd = colordim(img)
     td = timedim(img)
     p = spatialpermutation(["x", "y"], img)
