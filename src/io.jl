@@ -250,7 +250,6 @@ function image2wand(img, scalei)
     if ndims(imgw) > 3+have_color
         error("At most 3 dimensions are supported")
     end
-    n = size(imgw, 3+have_color)
     wand = LibMagick.MagickWand()
     LibMagick.constituteimage(to_explicit(to_contiguous(data(imgw))), wand, colorspace(img))
     LibMagick.resetiterator(wand)
