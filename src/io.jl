@@ -245,7 +245,7 @@ function image2wand(img, scalei)
         img = convert(Image, img)
     end
     imgw = scale(scalei, img)
-    imgw = permutedims_cannonical(imgw)
+    imgw = permutedims_canonical(imgw)
     have_color = colordim(imgw)!=0
     if ndims(imgw) > 3+have_color
         error("At most 3 dimensions are supported")
@@ -764,7 +764,7 @@ function parseints(line, n)
 end
 
 # Permute to a color, horizontal, vertical, ... storage order (with time always last)
-function permutedims_cannonical(img)
+function permutedims_canonical(img)
     cd = colordim(img)
     td = timedim(img)
     p = spatialpermutation(["x", "y"], img)
