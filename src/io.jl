@@ -219,7 +219,7 @@ function imread(filename::String, ::Type{ImageMagick})
     cs = LibMagick.getimagecolorspace(wand)
     nc, cs = LibMagick.nchannels(imtype, cs, havealpha)
     depth = LibMagick.getimagedepth(wand)
-    T = typedict[depth]
+    T = typedict[iceil(depth/8)*8]
     # Allocate the buffer and get the pixel data
     buf = (nc > 1) ? Array(T, nc, sz...) : Array(T, sz...)
     LibMagick.exportimagepixels!(buf, wand, cs)
