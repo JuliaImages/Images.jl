@@ -252,10 +252,14 @@ function image2wand(img, scalei)
     end
     n = size(imgw, 3+have_color)
     wand = LibMagick.MagickWand()
-    LibMagick.constituteimage(to_explicit(data(imgw)), wand, colorspace(img))
+    LibMagick.constituteimage(to_explicit(to_contiguous(data(imgw))), wand, colorspace(img))
     LibMagick.resetiterator(wand)
     wand
 end
+
+# Make the data contiguous in memory, this is necessary for imagemagick since it doesn't handle stride.
+to_contiguous(A::AbstractArray) = A
+to_contiguous(A::SubArray) = copy(A)
 
 to_explicit(A::AbstractArray) = A
 to_explicit(A::AbstractArray{RGB8}) = reinterpret(Uint8, A, tuple(3, size(A)...))
