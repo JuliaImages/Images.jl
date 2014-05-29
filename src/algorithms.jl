@@ -620,8 +620,8 @@ sadn{T}(A::AbstractArray{T}, B::AbstractArray{T}) = sad(A, B)/length(A)
 
 # normalized cross correlation
 function ncc{T}(A::AbstractArray{T}, B::AbstractArray{T})
-    Am = (data(A)-mean(data(A)))[:]
-    Bm = (data(B)-mean(data(B)))[:]
+    Am = (data(A).-mean(data(A)))[:]
+    Bm = (data(B).-mean(data(B)))[:]
     return dot(Am,Bm)/(norm(Am)*norm(Bm))
 end
 

@@ -290,7 +290,7 @@ convert{Cdest<:ColorValue,Csrc<:ColorValue}(::Type{Image{Cdest}}, img::Union(Abs
 function convert{C<:ColorValue,T<:Union(Integer,FloatingPoint)}(::Type{Image{C}}, img::Union(AbstractArray{T},AbstractImageDirect{T}))
     cs = colorspace(img)
     if !(cs == "RGB" || cs == "RGBA")
-        error("Only RGB and RGBA colorspaces supported currently")
+        error("Unsupported colorspace $cs of input image. Only RGB and RGBA are currently supported.")
     end
     scalei = scaleinfo(RGB, img)
     cd = colordim(img)
