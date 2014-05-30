@@ -67,7 +67,7 @@ end
     @nloops N d j->(j==1?0:1:size(F,j)) begin
         Fstar = (@nref N F j->(j==1?(:):d_j))
         l = 0
-        g = fill([0 for j = 1:ndims(I)],nfv+1)
+        g = fill([0 for j = 1:ndims(I)],length(Fstar)+1)
         for i in 1:size(Fstar,1)
             f = Fstar[i]
             if f != [0 for j=1:N]
