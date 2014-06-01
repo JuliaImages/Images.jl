@@ -507,7 +507,7 @@ for N = 1:4
             sz[cd] = 1
             szs = sz[setdiff(1:$N,cd)]
             out = Array(T, szs...)::Array{T,$N1}
-            wr, wg, wb = 0.30, 0.59, 0.11
+            wr, wg, wb = 0.299, 0.587, 0.114    # Rec 601 luma conversion
             dat = data(img)
             indx = 0
             @nloops $N i d->1:sz[d] begin

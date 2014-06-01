@@ -68,7 +68,8 @@ If the array represents a 4-channel image, the `colorspace` option is mandatory 
 there is no way to automatically distinguish between `"ARGB"` and `"RGBA"`.
 If both the first and last dimensions happen to be of size 3 or 4, it is impossible to
 guess which one represents color and thus an error is generated.
-Thus, if your code should be robust to arbitrary-sized images, prefer using the `Image` constructor directly.
+Thus, if your code should be robust to arbitrary-sized images, you should use the `Image`
+constructor directly.
 
 <br />
 ```
@@ -548,6 +549,13 @@ uint32color!(buf, img, [scaleinfo])
 ```
 converts to 24-bit RGB or 32-bit RGBA, primarily for use in display. The second
 version uses a pre-allocated output buffer, an `Array{Uint32}`.
+
+```
+rgb2gray(img)
+```
+calculates a grayscale image corresponding to the luminance of an RGB image, using the
+[Rec 601 luma](http://en.wikipedia.org/wiki/Luma_%28video%29#Rec._601_luma_versus_Rec._709_luma_coefficients).
+
 
 ### Image I/O
 
