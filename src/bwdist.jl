@@ -1,5 +1,22 @@
 using Base.Cartesian
 
+# A function to permute a tuple of subscripts given a
+# permutation vector
+function permutesubs(subs::(Int...),perm::Vector{Int})
+    n = length(subs)
+    t = ntuple(n,x->subs[perm[x]])
+end
+
+# A function to both permute the dimensions of an array and
+# those of the linear indices stored in that array
+function permutedimsubs{N}(F::Array{Int,N},perm::Vector{Int})
+    B = permutedims(F,perm)
+    for i in 1:length(B)
+        B[i] = B[i] == 0 ? 0 : sub2ind(size(B),permutesubs(ind2sub(size(F),B[i]),perm)...)
+    end
+    return B
+end
+
 # A Cartesian macro that we'll need
 # We need to be able to generate a vector
 # the same way ntuple works
@@ -40,22 +57,17 @@ bwdist(I::AbstractArray{Real}) = bwdist(convert(Bool,I))
     d = [1:N]
     for i in d
         _voronoift!(F,I)
-        F = permutedims(F,circshift(d,1))
-        for j in 1:length(F)
-            F[j] = circshift(F[j],1)
-        end
+        F = permutedimsubs(F,circshift(d,1))
     end
-    D = zeros(Int,size(I))
-    @nloops N i F begin
-        (@nref N D i) = sqeuclidean((@nvect N i),(@nref N F i))
-    end
-    return (F,D)
+    return F
 end
 
 # Generate F_0 in the parlance of Maurer et al. 2003
-@ngenerate N typeof(F) function _computeft!{N}(F::Array{Vector{Int},N},I::AbstractArray{Bool,N})
+@ngenerate N typeof(F) function _computeft!{N}(F::Array{Int,N},I::AbstractArray{Bool,N})
+    @nexprs N d->(stride_d = strides(F)[d])
     @nloops N i I begin
-        (@nref N F i) = (@nref N I i) ? (@nvect N i) : (@nvect N j->0)
+        ind = 1
+        (@nref N F i) = (@nref N I i) ? (@nexprs N d->(ind+=(i_d-1)*stride_d)) : 0
     end
 end
 
@@ -64,7 +76,7 @@ end
 @ngenerate N typeof(F) function _voronoift!{N}(F::Array{Vector{Int},N},I::AbstractArray{Bool,N})
     nfv = count(x->x,I)
     D = N-1
-    @nloops N d j->(j==1?0:1:size(F,j)) begin
+    @nloops N d j->(j==1?0:0:1:size(F,j)) begin
         Fstar = (@nref N F j->(j==1?(:):d_j))
         l = 0
         g = fill([0 for j = 1:ndims(I)],length(Fstar)+1)
