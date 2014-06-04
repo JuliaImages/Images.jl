@@ -519,18 +519,21 @@ for N = 1:4
             if cs != "RGB"
                 error("Color space of image is $cs, not RGB")
             end
+            strds = strides(img)
             cd = colordim(img)
-            cstrd = stride(img, cd)
+            cstrd = strds[cd]
             sz = [size(img,d) for d=1:$N]
             sz[cd] = 1
-            szs = sz[setdiff(1:$N,cd)]
-            out = Array(T, szs...)::Array{T,$N1}
+            szgray = sz[setdiff(1:$N,cd)]
+            out = Array(T, szgray...)::Array{T,$N1}
             wr, wg, wb = 0.299, 0.587, 0.114    # Rec 601 luma conversion
             dat = data(img)
             indx = 0
-            @nloops $N i d->1:sz[d] begin
-                _, k = @nlinear $N dat i
-                out[indx+=1] = truncround(T,wr*dat[k] + wg*dat[k+cstrd] + wb*dat[k+2cstrd])
+            @nexprs $N d->(strd_d = strds[d])
+            @nexprs $N d->(sz_d = sz[d])
+            @nexprs $N d->(k_d = 1)
+            @nloops $N i d->1:sz_d d->(k_{d-1}=k_d+strd_d*(i_d-1)) begin
+                out[indx+=1] = truncround(T,wr*dat[k_0] + wg*dat[k_0+cstrd] + wb*dat[k_0+2cstrd])
             end
             p = copy(properties(img))
             p["colorspace"] = "Gray"
@@ -1235,12 +1238,12 @@ for N = 1:5
                         out[indx+=1] = half*(@nref $N A i) + quarter*nxt
                         for k = 3:2:size(A,1)-2
                             prv = nxt
-                            i1 = k
-                            j1 = k+1
+                            i_1 = k
+                            j_1 = k+1
                             nxt = @nref $N A j
                             out[indx+=1] = quarter*(prv+nxt) + half*(@nref $N A i)
                         end
-                        i1 = size(A,1)
+                        i_1 = size(A,1)
                         out[indx+=1] = quarter*nxt + half*(@nref $N A i)
                     end
                 else
@@ -1250,20 +1253,20 @@ for N = 1:5
                     @nloops $N i d->(1:sz_d) begin
                         (@nref $N out i) = 0
                     end
-                    stride1 = 1
+                    stride_1 = 1
                     @nexprs $N d->(stride_{d+1} = stride_d*size(out,d))
                     @nexprs $N d->offset_d = 0
                     ispeak = true
                     @nloops $N i d->(d==1?(1:1):(1:size(A,d))) d->(if d==dim; ispeak=isodd(i_d); offset_{d-1} = offset_d+(div(i_d+1,2)-1)*stride_d; else; offset_{d-1} = offset_d+(i_d-1)*stride_d; end) begin
-                        indx = offset0
+                        indx = offset_0
                         if ispeak
                             for k = 1:size(A,1)
-                                i1 = k
+                                i_1 = k
                                 out[indx+=1] += half*(@nref $N A i)
                             end
                         else
                             for k = 1:size(A,1)
-                                i1 = k
+                                i_1 = k
                                 tmp = quarter*(@nref $N A i)
                                 out[indx+=1] += tmp
                                 out[indx+strd] = tmp
@@ -1281,8 +1284,8 @@ for N = 1:5
                         for k = 1:size(out,1)-1
                             a = c
                             b = d
-                            j1 = 2*k
-                            i1 = j1-1
+                            j_1 = 2*k
+                            i_1 = j_1-1
                             c = @nref $N A i
                             d = @nref $N A j
                             out[indx+=1] = oneeighth*(a+d) + threeeighths*(b+c)
@@ -1292,22 +1295,22 @@ for N = 1:5
                 else
                     fill!(out, 0)
                     strd = stride(out, dim)
-                    stride1 = 1
+                    stride_1 = 1
                     @nexprs $N d->(stride_{d+1} = stride_d*size(out,d))
                     @nexprs $N d->offset_d = 0
                     peakfirst = true
                     @nloops $N i d->(d==1?(1:1):(1:size(A,d))) d->(if d==dim; peakfirst=isodd(i_d); offset_{d-1} = offset_d+(div(i_d+1,2)-1)*stride_d; else; offset_{d-1} = offset_d+(i_d-1)*stride_d; end) begin
-                        indx = offset0
+                        indx = offset_0
                         if peakfirst
                             for k = 1:size(A,1)
-                                i1 = k
+                                i_1 = k
                                 tmp = @nref $N A i
                                 out[indx+=1] += threeeighths*tmp
                                 out[indx+strd] += oneeighth*tmp
                             end
                         else
                             for k = 1:size(A,1)
-                                i1 = k
+                                i_1 = k
                                 tmp = @nref $N A i
                                 out[indx+=1] += oneeighth*tmp
                                 out[indx+strd] += threeeighths*tmp
@@ -1549,144 +1552,144 @@ extr(order::Ordering, x::ColorValue, y::ColorValue, z::ColorValue) = extr(order,
 # On input, A should be 0 or 1. On output it will be the labeled array, where regions are labeled by the specified connectivity
 
 # Connectivity for an arbitrary neighborhood
-label_components(A::Union(BitArray, Array{Bool}), connectivity=1:ndims(A)) = label_components!(convert(Array{Int}, A), connectivity)
-
-for N = 1:4
-    @eval begin
-        function label_components!(A::Array{Int,$N}, connectivity::Union(BitArray{$N}, Array{Bool,$N}))
-            for i = 1:$N
-                if size(connectivity, i) != 1 && size(connectivity, i) != 3
-                    error("connectivity must be of size 1 or 3 in each dimension")
-                end
-            end
-            @nextract $N halfwidth d->(halfwidth(size(connectivity,d)))
-            @nextract $N offset d->(1+halfwidth(size(connectivity,d)))
-            # Step 0: map each non-zero pixel to itself
-            for i = 1:length(A)
-                if A[i] > 0
-                    A[i] = i
-                end
-            end
-            # Step 1: associate each pixel with its connected-neighbor of lowest index
-            @nloops $N i A begin
-                minindex = @nref $N A i
-                if minindex > 0               # not a background pixel
-                    @nloops $N j d->(-halfwidth_d:halfwidth_d) begin   # j is the displacement to the neighbor
-                        @nexprs $N d->(k_d=i_d+j_d)
-                        if (@nrefshift $N connectivity j offset)   # if in connectivity pattern
-                            if (@nall $N d->(1<=k_d<=size(A,d)))       # check bounds
-                                nbrindex = @nref $N A k
-                                if nbrindex > 0
-                                    if nbrindex < minindex
-                                        minindex = nbrindex
-                                    else
-                                        A[nbrindex] = minindex
-                                    end
-                                end
-                            end
-                        end
-                    end
-                    (@nref $N A i) = minindex
-                end
-            end
-            # Step 2: iterate the graph until it stops changing
-            flowmap!(A)
-            # Step 3: assign unique labels
-            labelmap!(A)
-        end
-    end
-end
-
-# A faster version for 4-connectivity (2d) and 6-connectivity (3d)
-# region = [1,3] if you want connectivity along axes 1 and 3 but not 2
-for N = 1:4
-    @eval begin
-        function label_components!(A::Array{Int,$N}, region::Union(Tuple, AbstractVector{Int}))
-            usedim = falses($N)
-            usedim[region] = true
-            @nextract $N usedim usedim
-            # Step 0: map each non-zero pixel to itself
-            for i = 1:length(A)
-                if A[i] > 0
-                    A[i] = i
-                end
-            end
-            # Step 1: associate each pixel with its connected-neighbor of lowest index
-            @nloops $N i A begin
-                minindex = @nref $N A i
-                if minindex > 0             # not a background pixel
-                    (@nexprs $N d->begin
-                        if usedim_d            # if in pattern
-                            if i_d>1           # if within bounds
-#                                 _, nbrindex = (@nlinear $N A (d2->(d2==d) ? i_d-1 : i_d2))
-                                nbrindex = @nref $N A (d2->(d2==d) ? i_d-1 : i_d2)
-                                if nbrindex > 0
-                                    if nbrindex < minindex
-                                        minindex = nbrindex
-                                    else
-                                        A[nbrindex] = minindex
-                                    end
-                                end
-                            end
-                            if i_d<size(A,d)   # if within bounds
-                                nbrindex = (@nref $N A (d2->(d2==d) ? i_d+1 : i_d2))
-                                if nbrindex > 0
-                                    if nbrindex < minindex
-                                        minindex = nbrindex
-                                    else
-                                        A[nbrindex] = minindex
-                                    end
-                                end
-                            end
-                        end
-                    end)
-                    (@nref $N A i) = minindex
-                end
-            end
-            # Step 2: iterate the graph until it stops changing
-            flowmap!(A)
-            # Step 3: assign unique labels
-            labelmap!(A)
-        end
-    end
-end
-
-# Converges in at most logN steps
-function flowmap!(map::Array{Int})
-    changed = true
-    while changed
-        changed = false
-        for i = 1:length(map)
-            peak = map[i]
-            if peak > 0
-                next = map[peak]
-                changed |= peak != next
-                map[i] = next
-            end
-        end
-    end
-    map
-end
-
-function labelmap!(map::Array{Int})
-    lbl = zeros(Int, size(map))
-    j = 1
-    for i = 1:length(lbl)
-        if map[i] == i
-            lbl[i] = j
-            j += 1
-        end
-    end
-    for i = 1:length(lbl)
-        m = map[i]
-        if m > 0
-            lbl[i] = lbl[m]
-        end
-    end
-    lbl
-end
-
-halfwidth(i::Integer) = div((i-1),2)
+# label_components(A::Union(BitArray, Array{Bool}), connectivity=1:ndims(A)) = label_components!(convert(Array{Int}, A), connectivity)
+# 
+# for N = 1:4
+#     @eval begin
+#         function label_components!(A::Array{Int,$N}, connectivity::Union(BitArray{$N}, Array{Bool,$N}))
+#             for i = 1:$N
+#                 if size(connectivity, i) != 1 && size(connectivity, i) != 3
+#                     error("connectivity must be of size 1 or 3 in each dimension")
+#                 end
+#             end
+#             @nextract $N halfwidth d->(halfwidth(size(connectivity,d)))
+#             @nextract $N offset d->(1+halfwidth(size(connectivity,d)))
+#             # Step 0: map each non-zero pixel to itself
+#             for i = 1:length(A)
+#                 if A[i] > 0
+#                     A[i] = i
+#                 end
+#             end
+#             # Step 1: associate each pixel with its connected-neighbor of lowest index
+#             @nloops $N i A begin
+#                 minindex = @nref $N A i
+#                 if minindex > 0               # not a background pixel
+#                     @nloops $N j d->(-halfwidth_d:halfwidth_d) begin   # j is the displacement to the neighbor
+#                         @nexprs $N d->(k_d=i_d+j_d)
+#                         if (@nrefshift $N connectivity j offset)   # if in connectivity pattern
+#                             if (@nall $N d->(1<=k_d<=size(A,d)))       # check bounds
+#                                 nbrindex = @nref $N A k
+#                                 if nbrindex > 0
+#                                     if nbrindex < minindex
+#                                         minindex = nbrindex
+#                                     else
+#                                         A[nbrindex] = minindex
+#                                     end
+#                                 end
+#                             end
+#                         end
+#                     end
+#                     (@nref $N A i) = minindex
+#                 end
+#             end
+#             # Step 2: iterate the graph until it stops changing
+#             flowmap!(A)
+#             # Step 3: assign unique labels
+#             labelmap!(A)
+#         end
+#     end
+# end
+# 
+# # A faster version for 4-connectivity (2d) and 6-connectivity (3d)
+# # region = [1,3] if you want connectivity along axes 1 and 3 but not 2
+# for N = 1:4
+#     @eval begin
+#         function label_components!(A::Array{Int,$N}, region::Union(Tuple, AbstractVector{Int}))
+#             usedim = falses($N)
+#             usedim[region] = true
+#             @nextract $N usedim usedim
+#             # Step 0: map each non-zero pixel to itself
+#             for i = 1:length(A)
+#                 if A[i] > 0
+#                     A[i] = i
+#                 end
+#             end
+#             # Step 1: associate each pixel with its connected-neighbor of lowest index
+#             @nloops $N i A begin
+#                 minindex = @nref $N A i
+#                 if minindex > 0             # not a background pixel
+#                     (@nexprs $N d->begin
+#                         if usedim_d            # if in pattern
+#                             if i_d>1           # if within bounds
+# #                                 _, nbrindex = (@nlinear $N A (d2->(d2==d) ? i_d-1 : i_d2))
+#                                 nbrindex = @nref $N A (d2->(d2==d) ? i_d-1 : i_d2)
+#                                 if nbrindex > 0
+#                                     if nbrindex < minindex
+#                                         minindex = nbrindex
+#                                     else
+#                                         A[nbrindex] = minindex
+#                                     end
+#                                 end
+#                             end
+#                             if i_d<size(A,d)   # if within bounds
+#                                 nbrindex = (@nref $N A (d2->(d2==d) ? i_d+1 : i_d2))
+#                                 if nbrindex > 0
+#                                     if nbrindex < minindex
+#                                         minindex = nbrindex
+#                                     else
+#                                         A[nbrindex] = minindex
+#                                     end
+#                                 end
+#                             end
+#                         end
+#                     end)
+#                     (@nref $N A i) = minindex
+#                 end
+#             end
+#             # Step 2: iterate the graph until it stops changing
+#             flowmap!(A)
+#             # Step 3: assign unique labels
+#             labelmap!(A)
+#         end
+#     end
+# end
+# 
+# # Converges in at most logN steps
+# function flowmap!(map::Array{Int})
+#     changed = true
+#     while changed
+#         changed = false
+#         for i = 1:length(map)
+#             peak = map[i]
+#             if peak > 0
+#                 next = map[peak]
+#                 changed |= peak != next
+#                 map[i] = next
+#             end
+#         end
+#     end
+#     map
+# end
+# 
+# function labelmap!(map::Array{Int})
+#     lbl = zeros(Int, size(map))
+#     j = 1
+#     for i = 1:length(lbl)
+#         if map[i] == i
+#             lbl[i] = j
+#             j += 1
+#         end
+#     end
+#     for i = 1:length(lbl)
+#         m = map[i]
+#         if m > 0
+#             lbl[i] = lbl[m]
+#         end
+#     end
+#     lbl
+# end
+# 
+# halfwidth(i::Integer) = div((i-1),2)
 
 # phantom images
 

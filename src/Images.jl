@@ -22,7 +22,12 @@ end
 typemin(::Type{RGB}) = RGB(0,0,0)
 typemax(::Type{RGB}) = RGB(1,1,1)
 
-using Cartesian
+if VERSION.minor < 3
+    using Cartesian
+else
+    using Base.Cartesian
+    include("compatibility/forcartesian.jl")
+end
 
 # if isdefined(module_parent(Images), :Grid)
 #     import ..Grid.restrict
@@ -36,6 +41,7 @@ include("io.jl")
 include("scaling.jl")
 include("labeledarrays.jl")
 include("algorithms.jl")
+include("connected.jl")
 
 __init__() = LibMagick.init()
 
