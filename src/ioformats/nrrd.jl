@@ -203,7 +203,7 @@ function imread{S<:IO}(stream::S, ::Type{Images.NRRDFile})
     else
         props["spatialorder"] = [string(char(97+(i+22)%26)) for i = 1:sum(isspatial)]
     end
-    spacedim = 0
+    spacedim = nd
     if haskey(header, "space")
         props["space"] = header["space"]
         spacedim = spacedimdict[lowercase(header["space"])]
@@ -212,7 +212,7 @@ function imread{S<:IO}(stream::S, ::Type{Images.NRRDFile})
         spacedim = int(header["space dimension"])
         spacedim == sum(isspatial) || error("spacedim $spacedim disagrees with isspatial=$isspatial")
     end
-    units = Array(SIUnits.SIQuantity, 0)
+    units = Array(Union(SIUnits.SIUnit,SIUnits.SIQuantity), 0)
     if haskey(header, "space units")
         ustrs = parse_vector_strings(header["space units"])
         length(ustrs) == spacedim || error("parsing of space units: $(header["space units"]) is inconsistent with $spacedim space dimensions")
