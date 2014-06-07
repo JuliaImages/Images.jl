@@ -38,9 +38,12 @@ end
 (./)(img1::AbstractImageDirect, img2::AbstractImageDirect) = limadj(copy(img1, data(img1)./data(img2)), limdivide(limits(img1), limits(img2)))
 (./)(img::AbstractImageDirect, A::AbstractArray) = limadj(copy(img, data(img)./A), limdivide(limits(img), limits(A)))
 # (./)(A::AbstractArray, img::AbstractImageDirect) = limadj(copy(img, A./data(img))
+(.^)(img::AbstractImageDirect, p::Number) = limadj(copy(img, data(img).^p), limpower(limits(img), p))
 
 function limadj(img::AbstractImageDirect, newlim)
-    img["limits"] = newlim
+    if haskey(img, "limits")
+        img["limits"] = newlim
+    end
     img
 end
 
@@ -57,6 +60,7 @@ limtimes(a::Tuple, b::Tuple) = min(a[1]*b[1],a[1]*b[2],a[2]*b[1],a[2]*b[2]), max
 limdivide(a::Tuple, n::Number) = n > 0 ? (a[1]/n, a[2]/n) : (a[2]/n, a[1]/n)
 limdivide(a::Tuple, ::Type{Bool}) = min(a[1],a[1]/0), max(a[2],a[2]/0)
 limdivide(a::Tuple, b::Tuple) = min(a[1]/b[1],a[1]/b[2],a[2]/b[1],a[2]/b[2]), max(a[1]/b[1],a[1]/b[2],a[2]/b[1],a[2]/b[2])
+limpower(a::Tuple, p::Number) = (l = a[1]^p; u = a[2]^p; (min(l,u), max(l,u)))
 
 function sum(img::AbstractImageDirect, region)
     f = prod(size(img)[region...])
