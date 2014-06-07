@@ -42,7 +42,12 @@ end
 
 function limadj(img::AbstractImageDirect, newlim)
     if haskey(img, "limits")
-        img["limits"] = newlim
+        T = eltype(img)
+        if method_exists(typemin, (T,)) && method_exists(typemax, (T,))
+            img["limits"] = (minclamp(typemin(T), newlim[1]), maxclamp(typemax(T), newlim[2]))
+        else
+            img["limits"] = (convert(T, newlim[1]), convert(T, newlim[2]))
+        end
     end
     img
 end

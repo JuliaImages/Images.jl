@@ -29,6 +29,8 @@ img2 = img ./ A
 @assert Images.limits(img2) == (0, Inf)
 img2 = (2img).^2
 @assert Images.limits(img2) == (0, 4)
+imgu = convert(Images.Image, Uint8[1 240; 10 128])  # from #101
+@assert limits(2imgu) == (0x00,0xff)
 
 # scaling, ssd
 img = convert(Images.Image, fill(typemax(Uint16), 3, 3))
