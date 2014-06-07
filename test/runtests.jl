@@ -1,4 +1,5 @@
 include("core.jl")
+include("scaling.jl")
 include("algorithms.jl")
 include("io.jl")
 include("readnrrd.jl")

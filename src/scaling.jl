@@ -1,5 +1,12 @@
 #### Scaling/clipping/type conversion ####
 
+minclamp(minval, val) = val < minval ? minval : convert(typeof(minval), val)
+maxclamp(maxval, val) = val > maxval ? maxval : convert(typeof(maxval), val)
+
+clamp{T}(::Type{T}, val::T) = T
+clamp{T}(::Type{T}, val) = val > typemax(T) ? typemax(T) : (val < typemin(T) ? typemin(T) : convert(T, val))
+clamp{S<:Integer, T<:FloatingPoint}(::Type{T}, val::S) = convert(T, S)
+
 # "Safe" rounding to an integer. Clips the value to the target range before converting the type.
 truncround{T<:Integer}(::Type{T}, val::T) = val
 truncround{T<:Integer}(::Type{T}, val::Integer) = val > typemax(T) ? typemax(T) : (val < typemin(T) ? typemin(T) : val)
