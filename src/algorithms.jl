@@ -68,9 +68,14 @@ limdivide(a::Tuple, b::Tuple) = min(a[1]/b[1],a[1]/b[2],a[2]/b[1],a[2]/b[2]), ma
 limpower(a::Tuple, p::Number) = (l = a[1]^p; u = a[2]^p; (min(l,u), max(l,u)))
 
 function sum(img::AbstractImageDirect, region)
-    f = prod(size(img)[region...])
-    l = limits(img)
-    limadj(copy(img, sum(data(img), region)), (f*l[1], f*l[2]))
+    f = prod(size(img)[[region...]])
+    imgs = sum(data(img), region)
+    l = map(x->convert(eltype(imgs),x), limits(img))
+    out = limadj(copy(img, imgs), (f*l[1], f*l[2]))
+    if in(colordim(img), region)
+        out["colorspace"] = "Unknown"
+    end
+    out
 end
 
 # Logical operations

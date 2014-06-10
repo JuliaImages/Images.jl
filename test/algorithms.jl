@@ -58,6 +58,19 @@ B = scale(Images.ClipMin(Float32, 3), A)
 B = scale(Images.ClipMax(Uint8, 7), A)
 @assert eltype(B) == Uint8 && B == [1 4 7; 2 5 7; 3 6 7]
 
+# Reductions
+let
+    A = rand(5,5,3)
+    img = Images.colorim(A, "RGB")
+    img["limits"] = (0.0, 1.0)
+    s12 = sum(img, (1,2))
+    @test colorspace(s12) == "RGB"
+    @test limits(s12) == (0.0,25.0)
+    s3 = sum(img, (3,))
+    @test colorspace(s3) == "Unknown"
+    @test limits(s3) == (0.0,3.0)
+end
+
 # Array padding
 let A = [1 2; 3 4]
     @test Images.padarray(A, (0,0), (0,0), "replicate") == A
