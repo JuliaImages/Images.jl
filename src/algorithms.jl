@@ -708,6 +708,19 @@ end
 ###
 ### imfilter
 ###
+function imfilter(img::AbstractImageDirect, kern, border, value)
+    if haskey(img, "limits")
+        tmp = copy(img, imfilter_inseparable(img, kern, border, value))
+        if all(kern .>= 0)
+            return limadj(tmp, limtimes(limits(img), sum(kern)))
+        else
+            delete!(tmp, "limits")
+            return tmp
+        end
+    end
+    copy(img, imfilter(data(img), kern, border, value))
+end
+
 imfilter(img, kern, border, value) = copy(img, imfilter_inseparable(img, kern, border, value))
 # Do not combine these with the previous using a default value (see the 2d specialization below)
 imfilter(img, filter) = imfilter(img, filter, "replicate", 0)
