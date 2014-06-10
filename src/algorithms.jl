@@ -634,60 +634,62 @@ function ncc{T}(A::AbstractArray{T}, B::AbstractArray{T})
     return dot(Am,Bm)/(norm(Am)*norm(Bm))
 end
 
-function padarray{T,n}(img::AbstractArray{T,n}, prepad::Vector{Int}, postpad::Vector{Int}, border::String, value::T)
+# Array padding
+function padarray{T,n}(img::AbstractArray{T,n}, prepad::Union(Vector{Int},Dims), postpad::Union(Vector{Int},Dims), border::String)
     I = Array(Vector{Int}, n)
     for d = 1:n
         M = size(img, d)
         I[d] = [(1 - prepad[d]):(M + postpad[d])]
-        if border == "value"
-            I[d] = int((I[d] .>= 1) & (I[d] .<= M))
-        elseif border == "replicate"
+        if border == "replicate"
             I[d] = min(max(I[d], 1), M)
         elseif border == "circular"
-            I[d] = 1 + mod(I[d] - 1, M)
+            I[d] = 1 .+ mod(I[d] .- 1, M)
         elseif border == "symmetric"
-            I[d] = [1:M, M:-1:1][1 + mod(I[d] - 1, 2 * M)]
+            I[d] = [1:M, M:-1:1][1 .+ mod(I[d] .- 1, 2 * M)]
         elseif border == "reflect"
-            I[d] = [1:M, M-1:-1:2][1 + mod(I[d] - 1, 2 * M - 2)]
+            I[d] = [1:M, M-1:-1:2][1 .+ mod(I[d] .- 1, 2 * M - 2)]
         else
             error("unknown border condition")
         end
     end
-
-    if border == "value"
-        A = Array(T, map(length, I)...)
-        fill!(A, value)
-        A[map(x->map(bool, x), I)...] = img
-    else
-        A = img[I...]
-    end
-
-    return A
+    img[I...]
 end
 
-padarray{T,n}(img::AbstractArray{T,n}, padding) = padarray(img, padding, padding, "replicate", zero(T))
-padarray{T,n}(img::AbstractArray{T,n}, padding::Vector{Int}, border::String) = padarray(img, padding, padding, border, zero(T))
-padarray{T,n}(img::AbstractArray{T,n}, padding::Vector{Int}, value::T) = padarray(img, padding, padding, "value", value)
+function padarray{T,n}(img::AbstractArray{T,n}, prepad::Union(Vector{Int},Dims), postpad::Union(Vector{Int},Dims), border::String, value)
+    if border != "value"
+        return padarray(img, prepad, postpad, border)
+    end
+    A = Array(T, ntuple(n, d->size(img,d)+prepad[d]+postpad[d]))
+    fill!(A, value)
+    I = Vector{Int}[1+prepad[d]:size(A,d)-postpad[d] for d = 1:n]
+    A[I...] = img
+    A
+end
 
-function padarray{T,n}(img::AbstractArray{T,n}, padding::Vector{Int}, border::String, direction::String)
+padarray{T,n}(img::AbstractArray{T,n}, padding::Union(Vector{Int},Dims), border::String = "replicate") = padarray(img, padding, padding, border)
+# Restrict the following to Number to avoid trouble when img is an Array{String}
+padarray{T<:Number,n}(img::AbstractArray{T,n}, padding::Union(Vector{Int},Dims), value::T) = padarray(img, padding, padding, "value", value)
+
+function padarray{T,n}(img::AbstractArray{T,n}, padding::Union(Vector{Int},Dims), border::String, direction::String)
     if direction == "both"
-        return padarray(img, padding, padding, border, zero(T))
+        return padarray(img, padding, padding, border)
     elseif direction == "pre"
-        return padarray(img, padding, 0 * padding, border, zero(T))
+        return padarray(img, padding, zeros(Int, n), border)
     elseif direction == "post"
-        return padarray(img, 0 * padding, padding, border, zero(T))
+        return padarray(img, zeros(Int, n), padding, border)
     end
 end
 
-function padarray{T,n}(img::AbstractArray{T,n}, padding::Vector{Int}, value::T, direction::String)
+function padarray{T<:Number,n}(img::AbstractArray{T,n}, padding::Vector{Int}, value::T, direction::String)
     if direction == "both"
         return padarray(img, padding, padding, "value", value)
     elseif direction == "pre"
-        return padarray(img, padding, 0 * padding, "value", value)
+        return padarray(img, padding, zeros(Int, n), "value", value)
     elseif direction == "post"
-        return padarray(img, 0 * padding, padding, "value", value)
+        return padarray(img, zeros(Int, n), padding, "value", value)
     end
 end
+
 
 function prep_kernel(img::AbstractArray, kern::AbstractArray)
     sc = coords_spatial(img)
