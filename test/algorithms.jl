@@ -30,15 +30,18 @@ img2 = img ./ A
 img2 = (2img).^2
 @assert Images.limits(img2) == (0, 4)
 imgu = convert(Images.Image, Uint8[1 240; 10 128])  # from #101
-@assert limits(2imgu) == (0x00,0xff)
+@assert Images.limits(2imgu) == (0x00,0xff)
 
 # scaling, ssd
 img = convert(Images.Image, fill(typemax(Uint16), 3, 3))
 scalei = Images.scaleinfo(Uint8, img)
 img8 = scale(scalei, img)
 @assert all(img8 .== typemax(Uint8))
-A = randn(3,3)
-mxA = maximum(A)
+mxA = -1.0
+while mxA < 0
+    A = randn(3,3)
+    mxA = maximum(A)
+end
 offset = 30.0
 img = convert(Images.Image, A .+ offset)
 scalei = Images.ScaleMinMax{Uint8, Float64}(offset, offset+mxA, 100/mxA)
@@ -54,6 +57,24 @@ B = scale(Images.ClipMin(Float32, 3), A)
 @assert eltype(B) == Float32 && B == [3 4 7; 3 5 8; 3 6 9]
 B = scale(Images.ClipMax(Uint8, 7), A)
 @assert eltype(B) == Uint8 && B == [1 4 7; 2 5 7; 3 6 7]
+
+# Array padding
+let A = [1 2; 3 4]
+    @test Images.padarray(A, (0,0), (0,0), "replicate") == A
+    @test Images.padarray(A, (1,2), (2,0), "replicate") == [1 1 1 2; 1 1 1 2; 3 3 3 4; 3 3 3 4; 3 3 3 4]
+    @test Images.padarray(A, [2,1], [0,2], "circular") == [2 1 2 1 2; 4 3 4 3 4; 2 1 2 1 2; 4 3 4 3 4]
+    @test Images.padarray(A, (1,2), (2,0), "symmetric") == [2 1 1 2; 2 1 1 2; 4 3 3 4; 4 3 3 4; 2 1 1 2]
+    @test Images.padarray(A, (1,2), (2,0), "value", -1) == [-1 -1 -1 -1; -1 -1 1 2; -1 -1 3 4; -1 -1 -1 -1; -1 -1 -1 -1]
+    A = [1 2 3; 4 5 6]
+    @test Images.padarray(A, (1,2), (2,0), "reflect") == [6 5 4 5 6; 3 2 1 2 3; 6 5 4 5 6; 3 2 1 2 3; 6 5 4 5 6]
+    A = [1 2; 3 4]
+    @test Images.padarray(A, (1,1)) == [1 1 2 2; 1 1 2 2; 3 3 4 4; 3 3 4 4]
+    @test Images.padarray(A, (1,1), "replicate", "both") == [1 1 2 2; 1 1 2 2; 3 3 4 4; 3 3 4 4]
+    @test Images.padarray(A, (1,1), "circular", "pre") == [4 3 4; 2 1 2; 4 3 4]
+    @test Images.padarray(A, (1,1), "symmetric", "post") == [1 2 2; 3 4 4; 3 4 4]
+    A = ["a" "b"; "c" "d"]
+    @test Images.padarray(A, (1,1)) == ["a" "a" "b" "b"; "a" "a" "b" "b"; "c" "c" "d" "d"; "c" "c" "d" "d"]
+end
 
 # filtering
 EPS = 1e-14
