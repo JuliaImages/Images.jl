@@ -21,26 +21,26 @@ if !isdir(writedir)
 end
 
 # Gray
-file = getfile("pencil_tile.gif")
+file = getfile("jigsaw_tmpl.png")
 img = imread(file)
 @assert colorspace(img) == "Gray"
 @assert ndims(img) == 2
 @assert colordim(img) == 0
 @assert eltype(img) == Uint8
-outname = joinpath(writedir, "pencil_tile.tif")
+outname = joinpath(writedir, "jigsaw_tmpl.png")
 imwrite(img, outname)
 imgc = imread(outname)
 @assert img.data == imgc.data
 
 
 # Gray with alpha channel
-file = getfile("gamma_rules.png")
+file = getfile("wmark_image.png")
 img = imread(file)
 @assert colorspace(img) == "GrayAlpha"
 @assert ndims(img) == 3
 @assert colordim(img) == 1
 @assert eltype(img) == Uint8
-outname = joinpath(writedir, "gamma_rules.png")
+outname = joinpath(writedir, "wmark_image.png")
 imwrite(img, outname)
 sleep(0.2)
 imgc = imread(outname)

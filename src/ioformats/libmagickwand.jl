@@ -62,6 +62,9 @@ const CStoIMTypedict = ["Gray" => "GrayscaleType", "GrayAlpha" => "GrayscaleMatt
 # Colorspace
 const IMColorspace = ["RGB", "Gray", "Transparent", "OHTA", "Lab", "XYZ", "YCbCr", "YCC", "YIQ", "YPbPr", "YUV", "CMYK", "sRGB"]
 const IMColordict = Dict(IMColorspace, 1:length(IMColorspace))
+IMColordict["GrayAlpha"] = IMColordict["Gray"]
+IMColordict["RGBA"] = IMColordict["RGB"]
+IMColordict["ARGB"] = IMColordict["RGB"]
 
 function nchannels(imtype::String, cs::String, havealpha = false)
     n = 3
@@ -155,6 +158,7 @@ function constituteimage{T<:Unsigned}(buffer::AbstractArray{T}, wand::MagickWand
     for i = 1:nimages
         status = ccall((:MagickConstituteImage, libwand), Cint, (Ptr{Void}, Cssize_t, Cssize_t, Ptr{Uint8}, Cint, Ptr{Void}), wand.ptr, cols, rows, channelorder[colorspace], storagetype(T), p)
         status == 0 && error(wand)
+        setimagecolorspace(wand, colorspace)
         status = ccall((:MagickSetImageDepth, libwand), Cint, (Ptr{Void}, Csize_t), wand.ptr, 8*sizeof(T))
         status == 0 && error(wand)
         p += sizeof(T)*cols*rows*ncolors
