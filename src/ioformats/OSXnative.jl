@@ -32,8 +32,8 @@ function imread(filename)
         tiffdict = CFDictionaryGetValue(dict, "{TIFF}")
         imagedescription = tiffdict != C_NULL ?
             getCFString(CFDictionaryGetValue(tiffdict, "ImageDescription")) : nothing
-        CFRelease(dict)
     end
+    CFRelease(dict)
 
     # Allocate the buffer and get the pixel data
     sz = imframes > 1 ? (imwidth, imheight, imframes) : (imwidth, imheight)
