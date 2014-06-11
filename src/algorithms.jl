@@ -528,7 +528,7 @@ for N = 1:4
                 _, k = @nlinear $N dat i
                 out[indx+=1] = truncround(T,wr*dat[k] + wg*dat[k+cstrd] + wb*dat[k+2cstrd])
             end
-            p = properties(img)
+            p = copy(properties(img))
             p["colorspace"] = "Gray"
             p["colordim"] = 0
             Image(out, p)
