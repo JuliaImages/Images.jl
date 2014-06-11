@@ -23,6 +23,11 @@ function imread(filename)
     T = typedict[int(pixeldepth)]
     # Colormodel is one of: "RGB", "Gray", "CMYK", "Lab"
     colormodel = getCFString(CFDictionaryGetValue(dict, "ColorModel"))
+    if colormodel == ""
+        # Bail out to ImageMagick
+        CFRelease(imgsrc)
+        return nothing
+    end
     imtype = getCFString(CGImageSourceGetType(imgsrc))
     alpha, storagedepth = alpha_and_depth(imgsrc)
 
