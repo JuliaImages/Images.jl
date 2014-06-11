@@ -23,6 +23,11 @@ function imread(filename)
     T = typedict[int(pixeldepth)]
     # Colormodel is one of: "RGB", "Gray", "CMYK", "Lab"
     colormodel = getCFString(CFDictionaryGetValue(dict, "ColorModel"))
+    if colormodel == ""
+        # Bail out to ImageMagick
+        CFRelease(imgsrc)
+        return nothing
+    end
     imtype = getCFString(CGImageSourceGetType(imgsrc))
     alpha, storagedepth = alpha_and_depth(imgsrc)
 
@@ -32,8 +37,8 @@ function imread(filename)
         tiffdict = CFDictionaryGetValue(dict, "{TIFF}")
         imagedescription = tiffdict != C_NULL ?
             getCFString(CFDictionaryGetValue(tiffdict, "ImageDescription")) : nothing
-        CFRelease(dict)
     end
+    CFRelease(dict)
 
     # Allocate the buffer and get the pixel data
     sz = imframes > 1 ? (imwidth, imheight, imframes) : (imwidth, imheight)
