@@ -171,6 +171,16 @@ If supplied, you must have one entry per spatial dimension.
 If you specify their values in the `properties` dictionary, your values will be
 used; if not, hopefully-reasonable defaults will be chosen.
 
+In addition to these "core" properties, `ImageView` will look for a `scalei` property:
+this should be a [`ScaleInfo`](https://github.com/timholy/Images.jl/blob/master/doc/function_reference.md#intensity-scaling) value, to be used for setting the contrast upon display. In the absence of this property,
+the `limits` property will be used, if available, to choose contrast limits.
+
+Naturally, you can add whatever additional properties you want: you could add the date/time
+at which the image was captured, the patient ID, etc. The main point of having a
+properties dictionary, rather than a type with fixed fields, is the flexibility of adding
+whatever metadata you find to be useful.
+
+
 
 ## Writing generic algorithms
 
