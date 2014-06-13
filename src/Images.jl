@@ -37,7 +37,7 @@ include("scaling.jl")
 include("labeledarrays.jl")
 include("algorithms.jl")
 
-init() = LibMagick.init()
+__init__() = LibMagick.init()
 
 function precompile()
     for T in (Uint8, Uint16, Int, Float32, Float64)
@@ -222,10 +222,13 @@ export # types
     # phantoms
     shepp_logan
 
-init()
 
 @deprecate cairoRGB     uint32color!
 @deprecate refim        getindexim
 @deprecate scaledefault climdefault
+
+if VERSION < v"0.3-"
+  __init__()
+end
 
 end
