@@ -136,6 +136,9 @@ Aimg = permutedims(convert(Images.Image, A), [3,1,2])
 
 @assert approx_equal(Images.imfilter_gaussian(ones(4,4), [5,5]), 1.0)
 
+A = zeros(Int, 9, 9); A[5, 5] = 1
+@test maximum(abs(Images.imfilter_LoG(A, [1,1]) - imlog(1.0))) < EPS
+
 # restriction
 A = reshape(uint16(1:60), 4, 5, 3)
 B = Images.restrict(A, (1,2))

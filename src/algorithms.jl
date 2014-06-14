@@ -528,7 +528,7 @@ for N = 1:4
                 _, k = @nlinear $N dat i
                 out[indx+=1] = truncround(T,wr*dat[k] + wg*dat[k+cstrd] + wb*dat[k+2cstrd])
             end
-            p = properties(img)
+            p = copy(properties(img))
             p["colorspace"] = "Gray"
             p["colordim"] = 0
             Image(out, p)
@@ -609,8 +609,6 @@ end
 imdog() = imdog(0.5)
 
 # laplacian of gaussian
-# Inseparable kernel from Huertas and Medioni, IEEE Trans. Pat. Anal. Mach. Int., 
-# PAMI-8, 651, (1986)
 function imlog(sigma::Number)
     m = ceil(8.5sigma)
     m = m % 2 == 0 ? m + 1 : m
@@ -1080,6 +1078,95 @@ function copytail!(dest, A, coloffset, strd, len)
         end
     end
     dest
+end
+
+# Laplacian of Gaussian filter
+# Separable implementation from Huertas and Medioni,
+# IEEE Trans. Pat. Anal. Mach. Int., PAMI-8, 651, (1986)
+
+function imfilter_LoG{T}(img::AbstractArray{T,2}, σ::Vector, border="replicate")
+    # Limited to 2D for now.
+    # See Sage D, Neumann F, Hediger F, Gasser S, Unser M.
+    # Image Processing, IEEE Transactions on. (2005) 14(9):1372-1383.
+    # for 3D.
+
+    # Set up 1D kernels
+    @assert length(σ) == 2
+    σx, σy = σ[1], σ[2]
+    h1(ξ, σ) = sqrt(1/(2π*σ^4))*(1 - ξ^2/σ^2)exp(-ξ^2/(2σ^2))
+    h2(ξ, σ) = sqrt(1/(2π*σ^4))*exp(-ξ^2/(2σ^2))
+
+    w = 8.5σx
+    kh1x = Float64[h1(i, σx) for i = -floor(w/2):floor(w/2)]
+    kh2x = Float64[h2(i, σx) for i = -floor(w/2):floor(w/2)]
+
+    w = 8.5σy
+    kh1y = Float64[h1(i, σy) for i = -floor(w/2):floor(w/2)]
+    kh2y = Float64[h2(i, σy) for i = -floor(w/2):floor(w/2)]
+    
+    # Set up padding index lists
+    kernlenx = length(kh1x)
+    prepad  = div(kernlenx - 1, 2)
+    postpad = div(kernlenx, 2)
+    Ix = padindexes(img, 2, prepad, postpad, border)
+
+    kernleny = length(kh1y)
+    prepad  = div(kernleny - 1, 2)
+    postpad = div(kernleny, 2)
+    Iy = padindexes(img, 1, prepad, postpad, border)
+
+    sz = size(img)
+    # Store intermediate result in a transposed array
+    # Allows column-major second stage filtering
+    img1 = Array(Float64, (sz[2], sz[1]))
+    img2 = Array(Float64, (sz[2], sz[1]))
+    for j in 1:sz[2]
+        for i in 1:sz[1]
+            tmp1, tmp2 = 0.0, 0.0
+            @simd for k in 1:kernlenx
+                @inbounds tmp1 += kh1x[k] * img[Ix[i + k - 1], j]
+                @inbounds tmp2 += kh2x[k] * img[Ix[i + k - 1], j]
+            end
+            @inbounds img1[j, i] = tmp1 # Note the transpose
+            @inbounds img2[j, i] = tmp2
+        end
+    end
+
+    img12 = Array(Float64, sz) # Original image dims here
+    img21 = Array(Float64, sz)
+    for j in 1:sz[1]
+        for i in 1:sz[2]
+            tmp12, tmp21 = 0.0, 0.0
+            @simd for k in 1:kernleny
+                @inbounds tmp12 += kh2y[k] * img1[Iy[i + k - 1], j]
+                @inbounds tmp21 += kh1y[k] * img2[Iy[i + k - 1], j]
+            end
+            @inbounds img12[j, i] = tmp12 # Transpose back to original dims
+            @inbounds img21[j, i] = tmp21
+        end
+    end
+    img12 + img21
+end
+
+imfilter_LoG{T}(img::AbstractArray{T,2}, σ::Real, border="replicate") = 
+imfilter_LoG(img::AbstractArray{T,2}, [σ, σ], border)
+
+function padindexes{T,n}(img::AbstractArray{T,n}, dim, prepad, postpad, border::String)
+    M = size(img, dim)
+    I = Array(Int, M + prepad + postpad)
+    I = [(1 - prepad):(M + postpad)]
+    if border == "replicate"
+        I = min(max(I, 1), M)
+    elseif border == "circular"
+        I = 1 .+ mod(I .- 1, M)
+    elseif border == "symmetric"
+        I = [1:M, M:-1:1][1 .+ mod(I .- 1, 2 * M)]
+    elseif border == "reflect"
+        I = [1:M, M-1:-1:2][1 .+ mod(I .- 1, 2 * M - 2)]
+    else
+        error("unknown border condition")
+    end
+    I
 end
 
 ### restrict, for reducing the image size by 2-fold
