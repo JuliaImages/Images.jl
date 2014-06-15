@@ -35,14 +35,14 @@ function imread(filename)
     typedict = [8 => Uint8, 16 => Uint16, 32 => Uint32]
     T = typedict[int(pixeldepth)]
     # Colormodel is one of: "RGB", "Gray", "CMYK", "Lab"
-    colormodel = getCFString(CFDictionaryGetValue(dict, "ColorModel"))
+    colormodel = CFStringGetCString(CFDictionaryGetValue(dict, "ColorModel"))
     if colormodel == ""
         # Bail out to ImageMagick
         warn("OSX reader found empty colormodel string")
         CFRelease(imgsrc)
         return nothing
     end
-    imtype = getCFString(CGImageSourceGetType(imgsrc))
+    imtype = CFStringGetCString(CGImageSourceGetType(imgsrc))
     alphacode, storagedepth = alpha_and_depth(imgsrc)
 
     # Get image description string
@@ -50,7 +50,7 @@ function imread(filename)
     if imtype == "public.tiff"
         tiffdict = CFDictionaryGetValue(dict, "{TIFF}")
         imagedescription = tiffdict != C_NULL ?
-            getCFString(CFDictionaryGetValue(tiffdict, "ImageDescription")) : nothing
+            CFStringGetCString(CFDictionaryGetValue(tiffdict, "ImageDescription")) : nothing
     end
     CFRelease(dict)
 
@@ -302,11 +302,24 @@ CFBooleanGetValue(CFBoolean::Ptr{Void}) =
     ccall(:CFBooleanGetValue, Bool, (Ptr{Void}, ), CFBoolean)
 
 # CFString
-CFStringGetCStringPtr(CFStringRef::Ptr{Void}) = 
-    ccall(:CFStringGetCStringPtr, Ptr{Uint8}, (Ptr{Void}, Uint16), CFStringRef, 0x0600)
+function CFStringGetCString(CFStringRef::Ptr{Void})
+    buffer = Array(Uint8, 128)
+    res = ccall(:CFStringGetCString, Bool, (Ptr{Void}, Ptr{Uint8}, Uint, Uint16), 
+                CFStringRef, buffer, length(buffer), 0x0600)
+    if res
+        return bytestring(convert(Ptr{Uint8}, buffer))
+    else
+        return ""
+    end
+end
 
-getCFString(CFStr::Ptr{Void}) = CFStringGetCStringPtr(CFStr) != C_NULL ?
-    bytestring(CFStringGetCStringPtr(CFStr)) : ""
+# These were unsafe, can return null pointers at random times.
+# See Apple Developer Docs
+#CFStringGetCStringPtr(CFStringRef::Ptr{Void}) = 
+#    ccall(:CFStringGetCStringPtr, Ptr{Uint8}, (Ptr{Void}, Uint16), CFStringRef, 0x0600)
+#
+#getCFString(CFStr::Ptr{Void}) = CFStringGetCStringPtr(CFStr) != C_NULL ?
+#    bytestring(CFStringGetCStringPtr(CFStr)) : ""
 
 # Core Graphics
 # CGImageSource
