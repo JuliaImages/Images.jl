@@ -22,6 +22,15 @@ function imread(filename)
     dict = CGImageSourceCopyPropertiesAtIndex(imgsrc, 0)
     imheight = CFNumberGetValue(CFDictionaryGetValue(dict, "PixelHeight"), Int16)
     imwidth = CFNumberGetValue(CFDictionaryGetValue(dict, "PixelWidth"), Int16)
+    isindexed = CFBooleanGetValue(CFDictionaryGetValue(dict, "IsIndexed"))
+    if isindexed
+        # Bail out to ImageMagick
+        warn("OSX reader: indexed color images not implemented")
+        CFRelease(imgsrc)
+        return nothing
+    end
+    hasalpha = CFBooleanGetValue(CFDictionaryGetValue(dict, "HasAlpha"))
+
     pixeldepth = CFNumberGetValue(CFDictionaryGetValue(dict, "Depth"), Int16)
     typedict = [8 => Uint8, 16 => Uint16, 32 => Uint32]
     T = typedict[int(pixeldepth)]
@@ -260,6 +269,7 @@ CFDictionaryGetValue(CFDictionaryRef::Ptr{Void}, key::String) =
 
 # CFNumber
 function CFNumberGetValue(CFNum::Ptr{Void}, numtype)
+    CFNum == C_NULL && return nothing
     out = Cint[0]
     ccall(:CFNumberGetValue, Bool, (Ptr{Void}, Cint, Ptr{Cint}), CFNum, numtype, out)
     out[1]
@@ -285,6 +295,11 @@ CFNumberGetValue(CFNum::Ptr{Void}, ::Type{Float64}) =
 
 CFNumberGetValue(CFNum::Ptr{Void}, ::Type{Uint8}) =
     CFNumberGetValue(CFNum, kCFNumberCharType)
+
+#CFBoolean
+CFBooleanGetValue(CFBoolean::Ptr{Void}) =
+    CFBoolean != C_NULL &&
+    ccall(:CFBooleanGetValue, Bool, (Ptr{Void}, ), CFBoolean)
 
 # CFString
 CFStringGetCStringPtr(CFStringRef::Ptr{Void}) = 
