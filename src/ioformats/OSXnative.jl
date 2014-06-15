@@ -9,12 +9,16 @@ function imread(filename)
     myURL = CFURLCreateWithFileSystemPath(abspath(filename))
     imgsrc = CGImageSourceCreateWithURL(myURL)
     CFRelease(myURL)
-    #imgsrc == C_NULL && error("Could not create image at URL: $filename")
-    imgsrc == C_NULL && return nothing  # Fall through to imagemagick in io.jl
+    imgsrc == C_NULL && return nothing
 
     # Get image information
     imframes = int(CGImageSourceGetCount(imgsrc))
-    imframes == 0 && return nothing  # Not an image?  Fall through to ImageMagick
+    if imframes == 0
+        # Bail out to ImageMagick
+        warn("OSX reader found no frames")
+        CFRelease(imgsrc)
+        return nothing
+    end
     dict = CGImageSourceCopyPropertiesAtIndex(imgsrc, 0)
     imheight = CFNumberGetValue(CFDictionaryGetValue(dict, "PixelHeight"), Int16)
     imwidth = CFNumberGetValue(CFDictionaryGetValue(dict, "PixelWidth"), Int16)
@@ -25,11 +29,12 @@ function imread(filename)
     colormodel = getCFString(CFDictionaryGetValue(dict, "ColorModel"))
     if colormodel == ""
         # Bail out to ImageMagick
+        warn("OSX reader found empty colormodel string")
         CFRelease(imgsrc)
         return nothing
     end
     imtype = getCFString(CGImageSourceGetType(imgsrc))
-    alpha, storagedepth = alpha_and_depth(imgsrc)
+    alphacode, storagedepth = alpha_and_depth(imgsrc)
 
     # Get image description string
     imagedescription = ""
@@ -43,16 +48,33 @@ function imread(filename)
     # Allocate the buffer and get the pixel data
     sz = imframes > 1 ? (imwidth, imheight, imframes) : (imwidth, imheight)
     buf = (storagedepth > 1) ? Array(T, storagedepth, sz...) : Array(T, sz...)
-    colormodel = colormodel == "Gray" && alpha > 0 ? "GrayAlpha" : colormodel
-    colormodel = colormodel == "RGB"  && alpha > 0 ? "RGBA" : colormodel
-    if colormodel == "Gray"
+    if colormodel == "Gray" && alphacode == 0
         fillgray!(buf, imgsrc)
-    elseif colormodel == "GrayAlpha"
+    elseif colormodel == "Gray" && in(alphacode, [1, 2, 3, 4])
+        colormodel = "GrayAlpha"
         fillgrayalpha!(buf, imgsrc)
-    else
+    elseif colormodel == "RGB" && in(alphacode, [1, 3])
+        colormodel = "RGBA"
         fillcolor!(buf, imgsrc, storagedepth)
+    elseif colormodel == "RGB" && in(alphacode, [2, 4])
+        colormodel = "ARGB"
+        fillcolor!(buf, imgsrc, storagedepth)
+    elseif colormodel == "RGB" && in(alphacode, [0, 5, 6])
+        fillcolor!(buf, imgsrc, storagedepth)
+    else
+        warn("Unknown colormodel ($colormodel) and alphacode ($alphacode) found by OSX reader")
+        CFRelease(imgsrc)
+        return nothing
     end
     CFRelease(imgsrc)
+
+    # Deal with kCGImageAlphaNoneSkipLast and kCGImageAlphaNoneSkipFirst
+    # These have no useful information in the first or last color channel
+    if alphacode == 5
+        buf = slicedim(buf, 1, 1:3)
+    elseif alphacode == 6
+        buf = slicedim(buf, 1, 2:4)
+    end
     
     # Set the image properties
     spatialorder = (imframes > 1) ? ["x", "y", "z"] : ["x", "y"]
@@ -70,21 +92,16 @@ function imread(filename)
 end
 
 function alpha_and_depth(imgsrc)
-    # Dividing bits per pixel by bits per component tells us how many
-    # color + alpha slices we have in the file.  Alpha returns the 
-    # index of the alpha channel (I hope).  Right now, we just test if 
-    # it is nonzero, but we could use it later to distinguish RGBA from ARGB
     CGimg = CGImageSourceCreateImageAtIndex(imgsrc, 0)  # Check only first frame
     alphacode = CGImageGetAlphaInfo(CGimg)
     bitspercomponent = CGImageGetBitsPerComponent(CGimg)
     bitsperpixel = CGImageGetBitsPerPixel(CGimg)
     CGImageRelease(CGimg)
-    # See https://developer.apple.com/library/mac/documentation/graphicsimaging/reference/CGImage/Reference/reference.html#//apple_ref/doc/uid/TP30000956-CH3g-459700
-    # Returns the channel that contains the alpha values. 
-    # Perhaps not the greatest, but this will do for now.
-    alphadict = [0x00000000 => 0, 0x00000001 => 4, 0x00000002 => 1, 0x00000003 => 4, 
-                 0x00000004 => 1, 0x00000005 => 0, 0x00000006 => 0]
-    alphadict[alphacode], int(div(bitsperpixel, bitspercomponent))
+    # Alpha codes documented here:
+    # https://developer.apple.com/library/mac/documentation/graphicsimaging/reference/CGImage/Reference/reference.html#//apple_ref/doc/uid/TP30000956-CH3g-459700
+    # Dividing bits per pixel by bits per component tells us how many
+    # color + alpha slices we have in the file.
+    alphacode, int(div(bitsperpixel, bitspercomponent))
 end
 
 function fillgray!{T}(buffer::AbstractArray{T, 2}, imgsrc)
