@@ -210,6 +210,12 @@ function scaleinfo_uint{To<:Unsigned,From<:FloatingPoint}(::Type{To}, img::Abstr
     l = climdefault(img)
     ScaleMinMax(To, l[1], l[2], typemax(To)/(l[2]-l[1]))
 end
+
+scaleinfo_uint{From<:Unsigned}(img::AbstractImageDirect{From}) = @get img "scalei" scaleinfo_uint(data(img))
+scaleinfo_uint{From<:Integer}(img::AbstractImageDirect{From}) = @get img "scalei" scaleinfo_uint(data(img))
+scaleinfo_uint{From<:FloatingPoint}(img::AbstractImageDirect{From}) = @get img "scalei" scaleinfo_uint(data(img))
+scaleinfo_uint(img::AbstractImageDirect{RGB}) = @get img "scalei" scaleinfo_uint(data(img))
+
 scaleinfo_uint{From<:Unsigned}(img::AbstractArray{From}) = ScaleNone{From}()
 scaleinfo_uint{From<:Integer}(img::AbstractArray{From}) = scaleinfo_uint(unsigned(From), img)
 scaleinfo_uint{From<:FloatingPoint}(img::AbstractArray{From}) = scaleinfo_uint(Uint8, img)
