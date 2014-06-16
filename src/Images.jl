@@ -201,6 +201,7 @@ export # types
     imfilter_fft,
     imfilter_gaussian,
     imfilter_gaussian!,
+    imfilter_LoG,
     imgaussiannoise,
     imlaplacian,
     imlineardiffusion,

@@ -634,13 +634,23 @@ large kernels. For Gaussian blur, an even better choice is
 ```
 imfilter_gaussian(img, sigma)
 ```
-filters the image with a gaussian of the specified width. `sigma` should have
+filters the image with a Gaussian of the specified width. `sigma` should have
 one value per array dimension (any number of dimensions are supported), 0
 indicating that no filtering is to occur along that dimension. Uses the Young,
 van Vliet, and van Ginkel IIR-based algorithm to provide fast gaussian filtering
 even with large `sigma`. Edges are handled by "NA" conditions, meaning the
 result is normalized by the number and weighting of available pixels, and
 missing data (NaNs) are handled likewise.
+
+<br />
+```
+imfilter_LoG(img, sigma, [border])
+```
+
+filters a 2D image with a Laplacian of Gaussian of the specified width. `sigma`
+may be a vector with one value per array dimension, or may be a single scalar
+value for uniform filtering in both dimensions.  Uses the Huertas and Medioni
+separable algorithm.
 
 <br />
 ```
