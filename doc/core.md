@@ -158,7 +158,12 @@ is no dimension corresponding to color
 - `timedim`: the array dimension used for time (i.e., sequence), or 0 for single
 images
 - `limits`: (minvalue,maxvalue) for this type of image (e.g., (0,255) for Uint8
-images, even if pixels do not reach these values)
+images, even if pixels do not reach these values).
+Particularly useful for scientific imaging when using cameras of bit depth higher than
+8 (but not necessarily as high as 16).
+- `scalei`: a property that controls default contrast scaling upon display. This should be a [`ScaleInfo`](https://github.com/timholy/Images.jl/blob/master/doc/function_reference.md#intensity-scaling)
+value, to be used for setting the contrast upon display. In the absence of this property,
+the `limits` property will be used, if available, to choose contrast limits.
 - `pixelspacing`: the spacing between adjacent pixels along spatial dimensions
 - `spacedirections`: more detailed information about the orientation of array axes
 relative to an external coordinate system (see the [function reference](function_reference.md)).
@@ -170,10 +175,6 @@ If supplied, you must have one entry per spatial dimension.
 
 If you specify their values in the `properties` dictionary, your values will be
 used; if not, hopefully-reasonable defaults will be chosen.
-
-In addition to these "core" properties, `ImageView` will look for a `scalei` property:
-this should be a [`ScaleInfo`](https://github.com/timholy/Images.jl/blob/master/doc/function_reference.md#intensity-scaling) value, to be used for setting the contrast upon display. In the absence of this property,
-the `limits` property will be used, if available, to choose contrast limits.
 
 Naturally, you can add whatever additional properties you want: you could add the date/time
 at which the image was captured, the patient ID, etc. The main point of having a
