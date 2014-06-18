@@ -178,6 +178,10 @@ Base.mimewritable(::MIME"image/png", img::AbstractImage) = sdims(img) == 2
 
 function writemime(stream::IO, ::MIME"image/png", img::AbstractImage; scalei = scaleinfo_uint(img))
     assert2d(img)
+    if isa(img, AbstractImageIndexed)
+        # For now, convert to direct
+        img = convert(Image, img)
+    end
     A = data(img)
     nc = ncolorelem(img)
     npix = length(A)/nc
