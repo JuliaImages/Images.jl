@@ -67,7 +67,7 @@ limdivide(a::Tuple, ::Type{Bool}) = min(a[1],a[1]/0), max(a[2],a[2]/0)
 limdivide(a::Tuple, b::Tuple) = min(a[1]/b[1],a[1]/b[2],a[2]/b[1],a[2]/b[2]), max(a[1]/b[1],a[1]/b[2],a[2]/b[1],a[2]/b[2])
 limpower(a::Tuple, p::Number) = (l = a[1]^p; u = a[2]^p; (min(l,u), max(l,u)))
 
-function sum(img::AbstractImageDirect, region)
+function sum(img::AbstractImageDirect, region::Union(AbstractVector,Tuple,Integer))
     f = prod(size(img)[[region...]])
     imgs = sum(data(img), region)
     l = map(x->convert(eltype(imgs),x), limits(img))
