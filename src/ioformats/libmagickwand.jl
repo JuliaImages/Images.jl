@@ -22,7 +22,7 @@ export MagickWand,
 # Find the library
 mpath = get(ENV, "MAGICK_HOME", "") # If MAGICK_HOME is defined, add to library search path
 mpaths = isempty(mpath) ? ASCIIString[] : [mpath, joinpath(mpath, "lib")]
-libnames = ["libMagickWand", "CORE_RL_wand_"]
+libnames = ["libMagickWand", "libGraphicsMagickWand", "CORE_RL_wand_"]
 suffixes = ["", "-Q16", "-6.Q16", "-Q8"]
 options = ["", "HDRI"]
 const libwand = find_library(vec(libnames.*transpose(suffixes).*reshape(options,(1,1,length(options)))), mpaths)
@@ -32,7 +32,12 @@ const have_imagemagick = !isempty(libwand)
 function init()
     global libwand
     if have_imagemagick
-        eval(:(ccall((:MagickWandGenesis, $libwand), Void, ())))
+        # first try to initialize ImageMagick, then GraphicsMagick if that fails
+        try
+            eval(:(ccall((:MagickWandGenesis, $libwand), Void, ())))
+        catch
+            eval(:(ccall((:InitializeMagick, $libwand), Void, ())))
+        end
     else
         warn("ImageMagick utilities not found. Install for more file format support.")
     end
