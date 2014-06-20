@@ -3,7 +3,7 @@ using BinDeps
 @BinDeps.setup
 
 @linux_only begin
-    libnames = ["libMagickWand"]
+    libnames = ["libMagickWand", "libGraphicsMagickWand"]
     suffixes = ["", "-Q16", "-6.Q16", "-Q8"]
     options = ["", "HDRI"]
     aliases = vec(libnames.*transpose(suffixes).*reshape(options,(1,1,length(options))))
