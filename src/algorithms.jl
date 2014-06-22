@@ -1123,7 +1123,7 @@ function imfilter_LoG{T}(img::AbstractArray{T,2}, σ::Vector, border="replicate"
     for j in 1:sz[2]
         for i in 1:sz[1]
             tmp1, tmp2 = 0.0, 0.0
-            @simd for k in 1:kernlenx
+            for k in 1:kernlenx
                 @inbounds tmp1 += kh1x[k] * img[Ix[i + k - 1], j]
                 @inbounds tmp2 += kh2x[k] * img[Ix[i + k - 1], j]
             end
@@ -1137,7 +1137,7 @@ function imfilter_LoG{T}(img::AbstractArray{T,2}, σ::Vector, border="replicate"
     for j in 1:sz[1]
         for i in 1:sz[2]
             tmp12, tmp21 = 0.0, 0.0
-            @simd for k in 1:kernleny
+            for k in 1:kernleny
                 @inbounds tmp12 += kh2y[k] * img1[Iy[i + k - 1], j]
                 @inbounds tmp21 += kh1y[k] * img2[Iy[i + k - 1], j]
             end
