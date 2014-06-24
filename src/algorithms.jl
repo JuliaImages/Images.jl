@@ -1,7 +1,9 @@
 #### Math with images ####
 
-@deprecate (+)(img::AbstractImageDirect, n::Number) (.+)(img, n)
-@deprecate (+)(n::Number, img::AbstractImageDirect) (.+)(n, img)
+(+)(img::AbstractImageDirect{Bool}, n::Bool) = img .+ n
+(+)(img::AbstractImageDirect, n::Number) = img .+ n
+(+)(n::Bool, img::AbstractImageDirect{Bool}) = n .+ img
+(+)(n::Number, img::AbstractImageDirect) = n .+ img
 (.+)(img::AbstractImageDirect, n::Number) = limadj(copy(img, data(img).+n), limplus(limits(img), n))
 (.+)(n::Number, img::AbstractImageDirect) = limadj(copy(img, data(img).+n), limplus(limits(img), n))
 (+)(img::AbstractImageDirect, A::BitArray) = limadj(copy(img, data(img)+A), limplus(limits(img), Bool))
@@ -12,9 +14,11 @@ end
 (+)(img::AbstractImageDirect, A::AbstractArray) = limadj(copy(img, data(img)+data(A)), limplus(limits(img), limits(A)))
 (.+)(img::AbstractImageDirect, A::BitArray) = limadj(copy(img, data(img).+A), limplus(limits(img), Bool))
 (.+)(img::AbstractImageDirect, A::AbstractArray) = limadj(copy(img, data(img).+data(A)), limplus(limits(img), limits(A)))
-@deprecate (-)(img::AbstractImageDirect, n::Number) (.-)(img, n)
+(-)(img::AbstractImageDirect{Bool}, n::Bool) = img .- n
+(-)(img::AbstractImageDirect, n::Number) = img .- n
 (.-)(img::AbstractImageDirect, n::Number) = limadj(copy(img, data(img).-n), limminus(limits(img), n))
-@deprecate (-)(n::Number, img::AbstractImageDirect) (.-)(n, img)
+(-)(n::Bool, img::AbstractImageDirect{Bool}) = n .- img
+(-)(n::Number, img::AbstractImageDirect) = n .- img
 (.-)(n::Number, img::AbstractImageDirect) = limadj(copy(img, n.-data(img)), limminus(n, limits(img)))
 (-)(img::AbstractImageDirect, A::BitArray) = limadj(copy(img, data(img)-A), limminus(limits(img), Bool))
 (-){T}(img::AbstractImageDirect{T,2}, A::Diagonal) = limadj(copy(img, data(img)-A), limminus(limits(img), limits(A))) # fixes an ambiguity warning
