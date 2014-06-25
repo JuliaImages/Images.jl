@@ -265,7 +265,7 @@ function getindexim{T<:Real}(img::AbstractImage, I::Union(Real,AbstractArray{T})
     nd = ndims(ret)
     if cd > nd
         ret["colordim"] = 0
-        ret["colorspace"] = "Gray"
+        ret["colorspace"] = "Unknown"
     end
     td = timedim(img)
     if td > nd
@@ -299,7 +299,7 @@ function sliceim(img::AbstractImage, I::RangeIndex...)
     if cd > 0
         if isa(I[cd], Int)
             ret.properties["colordim"] = 0
-            ret.properties["colorspace"] = "Gray"
+            ret.properties["colorspace"] = "Unknown"
         else
             ret.properties["colordim"] = dimmap[cd]
             if I[cd] != 1:size(img, cd)

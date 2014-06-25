@@ -112,7 +112,7 @@ s = sliceim(imgd, sd, 2)
 sd = SliceData(imgd, 3)
 s = sliceim(imgd, sd, 2)
 @test colordim(s) == 0
-@test colorspace(s) == "Gray"
+@test colorspace(s) == "Unknown"
 @test spatialorder(s) == Images.yx
 @test s.data == imgd[:,:,2]
 reslice!(s, sd, 3)
