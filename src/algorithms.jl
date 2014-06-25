@@ -659,7 +659,7 @@ function padarray{T,n}(img::AbstractArray{T,n}, prepad::Union(Vector{Int},Dims),
             error("unknown border condition")
         end
     end
-    img[I...]
+    img[I...]::Array{T,n}
 end
 
 function padarray{T,n}(img::AbstractArray{T,n}, prepad::Union(Vector{Int},Dims), postpad::Union(Vector{Int},Dims), border::String, value)
@@ -670,7 +670,7 @@ function padarray{T,n}(img::AbstractArray{T,n}, prepad::Union(Vector{Int},Dims),
     fill!(A, value)
     I = Vector{Int}[1+prepad[d]:size(A,d)-postpad[d] for d = 1:n]
     A[I...] = img
-    A
+    A::typeof(img)
 end
 
 padarray{T,n}(img::AbstractArray{T,n}, padding::Union(Vector{Int},Dims), border::String = "replicate") = padarray(img, padding, padding, border)
