@@ -738,7 +738,7 @@ function permutedims(img::AbstractImage, p::Union(Vector{Int}, (Int...)), spatia
     if issorted(p) && length(p) == ndims(img)
         return img   # should we return a copy?
     end
-    ip = invperm(p)
+    ip = invperm(to_vector(p))
     cd = colordim(img)
     sd = timedim(img)
     ret = copy(img, permutedims(img.data, p))
@@ -896,3 +896,5 @@ require_dimindex(img::AbstractImage, dimname, so) = (di = dimindex(img, dimname,
 
 dimindexes(img::AbstractImage, dimnames::String...) = Int[dimindex(img, nam, spatialorder(img)) for nam in dimnames]
 
+to_vector(v::AbstractVector) = v
+to_vector(v::Tuple) = [v...]
