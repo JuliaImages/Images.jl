@@ -174,7 +174,7 @@ end
 
 # only mime writeable to PNG if 2D (used by IJulia for example)
 import Base.mimewritable
-Base.mimewritable(::MIME"image/png", img::AbstractImage) = sdims(img) == 2
+Base.mimewritable(::MIME"image/png", img::AbstractImage) = sdims(img) == 2 && timedim(img) == 0
 
 function writemime(stream::IO, ::MIME"image/png", img::AbstractImage; scalei = scaleinfo_uint(img))
     assert2d(img)
@@ -228,10 +228,13 @@ function imread(filename::String, ::Type{ImageMagick})
     buf = (nc > 1) ? Array(T, nc, sz...) : Array(T, sz...)
     LibMagick.exportimagepixels!(buf, wand, cs)
     # Set up the properties
-    spatialorder = (n > 1) ? ["x", "y", "z"] : ["x", "y"]
-    prop = ["colorspace" => cs, "spatialorder" => spatialorder, "limits" => (zero(T), typemax(T))]
+#     spatialorder = (n > 1) ? ["x", "y", "z"] : ["x", "y"]
+    prop = ["colorspace" => cs, "spatialorder" => ["x", "y"], "limits" => (zero(T), typemax(T))]
     if nc > 1
         prop["colordim"] = 1
+    end
+    if n > 1
+        prop["timedim"] = ndims(buf)
     end
     Image(buf, prop)
 end
