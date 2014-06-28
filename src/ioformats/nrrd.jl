@@ -267,7 +267,8 @@ function imread{S<:IO}(stream::S, ::Type{Images.NRRDFile})
         length(ps) == nd || error("parsing of spacings: $(header["spacings"]) is inconsistent with $nd dimensions")
         pss = ps[isspatial]
         if !isempty(units)
-            vu = [pss[i]*units[i] for i = 1:spacedim]
+            unitss = units[isspatial]
+            vu = [pss[i]*units[i] for i = 1:length(pss)]
             props["pixelspacing"] = vu
         else
             props["pixelspacing"] = pss
