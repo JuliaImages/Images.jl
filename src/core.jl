@@ -89,12 +89,10 @@ type Overlay{AT<:(AbstractArray...),N,SIT<:(ScaleInfo...)} <: StoredArray{RGB,N}
         new(channels, [convert(RGB, c) for c in colors], scalei, visible)
     end
 end
-Overlay(channels::(AbstractArray...), colors, scalei::(ScaleInfo...), visible::BitVector) =
-    Overlay{typeof(channels),ndims(channels[1]),typeof(scalei)}(channels,colors,scalei,visible)
-Overlay(channels::(AbstractArray...), colors, scalei::(ScaleInfo...)) =
-    Overlay{typeof(channels),ndims(channels[1]),typeof(scalei)}(channels,colors,scalei,trues(length(channels)))
+Overlay(channels::(AbstractArray...), colors, scalei::(ScaleInfo...), visible = trues(length(channels))) =
+    Overlay{typeof(channels),ndims(channels[1]),typeof(scalei)}(channels,colors,scalei,convert(BitVector, visible))
 
-function Overlay(channels::(AbstractArray...), colors, clim)
+function Overlay(channels::(AbstractArray...), colors, clim = ntuple(length(channels), i->limits(channels[i])))
     n = length(channels)
     for i = 1:n
         if length(clim[i]) != 2
@@ -106,16 +104,17 @@ function Overlay(channels::(AbstractArray...), colors, clim)
 end
 
 # Returns the overlay as an image, if possible
-function OverlayImage(channels::(AbstractArray...), colors::(ColorValue...), clim)
-    ovr = Overlay(channels, colors, clim)
+function OverlayImage(channels::(AbstractArray...), colors::(ColorValue...), args...)
+    ovr = Overlay(channels, colors, args...)
     for i = 1:length(channels)
         if isa(channels[i], AbstractImage)
             prop = copy(properties(channels[i]))
-            delete!(prop, "colorspace")
+            haskey(prop, "colorspace") && delete!(prop, "colorspace")
+            haskey(prop, "limits") && delete!(prop, "limits")
             return Image(ovr, prop)
         end
     end
-    ovr
+    colorim(ovr)
 end
 
 #### Core operations ####
