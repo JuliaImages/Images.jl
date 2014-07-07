@@ -124,7 +124,6 @@ for N = 1:4
                             end
                         end
                     end)
-                    @label donechecking
                     if label == typemax(Int)
                         label = push!(sets)
                     end
