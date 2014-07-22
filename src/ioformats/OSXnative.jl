@@ -92,10 +92,12 @@ function imread(filename)
             "limits" => (zero(T), typemax(T)),
             "imagedescription" => imagedescription,
             "suppress" => Set({"imagedescription"})]
-    imframes > 1 && prop["timedim"] = ndims(buf)
-    # Does GrayAlpha count as a colordim??
-    colormodel != "Gray" && prop["colordim"] = 1
-
+    if imframes > 1
+        prop["timedim"] = ndims(buf)
+    end
+    if colormodel != "Gray"  # Does GrayAlpha count as a colordim??
+        prop["colordim"] = 1
+    end
     Image(buf, prop)
 end
 
