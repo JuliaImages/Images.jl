@@ -203,7 +203,7 @@ oms{T}(id, uid, ::Type{T}=Ptr{Void}) =
     ccall(:objc_msgSend, T, (Ptr{Void}, Ptr{Void}), id, selector(uid))
 
 ogc{T}(id, ::Type{T}=Ptr{Void}) =
-    ccall((:objc_getClass, "Cocoa.framework/Cocoa"), Ptr{Void}, (Ptr{Uint8},), id)
+    ccall((:objc_getClass, "Cocoa.framework/Cocoa"), Ptr{Void}, (Ptr{Uint8}, ), id)
 
 selector(sel::String) = ccall(:sel_getUid, Ptr{Void}, (Ptr{Uint8}, ), sel)
 
@@ -229,21 +229,25 @@ CFRelease(CFTypeRef::Ptr{Void}) = CFTypeRef != C_NULL &&
     ccall(:CFRelease, Void, (Ptr{Void}, ), CFTypeRef)
 
 function CFGetRetainCount(CFTypeRef::Ptr{Void})
-    CFTypeRef != C_NULL ?
-        ccall(:CFGetRetainCount, Clonglong, (Ptr{Void}, ), CFTypeRef) : 0
+    CFTypeRef == C_NULL && return 0
+    ccall(:CFGetRetainCount, Clonglong, (Ptr{Void}, ), CFTypeRef)
 end
 
 CFShow(CFTypeRef::Ptr{Void}) = CFTypeRef != C_NULL && 
     ccall(:CFShow, Void, (Ptr{Void}, ), CFTypeRef)
 
-CFCopyDescription(CFTypeRef::Ptr{Void}) = CFTypeRef != C_NULL && 
+function CFCopyDescription(CFTypeRef::Ptr{Void})
+    CFTypeRef == C_NULL && return C_NULL
     ccall(:CFCopyDescription, Ptr{Void}, (Ptr{Void}, ), CFTypeRef)
+end
 
 #CFCopyTypeIDDescription(CFTypeID::Cint) = CFTypeRef != C_NULL && 
 #    ccall(:CFCopyTypeIDDescription, Ptr{Void}, (Cint, ), CFTypeID)
 
-CFGetTypeID(CFTypeRef::Ptr{Void}) = CFTypeRef != C_NULL && 
+function CFGetTypeID(CFTypeRef::Ptr{Void})
+    CFTypeRef == C_NULL && return nothing
     ccall(:CFGetTypeID, Culonglong, (Ptr{Void}, ), CFTypeRef)
+end
 
 CFURLCreateWithString(filename) = 
     ccall(:CFURLCreateWithString, Ptr{Void},
@@ -259,10 +263,11 @@ CFDictionaryGetKeysAndValues(CFDictionaryRef::Ptr{Void}, keys, values) =
     ccall(:CFDictionaryGetKeysAndValues, Void,
           (Ptr{Void}, Ptr{Ptr{Void}}, Ptr{Ptr{Void}}), CFDictionaryRef, keys, values)
 
-CFDictionaryGetValue(CFDictionaryRef::Ptr{Void}, key) =
-    CFDictionaryRef != C_NULL && 
+function CFDictionaryGetValue(CFDictionaryRef::Ptr{Void}, key)
+    CFDictionaryRef == C_NULL && return C_NULL
     ccall(:CFDictionaryGetValue, Ptr{Void},
           (Ptr{Void}, Ptr{Void}), CFDictionaryRef, key)
+end
 
 CFDictionaryGetValue(CFDictionaryRef::Ptr{Void}, key::String) = 
     CFDictionaryGetValue(CFDictionaryRef::Ptr{Void}, NSString(key))
@@ -303,14 +308,12 @@ CFBooleanGetValue(CFBoolean::Ptr{Void}) =
 
 # CFString
 function CFStringGetCString(CFStringRef::Ptr{Void})
-    buffer = Array(Uint8, 128)
+    CFStringRef == C_NULL && return ""
+    buffer = Array(Uint8, 1024)  # does this need to be bigger for Open Microscopy TIFFs?
     res = ccall(:CFStringGetCString, Bool, (Ptr{Void}, Ptr{Uint8}, Uint, Uint16), 
                 CFStringRef, buffer, length(buffer), 0x0600)
-    if res
-        return bytestring(convert(Ptr{Uint8}, buffer))
-    else
-        return ""
-    end
+    res == C_NULL && return ""
+    return bytestring(convert(Ptr{Uint8}, buffer))
 end
 
 # These were unsafe, can return null pointers at random times.
