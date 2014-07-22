@@ -86,16 +86,15 @@ function imread(filename)
     end
     
     # Set the image properties
-    spatialorder = (imframes > 1) ? ["x", "y", "z"] : ["x", "y"]
-    prop = {"colorspace" => colormodel,
-            "spatialorder" => spatialorder,
+    prop = ["colorspace" => colormodel,
+            "spatialorder" => ["x", "y"],
             "pixelspacing" => [1, 1],
             "limits" => (zero(T), typemax(T)),
             "imagedescription" => imagedescription,
-            "suppress" => Set({"imagedescription"})}
-    if colormodel != "Gray"  # Does GrayAlpha count as a colordim??
-        prop["colordim"] = 1
-    end
+            "suppress" => Set({"imagedescription"})]
+    imframes > 1 && prop["timedim"] = ndims(buf)
+    # Does GrayAlpha count as a colordim??
+    colormodel != "Gray" && prop["colordim"] = 1
 
     Image(buf, prop)
 end
