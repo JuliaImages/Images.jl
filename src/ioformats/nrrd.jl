@@ -226,7 +226,7 @@ function imread{S<:IO}(stream::S, ::Type{Images.NRRDFile})
         end
         if length(units) < spacedim
             units = Array(SIUnits.SIQuantity, 0)  # Don't use any units
-            header["spaceunits"] = ustrs          # ...but store the string representation
+            props["spaceunits"] = ustrs          # ...but store the string representation
         end
     end
     if haskey(header, "space directions")
