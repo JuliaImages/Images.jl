@@ -24,6 +24,7 @@ end
 (-){T}(img::AbstractImageDirect{T,2}, A::Diagonal) = limadj(copy(img, data(img)-A), limminus(limits(img), limits(A))) # fixes an ambiguity warning
 (-)(img::AbstractImageDirect, A::AbstractArray) = limadj(copy(img, data(img)-data(A)), limminus(limits(img), limits(A)))
 # (-)(A::AbstractArray, img::AbstractImageDirect) = limadj(copy(img, data(A) - data(img)), limminus(limits(A), limits(img)))
+(-)(img::AbstractImageDirect) = limadj(copy(img, -data(img)), limtimes(limits(img), -1))
 (.-)(img::AbstractImageDirect, A::BitArray) = limadj(copy(img, data(img).-A), limminus(limits(img), Bool))
 (.-)(img::AbstractImageDirect, A::AbstractArray) = limadj(copy(img, data(img).-data(A)), limminus(limits(img), limits(A)))
 (*)(img::AbstractImageDirect, n::Number) = (.*)(img, n)
@@ -43,6 +44,8 @@ end
 (./)(img::AbstractImageDirect, A::AbstractArray) = limadj(copy(img, data(img)./A), limdivide(limits(img), limits(A)))
 # (./)(A::AbstractArray, img::AbstractImageDirect) = limadj(copy(img, A./data(img))
 (.^)(img::AbstractImageDirect, p::Number) = limadj(copy(img, data(img).^p), limpower(limits(img), p))
+sqrt(img::AbstractImageDirect) = limadj(copy(img, sqrt(data(img))), limpower(limits(img), 0.5))
+atan2(img1::AbstractImageDirect, img2::AbstractImageDirect) = (img = copy(img1, atan2(data(img1), data(img2))); img["limits"] = (-float(pi),float(pi)); img)
 
 function limadj(img::AbstractImageDirect, newlim)
     if haskey(img, "limits")
@@ -544,12 +547,73 @@ for N = 1:4
 end
 
 function sobel()
-    f = [1.0 2.0 1.0; 0.0 0.0 0.0; -1.0 -2.0 -1.0]
+    f = [ -1.0  0.0  1.0
+          -2.0  0.0  2.0
+          -1.0  0.0  1.0 ]
     return f, f'
 end
 
 function prewitt()
-    f = [1.0 1.0 1.0; 0.0 0.0 0.0; -1.0 -1.0 -1.0]
+    f = [ -1.0  0.0  1.0
+          -1.0  0.0  1.0
+          -1.0  0.0  1.0 ]
+    return f, f'
+end
+
+# Consistent Gradient Operators
+# Ando Shigeru
+# IEEE Trans. Pat. Anal. Mach. Int., vol. 22 no 3, March 2000
+#
+# TODO: These coefficients were taken from the paper It would be nice
+#       to resolve the optimization problem and use higher precision
+#       versions, which might allow better separable approximations of
+#       shigeru4 and shigeru5.
+
+function shigeru3()
+    f = [ -0.112737  0.0  0.112737
+          -0.274526  0.0  0.274526
+          -0.112737  0.0  0.112737 ]
+    return f, f'
+end
+
+# Below, the shigeru4() and shigeru5() functions return filters with
+# the published filter values.  The shigeru4_sep() and shigeru5_sep()
+# functions return separable approximations to the corresponding
+# filters, estimated using the projection of the actual values on the
+# eigenvector corresponding to the largest eigenvalue of the SVD of
+# the original filter.
+
+function shigeru4()
+    f = [ -0.022116 -0.025526  0.025526  0.022116
+          -0.098381 -0.112984  0.112984  0.098381
+          -0.098381 -0.112984  0.112984  0.098381
+          -0.022116 -0.025526  0.025526  0.022116 ]
+    return f, f'
+end
+
+function shigeru4_sep()
+    f = [-0.022175974729759376 -0.025473821998749126 0.025473821998749126 0.022175974729759376
+         -0.09836750569692418  -0.11299599504060115  0.11299599504060115  0.09836750569692418
+         -0.09836750569692418  -0.11299599504060115  0.11299599504060115  0.09836750569692418
+         -0.022175974729759376 -0.025473821998749126 0.025473821998749126 0.022175974729759376]
+    return f, f'
+end
+
+function shigeru5()
+    f = [ -0.003776 -0.010199  0.0  0.010199  0.003776
+          -0.026786 -0.070844  0.0  0.070844  0.026786
+          -0.046548 -0.122572  0.0  0.122572  0.046548
+          -0.026786 -0.070844  0.0  0.070844  0.026786
+          -0.003776 -0.010199  0.0  0.010199  0.003776 ]
+    return f, f'
+end
+
+function shigeru5_sep()
+    f = [-0.0038543900766123762 -0.0101692999709622   0.0  0.0101692999709622   0.0038543900766123762
+         -0.026843218687756566  -0.07082229291692607  0.0  0.07082229291692607  0.026843218687756566
+         -0.046468878396946627  -0.12260200818803602  0.0  0.12260200818803602  0.046468878396946627
+         -0.026843218687756566  -0.07082229291692607  0.0  0.07082229291692607  0.026843218687756566
+         -0.0038543900766123762 -0.0101692999709622   0.0  0.0101692999709622   0.0038543900766123762]
     return f, f'
 end
 
@@ -1435,23 +1499,7 @@ function imstretch{T}(img::AbstractArray{T}, m::Number, slope::Number)
     share(img, 1./(1 + (m./(data(img) + eps(T))).^slope))
 end
 
-function imedge{T}(img::AbstractArray{T}, method::String, border::String)
-    # needs more methods
-    if method == "sobel"
-        s1, s2 = sobel()
-        img1 = imfilter(img, s1, border)
-        img2 = imfilter(img, s2, border)
-        return img1, img2, sqrt(img1.^2 + img2.^2), atan2(img2, img1)
-    elseif method == "prewitt"
-        s1, s2 = prewitt()
-        img1 = imfilter(img, s1, border)
-        img2 = imfilter(img, s2, border)
-        return img1, img2, sqrt(img1.^2 + img2.^2), atan2(img2, img1)
-    end
-end
-
-imedge{T}(img::AbstractArray{T}, method::String) = imedge(img, method, "replicate")
-imedge{T}(img::AbstractArray{T}) = imedge(img, "sobel", "replicate")
+# image gradients
 
 # forward and backward differences 
 # can be very helpful for discretized continuous models 
@@ -1459,6 +1507,38 @@ forwarddiffy{T}(u::Array{T,2}) = [u[2:end,:]; u[end,:]] - u
 forwarddiffx{T}(u::Array{T,2}) = [u[:,2:end] u[:,end]] - u
 backdiffy{T}(u::Array{T,2}) = u - [u[1,:]; u[1:end-1,:]]
 backdiffx{T}(u::Array{T,2}) = u - [u[:,1] u[:,1:end-1]]
+
+function imgradientxy(img::AbstractArray, method::String="shigeru3", border::String="replicate")
+    sx,sy = spatialorder(img)[1] == "x" ? (2,1) : (1,2)
+    s = (method == "sobel"        ? sobel() :
+         method == "prewitt"      ? prewitt() :
+         method == "shigeru3"     ? shigeru3() :
+         method == "shigeru4"     ? shigeru4() :
+         method == "shigeru5"     ? shigeru5() :
+         method == "shigeru4_sep" ? shigeru4_sep() :
+         method == "shigeru5_sep" ? shigeru5_sep() :
+         error("Unknown gradient method: $method"))
+
+    grad_x = imfilter(img, s[sx], border)
+    grad_y = imfilter(img, s[sy], border)
+
+    return grad_x, grad_y
+end
+
+function imgradient(grad_x::AbstractArray, grad_y::AbstractArray)
+    return sqrt(grad_x.^2 + grad_y.^2), atan2(-grad_y, grad_x)
+end
+
+function imgradient(img::AbstractArray, method::String="shigeru3", border::String="replicate")
+    grad_x, grad_y = imgradientxy(img, method, border)
+    return imgradient(grad_x, grad_y)
+end
+
+function imedge(img::AbstractArray, method::String="sobel", border::String="replicate")
+    grad_x, grad_y = imgradientxy(img, method, border)
+    mag, phase = imgradient(grad_x, grad_y)
+    return (grad_x, grad_y, mag, phase)
+end
 
 function imROF{T}(img::Array{T,2}, lambda::Number, iterations::Integer)
     # Total Variation regularized image denoising using the primal dual algorithm
