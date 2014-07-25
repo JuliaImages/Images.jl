@@ -554,29 +554,27 @@ function prewitt()
 end
 
 # average filter
-function imaverage(filter_size)
+function imaverage(filter_size=[3,3])
     if length(filter_size) != 2
         error("wrong filter size")
     end
-    m, n = filter_size[1], filter_size[2]
+    m, n = filter_size
     if mod(m, 2) != 1 || mod(n, 2) != 1
         error("filter dimensions must be odd")
     end
     f = ones(Float64, m, n)/(m*n)
 end
 
-imaverage() = imaverage([3 3])
-
 # laplacian filter kernel
-function imlaplacian(diagonals::String)
+function imlaplacian(diagonals::String="nodiagonals")
     if diagonals == "diagonals"
         return [1.0 1.0 1.0; 1.0 -8.0 1.0; 1.0 1.0 1.0]
     elseif diagonals == "nodiagonals"
         return [0.0 1.0 0.0; 1.0 -4.0 1.0; 0.0 1.0 0.0]
+    else
+        error("Expected \"diagnoals\" or \"nodiagonals\" or Number, got: \"$diagonals\"")
     end
 end
-
-imlaplacian() = imlaplacian("nodiagonals")
 
 # more general version
 function imlaplacian(alpha::Number)
@@ -587,7 +585,7 @@ function imlaplacian(alpha::Number)
 end
 
 # 2D gaussian filter kernel
-function gaussian2d(sigma::Number, filter_size)
+function gaussian2d(sigma::Number=0.5, filter_size=[])
     if length(filter_size) == 0
         # choose 'good' size 
         m = 4*ceil(sigma)+1
@@ -604,26 +602,19 @@ function gaussian2d(sigma::Number, filter_size)
     return g/sum(g)
 end
 
-gaussian2d(sigma::Number) = gaussian2d(sigma, [])
-gaussian2d() = gaussian2d(0.5, [])
-
 # difference of gaussian
-function imdog(sigma::Number)
+function imdog(sigma::Number=0.5)
     m = 4*ceil(sqrt(2)*sigma)+1
     return gaussian2d(sqrt(2)*sigma, [m m]) - gaussian2d(sigma, [m m])
 end
 
-imdog() = imdog(0.5)
-
 # laplacian of gaussian
-function imlog(sigma::Number)
+function imlog(sigma::Number=0.5)
     m = ceil(8.5sigma)
     m = m % 2 == 0 ? m + 1 : m
     return [(1/(2pi*sigma^4))*(2 - (x^2 + y^2)/sigma^2)*exp(-(x^2 + y^2)/(2sigma^2)) 
             for x=-floor(m/2):floor(m/2), y=-floor(m/2):floor(m/2)]
 end
-
-imlog() = imlog(0.5)
 
 # Sum of squared differences
 ssd{T}(A::AbstractArray{T}, B::AbstractArray{T}) = sum((data(A)-data(B)).^2)
