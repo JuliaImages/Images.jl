@@ -176,7 +176,7 @@ end
 import Base.mimewritable
 Base.mimewritable(::MIME"image/png", img::AbstractImage) = sdims(img) == 2 && timedim(img) == 0
 
-function writemime(stream::IO, ::MIME"image/png", img::AbstractImage; scalei = scaleinfo_uint(img))
+function _writemime(stream::IO, ::MIME"image/png", img::AbstractImage, scalei)
     assert2d(img)
     if isa(img, AbstractImageIndexed)
         # For now, convert to direct
@@ -197,6 +197,9 @@ function writemime(stream::IO, ::MIME"image/png", img::AbstractImage; scalei = s
     blob = LibMagick.getblob(wand, "png")
     write(stream, blob)
 end
+writemime(stream::IO, mime::MIME"image/png", img::AbstractImage{RGB}; scalei = scaleinfo_uint(img)) = _writemime(stream, mime, img, scalei)
+writemime{C<:ColorValue}(stream::IO, mime::MIME"image/png", img::AbstractImage{C}; kwargs...) = writemime(stream, mime, convert(Image{RGB}, img); kwargs...)
+writemime(stream::IO, mime::MIME"image/png", img::AbstractImage; scalei = scaleinfo_uint(img)) = _writemime(stream, mime, img, scalei=scalei)
 
 #### Implementation of specific formats ####
 
