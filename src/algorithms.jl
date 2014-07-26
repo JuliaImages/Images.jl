@@ -721,7 +721,8 @@ function imfilter_inseparable{T,K,N}(img::AbstractArray{T,N}, kern::AbstractArra
     prepad  = [div(size(kern,i)-1, 2) for i = 1:N]
     postpad = [div(size(kern,i),   2) for i = 1:N]
     A = padarray(img, prepad, postpad, border, convert(T, value))
-    _imfilter!(Array(typeof(one(T)*one(K)), size(img)), A, data(kern))
+    result = _imfilter!(Array(typeof(one(T)*one(K)), size(img)), A, data(kern))
+    copy(img, result)
 end
 
 # Special case for 2d kernels: check for separability
