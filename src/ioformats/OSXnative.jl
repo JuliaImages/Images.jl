@@ -33,7 +33,7 @@ function imread(filename)
 
     pixeldepth = CFNumberGetValue(CFDictionaryGetValue(dict, "Depth"), Int16)
     typedict = [8 => Uint8, 16 => Uint16, 32 => Uint32]
-    T = typedict[int(pixeldepth)]
+    T = typedict[iceil(pixeldepth/8)*8]
     # Colormodel is one of: "RGB", "Gray", "CMYK", "Lab"
     colormodel = CFStringGetCString(CFDictionaryGetValue(dict, "ColorModel"))
     if colormodel == ""
