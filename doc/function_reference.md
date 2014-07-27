@@ -698,6 +698,8 @@ Edge-detection filtering. `method` is one of `"sobel"`, `"prewitt"`, `"shigeru3"
 
 Returns a tuple `(grad_x, grad_y, mag, orient)`, which are the horizontal gradient, vertical gradient, and the magnitude and orientation of the strongest edge, respectively.
 
+Returns a tuple `(grad_x, grad_y, mag, phase)`, which are the horizontal component, vertical component, magnitude, and phase of the gradient, respectively.
+
 <br />
 ```
 forwarddiffx(img)
