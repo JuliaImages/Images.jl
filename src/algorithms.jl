@@ -551,14 +551,14 @@ function sobel()
     f = [ -1.0  0.0  1.0
           -2.0  0.0  2.0
           -1.0  0.0  1.0 ]
-    return f, f'
+    return f', f
 end
 
 function prewitt()
     f = [ -1.0  0.0  1.0
           -1.0  0.0  1.0
           -1.0  0.0  1.0 ]
-    return f, f'
+    return f', f
 end
 
 # Consistent Gradient Operators
@@ -574,7 +574,7 @@ function shigeru3()
     f = [ -0.112737  0.0  0.112737
           -0.274526  0.0  0.274526
           -0.112737  0.0  0.112737 ]
-    return f, f'
+    return f', f
 end
 
 # Below, the shigeru4() and shigeru5() functions return filters with
@@ -589,7 +589,7 @@ function shigeru4()
           -0.098381 -0.112984  0.112984  0.098381
           -0.098381 -0.112984  0.112984  0.098381
           -0.022116 -0.025526  0.025526  0.022116 ]
-    return f, f'
+    return f', f
 end
 
 function shigeru4_sep()
@@ -597,7 +597,7 @@ function shigeru4_sep()
          -0.09836750569692418  -0.11299599504060115  0.11299599504060115  0.09836750569692418
          -0.09836750569692418  -0.11299599504060115  0.11299599504060115  0.09836750569692418
          -0.022175974729759376 -0.025473821998749126 0.025473821998749126 0.022175974729759376]
-    return f, f'
+    return f', f
 end
 
 function shigeru5()
@@ -606,7 +606,7 @@ function shigeru5()
           -0.046548 -0.122572  0.0  0.122572  0.046548
           -0.026786 -0.070844  0.0  0.070844  0.026786
           -0.003776 -0.010199  0.0  0.010199  0.003776 ]
-    return f, f'
+    return f', f
 end
 
 function shigeru5_sep()
@@ -615,7 +615,7 @@ function shigeru5_sep()
          -0.046468878396946627  -0.12260200818803602  0.0  0.12260200818803602  0.046468878396946627
          -0.026843218687756566  -0.07082229291692607  0.0  0.07082229291692607  0.026843218687756566
          -0.0038543900766123762 -0.0101692999709622   0.0  0.0101692999709622   0.0038543900766123762]
-    return f, f'
+    return f', f
 end
 
 # average filter
@@ -1511,7 +1511,7 @@ backdiffx{T}(u::Array{T,2}) = u - [u[:,1] u[:,1:end-1]]
 
 # Image gradients in the X and Y direction
 function imgradientxy(img::AbstractArray, method::String="shigeru3", border::String="replicate")
-    sx,sy = spatialorder(img)[1] == "x" ? (2,1) : (1,2)
+    sx,sy = spatialorder(img)[1] == "x" ? (1,2) : (2,1)
     s = (method == "sobel"        ? sobel() :
          method == "prewitt"      ? prewitt() :
          method == "shigeru3"     ? shigeru3() :
