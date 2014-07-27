@@ -297,7 +297,9 @@ let
     checkerboard(sq_width::Integer, count::Integer) = checkerboard(Uint8, sq_width, count)
 end
 
-cb_array    = checkerboard(5,3)
+SZ=5
+
+cb_array    = checkerboard(SZ,3)
 cb_image_xy = grayim(cb_array)
 cb_image_yx = grayim(cb_array)
 cb_image_yx["spatialorder"] = ["y","x"]
@@ -311,16 +313,16 @@ for method in ["sobel", "prewitt", "shigeru3", "shigeru4", "shigeru5", "shigeru4
     @assert (a_mag, a_grad_phase) == imgradient(a_grad_x, a_grad_y)
     @assert (a_grad_x, a_grad_y, a_mag, a_grad_phase) == imedge(cb_array, method)
 
-    @assert a_grad_x[1,5]  < 0.0   # white to black transition
-    @assert a_grad_x[1,10] > 0.0   # black to white transition
-    @assert a_grad_y[5,1]  < 0.0   # white to black transition
-    @assert a_grad_y[10,1] > 0.0   # black to white transition
+    @assert a_grad_x[1,SZ]   < 0.0   # white to black transition
+    @assert a_grad_x[1,2*SZ] > 0.0   # black to white transition
+    @assert a_grad_y[SZ,1]   < 0.0   # white to black transition
+    @assert a_grad_y[2*SZ,1] > 0.0   # black to white transition
 
     # Test direction of increasing gradient
-    @assert cos(a_grad_phase[1,5])  - (-1.0) < EPS   # increasing left  (=  pi   radians)
-    @assert cos(a_grad_phase[1,10]) -   1.0  < EPS   # increasing right (=   0   radians)
-    @assert sin(a_grad_phase[5,1])  -   1.0  < EPS   # increasing up    (=  pi/2 radians)
-    @assert sin(a_grad_phase[10,1]) - (-1.0) < EPS   # increasing down  (= -pi/2 radians)
+    @assert cos(a_grad_phase[1,SZ])   - (-1.0) < EPS   # increasing left  (=  pi   radians)
+    @assert cos(a_grad_phase[1,2*SZ]) -   1.0  < EPS   # increasing right (=   0   radians)
+    @assert sin(a_grad_phase[SZ,1])   -   1.0  < EPS   # increasing up    (=  pi/2 radians)
+    @assert sin(a_grad_phase[2*SZ,1]) - (-1.0) < EPS   # increasing down  (= -pi/2 radians)
 
 
     ## Checkerboard Image with row major order
@@ -331,15 +333,15 @@ for method in ["sobel", "prewitt", "shigeru3", "shigeru4", "shigeru5", "shigeru4
     @assert (mag, grad_phase) == imgradient(grad_x, grad_y)
     @assert (grad_x, grad_y, mag, grad_phase) == imedge(cb_image_xy, method)
 
-    @assert grad_x[5,1]  < 0.0   # white to black transition
-    @assert grad_x[10,1] > 0.0   # black to white transition
-    @assert grad_y[1,5]  < 0.0   # white to black transition
-    @assert grad_y[1,10] > 0.0   # black to white transition
+    @assert grad_x[SZ,1]   < 0.0   # white to black transition
+    @assert grad_x[2*SZ,1] > 0.0   # black to white transition
+    @assert grad_y[1,SZ]   < 0.0   # white to black transition
+    @assert grad_y[1,2*SZ] > 0.0   # black to white transition
 
-    @assert cos(grad_phase[5,1])  - (-1.0) < EPS   # increasing left  (=  pi   radians)
-    @assert cos(grad_phase[10,1]) -   1.0  < EPS   # increasing right (=   0   radians)
-    @assert sin(grad_phase[1,5])  -   1.0  < EPS   # increasing up    (=  pi/2 radians)
-    @assert sin(grad_phase[1,10]) - (-1.0) < EPS   # increasing down  (= -pi/2 radians)
+    @assert cos(grad_phase[SZ,1])   - (-1.0) < EPS   # increasing left  (=  pi   radians)
+    @assert cos(grad_phase[2*SZ,1]) -   1.0  < EPS   # increasing right (=   0   radians)
+    @assert sin(grad_phase[1,SZ])   -   1.0  < EPS   # increasing up    (=  pi/2 radians)
+    @assert sin(grad_phase[1,2*SZ]) - (-1.0) < EPS   # increasing down  (= -pi/2 radians)
 
 
     ## Checkerboard Image with column-major order
@@ -350,16 +352,16 @@ for method in ["sobel", "prewitt", "shigeru3", "shigeru4", "shigeru5", "shigeru4
     @assert (mag, grad_phase) == imgradient(grad_x, grad_y)
     @assert (grad_x, grad_y, mag, grad_phase) == imedge(cb_image_yx, method)
 
-    @assert grad_x[1,5]  < 0.0   # white to black transition
-    @assert grad_x[1,10] > 0.0   # black to white transition
-    @assert grad_y[5,1]  < 0.0   # white to black transition
-    @assert grad_y[10,1] > 0.0   # black to white transition
+    @assert grad_x[1,SZ]   < 0.0   # white to black transition
+    @assert grad_x[1,2*SZ] > 0.0   # black to white transition
+    @assert grad_y[SZ,1]   < 0.0   # white to black transition
+    @assert grad_y[2*SZ,1] > 0.0   # black to white transition
 
     # Test direction of increasing gradient
-    @assert cos(grad_phase[1,5])  - (-1.0) < EPS   # increasing left  (=  pi   radians)
-    @assert cos(grad_phase[1,10]) -   1.0  < EPS   # increasing right (=   0   radians)
-    @assert sin(grad_phase[5,1])  -   1.0  < EPS   # increasing up    (=  pi/2 radians)
-    @assert sin(grad_phase[10,1]) - (-1.0) < EPS   # increasing down  (= -pi/2 radians)
+    @assert cos(grad_phase[1,SZ])   - (-1.0) < EPS   # increasing left  (=  pi   radians)
+    @assert cos(grad_phase[1,2*SZ]) -   1.0  < EPS   # increasing right (=   0   radians)
+    @assert sin(grad_phase[SZ,1])   -   1.0  < EPS   # increasing up    (=  pi/2 radians)
+    @assert sin(grad_phase[2*SZ,1]) - (-1.0) < EPS   # increasing down  (= -pi/2 radians)
 end
 
 # Create an image with white along diagonals -2:2 and black elsewhere
