@@ -221,6 +221,7 @@ export # types
     label_components!,
     magnitude,
     ncc,
+    orientation,
     padarray,
     phase,
     prewitt,

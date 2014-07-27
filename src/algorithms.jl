@@ -1522,9 +1522,9 @@ end
 # Magnitude of gradient, calculated from X and Y image gradients
 magnitude(grad_x::AbstractArray, grad_y::AbstractArray) = hypot(grad_x, grad_y)
 
-# Phase (angle of steepest gradient ascent), calculated from X and Y image gradients
+# Phase (angle of steepest gradient ascent), calculated from X and Y gradient images
 function phase{T}(grad_x::AbstractArray{T}, grad_y::AbstractArray{T})
-    EPS = sqrt(eps(T))
+    EPS = eps(T)*log(eps(T))
     # Set phase to zero when both gradients are close to zero
     reshape([atan2(-grad_y[i], grad_x[i]) * ((abs(grad_x[i]) > EPS) | (abs(grad_y[i]) > EPS))
              for i=1:length(grad_x)], size(grad_x))
@@ -1532,6 +1532,24 @@ end
 
 function phase(grad_x::AbstractImageDirect, grad_y::AbstractImageDirect)
     img = copy(grad_x, phase(data(grad_x), data(grad_y)))
+    img["limits"] = (-float(pi),float(pi))
+    img
+end
+
+# Orientation of the strongest edge at a point, calculated from X and Y gradient images
+# Note that this is perpendicular to the phase at that point, except where 
+# both gradients are close to zero.
+
+function orientation{T}(grad_x::AbstractArray{T}, grad_y::AbstractArray{T})
+    EPS = eps(T)*log(eps(T))
+    # Set orientation to zero when both gradients are close to zero
+    # (grad_y[i] should probably be negated here, but isn't for consistency with earlier releases)
+    reshape([atan2(grad_x[i], grad_y[i]) * ((abs(grad_x[i]) > EPS) | (abs(grad_y[i]) > EPS))
+             for i=1:length(grad_x)], size(grad_x))
+end
+
+function orientation(grad_x::AbstractImageDirect, grad_y::AbstractImageDirect)
+    img = copy(grad_x, orientation(data(grad_x), data(grad_y)))
     img["limits"] = (-float(pi),float(pi))
     img
 end
@@ -1549,8 +1567,8 @@ end
 function imedge(img::AbstractArray, method::String="shigeru3", border::String="replicate")
     grad_x, grad_y = imgradientxy(img, method, border)
     mag = magnitude(grad_x, grad_y)
-    grad_angle = phase(grad_x, grad_y)
-    return (grad_x, grad_y, mag, grad_angle)
+    orient = orientation(grad_x, grad_y)
+    return (grad_x, grad_y, mag, orient)
 end
 
 function imROF{T}(img::Array{T,2}, lambda::Number, iterations::Integer)

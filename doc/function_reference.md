@@ -656,7 +656,7 @@ separable algorithm.
 ```
 imgradientxy(img, [method="shigeru3"], [border])
 ```
-Edge-detection filtering. `method` is one of `"sobel"`, `"prewitt"`, `"shigeru3"`, `"shigeru4"`, `"shigeru4_sep"`, `"shigeru5"`, or `"shigeru5_sep"`, defaulting to `"shigeru3"`.  (See the functions of the same name for more information).  `border` is any of the boundary conditions specified in `padarray`.
+Edge-detection filtering. `method` is one of `"sobel"`, `"prewitt"`, `"shigeru3"`, `"shigeru4"`, `"shigeru4_sep"`, `"shigeru5"`, or `"shigeru5_sep"`, defaulting to `"shigeru3"` (see the functions of the same name for more information).  `border` is any of the boundary conditions specified in `padarray`.
 
 Returns a tuple containing `x` (horizontal) and `y` (vertical) gradient images of the same size as `img`, calculated using the requested method and border.
 
@@ -672,7 +672,15 @@ Returns a magnitude image the same size as `grad_x` and `grad_y`.
 ```
 phase(grad_x, grad_y)
 ```
-Calculates the rotation angle of the gradient images given by ``grad_x`` and ``grad_y`` Equivalent to ``atan2(-grad_y, grad_x)``.  When a both ``grad_x[i]`` and ``grad_y[i]`` are zero, the corresponding angle is set to zero.
+Calculates the rotation angle of the gradient images given by `grad_x` and `grad_y`. Equivalent to ``atan2(-grad_y, grad_x)``.  When a both ``grad_x[i]`` and ``grad_y[i]`` are zero, the corresponding angle is set to zero.
+
+Returns a phase image the same size as `grad_x` and `grad_y`.
+
+<br />
+```
+orientation(grad_x, grad_y)
+```
+Calculates the orientation angle of the strongest edge from gradient images given by `grad_x` and `grad_y`. Equivalent to ``atan2(grad_x, grad_y)``.  When a both `grad_x[i]` and `grad_y[i]` are zero, the corresponding angle is set to zero.
 
 Returns a phase image the same size as `grad_x` and `grad_y`.
 
@@ -680,15 +688,15 @@ Returns a phase image the same size as `grad_x` and `grad_y`.
 ```
 imgradient(grad_x, grad_y)
 ```
-Convenience function for calculating the magnitude and phase of the gradient images given in ``grad_x`` and ``grad_y``.  Returns a tuple containing the magnitude and phase images.  See `magnitude` and `phase` for details.
+Convenience function for calculating the magnitude and phase of the gradient images given in `grad_x` and `grad_y`.  Returns a tuple containing the magnitude and phase images.  See `magnitude` and `phase` for details.
 
 <br />
 ```
 imedge(img, [method], [border])
 ```
-Edge-detection filtering. `method` is either `"sobel"` or `"prewitt"`. `border` is any of the boundary conditions specified in `padarray`.
+Edge-detection filtering. `method` is one of `"sobel"`, `"prewitt"`, `"shigeru3"`, `"shigeru4"`, `"shigeru4_sep"`, `"shigeru5"`, or `"shigeru5_sep"`, defaulting to `"shigeru3"` (see the functions of the same name for more information). `border` is any of the boundary conditions specified in `padarray`.
 
-Returns a tuple `(grad_x, grad_y, mag, phase)`, which are the horizontal component, vertical component, magnitude, and phase of the gradient, respectively.
+Returns a tuple `(grad_x, grad_y, mag, orient)`, which are the horizontal gradient, vertical gradient, and the magnitude and orientation of the strongest edge, respectively.
 
 <br />
 ```

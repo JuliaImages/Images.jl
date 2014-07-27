@@ -307,61 +307,75 @@ cb_image_yx["spatialorder"] = ["y","x"]
 for method in ["sobel", "prewitt", "shigeru3", "shigeru4", "shigeru5", "shigeru4_sep", "shigeru5_sep"]
     ## Checkerboard array
 
-    (a_grad_x, a_grad_y) = imgradientxy(cb_array, method)
-    a_mag = magnitude(a_grad_x, a_grad_y)
-    a_grad_phase = phase(a_grad_x, a_grad_y)
-    @assert (a_mag, a_grad_phase) == imgradient(a_grad_x, a_grad_y)
-    @assert (a_grad_x, a_grad_y, a_mag, a_grad_phase) == imedge(cb_array, method)
+    (agx, agy) = imgradientxy(cb_array, method)
+    amag = magnitude(agx, agy)
+    agphase = phase(agx, agy)
+    @assert (amag, agphase) == imgradient(agx, agy)
 
-    @assert a_grad_x[1,SZ]   < 0.0   # white to black transition
-    @assert a_grad_x[1,2*SZ] > 0.0   # black to white transition
-    @assert a_grad_y[SZ,1]   < 0.0   # white to black transition
-    @assert a_grad_y[2*SZ,1] > 0.0   # black to white transition
+    @assert agx[1,SZ]   < 0.0   # white to black transition
+    @assert agx[1,2*SZ] > 0.0   # black to white transition
+    @assert agy[SZ,1]   < 0.0   # white to black transition
+    @assert agy[2*SZ,1] > 0.0   # black to white transition
 
     # Test direction of increasing gradient
-    @assert cos(a_grad_phase[1,SZ])   - (-1.0) < EPS   # increasing left  (=  pi   radians)
-    @assert cos(a_grad_phase[1,2*SZ]) -   1.0  < EPS   # increasing right (=   0   radians)
-    @assert sin(a_grad_phase[SZ,1])   -   1.0  < EPS   # increasing up    (=  pi/2 radians)
-    @assert sin(a_grad_phase[2*SZ,1]) - (-1.0) < EPS   # increasing down  (= -pi/2 radians)
+    @assert cos(agphase[1,SZ])   - (-1.0) < EPS   # increasing left  (=  pi   radians)
+    @assert cos(agphase[1,2*SZ]) -   1.0  < EPS   # increasing right (=   0   radians)
+    @assert sin(agphase[SZ,1])   -   1.0  < EPS   # increasing up    (=  pi/2 radians)
+    @assert sin(agphase[2*SZ,1]) - (-1.0) < EPS   # increasing down  (= -pi/2 radians)
 
+    # Test that orientation is perpendicular to gradient
+    aorient = orientation(agx, agy)
+    @assert all((cos(agphase).*cos(aorient) .+ sin(agphase).*sin(aorient) .< EPS) |
+                ((agphase .== 0.0) & (aorient .== 0.0)))  # this part is where both are 
+                                                          # zero because there is no gradient
 
     ## Checkerboard Image with row major order
 
-    (grad_x, grad_y) = imgradientxy(cb_image_xy, method)
-    mag = magnitude(grad_x, grad_y)
-    grad_phase = phase(grad_x, grad_y)
-    @assert (mag, grad_phase) == imgradient(grad_x, grad_y)
-    @assert (grad_x, grad_y, mag, grad_phase) == imedge(cb_image_xy, method)
+    (gx, gy) = imgradientxy(cb_image_xy, method)
+    mag = magnitude(gx, gy)
+    gphase = phase(gx, gy)
+    @assert (mag, gphase) == imgradient(gx, gy)
 
-    @assert grad_x[SZ,1]   < 0.0   # white to black transition
-    @assert grad_x[2*SZ,1] > 0.0   # black to white transition
-    @assert grad_y[1,SZ]   < 0.0   # white to black transition
-    @assert grad_y[1,2*SZ] > 0.0   # black to white transition
+    @assert gx[SZ,1]   < 0.0   # white to black transition
+    @assert gx[2*SZ,1] > 0.0   # black to white transition
+    @assert gy[1,SZ]   < 0.0   # white to black transition
+    @assert gy[1,2*SZ] > 0.0   # black to white transition
 
-    @assert cos(grad_phase[SZ,1])   - (-1.0) < EPS   # increasing left  (=  pi   radians)
-    @assert cos(grad_phase[2*SZ,1]) -   1.0  < EPS   # increasing right (=   0   radians)
-    @assert sin(grad_phase[1,SZ])   -   1.0  < EPS   # increasing up    (=  pi/2 radians)
-    @assert sin(grad_phase[1,2*SZ]) - (-1.0) < EPS   # increasing down  (= -pi/2 radians)
+    @assert cos(gphase[SZ,1])   - (-1.0) < EPS   # increasing left  (=  pi   radians)
+    @assert cos(gphase[2*SZ,1]) -   1.0  < EPS   # increasing right (=   0   radians)
+    @assert sin(gphase[1,SZ])   -   1.0  < EPS   # increasing up    (=  pi/2 radians)
+    @assert sin(gphase[1,2*SZ]) - (-1.0) < EPS   # increasing down  (= -pi/2 radians)
 
+    # Test that orientation is perpendicular to gradient
+    orient = orientation(gx, gy)
+    @assert all((cos(gphase).*cos(orient) .+ sin(gphase).*sin(orient) .< EPS) |
+                ((gphase .== 0.0) & (orient .== 0.0)))  # this part is where both are 
+                                                        # zero because there is no gradient
 
     ## Checkerboard Image with column-major order
 
-    (grad_x, grad_y) = imgradientxy(cb_image_yx, method)
-    mag = magnitude(grad_x, grad_y)
-    grad_phase = phase(grad_x, grad_y)
-    @assert (mag, grad_phase) == imgradient(grad_x, grad_y)
-    @assert (grad_x, grad_y, mag, grad_phase) == imedge(cb_image_yx, method)
+    (gx, gy) = imgradientxy(cb_image_yx, method)
+    mag = magnitude(gx, gy)
+    gphase = phase(gx, gy)
+    @assert (mag, gphase) == imgradient(gx, gy)
 
-    @assert grad_x[1,SZ]   < 0.0   # white to black transition
-    @assert grad_x[1,2*SZ] > 0.0   # black to white transition
-    @assert grad_y[SZ,1]   < 0.0   # white to black transition
-    @assert grad_y[2*SZ,1] > 0.0   # black to white transition
+    @assert gx[1,SZ]   < 0.0   # white to black transition
+    @assert gx[1,2*SZ] > 0.0   # black to white transition
+    @assert gy[SZ,1]   < 0.0   # white to black transition
+    @assert gy[2*SZ,1] > 0.0   # black to white transition
 
     # Test direction of increasing gradient
-    @assert cos(grad_phase[1,SZ])   - (-1.0) < EPS   # increasing left  (=  pi   radians)
-    @assert cos(grad_phase[1,2*SZ]) -   1.0  < EPS   # increasing right (=   0   radians)
-    @assert sin(grad_phase[SZ,1])   -   1.0  < EPS   # increasing up    (=  pi/2 radians)
-    @assert sin(grad_phase[2*SZ,1]) - (-1.0) < EPS   # increasing down  (= -pi/2 radians)
+    @assert cos(gphase[1,SZ])   - (-1.0) < EPS   # increasing left  (=  pi   radians)
+    @assert cos(gphase[1,2*SZ]) -   1.0  < EPS   # increasing right (=   0   radians)
+    @assert sin(gphase[SZ,1])   -   1.0  < EPS   # increasing up    (=  pi/2 radians)
+    @assert sin(gphase[2*SZ,1]) - (-1.0) < EPS   # increasing down  (= -pi/2 radians)
+
+    # Test that orientation is perpendicular to gradient
+    orient = orientation(gx, gy)
+    @assert all((cos(gphase).*cos(orient) .+ sin(gphase).*sin(orient) .< EPS) |
+                ((gphase .== 0.0) & (orient .== 0.0)))  # this part is where both are 
+                                                        # zero because there is no gradient
+
 end
 
 # Create an image with white along diagonals -2:2 and black elsewhere
@@ -375,53 +389,67 @@ m_yx["spatialorder"] = ["y","x"]
 for method in ["sobel", "prewitt", "shigeru3", "shigeru4", "shigeru5", "shigeru4_sep", "shigeru5_sep"]
     ## Diagonal array
 
-    (a_grad_x, a_grad_y) = imgradientxy(m, method)
-    a_mag = magnitude(a_grad_x, a_grad_y)
-    a_grad_phase = phase(a_grad_x, a_grad_y)
-    @assert (a_mag, a_grad_phase) == imgradient(a_grad_x, a_grad_y)
-    @assert (a_grad_x, a_grad_y, a_mag, a_grad_phase) == imedge(m, method)
+    (agx, agy) = imgradientxy(m, method)
+    amag = magnitude(agx, agy)
+    agphase = phase(agx, agy)
+    @assert (amag, agphase) == imgradient(agx, agy)
 
-    @assert a_grad_x[7,9]  < 0.0   # white to black transition
-    @assert a_grad_x[10,8] > 0.0   # black to white transition
-    @assert a_grad_y[10,8] < 0.0   # white to black transition
-    @assert a_grad_y[7,9]  > 0.0   # black to white transition
+    @assert agx[7,9]  < 0.0   # white to black transition
+    @assert agx[10,8] > 0.0   # black to white transition
+    @assert agy[10,8] < 0.0   # white to black transition
+    @assert agy[7,9]  > 0.0   # black to white transition
 
     # Test direction of increasing gradient
-    @assert abs(a_grad_phase[10,8] -    pi/4 ) < EPS   # lower edge (increasing up-right  =   pi/4 radians)
-    @assert abs(a_grad_phase[7,9]  - (-3pi/4)) < EPS   # upper edge (increasing down-left = -3pi/4 radians)
+    @assert abs(agphase[10,8] -    pi/4 ) < EPS   # lower edge (increasing up-right  =   pi/4 radians)
+    @assert abs(agphase[7,9]  - (-3pi/4)) < EPS   # upper edge (increasing down-left = -3pi/4 radians)
+
+    # Test that orientation is perpendicular to gradient
+    aorient = orientation(agx, agy)
+    @assert all((cos(agphase).*cos(aorient) .+ sin(agphase).*sin(aorient) .< EPS) |
+                ((agphase .== 0.0) & (aorient .== 0.0)))  # this part is where both are 
+                                                          # zero because there is no gradient
 
     ## Diagonal Image, row-major order
 
-    (a_grad_x, a_grad_y) = imgradientxy(m_xy, method)
-    a_mag = magnitude(a_grad_x, a_grad_y)
-    a_grad_phase = phase(a_grad_x, a_grad_y)
-    @assert (a_mag, a_grad_phase) == imgradient(a_grad_x, a_grad_y)
-    @assert (a_grad_x, a_grad_y, a_mag, a_grad_phase) == imedge(m_xy, method)
+    (gx, gy) = imgradientxy(m_xy, method)
+    mag = magnitude(gx, gy)
+    gphase = phase(gx, gy)
+    @assert (mag, gphase) == imgradient(gx, gy)
 
-    @assert a_grad_x[9,7]  < 0.0   # white to black transition
-    @assert a_grad_x[8,10] > 0.0   # black to white transition
-    @assert a_grad_y[8,10] < 0.0   # white to black transition
-    @assert a_grad_y[9,7]  > 0.0   # black to white transition
+    @assert gx[9,7]  < 0.0   # white to black transition
+    @assert gx[8,10] > 0.0   # black to white transition
+    @assert gy[8,10] < 0.0   # white to black transition
+    @assert gy[9,7]  > 0.0   # black to white transition
 
     # Test direction of increasing gradient
-    @assert abs(a_grad_phase[8,10] -    pi/4 ) < EPS   # lower edge (increasing up-right  =   pi/4 radians)
-    @assert abs(a_grad_phase[9,7]  - (-3pi/4)) < EPS   # upper edge (increasing down-left = -3pi/4 radians)
+    @assert abs(gphase[8,10] -    pi/4 ) < EPS   # lower edge (increasing up-right  =   pi/4 radians)
+    @assert abs(gphase[9,7]  - (-3pi/4)) < EPS   # upper edge (increasing down-left = -3pi/4 radians)
+
+    # Test that orientation is perpendicular to gradient
+    orient = orientation(gx, gy)
+    @assert all((cos(gphase).*cos(orient) .+ sin(gphase).*sin(orient) .< EPS) |
+                ((gphase .== 0.0) & (orient .== 0.0)))  # this part is where both are 
+                                                        # zero because there is no gradient
 
     ## Diagonal Image, column-major order
 
-    (a_grad_x, a_grad_y) = imgradientxy(m_yx, method)
-    a_mag = magnitude(a_grad_x, a_grad_y)
-    a_grad_phase = phase(a_grad_x, a_grad_y)
-    @assert (a_mag, a_grad_phase) == imgradient(a_grad_x, a_grad_y)
-    @assert (a_grad_x, a_grad_y, a_mag, a_grad_phase) == imedge(m_yx, method)
+    (gx, gy) = imgradientxy(m_yx, method)
+    mag = magnitude(gx, gy)
+    gphase = phase(gx, gy)
+    @assert (mag, gphase) == imgradient(gx, gy)
 
-    @assert a_grad_x[7,9]  < 0.0   # white to black transition
-    @assert a_grad_x[10,8] > 0.0   # black to white transition
-    @assert a_grad_y[10,8] < 0.0   # white to black transition
-    @assert a_grad_y[7,9]  > 0.0   # black to white transition
+    @assert gx[7,9]  < 0.0   # white to black transition
+    @assert gx[10,8] > 0.0   # black to white transition
+    @assert gy[10,8] < 0.0   # white to black transition
+    @assert gy[7,9]  > 0.0   # black to white transition
 
     # Test direction of increasing gradient
-    @assert abs(a_grad_phase[10,8] -    pi/4 ) < EPS   # lower edge (increasing up-right  =   pi/4 radians)
-    @assert abs(a_grad_phase[7,9]  - (-3pi/4)) < EPS   # upper edge (increasing down-left = -3pi/4 radians)
+    @assert abs(gphase[10,8] -    pi/4 ) < EPS   # lower edge (increasing up-right  =   pi/4 radians)
+    @assert abs(gphase[7,9]  - (-3pi/4)) < EPS   # upper edge (increasing down-left = -3pi/4 radians)
 
+    # Test that orientation is perpendicular to gradient
+    orient = orientation(gx, gy)
+    @assert all((cos(gphase).*cos(orient) .+ sin(gphase).*sin(orient) .< EPS) |
+                ((gphase .== 0.0) & (orient .== 0.0)))  # this part is where both are 
+                                                        # zero because there is no gradient
 end
