@@ -674,7 +674,7 @@ phase(grad_x, grad_y)
 ```
 Calculates the rotation angle of the gradient images given by `grad_x` and `grad_y`. Equivalent to ``atan2(-grad_y, grad_x)``.  When a both ``grad_x[i]`` and ``grad_y[i]`` are zero, the corresponding angle is set to zero.
 
-Returns a phase image the same size as `grad_x` and `grad_y`.
+Returns a phase image the same size as `grad_x` and `grad_y`, with values in [-pi,pi].
 
 <br />
 ```
@@ -682,7 +682,7 @@ orientation(grad_x, grad_y)
 ```
 Calculates the orientation angle of the strongest edge from gradient images given by `grad_x` and `grad_y`. Equivalent to ``atan2(grad_x, grad_y)``.  When a both `grad_x[i]` and `grad_y[i]` are zero, the corresponding angle is set to zero.
 
-Returns a phase image the same size as `grad_x` and `grad_y`.
+Returns a phase image the same size as `grad_x` and `grad_y`, with values in [-pi,pi].
 
 <br />
 ```
