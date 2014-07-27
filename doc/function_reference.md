@@ -654,9 +654,41 @@ separable algorithm.
 
 <br />
 ```
+imgradientxy(img, [method="shigeru3"], [border])
+```
+Edge-detection filtering. `method` is one of `"sobel"`, `"prewitt"`, `"shigeru3"`, `"shigeru4"`, `"shigeru4_sep"`, `"shigeru5"`, or `"shigeru5_sep"`, defaulting to `"shigeru3"`.  (See the functions of the same name for more information).  `border` is any of the boundary conditions specified in `padarray`.
+
+Returns a tuple containing `x` (horizontal) and `y` (vertical) gradient images of the same size as `img`, calculated using the requested method and border.
+
+<br />
+```
+magnitude(grad_x, grad_y)
+```
+Calculates the magnitude of the gradient images given by `grad_x` and `grad_y`.  Equivalent to ``sqrt(grad_x.^2 + grad_y.^2)``.
+
+Returns a magnitude image the same size as `grad_x` and `grad_y`.
+
+<br />
+```
+phase(grad_x, grad_y)
+```
+Calculates the rotation angle of the gradient images given by ``grad_x`` and ``grad_y`` Equivalent to ``atan2(-grad_y, grad_x)``.  When a both ``grad_x[i]`` and ``grad_y[i]`` are zero, the corresponding angle is set to zero.
+
+Returns a phase image the same size as `grad_x` and `grad_y`.
+
+<br />
+```
+imgradient(grad_x, grad_y)
+```
+Convenience function for calculating the magnitude and phase of the gradient images given in ``grad_x`` and ``grad_y``.  Returns a tuple containing the magnitude and phase images.  See `magnitude` and `phase` for details.
+
+<br />
+```
 imedge(img, [method], [border])
 ```
 Edge-detection filtering. `method` is either `"sobel"` or `"prewitt"`. `border` is any of the boundary conditions specified in `padarray`.
+
+Returns a tuple `(grad_x, grad_y, mag, phase)`, which are the horizontal component, vertical component, magnitude, and phase of the gradient, respectively.
 
 <br />
 ```
@@ -720,8 +752,25 @@ returns a laplacian-of-gaussian kernel.
 ```
 sobel()
 prewitt()
+shigeru3()
+shigeru4()
+shigeru4_sep()
+shigeru5()
+shigeru5_sep()
 ```
-Return x- and y- Sobel and Prewitt derivative filters.
+Return x- and y- derivative filters of the specified type:
+
+Name             | Description
+-----------------|------------------------------
+`"sobel"`        | Sobel filter
+`"prewitt"`      | Prewitt filter
+`"shigeru3"`     | Optimal 3x3 filter from Shigeru 2000
+`"shigeru4"`     | Optimal 4x4 filter from Shigeru 2000
+`"shigeru4_sep"` | Separable approximation of `"shigeru4"`
+`"shigeru5"`     | Optimal 5x5 filter from Shigeru 2000
+`"shigeru5_sep"` | Separable approximation of `"shigeru5"`
+
+The shigeru filters were derived in Ando Shigeru, IEEE Trans. Pat. Anal. Mach. Int., vol. 22 no 3, March 2000.  As written in the paper, the 4x4 and 5x5 papers are not separable, so the `"shigeru4_sep"` and `"shigeru5_sep"` filters are provided as separable (and therefore faster) approximations of `"shigeru4"` and `"shigeru5"`, respectively.
 
 ### Nonlinear filtering and transformation
 
