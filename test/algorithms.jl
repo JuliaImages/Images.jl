@@ -274,3 +274,152 @@ P = [ 0.0  0.0  0.0   0.0   0.0   0.0   0.0  0.0;
 Q = Images.shepp_logan(8,highContrast=false)
 @assert norm((P-Q)[:]) < 1e-10
 
+## Checkerboard array, used to test image gradients
+
+let
+    white{T}(::Type{T}) = one(T)
+    black{T}(::Type{T}) = zero(T)
+    white{T<:Unsigned}(::Type{T}) = typemax(T)
+    black{T<:Unsigned}(::Type{T}) = typemin(T)
+
+    global checkerboard
+    function checkerboard{T}(::Type{T}, sq_width::Integer, count::Integer)
+        wh = fill(white(T), (sq_width,sq_width))
+        bk = fill(black(T), (sq_width,sq_width))
+        bw = [wh bk; bk wh]
+        vert = repmat(bw, (count>>1), 1)
+        isodd(count) && (vert = vcat(vert, [wh bk]))
+        cb = repmat(vert, 1, (count>>1))
+        isodd(count) && (cb = hcat(cb, vert[:,1:sq_width]))
+        cb
+    end
+
+    checkerboard(sq_width::Integer, count::Integer) = checkerboard(Uint8, sq_width, count)
+end
+
+cb_array    = checkerboard(5,3)
+cb_image_xy = grayim(cb_array)
+cb_image_yx = grayim(cb_array)
+cb_image_yx["spatialorder"] = ["y","x"]
+
+for method in ["sobel", "prewitt", "shigeru3", "shigeru4", "shigeru5", "shigeru4_sep", "shigeru5_sep"]
+    ## Checkerboard array
+
+    (a_grad_x, a_grad_y) = imgradientxy(cb_array, method)
+    a_mag = magnitude(a_grad_x, a_grad_y)
+    a_grad_phase = phase(a_grad_x, a_grad_y)
+    @assert (a_mag, a_grad_phase) == imgradient(a_grad_x, a_grad_y)
+    @assert (a_grad_x, a_grad_y, a_mag, a_grad_phase) == imedge(cb_array, method)
+
+    @assert a_grad_x[1,5]  < 0.0   # white to black transition
+    @assert a_grad_x[1,10] > 0.0   # black to white transition
+    @assert a_grad_y[5,1]  < 0.0   # white to black transition
+    @assert a_grad_y[10,1] > 0.0   # black to white transition
+
+    # Test direction of increasing gradient
+    @assert cos(a_grad_phase[1,5])  - (-1.0) < EPS   # increasing left  (=  pi   radians)
+    @assert cos(a_grad_phase[1,10]) -   1.0  < EPS   # increasing right (=   0   radians)
+    @assert sin(a_grad_phase[5,1])  -   1.0  < EPS   # increasing up    (=  pi/2 radians)
+    @assert sin(a_grad_phase[10,1]) - (-1.0) < EPS   # increasing down  (= -pi/2 radians)
+
+
+    ## Checkerboard Image with row major order
+
+    (grad_x, grad_y) = imgradientxy(cb_image_xy, method)
+    mag = magnitude(grad_x, grad_y)
+    grad_phase = phase(grad_x, grad_y)
+    @assert (mag, grad_phase) == imgradient(grad_x, grad_y)
+    @assert (grad_x, grad_y, mag, grad_phase) == imedge(cb_image_xy, method)
+
+    @assert grad_x[5,1]  < 0.0   # white to black transition
+    @assert grad_x[10,1] > 0.0   # black to white transition
+    @assert grad_y[1,5]  < 0.0   # white to black transition
+    @assert grad_y[1,10] > 0.0   # black to white transition
+
+    @assert cos(grad_phase[5,1])  - (-1.0) < EPS   # increasing left  (=  pi   radians)
+    @assert cos(grad_phase[10,1]) -   1.0  < EPS   # increasing right (=   0   radians)
+    @assert sin(grad_phase[1,5])  -   1.0  < EPS   # increasing up    (=  pi/2 radians)
+    @assert sin(grad_phase[1,10]) - (-1.0) < EPS   # increasing down  (= -pi/2 radians)
+
+
+    ## Checkerboard Image with column-major order
+
+    (grad_x, grad_y) = imgradientxy(cb_image_yx, method)
+    mag = magnitude(grad_x, grad_y)
+    grad_phase = phase(grad_x, grad_y)
+    @assert (mag, grad_phase) == imgradient(grad_x, grad_y)
+    @assert (grad_x, grad_y, mag, grad_phase) == imedge(cb_image_yx, method)
+
+    @assert grad_x[1,5]  < 0.0   # white to black transition
+    @assert grad_x[1,10] > 0.0   # black to white transition
+    @assert grad_y[5,1]  < 0.0   # white to black transition
+    @assert grad_y[10,1] > 0.0   # black to white transition
+
+    # Test direction of increasing gradient
+    @assert cos(grad_phase[1,5])  - (-1.0) < EPS   # increasing left  (=  pi   radians)
+    @assert cos(grad_phase[1,10]) -   1.0  < EPS   # increasing right (=   0   radians)
+    @assert sin(grad_phase[5,1])  -   1.0  < EPS   # increasing up    (=  pi/2 radians)
+    @assert sin(grad_phase[10,1]) - (-1.0) < EPS   # increasing down  (= -pi/2 radians)
+end
+
+# Create an image with white along diagonals -2:2 and black elsewhere
+m = zeros(Uint8, 20,20)
+for i = -2:2; m[diagind(m,i)] = 0xff; end
+
+m_xy = grayim(m')
+m_yx = grayim(m)
+m_yx["spatialorder"] = ["y","x"]
+
+for method in ["sobel", "prewitt", "shigeru3", "shigeru4", "shigeru5", "shigeru4_sep", "shigeru5_sep"]
+    ## Diagonal array
+
+    (a_grad_x, a_grad_y) = imgradientxy(m, method)
+    a_mag = magnitude(a_grad_x, a_grad_y)
+    a_grad_phase = phase(a_grad_x, a_grad_y)
+    @assert (a_mag, a_grad_phase) == imgradient(a_grad_x, a_grad_y)
+    @assert (a_grad_x, a_grad_y, a_mag, a_grad_phase) == imedge(m, method)
+
+    @assert a_grad_x[7,9]  < 0.0   # white to black transition
+    @assert a_grad_x[10,8] > 0.0   # black to white transition
+    @assert a_grad_y[10,8] < 0.0   # white to black transition
+    @assert a_grad_y[7,9]  > 0.0   # black to white transition
+
+    # Test direction of increasing gradient
+    @assert abs(a_grad_phase[10,8] -    pi/4 ) < EPS   # lower edge (increasing up-right  =   pi/4 radians)
+    @assert abs(a_grad_phase[7,9]  - (-3pi/4)) < EPS   # upper edge (increasing down-left = -3pi/4 radians)
+
+    ## Diagonal Image, row-major order
+
+    (a_grad_x, a_grad_y) = imgradientxy(m_xy, method)
+    a_mag = magnitude(a_grad_x, a_grad_y)
+    a_grad_phase = phase(a_grad_x, a_grad_y)
+    @assert (a_mag, a_grad_phase) == imgradient(a_grad_x, a_grad_y)
+    @assert (a_grad_x, a_grad_y, a_mag, a_grad_phase) == imedge(m_xy, method)
+
+    @assert a_grad_x[9,7]  < 0.0   # white to black transition
+    @assert a_grad_x[8,10] > 0.0   # black to white transition
+    @assert a_grad_y[8,10] < 0.0   # white to black transition
+    @assert a_grad_y[9,7]  > 0.0   # black to white transition
+
+    # Test direction of increasing gradient
+    @assert abs(a_grad_phase[8,10] -    pi/4 ) < EPS   # lower edge (increasing up-right  =   pi/4 radians)
+    @assert abs(a_grad_phase[9,7]  - (-3pi/4)) < EPS   # upper edge (increasing down-left = -3pi/4 radians)
+
+    ## Diagonal Image, column-major order
+
+    (a_grad_x, a_grad_y) = imgradientxy(m_yx, method)
+    a_mag = magnitude(a_grad_x, a_grad_y)
+    a_grad_phase = phase(a_grad_x, a_grad_y)
+    @assert (a_mag, a_grad_phase) == imgradient(a_grad_x, a_grad_y)
+    @assert (a_grad_x, a_grad_y, a_mag, a_grad_phase) == imedge(m_yx, method)
+
+    @assert a_grad_x[7,9]  < 0.0   # white to black transition
+    @assert a_grad_x[10,8] > 0.0   # black to white transition
+    @assert a_grad_y[10,8] < 0.0   # white to black transition
+    @assert a_grad_y[7,9]  > 0.0   # black to white transition
+
+    # Test direction of increasing gradient
+    @assert abs(a_grad_phase[10,8] -    pi/4 ) < EPS   # lower edge (increasing up-right  =   pi/4 radians)
+    @assert abs(a_grad_phase[7,9]  - (-3pi/4)) < EPS   # upper edge (increasing down-left = -3pi/4 radians)
+
+end
