@@ -46,6 +46,7 @@ end
 (.^)(img::AbstractImageDirect, p::Number) = limadj(copy(img, data(img).^p), limpower(limits(img), p))
 sqrt(img::AbstractImageDirect) = limadj(copy(img, sqrt(data(img))), limpower(limits(img), 0.5))
 atan2(img1::AbstractImageDirect, img2::AbstractImageDirect) = (img = copy(img1, atan2(data(img1), data(img2))); img["limits"] = (-float(pi),float(pi)); img)
+hypot(img1::AbstractImageDirect, img2::AbstractImageDirect) = limadj(copy(img1, hypot(data(img1), data(img2))), limpower(limplus(limpower(limits(img1),2),limpower(limits(img2),2)),0.5))
 
 function limadj(img::AbstractImageDirect, newlim)
     if haskey(img, "limits")
@@ -1500,6 +1501,7 @@ forwarddiffx{T}(u::Array{T,2}) = [u[:,2:end] u[:,end]] - u
 backdiffy{T}(u::Array{T,2}) = u - [u[1,:]; u[1:end-1,:]]
 backdiffx{T}(u::Array{T,2}) = u - [u[:,1] u[:,1:end-1]]
 
+# Image gradients in the X and Y direction
 function imgradientxy(img::AbstractArray, method::String="shigeru3", border::String="replicate")
     sx,sy = spatialorder(img)[1] == "x" ? (2,1) : (1,2)
     s = (method == "sobel"        ? sobel() :
@@ -1517,19 +1519,38 @@ function imgradientxy(img::AbstractArray, method::String="shigeru3", border::Str
     return grad_x, grad_y
 end
 
-function imgradient(grad_x::AbstractArray, grad_y::AbstractArray)
-    return sqrt(grad_x.^2 + grad_y.^2), atan2(-grad_y, grad_x)
+# Magnitude of gradient, calculated from X and Y image gradients
+magnitude(grad_x::AbstractArray, grad_y::AbstractArray) = hypot(grad_x, grad_y)
+
+# Phase (angle of steepest gradient ascent), calculated from X and Y image gradients
+function phase{T}(grad_x::AbstractArray{T}, grad_y::AbstractArray{T})
+    EPS = sqrt(eps(T))
+    # Set phase to zero when both gradients are close to zero
+    reshape([atan2(-grad_y[i], grad_x[i]) * ((abs(grad_x[i]) > EPS) | (abs(grad_y[i]) > EPS))
+             for i=1:length(grad_x)], size(grad_x))
 end
 
+function phase(grad_x::AbstractImageDirect, grad_y::AbstractImageDirect)
+    img = copy(grad_x, phase(data(grad_x), data(grad_y)))
+    img["limits"] = (-float(pi),float(pi))
+    img
+end
+
+# Return both the magnituded and phase in one call
+imgradient(grad_x::AbstractArray, grad_y::AbstractArray) = (magnitude(grad_x,grad_y), phase(grad_x,grad_y))
+
+# Return the magnituded and phase of the gradients in an image
 function imgradient(img::AbstractArray, method::String="shigeru3", border::String="replicate")
     grad_x, grad_y = imgradientxy(img, method, border)
     return imgradient(grad_x, grad_y)
 end
 
-function imedge(img::AbstractArray, method::String="sobel", border::String="replicate")
+# Return the x-y gradients and magnitude and phase of gradients in an image
+function imedge(img::AbstractArray, method::String="shigeru3", border::String="replicate")
     grad_x, grad_y = imgradientxy(img, method, border)
-    mag, phase = imgradient(grad_x, grad_y)
-    return (grad_x, grad_y, mag, phase)
+    mag = magnitude(grad_x, grad_y)
+    grad_angle = phase(grad_x, grad_y)
+    return (grad_x, grad_y, mag, grad_angle)
 end
 
 function imROF{T}(img::Array{T,2}, lambda::Number, iterations::Integer)
