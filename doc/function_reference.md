@@ -654,9 +654,49 @@ separable algorithm.
 
 <br />
 ```
+imgradients(img, [method], [border])
+```
+Edge-detection filtering. `method` is one of `"sobel"`, `"prewitt"`, `"ando3"`, `"ando4"`, `"ando4_sep"`, `"ando5"`, or `"ando5_sep"`, defaulting to `"ando3"` (see the functions of the same name for more information).  `border` is any of the boundary conditions specified in `padarray`.
+
+Returns a tuple containing `x` (horizontal) and `y` (vertical) gradient images of the same size as `img`, calculated using the requested method and border.
+
+<br />
+```
+magnitude(grad_x, grad_y)
+```
+Calculates the magnitude of the gradient images given by `grad_x` and `grad_y`.  Equivalent to ``sqrt(grad_x.^2 + grad_y.^2)``.
+
+Returns a magnitude image the same size as `grad_x` and `grad_y`.
+
+<br />
+```
+phase(grad_x, grad_y)
+```
+Calculates the rotation angle of the gradient images given by `grad_x` and `grad_y`. Equivalent to ``atan2(-grad_y, grad_x)``.  When a both ``grad_x[i]`` and ``grad_y[i]`` are zero, the corresponding angle is set to zero.
+
+Returns a phase image the same size as `grad_x` and `grad_y`, with values in [-pi,pi].
+
+<br />
+```
+orientation(grad_x, grad_y)
+```
+Calculates the orientation angle of the strongest edge from gradient images given by `grad_x` and `grad_y`. Equivalent to ``atan2(grad_x, grad_y)``.  When a both `grad_x[i]` and `grad_y[i]` are zero, the corresponding angle is set to zero.
+
+Returns a phase image the same size as `grad_x` and `grad_y`, with values in [-pi,pi].
+
+<br />
+```
+magnitude_phase(grad_x, grad_y)
+```
+Convenience function for calculating the magnitude and phase of the gradient images given in `grad_x` and `grad_y`.  Returns a tuple containing the magnitude and phase images.  See `magnitude` and `phase` for details.
+
+<br />
+```
 imedge(img, [method], [border])
 ```
-Edge-detection filtering. `method` is either `"sobel"` or `"prewitt"`. `border` is any of the boundary conditions specified in `padarray`.
+Edge-detection filtering. `method` is one of `"sobel"`, `"prewitt"`, `"ando3"`, `"ando4"`, `"ando4_sep"`, `"ando5"`, or `"ando5_sep"`, defaulting to `"ando3"` (see the functions of the same name for more information). `border` is any of the boundary conditions specified in `padarray`.
+
+Returns a tuple `(grad_x, grad_y, mag, orient)`, which are the horizontal gradient, vertical gradient, and the magnitude and orientation of the strongest edge, respectively.
 
 <br />
 ```
@@ -720,8 +760,25 @@ returns a laplacian-of-gaussian kernel.
 ```
 sobel()
 prewitt()
+ando3()
+ando4()
+ando4_sep()
+ando5()
+ando5_sep()
 ```
-Return x- and y- Sobel and Prewitt derivative filters.
+Return x- and y- derivative filters of the specified type:
+
+Name          | Description
+--------------|------------------------------
+`"sobel"`     | Sobel filter
+`"prewitt"`   | Prewitt filter
+`"ando3"`     | Optimal 3x3 filter from Ando 2000
+`"ando4"`     | Optimal 4x4 filter from Ando 2000
+`"ando4_sep"` | Separable approximation of `"ando4"`
+`"ando5"`     | Optimal 5x5 filter from Ando 2000
+`"ando5_sep"` | Separable approximation of `"ando5"`
+
+The ando filters were derived in Ando Shigeru, IEEE Trans. Pat. Anal. Mach. Int., vol. 22 no 3, March 2000.  As written in the paper, the 4x4 and 5x5 papers are not separable, so the `"ando4_sep"` and `"ando5_sep"` filters are provided as separable (and therefore faster) approximations of `"ando4"` and `"ando5"`, respectively.
 
 ### Nonlinear filtering and transformation
 
