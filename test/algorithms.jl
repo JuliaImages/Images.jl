@@ -167,7 +167,7 @@ gray32 = [uint32(g)<<16 | uint32(g)<<8 | uint32(g) for g in gray8]
 imgray = Images.Image(gray, ["colordim"=>0, "colorspace"=>"Gray"])
 buf = Images.uint32color(imgray)
 @assert buf == gray32
-rgb = [RGB(g, g, g) for g in gray]
+rgb = RGB{Float64}[RGB(g, g, g) for g in gray]
 buf = Images.uint32color(rgb)
 @assert buf == gray32
 img = Images.Image(gray32, ["colordim"=>0, "colorspace"=>"RGB24"])

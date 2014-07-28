@@ -1,4 +1,4 @@
-using Images
+using Images, FixedPoint
 
 urlbase = "http://www.imagemagick.org/Usage/images/"
 
@@ -50,17 +50,20 @@ imgc = imread(outname)
 file = getfile("rose.png")
 img = imread(file)
 @assert colorspace(img) == "RGB"
-@assert ndims(img) == 3
-@assert colordim(img) == 1
-@assert size(img, 1) == 3
-@assert eltype(img) == Uint8
+# @assert ndims(img) == 3
+@assert ndims(img) == 2
+# @assert colordim(img) == 1
+@assert colordim(img) == 0
+# @assert size(img, 1) == 3
+# @assert eltype(img) == Uint8
+@assert eltype(img) == RGB{Ufixed8}
 outname = joinpath(writedir, "rose.ppm")
 imwrite(img, outname)
 imgc = imread(outname)
 T = eltype(imgc)
 lim = limits(imgc)
 @assert (typeof(lim[1]) == typeof(lim[2]) == T)  # issue #62
-@assert img.data == imgc.data
+@assert reinterpret(Uint8, img.data, size(imgc)) == imgc.data
 
 # RGBA with 16 bit depth
 file = getfile("autumn_leaves.png")

@@ -4,7 +4,7 @@ import Base.Order: Ordering, ForwardOrdering, ReverseOrdering
 import Base.Graphics: width, height
 importall Base
 
-using Color
+using Color, FixedPoint
 
 # We need a couple of extra features not present in Color
 immutable RGB8 <: ColorValue

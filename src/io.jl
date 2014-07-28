@@ -227,12 +227,17 @@ function imread(filename::String, ::Type{ImageMagick})
     nc, cs = LibMagick.nchannels(imtype, cs, havealpha)
     depth = LibMagick.getimagedepth(wand)
     T = typedict[iceil(depth/8)*8]
+    if T == Uint8 && cs == "RGB"
+        T = RGB{Ufixed8}
+        nc = 1
+    end
     # Allocate the buffer and get the pixel data
     buf = (nc > 1) ? Array(T, nc, sz...) : Array(T, sz...)
     LibMagick.exportimagepixels!(buf, wand, cs)
-    # Set up the properties
-#     spatialorder = (n > 1) ? ["x", "y", "z"] : ["x", "y"]
-    prop = ["colorspace" => cs, "spatialorder" => ["x", "y"], "limits" => (zero(T), typemax(T))]
+    prop = ["spatialorder" => ["x", "y"], "limits" => (zero(T), typemax(T))]
+    if !isa(T, ColorValue)
+        prop["colorspace"] = cs
+    end
     if nc > 1
         prop["colordim"] = 1
     end
@@ -261,7 +266,9 @@ function image2wand(img, scalei)
         error("At most 3 dimensions are supported")
     end
     wand = LibMagick.MagickWand()
-    LibMagick.constituteimage(to_explicit(to_contiguous(data(imgw))), wand, colorspace(img))
+    cs = colorspace(imgw)
+    cs = cs == "RGB8" ? "RGB" : cs
+    LibMagick.constituteimage(to_explicit(to_contiguous(data(imgw))), wand, cs)
     LibMagick.resetiterator(wand)
     wand
 end
@@ -278,6 +285,7 @@ function writegray(stream, img, scalei::ScaleInfo)
     assert2d(img)
     xfirst = isxfirst(img)
     firstindex, spsz, spstride, csz, cstride = iterate_spatial(img)
+    @assert cstride == 0
     isz, jsz = spsz
     istride, jstride = spstride
     A = parent(img)
@@ -448,6 +456,12 @@ function writecolor(stream, img, scalei::ScaleInfo)
     end
 end
 
+function write{T<:Ufixed}(io::IO, c::ColorValue{T})
+    write(io, reinterpret(getfield(c, 1)))
+    write(io, reinterpret(getfield(c, 2)))
+    write(io, reinterpret(getfield(c, 3)))
+end
+
 ## PPM, PGM, and PBM ##
 type PPMBinary <: ImageFileType end
 type PGMBinary <: ImageFileType end
@@ -548,20 +562,26 @@ function imwrite(img, s::IO, ::Type{PPMBinary})
     write(s, "# ppm file written by Julia\n")
     w, h = widthheight(img)
     bitdepth = 8*sizeof(eltype(img))
-    if eltype(img) <: FloatingPoint
-        bitdepth = 8
+    if eltype(img) == RGB{Ufixed8}
+        write(s, "$w $h\n255\n")
+        scalei = ScaleNone{RGB{Ufixed8}}()
+        writegray(s, img, scalei)
+    else
+        if eltype(img) <: FloatingPoint
+            bitdepth = 8
+        end
+        cs = colorspace(img)
+        if cs == "RGB24"
+            bitdepth = 8
+        elseif cs == "ARGB32"
+            bitdepth = 8
+        end
+        T = typedict[bitdepth]
+        mx = int(typemax(T))
+        scalei = scaleinfo(T, img)
+        write(s, "$w $h\n$mx\n")
+        writecolor(s, img, scalei)
     end
-    cs = colorspace(img)
-    if cs == "RGB24"
-        bitdepth = 8
-    elseif cs == "ARGB32"
-        bitdepth = 8
-    end
-    T = typedict[bitdepth]
-    mx = int(typemax(T))
-    scalei = scaleinfo(T, img)
-    write(s, "$w $h\n$mx\n")
-    writecolor(s, img, scalei)
 end
 
 # ## PNG ##

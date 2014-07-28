@@ -74,17 +74,20 @@ type ClipMin{T,From} <: Clip{T}
     min::From
 end
 ClipMin{T,From}(::Type{T}, min::From) = ClipMin{T,From}(min)
+ClipMin(::Type{RGB{Ufixed8}}) = ScaleNone{T}()
 ClipMin{T}(::Type{RGB{T}}) = ClipMin(T,zero(T))
 type ClipMax{T,From} <: Clip{T}
     max::From
 end
 ClipMax{T,From}(::Type{T}, max::From) = ClipMax{T,From}(max)
+ClipMax(::Type{RGB{Ufixed8}}) = ScaleNone{T}()
 ClipMax{T}(::Type{RGB{T}}) = ClipMin(T,one(T))
 type ClipMinMax{T,From} <: Clip{T}
     min::From
     max::From
 end
 ClipMinMax{T,From}(::Type{T}, min::From, max::From) = ClipMinMax{T,From}(min,max)
+ClipMinMax(::Type{RGB{Ufixed8}}) = ScaleNone{T}()
 ClipMinMax{T}(::Type{RGB{T}}) = ClipMinMax(T,zero(T),one(T))
 ClipMinMax{T}(::Type{RGB8}, ::Type{RGB{T}}) = ClipMinMax{RGB8,RGB{T}}(RGB(zero(T),zero(T),zero(T)),RGB(one(T),one(T),one(T)))
 
@@ -197,6 +200,7 @@ function scaleinfo{T}(::Type{RGB{T}}, img::AbstractArray)
     l = climdefault(img)
     ScaleMinMax(T, l[1], l[2], 1.0/(l[2]-l[1]))
 end
+scaleinfo(::Type{RGB{Ufixed8}}, img::AbstractArray{RGB{Ufixed8}}) = ScaleNone{RGB(Ufixed8)}()
 
 function scaleinfo_uint{To<:Unsigned,From<:Unsigned}(::Type{To}, img::AbstractArray{From})
     l = limits(img)

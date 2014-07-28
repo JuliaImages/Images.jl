@@ -1,5 +1,7 @@
 module LibMagick
 
+using Color, FixedPoint
+
 import Base: error, size
 
 export MagickWand,
@@ -52,6 +54,7 @@ storagetype(::Type{Uint16}) = SHORTPIXEL
 storagetype(::Type{Uint32}) = INTEGERPIXEL
 storagetype(::Type{Float32}) = FLOATPIXEL
 storagetype(::Type{Float64}) = DOUBLEPIXEL
+storagetype(::Type{RGB{Ufixed8}}) = CHARPIXEL
 
 # Image type
 const IMType = ["BilevelType", "GrayscaleType", "GrayscaleMatteType", "PaletteType", "PaletteMatteType", "TrueColorType", "TrueColorMatteType", "ColorSeparationType", "ColorSeparationMatteType", "OptimizeType", "PaletteBilevelMatteType"]
@@ -130,10 +133,14 @@ function getsize(buffer, colorspace)
         return size(buffer, 2), size(buffer, 3), size(buffer, 4)
     end
 end
+getsize{C<:ColorValue}(buffer::AbstractArray{C}, colorspace) = size(buffer, 1), size(buffer, 2), size(buffer, 3)
+
+colorsize(buffer, colorspace) = colorspace == "Gray" ? 1 : size(buffer, 1)
+colorsize{C<:ColorValue}(buffer::AbstractArray{C}, colorspace) = 3
 
 function exportimagepixels!{T}(buffer::AbstractArray{T}, wand::MagickWand,  colorspace::ASCIIString; x = 0, y = 0)
     cols, rows, nimages = getsize(buffer, colorspace)
-    ncolors = colorspace == "Gray" ? 1 : size(buffer, 1)
+    ncolors = colorsize(buffer, colorspace)
     p = pointer(buffer)
     for i = 1:nimages
         status = ccall((:MagickExportImagePixels, libwand), Cint, (Ptr{Void}, Cssize_t, Cssize_t, Csize_t, Csize_t, Ptr{Uint8}, Cint, Ptr{Void}), wand.ptr, x, y, cols, rows, channelorder[colorspace], storagetype(T), p)
