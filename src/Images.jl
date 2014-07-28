@@ -42,6 +42,7 @@ include("scaling.jl")
 include("labeledarrays.jl")
 include("algorithms.jl")
 include("connected.jl")
+include("nonmaxsup.jl")
 
 __init__() = LibMagick.init()
 
@@ -233,6 +234,10 @@ export # types
     sobel,
     ssd,
     ssdn,
+    thin_edges,
+    thin_edges_subpix,
+    thin_edges_nonmaxsup,
+    thin_edges_nonmaxsup_subpix,
 
     # phantoms
     shepp_logan

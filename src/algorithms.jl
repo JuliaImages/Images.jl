@@ -1571,6 +1571,12 @@ function imedge(img::AbstractArray, method::String="ando3", border::String="repl
     return (grad_x, grad_y, mag, orient)
 end
 
+# Thin edges
+thin_edges{T}(img::AbstractArray{T,2}, gradientangles::AbstractArray, border::String="replicate") =
+    thin_edges_nonmaxsup(img, gradientangles, border)
+thin_edges_subpix{T}(img::AbstractArray{T,2}, gradientangles::AbstractArray, border::String="replicate") =
+    thin_edges_nonmaxsup_subpix(img, gradientangles, border)
+
 function imROF{T}(img::Array{T,2}, lambda::Number, iterations::Integer)
     # Total Variation regularized image denoising using the primal dual algorithm
     # Also called Rudin Osher Fatemi (ROF) model
