@@ -535,9 +535,9 @@ isdirect(img::AbstractArray) = true
 isdirect(img::AbstractImageDirect) = true
 isdirect(img::AbstractImageIndexed) = false
 
-colorspace{C<:ColorValue}(img::AbstractMatrix{C}) = string(C)
-colorspace{C<:ColorValue}(img::AbstractArray{C,3}) = string(C)
-colorspace{C<:ColorValue}(img::AbstractImage{C}) = string(C)
+colorspace{C<:ColorValue}(img::AbstractMatrix{C}) = string(C.name)
+colorspace{C<:ColorValue}(img::AbstractArray{C,3}) = string(C.name)
+colorspace{C<:ColorValue}(img::AbstractImage{C}) = string(C.name)
 colorspace(img::AbstractMatrix{Bool}) = "Binary"
 colorspace(img::AbstractArray{Bool}) = "Binary"
 colorspace(img::AbstractArray{Bool,3}) = "Binary"
@@ -565,11 +565,12 @@ colordim(img::AbstractImageIndexed) = 0
 
 timedim(img) = get(img, "timedim", 0)
 
+one{T}(::Type{RGB{T}}) = RGB{T}(one(T),one(T),one(T))
+zero{T}(::Type{RGB{T}}) = RGB{T}(zero(T),zero(T),zero(T))
 limits(img::AbstractArray{Bool}) = 0,1
 limits{T<:Integer}(img::AbstractArray{T}) = typemin(T), typemax(T)
 limits{T<:FloatingPoint}(img::AbstractArray{T}) = zero(T), one(T)
 limits(img::AbstractImage{Bool}) = 0,1
-limits{T<:ColorValue}(img::AbstractArray{T}) = 0,1
 limits{T}(img::AbstractImageDirect{T}) = get(img, "limits", (typemin(T), typemax(T)))
 limits(img::AbstractImageIndexed) = @get img "limits" (minimum(img.cmap), maximum(img.cmap))
 
