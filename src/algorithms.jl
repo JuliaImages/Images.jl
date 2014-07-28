@@ -568,23 +568,23 @@ end
 # TODO: These coefficients were taken from the paper It would be nice
 #       to resolve the optimization problem and use higher precision
 #       versions, which might allow better separable approximations of
-#       shigeru4 and shigeru5.
+#       ando4 and ando5.
 
-function shigeru3()
+function ando3()
     f = [ -0.112737  0.0  0.112737
           -0.274526  0.0  0.274526
           -0.112737  0.0  0.112737 ]
     return f', f
 end
 
-# Below, the shigeru4() and shigeru5() functions return filters with
-# the published filter values.  The shigeru4_sep() and shigeru5_sep()
+# Below, the ando4() and ando5() functions return filters with
+# the published filter values.  The ando4_sep() and ando5_sep()
 # functions return separable approximations to the corresponding
 # filters, estimated using the projection of the actual values on the
 # eigenvector corresponding to the largest eigenvalue of the SVD of
 # the original filter.
 
-function shigeru4()
+function ando4()
     f = [ -0.022116 -0.025526  0.025526  0.022116
           -0.098381 -0.112984  0.112984  0.098381
           -0.098381 -0.112984  0.112984  0.098381
@@ -592,7 +592,7 @@ function shigeru4()
     return f', f
 end
 
-function shigeru4_sep()
+function ando4_sep()
     f = [-0.022175974729759376 -0.025473821998749126 0.025473821998749126 0.022175974729759376
          -0.09836750569692418  -0.11299599504060115  0.11299599504060115  0.09836750569692418
          -0.09836750569692418  -0.11299599504060115  0.11299599504060115  0.09836750569692418
@@ -600,7 +600,7 @@ function shigeru4_sep()
     return f', f
 end
 
-function shigeru5()
+function ando5()
     f = [ -0.003776 -0.010199  0.0  0.010199  0.003776
           -0.026786 -0.070844  0.0  0.070844  0.026786
           -0.046548 -0.122572  0.0  0.122572  0.046548
@@ -609,7 +609,7 @@ function shigeru5()
     return f', f
 end
 
-function shigeru5_sep()
+function ando5_sep()
     f = [-0.0038543900766123762 -0.0101692999709622   0.0  0.0101692999709622   0.0038543900766123762
          -0.026843218687756566  -0.07082229291692607  0.0  0.07082229291692607  0.026843218687756566
          -0.046468878396946627  -0.12260200818803602  0.0  0.12260200818803602  0.046468878396946627
@@ -1502,15 +1502,15 @@ backdiffy{T}(u::Array{T,2}) = u - [u[1,:]; u[1:end-1,:]]
 backdiffx{T}(u::Array{T,2}) = u - [u[:,1] u[:,1:end-1]]
 
 # Image gradients in the X and Y direction
-function imgradientxy(img::AbstractArray, method::String="shigeru3", border::String="replicate")
+function imgradients(img::AbstractArray, method::String="ando3", border::String="replicate")
     sx,sy = spatialorder(img)[1] == "x" ? (1,2) : (2,1)
-    s = (method == "sobel"        ? sobel() :
-         method == "prewitt"      ? prewitt() :
-         method == "shigeru3"     ? shigeru3() :
-         method == "shigeru4"     ? shigeru4() :
-         method == "shigeru5"     ? shigeru5() :
-         method == "shigeru4_sep" ? shigeru4_sep() :
-         method == "shigeru5_sep" ? shigeru5_sep() :
+    s = (method == "sobel"     ? sobel() :
+         method == "prewitt"   ? prewitt() :
+         method == "ando3"     ? ando3() :
+         method == "ando4"     ? ando4() :
+         method == "ando5"     ? ando5() :
+         method == "ando4_sep" ? ando4_sep() :
+         method == "ando5_sep" ? ando5_sep() :
          error("Unknown gradient method: $method"))
 
     grad_x = imfilter(img, s[sx], border)
@@ -1524,7 +1524,7 @@ magnitude(grad_x::AbstractArray, grad_y::AbstractArray) = hypot(grad_x, grad_y)
 
 # Phase (angle of steepest gradient ascent), calculated from X and Y gradient images
 function phase{T}(grad_x::AbstractArray{T}, grad_y::AbstractArray{T})
-    EPS = eps(T)*log(eps(T))
+    EPS = sqrt(eps(eltype(T)))
     # Set phase to zero when both gradients are close to zero
     reshape([atan2(-grad_y[i], grad_x[i]) * ((abs(grad_x[i]) > EPS) | (abs(grad_y[i]) > EPS))
              for i=1:length(grad_x)], size(grad_x))
@@ -1541,7 +1541,7 @@ end
 # both gradients are close to zero.
 
 function orientation{T}(grad_x::AbstractArray{T}, grad_y::AbstractArray{T})
-    EPS = eps(T)*log(eps(T))
+    EPS = sqrt(eps(eltype(T)))
     # Set orientation to zero when both gradients are close to zero
     # (grad_y[i] should probably be negated here, but isn't for consistency with earlier releases)
     reshape([atan2(grad_x[i], grad_y[i]) * ((abs(grad_x[i]) > EPS) | (abs(grad_y[i]) > EPS))
@@ -1555,17 +1555,17 @@ function orientation(grad_x::AbstractImageDirect, grad_y::AbstractImageDirect)
 end
 
 # Return both the magnituded and phase in one call
-imgradient(grad_x::AbstractArray, grad_y::AbstractArray) = (magnitude(grad_x,grad_y), phase(grad_x,grad_y))
+magnitude_phase(grad_x::AbstractArray, grad_y::AbstractArray) = (magnitude(grad_x,grad_y), phase(grad_x,grad_y))
 
 # Return the magnituded and phase of the gradients in an image
-function imgradient(img::AbstractArray, method::String="shigeru3", border::String="replicate")
-    grad_x, grad_y = imgradientxy(img, method, border)
+function magnitude_phase(img::AbstractArray, method::String="ando3", border::String="replicate")
+    grad_x, grad_y = imgradients(img, method, border)
     return imgradient(grad_x, grad_y)
 end
 
 # Return the x-y gradients and magnitude and phase of gradients in an image
-function imedge(img::AbstractArray, method::String="shigeru3", border::String="replicate")
-    grad_x, grad_y = imgradientxy(img, method, border)
+function imedge(img::AbstractArray, method::String="ando3", border::String="replicate")
+    grad_x, grad_y = imgradients(img, method, border)
     mag = magnitude(grad_x, grad_y)
     orient = orientation(grad_x, grad_y)
     return (grad_x, grad_y, mag, orient)

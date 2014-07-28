@@ -654,9 +654,9 @@ separable algorithm.
 
 <br />
 ```
-imgradientxy(img, [method="shigeru3"], [border])
+imgradients(img, [method], [border])
 ```
-Edge-detection filtering. `method` is one of `"sobel"`, `"prewitt"`, `"shigeru3"`, `"shigeru4"`, `"shigeru4_sep"`, `"shigeru5"`, or `"shigeru5_sep"`, defaulting to `"shigeru3"` (see the functions of the same name for more information).  `border` is any of the boundary conditions specified in `padarray`.
+Edge-detection filtering. `method` is one of `"sobel"`, `"prewitt"`, `"ando3"`, `"ando4"`, `"ando4_sep"`, `"ando5"`, or `"ando5_sep"`, defaulting to `"ando3"` (see the functions of the same name for more information).  `border` is any of the boundary conditions specified in `padarray`.
 
 Returns a tuple containing `x` (horizontal) and `y` (vertical) gradient images of the same size as `img`, calculated using the requested method and border.
 
@@ -686,7 +686,7 @@ Returns a phase image the same size as `grad_x` and `grad_y`, with values in [-p
 
 <br />
 ```
-imgradient(grad_x, grad_y)
+magnitude_phase(grad_x, grad_y)
 ```
 Convenience function for calculating the magnitude and phase of the gradient images given in `grad_x` and `grad_y`.  Returns a tuple containing the magnitude and phase images.  See `magnitude` and `phase` for details.
 
@@ -694,11 +694,9 @@ Convenience function for calculating the magnitude and phase of the gradient ima
 ```
 imedge(img, [method], [border])
 ```
-Edge-detection filtering. `method` is one of `"sobel"`, `"prewitt"`, `"shigeru3"`, `"shigeru4"`, `"shigeru4_sep"`, `"shigeru5"`, or `"shigeru5_sep"`, defaulting to `"shigeru3"` (see the functions of the same name for more information). `border` is any of the boundary conditions specified in `padarray`.
+Edge-detection filtering. `method` is one of `"sobel"`, `"prewitt"`, `"ando3"`, `"ando4"`, `"ando4_sep"`, `"ando5"`, or `"ando5_sep"`, defaulting to `"ando3"` (see the functions of the same name for more information). `border` is any of the boundary conditions specified in `padarray`.
 
 Returns a tuple `(grad_x, grad_y, mag, orient)`, which are the horizontal gradient, vertical gradient, and the magnitude and orientation of the strongest edge, respectively.
-
-Returns a tuple `(grad_x, grad_y, mag, phase)`, which are the horizontal component, vertical component, magnitude, and phase of the gradient, respectively.
 
 <br />
 ```
@@ -762,25 +760,25 @@ returns a laplacian-of-gaussian kernel.
 ```
 sobel()
 prewitt()
-shigeru3()
-shigeru4()
-shigeru4_sep()
-shigeru5()
-shigeru5_sep()
+ando3()
+ando4()
+ando4_sep()
+ando5()
+ando5_sep()
 ```
 Return x- and y- derivative filters of the specified type:
 
-Name             | Description
------------------|------------------------------
-`"sobel"`        | Sobel filter
-`"prewitt"`      | Prewitt filter
-`"shigeru3"`     | Optimal 3x3 filter from Shigeru 2000
-`"shigeru4"`     | Optimal 4x4 filter from Shigeru 2000
-`"shigeru4_sep"` | Separable approximation of `"shigeru4"`
-`"shigeru5"`     | Optimal 5x5 filter from Shigeru 2000
-`"shigeru5_sep"` | Separable approximation of `"shigeru5"`
+Name          | Description
+--------------|------------------------------
+`"sobel"`     | Sobel filter
+`"prewitt"`   | Prewitt filter
+`"ando3"`     | Optimal 3x3 filter from Ando 2000
+`"ando4"`     | Optimal 4x4 filter from Ando 2000
+`"ando4_sep"` | Separable approximation of `"ando4"`
+`"ando5"`     | Optimal 5x5 filter from Ando 2000
+`"ando5_sep"` | Separable approximation of `"ando5"`
 
-The shigeru filters were derived in Ando Shigeru, IEEE Trans. Pat. Anal. Mach. Int., vol. 22 no 3, March 2000.  As written in the paper, the 4x4 and 5x5 papers are not separable, so the `"shigeru4_sep"` and `"shigeru5_sep"` filters are provided as separable (and therefore faster) approximations of `"shigeru4"` and `"shigeru5"`, respectively.
+The ando filters were derived in Ando Shigeru, IEEE Trans. Pat. Anal. Mach. Int., vol. 22 no 3, March 2000.  As written in the paper, the 4x4 and 5x5 papers are not separable, so the `"ando4_sep"` and `"ando5_sep"` filters are provided as separable (and therefore faster) approximations of `"ando4"` and `"ando5"`, respectively.
 
 ### Nonlinear filtering and transformation
 

@@ -304,13 +304,13 @@ cb_image_xy = grayim(cb_array)
 cb_image_yx = grayim(cb_array)
 cb_image_yx["spatialorder"] = ["y","x"]
 
-for method in ["sobel", "prewitt", "shigeru3", "shigeru4", "shigeru5", "shigeru4_sep", "shigeru5_sep"]
+for method in ["sobel", "prewitt", "ando3", "ando4", "ando5", "ando4_sep", "ando5_sep"]
     ## Checkerboard array
 
-    (agx, agy) = imgradientxy(cb_array, method)
+    (agx, agy) = imgradients(cb_array, method)
     amag = magnitude(agx, agy)
     agphase = phase(agx, agy)
-    @assert (amag, agphase) == imgradient(agx, agy)
+    @assert (amag, agphase) == magnitude_phase(agx, agy)
 
     @assert agx[1,SZ]   < 0.0   # white to black transition
     @assert agx[1,2*SZ] > 0.0   # black to white transition
@@ -331,10 +331,10 @@ for method in ["sobel", "prewitt", "shigeru3", "shigeru4", "shigeru5", "shigeru4
 
     ## Checkerboard Image with row major order
 
-    (gx, gy) = imgradientxy(cb_image_xy, method)
+    (gx, gy) = imgradients(cb_image_xy, method)
     mag = magnitude(gx, gy)
     gphase = phase(gx, gy)
-    @assert (mag, gphase) == imgradient(gx, gy)
+    @assert (mag, gphase) == magnitude_phase(gx, gy)
 
     @assert gx[SZ,1]   < 0.0   # white to black transition
     @assert gx[2*SZ,1] > 0.0   # black to white transition
@@ -354,10 +354,10 @@ for method in ["sobel", "prewitt", "shigeru3", "shigeru4", "shigeru5", "shigeru4
 
     ## Checkerboard Image with column-major order
 
-    (gx, gy) = imgradientxy(cb_image_yx, method)
+    (gx, gy) = imgradients(cb_image_yx, method)
     mag = magnitude(gx, gy)
     gphase = phase(gx, gy)
-    @assert (mag, gphase) == imgradient(gx, gy)
+    @assert (mag, gphase) == magnitude_phase(gx, gy)
 
     @assert gx[1,SZ]   < 0.0   # white to black transition
     @assert gx[1,2*SZ] > 0.0   # black to white transition
@@ -386,13 +386,13 @@ m_xy = grayim(m')
 m_yx = grayim(m)
 m_yx["spatialorder"] = ["y","x"]
 
-for method in ["sobel", "prewitt", "shigeru3", "shigeru4", "shigeru5", "shigeru4_sep", "shigeru5_sep"]
+for method in ["sobel", "prewitt", "ando3", "ando4", "ando5", "ando4_sep", "ando5_sep"]
     ## Diagonal array
 
-    (agx, agy) = imgradientxy(m, method)
+    (agx, agy) = imgradients(m, method)
     amag = magnitude(agx, agy)
     agphase = phase(agx, agy)
-    @assert (amag, agphase) == imgradient(agx, agy)
+    @assert (amag, agphase) == magnitude_phase(agx, agy)
 
     @assert agx[7,9]  < 0.0   # white to black transition
     @assert agx[10,8] > 0.0   # black to white transition
@@ -411,10 +411,10 @@ for method in ["sobel", "prewitt", "shigeru3", "shigeru4", "shigeru5", "shigeru4
 
     ## Diagonal Image, row-major order
 
-    (gx, gy) = imgradientxy(m_xy, method)
+    (gx, gy) = imgradients(m_xy, method)
     mag = magnitude(gx, gy)
     gphase = phase(gx, gy)
-    @assert (mag, gphase) == imgradient(gx, gy)
+    @assert (mag, gphase) == magnitude_phase(gx, gy)
 
     @assert gx[9,7]  < 0.0   # white to black transition
     @assert gx[8,10] > 0.0   # black to white transition
@@ -433,10 +433,10 @@ for method in ["sobel", "prewitt", "shigeru3", "shigeru4", "shigeru5", "shigeru4
 
     ## Diagonal Image, column-major order
 
-    (gx, gy) = imgradientxy(m_yx, method)
+    (gx, gy) = imgradients(m_yx, method)
     mag = magnitude(gx, gy)
     gphase = phase(gx, gy)
-    @assert (mag, gphase) == imgradient(gx, gy)
+    @assert (mag, gphase) == magnitude_phase(gx, gy)
 
     @assert gx[7,9]  < 0.0   # white to black transition
     @assert gx[10,8] > 0.0   # black to white transition
