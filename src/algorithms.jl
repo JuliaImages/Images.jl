@@ -1560,7 +1560,7 @@ magnitude_phase(grad_x::AbstractArray, grad_y::AbstractArray) = (magnitude(grad_
 # Return the magnituded and phase of the gradients in an image
 function magnitude_phase(img::AbstractArray, method::String="ando3", border::String="replicate")
     grad_x, grad_y = imgradients(img, method, border)
-    return imgradient(grad_x, grad_y)
+    return magnitude_phase(grad_x, grad_y)
 end
 
 # Return the x-y gradients and magnitude and phase of gradients in an image
