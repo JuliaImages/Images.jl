@@ -138,6 +138,8 @@ copy(img::AbstractImageDirect, data::StoredArray) = Image(data, copy(img.propert
 
 copy(img::AbstractImageIndexed, data::StoredArray) = ImageCmap(data, copy(img.cmap), copy(img.properties))
 
+copy(img::AbstractImageDirect, _data::AbstractImageDirect) = copy(img, data(_data))
+
 # Provide new data but reuse the properties & cmap
 share(img::AbstractArray, data::AbstractArray) = data
 
