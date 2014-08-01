@@ -774,7 +774,7 @@ end
 ###
 ### imfilter
 ###
-imfilter(img, kern, border, value) = copy(img, imfilter_inseparable(img, kern, border, value))
+imfilter(img, kern, border, value) = imfilter_inseparable(img, kern, border, value)
 # Do not combine these with the previous using a default value (see the 2d specialization below)
 imfilter(img, filter) = imfilter(img, filter, "replicate", 0)
 imfilter(img, filter, border) = imfilter(img, filter, border, 0)
@@ -811,7 +811,7 @@ function imfilter{T}(img::AbstractArray{T}, kern::AbstractMatrix, border::String
     ss = sqrt(s)
     sz1 = ones(Int, ndims(img)); sz1[sc[1]] = size(kern, 1)
     sz2 = ones(Int, ndims(img)); sz2[sc[2]] = size(kern, 2)
-    tmp = imfilter_inseparable(img, reshape(u*ss, sz1...), border, value)
+    tmp = imfilter_inseparable(data(img), reshape(u*ss, sz1...), border, value)
     copy(img, imfilter_inseparable(tmp, reshape(v*ss, sz2...), border, value))
 end
 
