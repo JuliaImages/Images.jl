@@ -42,7 +42,7 @@ include("scaling.jl")
 include("labeledarrays.jl")
 include("algorithms.jl")
 include("connected.jl")
-include("nonmaxsup.jl")
+include("edge.jl")
 
 __init__() = LibMagick.init()
 

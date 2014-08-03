@@ -1,6 +1,7 @@
 include("core.jl")
 include("scaling.jl")
 include("algorithms.jl")
+include("edge.jl")
 include("io.jl")
 include("readnrrd.jl")
 @linux_only include("readremote.jl")
