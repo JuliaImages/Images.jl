@@ -224,7 +224,7 @@ export # types
     label_components!,
     magnitude,
     magnitude_phase,
-    nanmean,
+    meanfinite,
     ncc,
     orientation,
     padarray,
