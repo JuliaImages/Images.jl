@@ -64,11 +64,18 @@ let
     img = Images.colorim(A, "RGB")
     img["limits"] = (0.0, 1.0)
     s12 = sum(img, (1,2))
-    @test colorspace(s12) == "RGB"
-    @test limits(s12) == (0.0,25.0)
+    @test Images.colorspace(s12) == "RGB"
+    @test Images.limits(s12) == (0.0,25.0)
     s3 = sum(img, (3,))
-    @test colorspace(s3) == "Unknown"
-    @test limits(s3) == (0.0,3.0)
+    @test Images.colorspace(s3) == "Unknown"
+    @test Images.limits(s3) == (0.0,3.0)
+    A = [NaN, 1, 2, 3]
+    @test_approx_eq Images.meanfinite(A, 1) [2]
+    A = [NaN 1 2 3;
+         NaN 6 5 4]
+    @test_approx_eq Images.meanfinite(A, 1) [NaN 3.5 3.5 3.5]
+    @test_approx_eq Images.meanfinite(A, 2) [2, 5]'
+    @test_approx_eq Images.meanfinite(A, (1,2)) [3.5]
 end
 
 # Array padding
@@ -137,7 +144,7 @@ Aimg = permutedims(convert(Images.Image, A), [3,1,2])
 @assert approx_equal(Images.imfilter_gaussian(ones(4,4), [5,5]), 1.0)
 
 A = zeros(Int, 9, 9); A[5, 5] = 1
-@test maximum(abs(Images.imfilter_LoG(A, [1,1]) - imlog(1.0))) < EPS
+@test maximum(abs(Images.imfilter_LoG(A, [1,1]) - Images.imlog(1.0))) < EPS
 
 # restriction
 A = reshape(uint16(1:60), 4, 5, 3)

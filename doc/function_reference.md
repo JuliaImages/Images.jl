@@ -840,6 +840,11 @@ maxabsfinite(img)
 ```
 Return the minimum and maximum value in the image, respectively, ignoring any values that are not finite (Inf or NaN).
 
+```
+meanfinite(img, region)
+```
+Calculate the mean value along the dimensions listed in `region`, ignoring any non-finite values.
+
 <br />
 ```
 ssd(img1, img2)

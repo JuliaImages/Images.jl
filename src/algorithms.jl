@@ -86,6 +86,47 @@ function sum(img::AbstractImageDirect, region::Union(AbstractVector,Tuple,Intege
     out
 end
 
+meanfinite(A::AbstractArray, region) = mean(A, region)
+function meanfinite{T<:FloatingPoint}(A::AbstractArray{T}, region)
+    sz = Base.reduced_dims(A, region)
+    K = zeros(Int, sz)
+    S = zeros(T, sz)
+    sumfinite!(S, K, A)
+    S./K
+end
+# Note that you have to zero S and K upon entry
+@ngenerate N typeof((S,K)) function sumfinite!{T,N}(S, K, A::AbstractArray{T,N})
+    isempty(A) && return S, K
+    @nexprs N d->(sizeS_d = size(S,d))
+    sizeA1 = size(A, 1)
+    if size(S, 1) == 1 && sizeA1 > 1
+        # When we are reducing along dim == 1, we can accumulate to a temporary
+        @inbounds @nloops N i d->(d>1? (1:size(A,d)) : (1:1)) d->(j_d = sizeS_d==1 ? 1 : i_d) begin
+            s = @nref(N, S, j)
+            k = @nref(N, K, j)
+            for i_1 = 1:sizeA1
+                tmp = @nref(N, A, i)
+                if isfinite(tmp)
+                    s += tmp
+                    k += 1
+                end
+            end
+            @nref(N, S, j) = s
+            @nref(N, K, j) = k
+        end
+    else
+        # Accumulate to array storage
+        @inbounds @nloops N i A d->(j_d = sizeS_d==1 ? 1 : i_d) begin
+            tmp = @nref(N, A, i)
+            if isfinite(tmp)
+                @nref(N, S, j) += tmp
+                @nref(N, K, j) += 1
+            end
+        end
+    end
+    S, K
+end
+
 # Logical operations
 (.<)(img::AbstractImageDirect, n::Number) = data(img) .< n
 (.>)(img::AbstractImageDirect, n::Number) = data(img) .> n
