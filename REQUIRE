@@ -1,5 +1,5 @@
 julia 0.2 0.3
-Color
+Color 0.2 0.3
 Cartesian 0.2-
 BinDeps
 @osx Homebrew
