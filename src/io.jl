@@ -244,12 +244,12 @@ end
 
 imread{C<:ColorValue}(filename::String, ::Type{ImageMagick}, ::Type{C}) = convert(Image{C}, imread(filename, ImageMagick))
 
-function imwrite(img, filename::String, ::Type{ImageMagick}; scalei = scaleinfo_uint(img))
-    wand = image2wand(img, scalei)
+function imwrite(img, filename::String, ::Type{ImageMagick}; scalei = scaleinfo_uint(img), quality = nothing)
+    wand = image2wand(img, scalei, quality)
     LibMagick.writeimage(wand, filename)
 end
 
-function image2wand(img, scalei)
+function image2wand(img, scalei, quality)
     if isa(img, AbstractImageIndexed)
         # For now, convert to direct
         img = convert(Image, img)
@@ -262,6 +262,9 @@ function image2wand(img, scalei)
     end
     wand = LibMagick.MagickWand()
     LibMagick.constituteimage(to_explicit(to_contiguous(data(imgw))), wand, colorspace(img))
+    if quality != nothing
+        LibMagick.setimagecompressionquality(wand, quality)
+    end
     LibMagick.resetiterator(wand)
     wand
 end

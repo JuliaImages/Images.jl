@@ -48,6 +48,11 @@ julia> imwrite(img, "rose2.jpg")
 ```
 The image file type is inferred from the extension.
 
+When using ImageMagick, i.e. for most common filetypes, an additional `quality` parameter can be set to choose compression quality. Admissible values are in the range 0-100 and described in more detail in the [ImageMagick documentation](http://www.imagemagick.org/script/command-line-options.php#quality).
+```
+julia> imwrite(img, "rose2.jpg", quality=95)
+```
+
 ## Image display
 
 The most direct approach is the `display` command:
