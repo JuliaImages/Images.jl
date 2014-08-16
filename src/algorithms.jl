@@ -92,7 +92,7 @@ function meanfinite{T<:FloatingPoint}(A::AbstractArray{T}, region)
     K = zeros(Int, sz)
     S = zeros(T, sz)
     sumfinite!(S, K, A)
-    S./K
+    copy(A, S./K)
 end
 # Note that you have to zero S and K upon entry
 @ngenerate N typeof((S,K)) function sumfinite!{T,N}(S, K, A::AbstractArray{T,N})
