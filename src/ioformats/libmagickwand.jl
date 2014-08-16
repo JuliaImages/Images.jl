@@ -63,8 +63,10 @@ const CStoIMTypedict = ["Gray" => "GrayscaleType", "GrayAlpha" => "GrayscaleMatt
 const IMColorspace = ["RGB", "Gray", "Transparent", "OHTA", "Lab", "XYZ", "YCbCr", "YCC", "YIQ", "YPbPr", "YUV", "CMYK", "sRGB"]
 const IMColordict = Dict(IMColorspace, 1:length(IMColorspace))
 IMColordict["GrayAlpha"] = IMColordict["Gray"]
-IMColordict["RGBA"] = IMColordict["RGB"]
-IMColordict["ARGB"] = IMColordict["RGB"]
+# Everything is mapped to sRGB since that's what it really is.
+IMColordict["RGBA"] = IMColordict["sRGB"]
+IMColordict["ARGB"] = IMColordict["sRGB"]
+IMColordict["RGB"]  = IMColordict["sRGB"]
 
 function nchannels(imtype::String, cs::String, havealpha = false)
     n = 3
