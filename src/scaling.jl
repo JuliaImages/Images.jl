@@ -73,17 +73,20 @@ type ClipMin{T,From} <: Clip{T}
     min::From
 end
 ClipMin{T,From}(::Type{T}, min::From) = ClipMin{T,From}(min)
+ClipMin{From}(min::From) = ClipMin{From,From}(min)
 ClipMin(::Type{RGB}) = ClipMinMax(Float64,0.0)
 type ClipMax{T,From} <: Clip{T}
     max::From
 end
 ClipMax{T,From}(::Type{T}, max::From) = ClipMax{T,From}(max)
+ClipMax{From}(max::From) = ClipMax{From,From}(max)
 ClipMax(::Type{RGB}) = ClipMinMax(Float64,1.0)
 type ClipMinMax{T,From} <: Clip{T}
     min::From
     max::From
 end
 ClipMinMax{T,From}(::Type{T}, min::From, max::From) = ClipMinMax{T,From}(min,max)
+ClipMinMax{From}(min::From, max::From) = ClipMinMax{From,From}(min,max)
 ClipMinMax(::Type{RGB}) = ClipMinMax(Float64,0.0,1.0)
 ClipMinMax(::Type{RGB8}, ::Type{RGB}) = ClipMinMax{RGB8,RGB}(RGB(0,0,0),RGB(1,1,1))
 
