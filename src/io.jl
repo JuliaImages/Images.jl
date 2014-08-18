@@ -267,7 +267,6 @@ function image2wand(img, scalei)
     end
     wand = LibMagick.MagickWand()
     cs = colorspace(imgw)
-    cs = cs == "RGB8" ? "RGB" : cs
     LibMagick.constituteimage(to_explicit(to_contiguous(data(imgw))), wand, cs)
     LibMagick.resetiterator(wand)
     wand
@@ -278,7 +277,9 @@ to_contiguous(A::AbstractArray) = A
 to_contiguous(A::SubArray) = copy(A)
 
 to_explicit(A::AbstractArray) = A
-to_explicit(A::AbstractArray{RGB8}) = reinterpret(Uint8, A, tuple(3, size(A)...))
+to_explicit{T<:Ufixed}(A::AbstractArray{T}) = reinterpret(FixedPointNumbers.rawtype(T), A)
+to_explicit{T<:Ufixed}(A::AbstractArray{RGB{T}}) = reinterpret(FixedPointNumbers.rawtype(T), A, tuple(3, size(A)...))
+to_explicit{T<:FloatingPoint}(A::AbstractArray{RGB{T}}) = to_explicit(scale(ClipMinMax(RGB{Ufixed8}, zero(RGB{T}), one(RGB{T})), A))
 
 # Write grayscale values in horizontal-major order
 function writegray(stream, img, scalei::ScaleInfo)

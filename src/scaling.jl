@@ -57,7 +57,6 @@ scale{T<:Integer,S<:FloatingPoint}(scalei::ScaleNone{T}, val::S) = iround(T, val
 scale{T}(scalei::ScaleNone{T}, img::AbstractArray{T}) = img
 
 scale(scalei::ScaleNone{Uint32}, val::RGB) = convert(Uint32, convert(RGB24, val))
-scale(scalei::ScaleNone{RGB8}, val::RGB) = RGB8(iround(Uint8, 255*val.r), iround(Uint8, 255*val.g), iround(Uint8, 255*val.b))
 
 ## BitShift
 
@@ -87,9 +86,8 @@ type ClipMinMax{T,From} <: Clip{T}
     max::From
 end
 ClipMinMax{T,From}(::Type{T}, min::From, max::From) = ClipMinMax{T,From}(min,max)
-ClipMinMax(::Type{RGB{Ufixed8}}) = ScaleNone{T}()
-ClipMinMax{T}(::Type{RGB{T}}) = ClipMinMax(T,zero(T),one(T))
-ClipMinMax{T}(::Type{RGB8}, ::Type{RGB{T}}) = ClipMinMax{RGB8,RGB{T}}(RGB(zero(T),zero(T),zero(T)),RGB(one(T),one(T),one(T)))
+ClipMinMax{T<:Ufixed}(::Type{RGB{T}}) = ScaleNone{RGB{T}}()
+ClipMinMax{T<:FloatingPoint}(::Type{RGB{T}}) = ClipMinMax(RGB{T},zero(RGB{T}),one(RGB{T}))
 
 scale{T<:Integer,F<:FloatingPoint}(scalei::ClipMin{T,F}, val::F) = iround(T, max(val, scalei.min))
 scale{T<:Real,F<:Real}(scalei::ClipMin{T,F}, val::F) = convert(T, max(val, scalei.min))
@@ -98,12 +96,15 @@ scale{T<:Real,F<:Real}(scalei::ClipMax{T,F}, val::F) = convert(T, min(val, scale
 scale{T<:Real}(scalei::ClipMinMax{T,T}, val::T) = min(max(val, scalei.min), scalei.max)
 scale{T<:Real,F<:Real}(scalei::ClipMinMax{T,F}, val::F) = convert(T,min(max(val, scalei.min), scalei.max))
 scale{T<:Integer,F<:FloatingPoint}(scalei::ClipMinMax{T,F}, val::F) = iround(T,min(max(val, scalei.min), scalei.max))
+scale{CV<:ColorValue}(scalei::ClipMinMax{CV,CV}, val::CV) = mincv(maxcv(val, scalei.min), scalei.max)
+scale{T<:ColorValue, F<:ColorValue}(scalei::ClipMinMax{T,F}, val::F) = convert(T, mincv(maxcv(val, scalei.min), scalei.max))
 
-scale(scalei::Clip, v::RGB) = RGB(scale(scalei, v.r), scale(scalei, v.g), scale(scalei, v.b))
-scale{C<:RGB}(scalei::ClipMinMax{RGB8,C}, val::C) = RGB8(truncround(Uint8, 255*val.r), truncround(Uint8, 255*val.g), truncround(Uint8, 255*val.b))
+mincv{CV<:ColorValue}(c1::CV, c2::CV) = CV(min(getfield(c1,1),getfield(c2,1)), min(getfield(c1,2),getfield(c2,2)), min(getfield(c1,3),getfield(c2,3)))
+maxcv{CV<:ColorValue}(c1::CV, c2::CV) = CV(max(getfield(c1,1),getfield(c2,1)), max(getfield(c1,2),getfield(c2,2)), max(getfield(c1,3),getfield(c2,3)))
 
-clip(v::RGB) = RGB(min(1.0,v.r),min(1.0,v.g),min(1.0,v.b))
-function clip!(A::Array{RGB})
+clip{T}(v::RGB{T}) = scale(ClipMinMax(RGB{T}), v)
+clip!{T<:Ufixed}(A::Array{RGB{T}}) = A
+function clip!{T}(A::Array{RGB{T}})
     for i = 1:length(A)
         A[i] = clip(A[i])
     end
@@ -224,7 +225,8 @@ scaleinfo_uint(img::AbstractImageDirect{RGB}) = @get img "scalei" scaleinfo_uint
 scaleinfo_uint{From<:Unsigned}(img::AbstractArray{From}) = ScaleNone{From}()
 scaleinfo_uint{From<:Integer}(img::AbstractArray{From}) = scaleinfo_uint(unsigned(From), img)
 scaleinfo_uint{From<:FloatingPoint}(img::AbstractArray{From}) = scaleinfo_uint(Uint8, img)
-scaleinfo_uint{T}(img::AbstractArray{RGB{T}}) = ClipMinMax(RGB8, RGB{T})
+scaleinfo_uint{T<:Ufixed}(img::AbstractArray{RGB{T}}) = ScaleNone(RGB{T})
+scaleinfo_uint{T<:FloatingPoint}(img::AbstractArray{RGB{T}}) = ClipMinMax(RGB{T})
 
 climdefault{T<:Integer}(img::AbstractArray{T}) = limits(img)
 function climdefault{T<:FloatingPoint}(img::AbstractArray{T})
