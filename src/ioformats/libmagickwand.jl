@@ -1,6 +1,6 @@
 module LibMagick
 
-using Color, FixedPoint
+using Color, FixedPointNumbers
 
 import Base: error, size
 

@@ -1,4 +1,4 @@
-using Images, FixedPoint
+using Images, FixedPointNumbers
 
 urlbase = "http://www.imagemagick.org/Usage/images/"
 
