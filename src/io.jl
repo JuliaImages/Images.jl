@@ -489,29 +489,36 @@ function parse_netpbm_maxval(stream::IO)
     parseint(maxvalline)
 end
 
+const ufixedtype = [10=>Ufixed10, 12=>Ufixed12, 14=>Ufixed14, 16=>Ufixed16]
+
 function imread{S<:IO}(stream::S, ::Type{PPMBinary})
     w, h = parse_netpbm_size(stream)
     maxval = parse_netpbm_maxval(stream)
     local dat
     if maxval <= 255
-        dat = read(stream, Uint8, 3, w, h)
+        datraw = read(stream, Ufixed8, 3, w, h)
+        dat = reinterpret(RGB{Ufixed8}, datraw, (w, h))
     elseif maxval <= typemax(Uint16)
-        dat = Array(Uint16, 3, w, h)
+        # read first as Uint16 so the loop is type-stable, then convert to Ufixed
+        datraw = Array(Uint16, 3, w, h)
         # there is no endian standard, but netpbm is big-endian
         if ENDIAN_BOM == 0x01020304
             for indx = 1:3*w*h
-                dat[indx] = read(stream, Uint16)
+                datraw[indx] = read(stream, Uint16)
             end
         else
             for indx = 1:3*w*h
-                dat[indx] = bswap(read(stream, Uint16))
+                datraw[indx] = bswap(read(stream, Uint16))
             end
         end
+        # Determine the appropriate Ufixed type
+        T = ufixedtype[iceil(log2(maxval)/2)<<1]
+        dat = reinterpret(RGB{T}, datraw, (w, h))
     else
         error("Image file may be corrupt. Are there really more than 16 bits in this image?")
     end
     T = eltype(dat)
-    Image(dat, ["colorspace" => "RGB", "colordim" => 1, "spatialorder" => ["x", "y"], "limits" => (zero(T),convert(T,maxval))])
+    Image(dat, ["colorspace" => "RGB", "spatialorder" => ["x", "y"], "limits" => (zero(T),one(T))])
 end
 
 function imread{S<:IO}(stream::S, ::Type{PGMBinary})
@@ -519,23 +526,26 @@ function imread{S<:IO}(stream::S, ::Type{PGMBinary})
     maxval = parse_netpbm_maxval(stream)
     local dat
     if maxval <= 255
-        dat = read(stream, Uint8, w, h)
+        dat = read(stream, Ufixed8, w, h)
     elseif maxval <= typemax(Uint16)
-        dat = Array(Uint16, w, h)
+        datraw = Array(Uint16, w, h)
         if ENDIAN_BOM == 0x01020304
             for indx = 1:w*h
-                dat[indx] = read(stream, Uint16)
+                datraw[indx] = read(stream, Uint16)
             end
         else
             for indx = 1:w*h
-                dat[indx] = bswap(read(stream, Uint16))
+                datraw[indx] = bswap(read(stream, Uint16))
             end
         end
+        # Determine the appropriate Ufixed type
+        T = ufixedtype[iceil(log2(maxval)/2)<<1]
+        dat = reinterpret(RGB{T}, datraw, (w, h))
     else
         error("Image file may be corrupt. Are there really more than 16 bits in this image?")
     end
     T = eltype(dat)
-    Image(dat, ["colorspace" => "Gray", "spatialorder" => ["x", "y"], "limits" => (zero(T),convert(T,maxval))])
+    Image(dat, ["colorspace" => "Gray", "spatialorder" => ["x", "y"], "limits" => (zero(T),one(T))])
 end
 
 function imread{S<:IO}(stream::S, ::Type{PBMBinary})
