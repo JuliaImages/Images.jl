@@ -21,8 +21,13 @@ export MagickWand,
 
 
 # Find the library
-include("../../deps/deps.jl")
-const have_imagemagick = !isempty(libwand)
+depsfile = Pkg.dir("Images","deps","deps.jl")
+if isfile(depsfile)
+    include(depsfile)
+else
+    error("Images not properly installed. Please run Pkg.build(\"Images\") then restart Julia.")
+end
+const have_imagemagick = isdefined(:libwand)
 
 # Initialize the library
 function init()
