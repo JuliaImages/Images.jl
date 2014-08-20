@@ -30,6 +30,7 @@ const have_imagemagick = include("ioformats/libmagickwand.jl")
 include("io.jl")
 include("scaling.jl")
 include("labeledarrays.jl")
+include("uint32color.jl")
 include("algorithms.jl")
 include("connected.jl")
 
