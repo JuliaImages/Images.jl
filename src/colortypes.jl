@@ -3,7 +3,7 @@ module ColorTypes
 using Color
 import Color.Fractional
 
-export RGBA, ARGB, BGRA, GrayAlpha
+export RGBA, ARGB, BGRA, Gray, GrayAlpha
 
 typealias RGBA{T} AlphaColorValue{RGB{T}, T}
 

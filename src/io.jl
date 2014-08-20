@@ -228,7 +228,7 @@ function imread(filename::String, ::Type{ImageMagick})
     T = ufixedtype[depth]
     if havealpha
         if cs == "sRGB"
-            if ENDIAN_BOM == 0x04030201
+            if is_little_endian
                 T, cs = BGRA{T}, "BGRA"
             else
                 T, cs = ARGB{T}, "ARGB"
@@ -519,7 +519,7 @@ function imread{S<:IO}(stream::S, ::Type{PPMBinary})
         # read first as Uint16 so the loop is type-stable, then convert to Ufixed
         datraw = Array(Uint16, 3, w, h)
         # there is no endian standard, but netpbm is big-endian
-        if ENDIAN_BOM == 0x01020304
+        if !is_little_endian
             for indx = 1:3*w*h
                 datraw[indx] = read(stream, Uint16)
             end
@@ -546,7 +546,7 @@ function imread{S<:IO}(stream::S, ::Type{PGMBinary})
         dat = read(stream, Ufixed8, w, h)
     elseif maxval <= typemax(Uint16)
         datraw = Array(Uint16, w, h)
-        if ENDIAN_BOM == 0x01020304
+        if !is_little_endian
             for indx = 1:w*h
                 datraw[indx] = read(stream, Uint16)
             end

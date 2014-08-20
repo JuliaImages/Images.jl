@@ -18,6 +18,8 @@ end
 #     import ..Grid.restrict
 # end
 
+const is_little_endian = ENDIAN_BOM == 0x04030201
+
 include("colortypes.jl")
 using .ColorTypes
 
@@ -61,6 +63,14 @@ function precompile()
 end
 
 export # types
+    Gray,
+    GrayAlpha,
+    ARGB,
+    BGRA,
+    RGBA,
+    RGB1,
+    RGB4,
+
     AbstractImage,
     AbstractImageDirect,
     AbstractImageIndexed,

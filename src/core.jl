@@ -24,10 +24,13 @@ ImageCmap(data::AbstractArray, cmap::AbstractArray, props::Dict) = ImageCmap{elt
 ImageCmap(data::AbstractArray, cmap::AbstractArray; kwargs...) = ImageCmap(data, cmap, kwargs2dict(kwargs))
 
 # Convenience constructors
-grayim{T<:Fractional}(A::AbstractArray{T,2}) = Image(A; colorspace="Gray", spatialorder=["x","y"])
-grayim{T<:Fractional}(A::AbstractArray{T,3}) = Image(A; colorspace="Gray", spatialorder=["x","y","z"])
-grayim(A::AbstractArray{Uint8})  = grayim(reinterpret(Ufixed8, A))
-grayim(A::AbstractArray{Uint16}) = grayim(reinterpret(Ufixed16, A))
+grayim(A::AbstractImage) = A
+grayim(A::AbstractArray{Uint8,2})  = grayim(reinterpret(Ufixed8, A))
+grayim(A::AbstractArray{Uint16,2}) = grayim(reinterpret(Ufixed16, A))
+grayim(A::AbstractArray{Uint8,3})  = grayim(reinterpret(Ufixed8, A))
+grayim(A::AbstractArray{Uint16,3}) = grayim(reinterpret(Ufixed16, A))
+grayim{T}(A::AbstractArray{T,2}) = Image(A; colorspace="Gray", spatialorder=["x","y"])
+grayim{T}(A::AbstractArray{T,3}) = Image(A; colorspace="Gray", spatialorder=["x","y","z"])
 
 function colorim{T<:Fractional}(A::AbstractArray{T,3})
     if size(A, 1) == 4 || size(A, 3) == 4
@@ -539,19 +542,18 @@ colorspace(img::AbstractArray{Bool,3}) = "Binary"
 colorspace{T<:Union(Int32,Uint32)}(img::AbstractMatrix{T}) = "RGB24"
 colorspace(img::AbstractMatrix) = "Gray"
 colorspace{T}(img::AbstractArray{T,3}) = (size(img, defaultarraycolordim) == 3) ? "RGB" : error("Cannot infer colorspace of Array, use an AbstractImage type")
-# colorspace{T}(img::AbstractArray{T,3}) = (size(img, defaultarraycolordim) == 3) ? "RGB" : 0
 colorspace(img::AbstractImage{Bool}) = "Binary"
-colorspace{T,N,A<:AbstractArray,C<:ColorValue}(img::ImageCmap{T,N,A,Array{C,1}}) = string(C)
+colorspace{T,N,A<:AbstractArray,C<:ColorValue}(img::ImageCmap{T,N,A,Array{C,1}}) = string(C.name)
 colorspace(img::AbstractImageIndexed) = @get img "colorspace" csinfer(eltype(img.cmap))
 colorspace{T}(img::AbstractImageIndexed{T,2}) = @get img "colorspace" csinfer(eltype(img.cmap))
 csinfer{C<:ColorValue}(::Type{C}) = string(C)
 csinfer(C) = "Unknown"
 colorspace(img::AbstractImage) = get(img.properties, "colorspace", "Unknown")
 
-colordim{C<:ColorValue}(img::AbstractVector{C}) = 0
-colordim{C<:ColorValue}(img::AbstractMatrix{C}) = 0
-colordim{C<:ColorValue}(img::AbstractArray{C,3}) = 0
-colordim{C<:ColorValue}(img::AbstractImage{C}) = 0
+colordim{C<:Union(ColorValue, AbstractAlphaColorValue)}(img::AbstractVector{C}) = 0
+colordim{C<:Union(ColorValue, AbstractAlphaColorValue)}(img::AbstractMatrix{C}) = 0
+colordim{C<:Union(ColorValue, AbstractAlphaColorValue)}(img::AbstractArray{C,3}) = 0
+colordim{C<:Union(ColorValue, AbstractAlphaColorValue)}(img::AbstractImage{C}) = 0
 colordim(img::AbstractMatrix) = 0
 colordim{T}(img::AbstractImageDirect{T,3}) = get(img, "colordim", 0)
 colordim{T}(img::AbstractArray{T,3}) = (size(img, defaultarraycolordim) == 3) ? 3 : 0
