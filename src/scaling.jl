@@ -116,6 +116,7 @@ ScaleMinMax{To<:Real,From<:Real}(::Type{To}, mn::From, mx::From) = ScaleMinMax(T
 
 # ScaleMinMax constructors that take AbstractArray input
 ScaleMinMax{To<:FloatingPoint,From}(::Type{To}, img::AbstractArray{From}, mn::Real, mx::Real) = ScaleMinMax(To, convert(From,mn), convert(From,mx), 1.0f0/(mx-mn))
+ScaleMinMax{To<:Ufixed,From}(::Type{To}, img::AbstractArray{From}, mn::Real, mx::Real) = ScaleMinMax(To, convert(From,mn), convert(From,mx), 1.0f0/(mx-mn))
 ScaleMinMax{To}(::Type{To}, img::AbstractArray) = ScaleMinMax(To, img, minfinite(img), maxfinite(img))
 ScaleMinMax(img::AbstractArray) = ScaleMinMax(Ufixed8, img)
 ScaleMinMax(img::AbstractArray, mn::Real, mx::Real) = ScaleMinMax(Ufixed8, img, mn, mx)

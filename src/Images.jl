@@ -240,6 +240,7 @@ export # types
 @deprecate ClipMin      ClampMin
 @deprecate ClipMax      ClampMax
 @deprecate ClipMinMax   ClampMinMax
+@deprecate climdefault(img) zero(eltype(img)), one(eltype(img))
 
 if VERSION < v"0.3-"
   __init__()
