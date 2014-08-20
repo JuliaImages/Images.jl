@@ -25,7 +25,7 @@ depsfile = Pkg.dir("Images","deps","deps.jl")
 if isfile(depsfile)
     include(depsfile)
 else
-    error("Images not properly installed. Please run Pkg.build(\"Images\")")
+    error("Images not properly installed. Please run Pkg.build(\"Images\") then restart Julia.")
 end
 const have_imagemagick = isdefined(:libwand)
 
