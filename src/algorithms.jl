@@ -4,78 +4,49 @@
 (+)(img::AbstractImageDirect, n::Number) = img .+ n
 (+)(n::Bool, img::AbstractImageDirect{Bool}) = n .+ img
 (+)(n::Number, img::AbstractImageDirect) = n .+ img
-(.+)(img::AbstractImageDirect, n::Number) = limadj(copy(img, data(img).+n), limplus(limits(img), n))
-(.+)(n::Number, img::AbstractImageDirect) = limadj(copy(img, data(img).+n), limplus(limits(img), n))
-(+)(img::AbstractImageDirect, A::BitArray) = limadj(copy(img, data(img)+A), limplus(limits(img), Bool))
+(.+)(img::AbstractImageDirect, n::Number) = copy(img, data(img).+n)
+(.+)(n::Number, img::AbstractImageDirect) = copy(img, data(img).+n)
+(+)(img::AbstractImageDirect, A::BitArray) = copy(img, data(img)+A)
 if isdefined(:UniformScaling)
-    (+){Timg,TA<:Number}(img::AbstractImageDirect{Timg,2}, A::UniformScaling{TA}) = limadj(copy(img, data(img)+A), limplus(limits(img), A.λ))
-    (-){Timg,TA<:Number}(img::AbstractImageDirect{Timg,2}, A::UniformScaling{TA}) = limadj(copy(img, data(img)-A), limminus(limits(img), A.λ))
+    (+){Timg,TA<:Number}(img::AbstractImageDirect{Timg,2}, A::UniformScaling{TA}) = copy(img, data(img)+A)
+    (-){Timg,TA<:Number}(img::AbstractImageDirect{Timg,2}, A::UniformScaling{TA}) = copy(img, data(img)-A)
 end
-(+)(img::AbstractImageDirect, A::AbstractArray) = limadj(copy(img, data(img)+data(A)), limplus(limits(img), limits(A)))
-(.+)(img::AbstractImageDirect, A::BitArray) = limadj(copy(img, data(img).+A), limplus(limits(img), Bool))
-(.+)(img::AbstractImageDirect, A::AbstractArray) = limadj(copy(img, data(img).+data(A)), limplus(limits(img), limits(A)))
+(+)(img::AbstractImageDirect, A::AbstractArray) = copy(img, data(img)+data(A))
+(.+)(img::AbstractImageDirect, A::BitArray) = copy(img, data(img).+A)
+(.+)(img::AbstractImageDirect, A::AbstractArray) = copy(img, data(img).+data(A))
 (-)(img::AbstractImageDirect{Bool}, n::Bool) = img .- n
 (-)(img::AbstractImageDirect, n::Number) = img .- n
-(.-)(img::AbstractImageDirect, n::Number) = limadj(copy(img, data(img).-n), limminus(limits(img), n))
+(.-)(img::AbstractImageDirect, n::Number) = copy(img, data(img).-n)
 (-)(n::Bool, img::AbstractImageDirect{Bool}) = n .- img
 (-)(n::Number, img::AbstractImageDirect) = n .- img
-(.-)(n::Number, img::AbstractImageDirect) = limadj(copy(img, n.-data(img)), limminus(n, limits(img)))
-(-)(img::AbstractImageDirect, A::BitArray) = limadj(copy(img, data(img)-A), limminus(limits(img), Bool))
-(-){T}(img::AbstractImageDirect{T,2}, A::Diagonal) = limadj(copy(img, data(img)-A), limminus(limits(img), limits(A))) # fixes an ambiguity warning
-(-)(img::AbstractImageDirect, A::AbstractArray) = limadj(copy(img, data(img)-data(A)), limminus(limits(img), limits(A)))
+(.-)(n::Number, img::AbstractImageDirect) = copy(img, n.-data(img))
+(-)(img::AbstractImageDirect, A::BitArray) = copy(img, data(img)-A)
+(-){T}(img::AbstractImageDirect{T,2}, A::Diagonal) = copy(img, data(img)-A) # fixes an ambiguity warning
+(-)(img::AbstractImageDirect, A::AbstractArray) = copy(img, data(img)-data(A))
 # (-)(A::AbstractArray, img::AbstractImageDirect) = limadj(copy(img, data(A) - data(img)), limminus(limits(A), limits(img)))
-(.-)(img::AbstractImageDirect, A::BitArray) = limadj(copy(img, data(img).-A), limminus(limits(img), Bool))
-(.-)(img::AbstractImageDirect, A::AbstractArray) = limadj(copy(img, data(img).-data(A)), limminus(limits(img), limits(A)))
+(.-)(img::AbstractImageDirect, A::BitArray) = copy(img, data(img).-A)
+(.-)(img::AbstractImageDirect, A::AbstractArray) = copy(img, data(img).-data(A))
 (*)(img::AbstractImageDirect, n::Number) = (.*)(img, n)
 (*)(n::Number, img::AbstractImageDirect) = (.*)(n, img)
-(.*)(img::AbstractImageDirect, n::Number) = limadj(copy(img, data(img).*n), limtimes(limits(img), n))
-(.*)(n::Number, img::AbstractImageDirect) = limadj(copy(img, data(img).*n), limtimes(limits(img), n))
-(/)(img::AbstractImageDirect, n::Number) = limadj(copy(img, data(img)/n), limdivide(limits(img), n))
-(.*)(img1::AbstractImageDirect, img2::AbstractImageDirect) = limadj(copy(img1, data(img1).*data(img2)), limtimes(limits(img1), limits(img2)))
-(.*)(img::AbstractImageDirect, A::BitArray) = limadj(copy(img, data(img).*A), limtimes(limits(img), Bool))
-(.*)(A::BitArray, img::AbstractImageDirect) = limadj(copy(img, data(img).*A), limtimes(limits(img), Bool))
-(.*)(img::AbstractImageDirect{Bool}, A::BitArray) = limadj(copy(img, data(img).*A), (false,true))
-(.*)(A::BitArray, img::AbstractImageDirect{Bool}) = limadj(copy(img, data(img).*A), (false,true))
-(.*)(img::AbstractImageDirect, A::AbstractArray) = limadj(copy(img, data(img).*A), limtimes(limits(img), limits(A)))
-(.*)(A::AbstractArray, img::AbstractImageDirect) = limadj(copy(img, data(img).*A), limtimes(limits(img), limits(A)))
-(./)(img::AbstractImageDirect, A::BitArray) = limadj(copy(img, data(img)./A), limdivide(limits(img), Bool))  # needed to avoid ambiguity warning
-(./)(img1::AbstractImageDirect, img2::AbstractImageDirect) = limadj(copy(img1, data(img1)./data(img2)), limdivide(limits(img1), limits(img2)))
-(./)(img::AbstractImageDirect, A::AbstractArray) = limadj(copy(img, data(img)./A), limdivide(limits(img), limits(A)))
+(.*)(img::AbstractImageDirect, n::Number) = copy(img, data(img).*n)
+(.*)(n::Number, img::AbstractImageDirect) = copy(img, data(img).*n)
+(/)(img::AbstractImageDirect, n::Number) = copy(img, data(img)/n)
+(.*)(img1::AbstractImageDirect, img2::AbstractImageDirect) = copy(img1, data(img1).*data(img2))
+(.*)(img::AbstractImageDirect, A::BitArray) = copy(img, data(img).*A)
+(.*)(A::BitArray, img::AbstractImageDirect) = copy(img, data(img).*A)
+(.*)(img::AbstractImageDirect{Bool}, A::BitArray) = copy(img, data(img).*A)
+(.*)(A::BitArray, img::AbstractImageDirect{Bool}) = copy(img, data(img).*A)
+(.*)(img::AbstractImageDirect, A::AbstractArray) = copy(img, data(img).*A)
+(.*)(A::AbstractArray, img::AbstractImageDirect) = copy(img, data(img).*A)
+(./)(img::AbstractImageDirect, A::BitArray) = copy(img, data(img)./A)  # needed to avoid ambiguity warning
+(./)(img1::AbstractImageDirect, img2::AbstractImageDirect) = copy(img1, data(img1)./data(img2))
+(./)(img::AbstractImageDirect, A::AbstractArray) = copy(img, data(img)./A)
 # (./)(A::AbstractArray, img::AbstractImageDirect) = limadj(copy(img, A./data(img))
-(.^)(img::AbstractImageDirect, p::Number) = limadj(copy(img, data(img).^p), limpower(limits(img), p))
-
-function limadj(img::AbstractImageDirect, newlim)
-    if haskey(img, "limits")
-        T = eltype(img)
-        if method_exists(typemin, (T,)) && method_exists(typemax, (T,))
-            img["limits"] = (minclamp(typemin(T), newlim[1]), maxclamp(typemax(T), newlim[2]))
-        else
-            img["limits"] = (convert(T, newlim[1]), convert(T, newlim[2]))
-        end
-    end
-    img
-end
-
-limplus(a::Tuple, n::Number) = a[1]+n, a[2]+n
-limplus(a::Tuple, ::Type{Bool}) = a[1], a[2]+1
-limplus(a::Tuple, b::Tuple) = a[1]+b[1], a[2]+b[2]
-limminus(a::Tuple, n::Number) = a[1]-n, a[2]-n
-limminus(n::Number, a::Tuple) = n-a[2], n-a[1]
-limminus(a::Tuple, ::Type{Bool}) = a[1]-1, a[2]
-limminus(a::Tuple, b::Tuple) = a[1]-b[2], a[2]-b[1]
-limtimes(a::Tuple, n::Number) = n > 0 ? (a[1]*n, a[2]*n) : (a[2]*n, a[1]*n)
-limtimes(a::Tuple, ::Type{Bool}) = min(a[1], false*a[1]), max(a[2], false*a[2])
-limtimes(a::Tuple, b::Tuple) = min(a[1]*b[1],a[1]*b[2],a[2]*b[1],a[2]*b[2]), max(a[1]*b[1],a[1]*b[2],a[2]*b[1],a[2]*b[2])
-limdivide(a::Tuple, n::Number) = n > 0 ? (a[1]/n, a[2]/n) : (a[2]/n, a[1]/n)
-limdivide(a::Tuple, ::Type{Bool}) = min(a[1],a[1]/0), max(a[2],a[2]/0)
-limdivide(a::Tuple, b::Tuple) = min(a[1]/b[1],a[1]/b[2],a[2]/b[1],a[2]/b[2]), max(a[1]/b[1],a[1]/b[2],a[2]/b[1],a[2]/b[2])
-limpower(a::Tuple, p::Number) = (l = a[1]^p; u = a[2]^p; (min(l,u), max(l,u)))
+(.^)(img::AbstractImageDirect, p::Number) = copy(img, data(img).^p)
 
 function sum(img::AbstractImageDirect, region::Union(AbstractVector,Tuple,Integer))
     f = prod(size(img)[[region...]])
-    imgs = sum(data(img), region)
-    l = map(x->convert(eltype(imgs),x), limits(img))
-    out = limadj(copy(img, imgs), (f*l[1], f*l[2]))
+    out = copy(img, sum(data(img), region))
     if in(colordim(img), region)
         out["colorspace"] = "Unknown"
     end
@@ -113,7 +84,7 @@ function getindex(o::Overlay, indexes::Integer...)
             rgb += scale(o.scalei[i], o.channels[i][indexes...])*o.colors[i]
         end
     end
-    clip(rgb)
+    clamp(rgb)
 end
 
 # Fix ambiguity warning
@@ -241,7 +212,7 @@ end
 # Grayscale arrays
 for N = 1:4
     @eval begin
-        function _uint32color_gray!{T}(buf::Array{Uint32}, A::AbstractArray{T,$N}, scalei::ScaleInfo = scaleinfo(Uint8, A))
+        function _uint32color_gray!{T}(buf::Array{Uint32}, A::AbstractArray{T,$N}, scalei::ScaleInfo = scaleinfo(Ufixed8, A))
             scalei_t = take(scalei, A)
             Adat = data(A)
             k = 0
@@ -272,7 +243,7 @@ end
 # Arrays where one dimension encodes color or transparency
 for N = 1:5
     @eval begin
-        function _uint32color!{T}(buf::Array{Uint32}, A::AbstractArray{T,$N}, cs::String, cdim::Int, scalei::ScaleInfo = scaleinfo(Uint8, A))
+        function _uint32color!{T}(buf::Array{Uint32}, A::AbstractArray{T,$N}, cs::String, cdim::Int, scalei::ScaleInfo = scaleinfo(Ufixed8, A))
             scalei_t = take(scalei, A)
             k = 0
             Adat = data(A)
@@ -341,7 +312,7 @@ function uint32color!{O<:Overlay,N,IT<:(RangeIndex...,)}(buf::Array{Uint32}, img
     buf
 end
 
-# Signed grayscale arrays colorized magenta (positive) and green (negative
+# Signed grayscale arrays colorized magenta (positive) and green (negative)
 for N = 1:4
     @eval begin
         function _uint32color_gray!{T}(buf::Array{Uint32}, A::AbstractArray{T,$N}, scalei::ScaleSigned)
@@ -352,11 +323,11 @@ for N = 1:4
                 gr = scale(scalei, val)
                 if isfinite(gr)
                     if gr >= 0
-                        gr8 = iround(Uint8, 255.0*gr)
-                        buf[k+=1] = rgb24(gr8, 0x00, gr8)
+                        gr8 = convert(Ufixed8, gr)
+                        buf[k+=1] = rgb24(gr8, zero(Ufixed8), gr8)
                     else
-                        gr8 = iround(Uint8, -255.0*gr)
-                        buf[k+=1] = rgb24(0x00, gr8, 0x00)
+                        gr8 = convert(Ufixed8, -gr)
+                        buf[k+=1] = rgb24(zero(Ufixed8), gr8, zero(Ufixed8))
                     end
                 else
                     buf[k+=1] = zero(Uint32)
@@ -367,26 +338,20 @@ for N = 1:4
     end
 end
 
-
 function rgb24(r::Uint8, g::Uint8, b::Uint8)
-    ret::Uint32
     ret = convert(Uint32,r)<<16 | convert(Uint32,g)<<8 | convert(Uint32,b)
 end
+rgb24(r::Ufixed8, g::Ufixed8, b::Ufixed8) = rgb24(reinterpret(r), reinterpret(g), reinterpret(b))
 
+
+argb32(a::Ufixed8, r::Ufixed8, g::Ufixed8, b::Ufixed8) = argb32(reinterpret(a), reinterpret(r), reinterpret(g), reinterpret(b))
 function argb32(a::Uint8, r::Uint8, g::Uint8, b::Uint8)
-    ret::Uint32
     ret = convert(Uint32,a)<<24 | convert(Uint32,r)<<16 | convert(Uint32,g)<<8 | convert(Uint32,b)
 end
 
-function rgb24{T}(scalei::ScaleInfo{Uint8}, r::T, g::T, b::T)
-    ret::Uint32
-    ret = convert(Uint32,scale(scalei,r))<<16 | convert(Uint32,scale(scalei,g))<<8 | convert(Uint32,scale(scalei,b))
-end
+rgb24(scalei::ScaleInfo, r, g, b) = rgb24(scale(scalei,r), scale(scalei,g), scale(scalei,b))
 
-function argb32{T}(scalei::ScaleInfo{Uint8}, a::T, r::T, g::T, b::T)
-    ret::Uint32
-    ret = convert(Uint32,scale(scalei,a))<<24 | convert(Uint32,scale(scalei,r))<<16 | convert(Uint32,scale(scalei,g))<<8 | convert(Uint32,scale(scalei,b))
-end
+argb32(scalei::ScaleInfo, a, r, g, b) = argb24(scale(scalei,a), scale(scalei,r), scale(scalei,g), scale(scalei,b))
 
 #### Color palettes ####
 
@@ -1372,10 +1337,6 @@ function ycbcr2rgb{T}(img::Array{T})
 end
 
 function imcomplement{T}(img::AbstractArray{T})
-    l = limits(img)
-    if l[2] != 1
-        error("imcomplement not defined unless upper limit is 1")
-    end
     return 1 - img
 end
 
@@ -1420,10 +1381,6 @@ function hsi2rgb{T}(img::Array{T})
 end
 
 function imstretch{T}(img::AbstractArray{T}, m::Number, slope::Number)
-    assert_scalar_color(img)
-    if limits(img) != (0,1)
-        warn("Image limits ", limits(img), " are not (0,1)")
-    end
     share(img, 1./(1 + (m./(data(img) + eps(T))).^slope))
 end
 

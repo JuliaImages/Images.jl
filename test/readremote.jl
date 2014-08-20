@@ -27,7 +27,7 @@ img = imread(file)
 @test colorspace(img) == "Gray"
 @test ndims(img) == 2
 @test colordim(img) == 0
-@test eltype(img) == Uint8
+@test eltype(img) == Ufixed8
 outname = joinpath(writedir, "jigsaw_tmpl.png")
 imwrite(img, outname)
 imgc = imread(outname)
@@ -38,9 +38,9 @@ imgc = imread(outname)
 file = getfile("wmark_image.png")
 img = imread(file)
 @test colorspace(img) == "GrayAlpha"
-@test ndims(img) == 3
-@test colordim(img) == 1
-@test eltype(img) == Uint8
+@test ndims(img) == 2
+@test colordim(img) == 0
+@test eltype(img) == Images.ColorTypes.GrayAlpha{Ufixed8}
 outname = joinpath(writedir, "wmark_image.png")
 imwrite(img, outname)
 sleep(0.2)
@@ -51,12 +51,8 @@ imgc = imread(outname)
 file = getfile("rose.png")
 img = imread(file)
 @test colorspace(img) == "RGB"
-# @test ndims(img) == 3
 @test ndims(img) == 2
-# @test colordim(img) == 1
 @test colordim(img) == 0
-# @test size(img, 1) == 3
-# @test eltype(img) == Uint8
 @test eltype(img) == RGB{Ufixed8}
 outname = joinpath(writedir, "rose.ppm")
 imwrite(img, outname)
@@ -69,11 +65,10 @@ lim = limits(imgc)
 # RGBA with 16 bit depth
 file = getfile("autumn_leaves.png")
 img = imread(file)
-@test colorspace(img) == "ARGB"
-@test ndims(img) == 3
-@test colordim(img) == 1
-@test size(img, 1) == 4
-@test eltype(img) == Uint16
+@test colorspace(img) == "BGRA"
+@test ndims(img) == 2
+@test colordim(img) == 0
+@test eltype(img) == Images.ColorTypes.BGRA{Ufixed16}
 outname = joinpath(writedir, "autumn_leaves.png")
 imwrite(img, outname)
 sleep(0.2)

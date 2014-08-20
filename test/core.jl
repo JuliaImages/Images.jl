@@ -49,8 +49,6 @@ img[4] = prev+1
 @test colordim(img) == 0
 @test colordim(imgd) == 3
 @test timedim(img) == 0
-@test limits(img) == (12,255)
-@test limits(imgd) == (0,255)
 @test pixelspacing(img) == [2.0, 3.0]
 @test pixelspacing(imgd) == [2.0mm, 3.0mm]
 @test spacedirections(img) == Vector{Float64}[[2.0, 0], [0, 3.0]]

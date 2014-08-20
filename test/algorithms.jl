@@ -1,5 +1,5 @@
 import Images
-using Color, Base.Test
+using Color, Base.Test, FixedPointNumbers
 
 # Comparison of each element in arrays with a scalar
 approx_equal(ar, v) = all(abs(ar.-v) .< sqrt(eps(v)))
@@ -7,10 +7,8 @@ approx_equal(ar::Images.AbstractImage, v) = approx_equal(Images.data(ar), v)
 
 # arithmetic
 img = convert(Images.Image, zeros(3,3))
-@assert Images.limits(img) == (0,1)
 img2 = (img .+ 3)/2
 @assert all(img2 .== 1.5)
-@assert Images.limits(img2) == (1.5,2.0)
 img3 = 2img2
 @assert all(img3 .== 3)
 img3 = copy(img2)
@@ -20,55 +18,47 @@ img = convert(Images.Image, rand(3,4))
 A = rand(3,4)
 img2 = img .* A
 @assert all(Images.data(img2) == Images.data(img).*A)
-@assert Images.limits(img2) == (0,1)
 img2 = convert(Images.Image, A)
 img2 = img2 .- 0.5
 img3 = 2img .* img2
-@assert Images.limits(img3) == (-1, 1)
 img2 = img ./ A
-@assert Images.limits(img2) == (0, Inf)
 img2 = (2img).^2
-@assert Images.limits(img2) == (0, 4)
-imgu = convert(Images.Image, Uint8[1 240; 10 128])  # from #101
-@assert Images.limits(2imgu) == (0x00,0xff)
+imgu = Images.grayim(Uint8[1 240; 10 128])  # from #101
 
 # scaling, ssd
-img = convert(Images.Image, fill(typemax(Uint16), 3, 3))
-scalei = Images.scaleinfo(Uint8, img)
+img = Images.grayim(fill(typemax(Uint16), 3, 3))
+scalei = Images.scaleinfo(Ufixed8, img)
 img8 = scale(scalei, img)
-@assert all(img8 .== typemax(Uint8))
-mxA = -1.0
-while mxA < 0
+@assert all(img8 .== typemax(Ufixed8))
+mnA, mxA = 1.0, -1.0
+while mnA > 0 || mxA < 0
     A = randn(3,3)
-    mxA = maximum(A)
+    mnA, mxA = extrema(A)
 end
 offset = 30.0
 img = convert(Images.Image, A .+ offset)
-scalei = Images.ScaleMinMax{Uint8, Float64}(offset, offset+mxA, 100/mxA)
+scalei = Images.ScaleMinMax(Ufixed8, offset, offset+mxA, 1/mxA)
 imgs = scale(scalei, img)
 @assert minimum(imgs) == 0
-@assert maximum(imgs) == 100
-@assert eltype(imgs) == Uint8
+@assert maximum(imgs) == 1
+@assert eltype(imgs) == Ufixed8
 imgs = Images.imadjustintensity(img, [])
 mnA = minimum(A)
 @assert Images.ssd(imgs, (A.-mnA)/(mxA-mnA)) < eps()
 A = reshape(1:9, 3, 3)
-B = scale(Images.ClipMin(Float32, 3), A)
+B = scale(Images.ClampMin(Float32, 3), A)
 @assert eltype(B) == Float32 && B == [3 4 7; 3 5 8; 3 6 9]
-B = scale(Images.ClipMax(Uint8, 7), A)
+B = scale(Images.ClampMax(Uint8, 7), A)
 @assert eltype(B) == Uint8 && B == [1 4 7; 2 5 7; 3 6 7]
 
 # Reductions
 let
     A = rand(5,5,3)
     img = Images.colorim(A, "RGB")
-    img["limits"] = (0.0, 1.0)
     s12 = sum(img, (1,2))
     @test colorspace(s12) == "RGB"
-    @test limits(s12) == (0.0,25.0)
     s3 = sum(img, (3,))
     @test colorspace(s3) == "Unknown"
-    @test limits(s3) == (0.0,3.0)
 end
 
 # Array padding

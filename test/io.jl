@@ -1,4 +1,5 @@
 import Images
+using FixedPointNumbers
 
 const writedir = joinpath(tempdir(), "Images")
 
@@ -7,19 +8,15 @@ if !isdir(writedir)
 end
 
 a = rand(2,2)
+aa = convert(Array{Ufixed8}, a)
 fn = joinpath(writedir, "2by2.png")
 Images.imwrite(a, fn)
 b = Images.imread(fn)
-@assert convert(Array, b) == scale(Images.scaleinfo(a), a)
-aa = int8(127*a)
-Images.imwrite(aa, fn)
-b = Images.imread(fn)
-@assert convert(Array{Int8}, b) == aa
-aa = uint8(255*a)
+@assert convert(Array, b) == aa
 Images.imwrite(aa, fn)
 b = Images.imread(fn)
 @assert convert(Array, b) == aa
-aa = uint16(65535*a)
+aa = convert(Array{Ufixed16}, a)
 Images.imwrite(aa, fn)
 b = Images.imread(fn)
 @assert convert(Array, b) == aa

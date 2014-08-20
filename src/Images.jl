@@ -5,6 +5,7 @@ import Base.Graphics: width, height
 importall Base
 
 using Color, FixedPointNumbers
+import Color: Fractional
 
 if VERSION.minor < 3
     using Cartesian
@@ -16,6 +17,9 @@ end
 # if isdefined(module_parent(Images), :Grid)
 #     import ..Grid.restrict
 # end
+
+include("colortypes.jl")
+using .ColorTypes
 
 include("core.jl")
 include("iterator.jl")
@@ -217,6 +221,14 @@ export # types
 @deprecate cairoRGB     uint32color!
 @deprecate refim        getindexim
 @deprecate scaledefault climdefault
+@deprecate scaleminmax  ScaleMinMax
+@deprecate float32sc    float32
+@deprecate float64sc    float64
+@deprecate uint8sc      ufixed8sc
+@deprecate uint16sc(img)  ufixedsc(Ufixed16, img)
+@deprecate ClipMin      ClampMin
+@deprecate ClipMax      ClampMax
+@deprecate ClipMinMax   ClampMinMax
 
 if VERSION < v"0.3-"
   __init__()

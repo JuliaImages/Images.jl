@@ -1,46 +1,35 @@
 #### Types and constructors ####
 
-if !isdefined(:StoredArray)
-    const StoredArray = AbstractArray
-end
-
 # Plain arrays can be treated as images. Other types will have
 # metadata associated, make yours a child of one of the following:
-abstract AbstractImage{T,N} <: StoredArray{T,N}         # image with metadata
+abstract AbstractImage{T,N} <: AbstractArray{T,N}         # image with metadata
 abstract AbstractImageDirect{T,N} <: AbstractImage{T,N}   # each pixel has own value/color
 abstract AbstractImageIndexed{T,N} <: AbstractImage{T,N}  # indexed images (i.e., lookup table)
 
-# converts keyword argument to a dictionary
-function kwargs2dict(kwargs)
-    d = (ASCIIString=>Any)[]
-    for (k, v) in kwargs
-        d[string(k)] = v
-    end
-    return d
-end
-
 # Direct image (e.g., grayscale, RGB)
-type Image{T,N,A<:StoredArray} <: AbstractImageDirect{T,N}
+type Image{T,N,A<:AbstractArray} <: AbstractImageDirect{T,N}
     data::A
     properties::Dict
 end
-Image(data::StoredArray, props::Dict) = Image{eltype(data),ndims(data),typeof(data)}(data,props)
-Image(data::StoredArray; kwargs...) = Image(data, kwargs2dict(kwargs))
+Image(data::AbstractArray, props::Dict) = Image{eltype(data),ndims(data),typeof(data)}(data,props)
+Image(data::AbstractArray; kwargs...) = Image(data, kwargs2dict(kwargs))
 
 # Indexed image (colormap)
-type ImageCmap{T,N,A<:StoredArray,C<:AbstractArray} <: AbstractImageIndexed{T,N}
+type ImageCmap{T,N,A<:AbstractArray,C<:AbstractArray} <: AbstractImageIndexed{T,N}
     data::A
     cmap::C
     properties::Dict
 end
-ImageCmap(data::StoredArray, cmap::AbstractArray, props::Dict) = ImageCmap{eltype(cmap),ndims(data),typeof(data),typeof(cmap)}(data, cmap, props)
-ImageCmap(data::StoredArray, cmap::AbstractArray; kwargs...) = ImageCmap(data, cmap, kwargs2dict(kwargs))
+ImageCmap(data::AbstractArray, cmap::AbstractArray, props::Dict) = ImageCmap{eltype(cmap),ndims(data),typeof(data),typeof(cmap)}(data, cmap, props)
+ImageCmap(data::AbstractArray, cmap::AbstractArray; kwargs...) = ImageCmap(data, cmap, kwargs2dict(kwargs))
 
 # Convenience constructors
-grayim{T}(A::StoredArray{T,2}) = Image(A; colorspace="Gray", spatialorder=["x","y"])
-grayim{T}(A::StoredArray{T,3}) = Image(A; colorspace="Gray", spatialorder=["x","y","z"])
+grayim{T<:Fractional}(A::AbstractArray{T,2}) = Image(A; colorspace="Gray", spatialorder=["x","y"])
+grayim{T<:Fractional}(A::AbstractArray{T,3}) = Image(A; colorspace="Gray", spatialorder=["x","y","z"])
+grayim(A::AbstractArray{Uint8})  = grayim(reinterpret(Ufixed8, A))
+grayim(A::AbstractArray{Uint16}) = grayim(reinterpret(Ufixed16, A))
 
-function colorim{T}(A::StoredArray{T,3})
+function colorim{T<:Fractional}(A::AbstractArray{T,3})
     if size(A, 1) == 4 || size(A, 3) == 4
         error("The array looks like a 4-channel color image. Please specify the colorspace explicitly (e.g. \"ARGB\" or \"RGBA\".)")
     end
@@ -48,7 +37,7 @@ function colorim{T}(A::StoredArray{T,3})
     colorim(A, "RGB")
 end
 
-function colorim{T}(A::StoredArray{T,3}, colorspace)
+function colorim{T<:Fractional}(A::AbstractArray{T,3}, colorspace)
     if 3 <= size(A, 1) <= 4 && 3 <= size(A, 3) <= 4
         error("Both first and last dimensions are of size 3 or 4; impossible to guess which is for color. Use the Image constructor directly.")
     elseif 3 <= size(A, 1) <= 4  # Image as returned by imread for regular 2D RGB images
@@ -60,11 +49,16 @@ function colorim{T}(A::StoredArray{T,3}, colorspace)
     end
 end
 
+colorim(A::AbstractArray{Uint8})  = colorim(reinterpret(Ufixed8, A))
+colorim(A::AbstractArray{Uint16}) = colorim(reinterpret(Ufixed16, A))
+colorim(A::AbstractArray{Uint8},  colorspace) = colorim(reinterpret(Ufixed8, A), colorspace)
+colorim(A::AbstractArray{Uint16}, colorspace) = colorim(reinterpret(Ufixed16, A), colorspace)
+
 # Dispatch-based scaling/clipping/type conversion
 abstract ScaleInfo{T}
 
 # An array type for colorized overlays of grayscale images
-type Overlay{AT<:(AbstractArray...),N,SIT<:(ScaleInfo...)} <: StoredArray{RGB,N}
+type Overlay{AT<:(AbstractArray...),N,SIT<:(ScaleInfo...)} <: AbstractArray{RGB,N}
     channels::AT   # this holds the grayscale arrays
     colors::Vector{RGB}
     scalei::SIT
@@ -99,7 +93,7 @@ function Overlay(channels::(AbstractArray...), colors, clim = ntuple(length(chan
             error("clim must be a 2-vector")
         end
     end
-    scalei = ntuple(n, i->scaleminmax(Float64, channels[i], clim[i][1], clim[i][2]))
+    scalei = ntuple(n, i->ScaleMinMax(Float32, channels[i], clim[i][1], clim[i][2]))
     Overlay{typeof(channels),ndims(channels[1]),typeof(scalei)}(channels, colors, scalei, trues(n))
 end
 
@@ -134,16 +128,16 @@ copy(img::AbstractImage) = deepcopy(img)
 # copy, replacing the data
 copy(img::AbstractArray, data::AbstractArray) = data
 
-copy(img::AbstractImageDirect, data::StoredArray) = Image(data, copy(img.properties))
+copy(img::AbstractImageDirect, data::AbstractArray) = Image(data, copy(img.properties))
 
-copy(img::AbstractImageIndexed, data::StoredArray) = ImageCmap(data, copy(img.cmap), copy(img.properties))
+copy(img::AbstractImageIndexed, data::AbstractArray) = ImageCmap(data, copy(img.cmap), copy(img.properties))
 
 # Provide new data but reuse the properties & cmap
 share(img::AbstractArray, data::AbstractArray) = data
 
-share(img::AbstractImageDirect, data::StoredArray) = Image(data, img.properties)
+share(img::AbstractImageDirect, data::AbstractArray) = Image(data, img.properties)
 
-share(img::AbstractImageIndexed, data::StoredArray) = ImageCmap(data, img.cmap, img.properties)
+share(img::AbstractImageIndexed, data::AbstractArray) = ImageCmap(data, img.cmap, img.properties)
 
 # similar
 similar(img::AbstractImageDirect) = Image(similar(img.data), copy(img.properties))
@@ -494,7 +488,6 @@ properties(img::AbstractArray) = [
     "colorspace" => colorspace(img),
     "colordim" => colordim(img),
     "timedim" => timedim(img),
-    "limits" => limits(img),
     "pixelspacing" => pixelspacing(img),
     "spatialorder" => spatialorder(img)]
 properties(img::AbstractImage) = img.properties
@@ -538,6 +531,8 @@ isdirect(img::AbstractImageIndexed) = false
 colorspace{C<:ColorValue}(img::AbstractMatrix{C}) = string(C.name)
 colorspace{C<:ColorValue}(img::AbstractArray{C,3}) = string(C.name)
 colorspace{C<:ColorValue}(img::AbstractImage{C}) = string(C.name)
+colorspace{C<:ColorValue,T}(img::AbstractArray{AlphaColorValue{C,T},2}) = (S = string(C.name); S == "Gray" ? "GrayAlpha" : string(S, "A"))
+colorspace{C<:ColorValue,T}(img::AbstractImage{AlphaColorValue{C,T}}) = (S = string(C.name); S == "Gray" ? "GrayAlpha" : string(S, "A"))
 colorspace(img::AbstractMatrix{Bool}) = "Binary"
 colorspace(img::AbstractArray{Bool}) = "Binary"
 colorspace(img::AbstractArray{Bool,3}) = "Binary"
@@ -568,10 +563,10 @@ timedim(img) = get(img, "timedim", 0)
 one{T}(::Type{RGB{T}}) = RGB{T}(one(T),one(T),one(T))
 zero{T}(::Type{RGB{T}}) = RGB{T}(zero(T),zero(T),zero(T))
 limits(img::AbstractArray{Bool}) = 0,1
-limits{T<:Integer}(img::AbstractArray{T}) = typemin(T), typemax(T)
+# limits{T<:Integer}(img::AbstractArray{T}) = typemin(T), typemax(T)  # best not to use Integers...
 limits{T<:FloatingPoint}(img::AbstractArray{T}) = zero(T), one(T)
 limits(img::AbstractImage{Bool}) = 0,1
-limits{T}(img::AbstractImageDirect{T}) = get(img, "limits", (typemin(T), typemax(T)))
+limits{T}(img::AbstractImageDirect{T}) = get(img, "limits", (zero(T), one(T)))
 limits(img::AbstractImageIndexed) = @get img "limits" (minimum(img.cmap), maximum(img.cmap))
 
 pixelspacing{T}(img::AbstractArray{T,3}) = (size(img, defaultarraycolordim) == 3) ? [1.0,1.0] : error("Cannot infer pixelspacing of Array, use an AbstractImage type")
@@ -898,3 +893,12 @@ dimindexes(img::AbstractImage, dimnames::String...) = Int[dimindex(img, nam, spa
 
 to_vector(v::AbstractVector) = v
 to_vector(v::Tuple) = [v...]
+
+# converts keyword argument to a dictionary
+function kwargs2dict(kwargs)
+    d = (ASCIIString=>Any)[]
+    for (k, v) in kwargs
+        d[string(k)] = v
+    end
+    return d
+end

@@ -1,209 +1,202 @@
-#### Scaling/clipping/type conversion ####
+#### Scaling/clamping/type conversion ####
 
-minclamp(minval, val) = val < minval ? minval : convert(typeof(minval), val)
-maxclamp(maxval, val) = val > maxval ? maxval : convert(typeof(maxval), val)
+# Structure of ScaleInfo definitions:
+#   - type definition
+#   - constructors for scalars
+#   - constructors for AbstractArrays
+#   - implementation of scale() for scalars
+#   - implementation of scale() for AbstractArrays
 
-clamp{T}(::Type{T}, val::T) = T
-clamp{T}(::Type{T}, val) = val > typemax(T) ? typemax(T) : (val < typemin(T) ? typemin(T) : convert(T, val))
-clamp{S<:Integer, T<:FloatingPoint}(::Type{T}, val::S) = convert(T, S)
 
-# "Safe" rounding to an integer. Clips the value to the target range before converting the type.
-truncround{T<:Integer}(::Type{T}, val::T) = val
-truncround{T<:Integer}(::Type{T}, val::Integer) = val > typemax(T) ? typemax(T) : (val < typemin(T) ? typemin(T) : val)
-truncround{T<:Integer,F<:FloatingPoint}(::Type{T}, val::F) = val > convert(F,typemax(T)) ? typemax(T) : (val < convert(F,typemin(T)) ? typemin(T) : iround(T, val))
-function truncround{T<:Integer}(::Type{T}, A::AbstractArray)
-    X = similar(A, T)
-    for i = 1:length(A)
-        X[i] = truncround(T, A[i])
-    end
-    X
-end
-
-## scale() for array types
+## Fall-back definitions of scale() for array types
 
 function scale{T}(scalei::ScaleInfo{T}, img::AbstractArray)
     out = similar(img, T)
     scale!(out, scalei, img)
 end
 
-function scale!{T}(out, scalei::ScaleInfo{T}, img::AbstractArray)
+@ngenerate N typeof(out) function scale!{T,T1,N}(out, scalei::ScaleInfo{T}, img::AbstractArray{T1,N})
     dimg = data(img)
     dout = data(out)
-    for i = 1:length(dimg)
-        dout[i] = scale(scalei, dimg[i])  # FIXME? SubArray performance
+    @nloops N i dout begin
+        @inbounds @nref(N, dout, i) = scale(scalei, @nref(N, dimg, i))
     end
-    out
-end
-
-function scale!{T}(out::AbstractImage, scalei::ScaleInfo{T}, img::AbstractArray)
-    dimg = data(img)
-    dout = data(out)
-    for i = 1:length(dimg)
-        dout[i] = scale(scalei, dimg[i])  # FIXME? SubArray performance
-    end
-    l = limits(img)
-    out["limits"] = (scale(scalei, l[1]), scale(scalei, l[2]))
     out
 end
 
 ## ScaleNone
+# At most, this does conversions
 
-type ScaleNone{T} <: ScaleInfo{T}; end
+immutable ScaleNone{T} <: ScaleInfo{T}; end
 
+# Constructors
+ScaleNone{T}(val::T) = ScaleNone{T}()
+ScaleNone{T}(A::AbstractArray{T}) = ScaleNone{T}()
+
+# Implementation
 scale{T<:Real}(scalei::ScaleNone{T}, val::T) = val
-scale{T<:ColorValue}(scalei::ScaleNone{T}, val::T) = val
 scale{T,S<:Real}(scalei::ScaleNone{T}, val::S) = convert(T, val)
-scale{T<:Integer,S<:FloatingPoint}(scalei::ScaleNone{T}, val::S) = iround(T, val)
-scale{T}(scalei::ScaleNone{T}, img::AbstractArray{T}) = img
+scale{T<:ColorValue}(scalei::ScaleNone{T}, val::T) = val
+scale(scalei::ScaleNone{Uint32}, val::ColorValue) = convert(Uint32, convert(RGB24, val))
+scale(scalei::ScaleNone{Uint32}, val::AlphaColorValue) = convert(Uint32, convert(RGBA32, val))
 
-scale(scalei::ScaleNone{Uint32}, val::RGB) = convert(Uint32, convert(RGB24, val))
+scale{T}(scalei::ScaleNone{T}, img::AbstractArray{T}) = img
 
 ## BitShift
 
-type BitShift{T<:Integer,N} <: ScaleInfo{T} end
+immutable BitShift{T<:Union(Integer,Ufixed),N} <: ScaleInfo{T} end
 
+# Constructors
+BitShift{T}(::Type{T}, N::Integer) = BitShift{T,N}()
+
+# Implementation
 scale{T,N}(scalei::BitShift{T,N}, val::Integer) = convert(T, val>>>N)
+scale{T<:Ufixed,N}(scalei::BitShift{T,N}, val::Ufixed) = reinterpret(T, convert(FixedPointNumbers.rawtype(T), reinterpret(val)>>>N))
 
-## Clip types
+## Clamp types
 
-# The Clip types just enforce bounds, but do not scale or
-# subtract the minimum
-abstract Clip{T} <: ScaleInfo{T}
-type ClipMin{T,From} <: Clip{T}
+# The Clamp types just enforce bounds, but do not scale or offset
+# Types and constructors
+abstract Clamp{T} <: ScaleInfo{T}
+immutable ClampMin{T,From} <: Clamp{T}
     min::From
 end
-ClipMin{T,From}(::Type{T}, min::From) = ClipMin{T,From}(min)
-ClipMin(::Type{RGB{Ufixed8}}) = ScaleNone{T}()
-ClipMin{T}(::Type{RGB{T}}) = ClipMin(T,zero(T))
-type ClipMax{T,From} <: Clip{T}
+ClampMin{T,From}(::Type{T}, min::From) = ClampMin{T,From}(min)
+ClampMin{T}(::Type{RGB{T}}) = ClampMin(T,zero(T))
+immutable ClampMax{T,From} <: Clamp{T}
     max::From
 end
-ClipMax{T,From}(::Type{T}, max::From) = ClipMax{T,From}(max)
-ClipMax(::Type{RGB{Ufixed8}}) = ScaleNone{T}()
-ClipMax{T}(::Type{RGB{T}}) = ClipMin(T,one(T))
-type ClipMinMax{T,From} <: Clip{T}
+ClampMax{T,From}(::Type{T}, max::From) = ClampMax{T,From}(max)
+ClampMax{T}(::Type{RGB{T}}) = ClampMax(T,one(T))
+immutable ClampMinMax{T,From} <: Clamp{T}
     min::From
     max::From
 end
-ClipMinMax{T,From}(::Type{T}, min::From, max::From) = ClipMinMax{T,From}(min,max)
-ClipMinMax{T<:Ufixed}(::Type{RGB{T}}) = ScaleNone{RGB{T}}()
-ClipMinMax{T<:FloatingPoint}(::Type{RGB{T}}) = ClipMinMax(RGB{T},zero(RGB{T}),one(RGB{T}))
+ClampMinMax{T,From}(::Type{T}, min::From, max::From) = ClampMinMax{T,From}(min,max)
+ClampMinMax{T}(::Type{RGB{T}}) = ClampMinMax(RGB{T},zero(RGB{T}),one(RGB{T}))
 
-scale{T<:Integer,F<:FloatingPoint}(scalei::ClipMin{T,F}, val::F) = iround(T, max(val, scalei.min))
-scale{T<:Real,F<:Real}(scalei::ClipMin{T,F}, val::F) = convert(T, max(val, scalei.min))
-scale{T<:Integer,F<:FloatingPoint}(scalei::ClipMax{T,F}, val::F) = iround(T, min(val, scalei.max))
-scale{T<:Real,F<:Real}(scalei::ClipMax{T,F}, val::F) = convert(T, min(val, scalei.max))
-scale{T<:Real}(scalei::ClipMinMax{T,T}, val::T) = min(max(val, scalei.min), scalei.max)
-scale{T<:Real,F<:Real}(scalei::ClipMinMax{T,F}, val::F) = convert(T,min(max(val, scalei.min), scalei.max))
-scale{T<:Integer,F<:FloatingPoint}(scalei::ClipMinMax{T,F}, val::F) = iround(T,min(max(val, scalei.min), scalei.max))
-scale{CV<:ColorValue}(scalei::ClipMinMax{CV,CV}, val::CV) = mincv(maxcv(val, scalei.min), scalei.max)
-scale{T<:ColorValue, F<:ColorValue}(scalei::ClipMinMax{T,F}, val::F) = convert(T, mincv(maxcv(val, scalei.min), scalei.max))
 
-mincv{CV<:ColorValue}(c1::CV, c2::CV) = CV(min(getfield(c1,1),getfield(c2,1)), min(getfield(c1,2),getfield(c2,2)), min(getfield(c1,3),getfield(c2,3)))
-maxcv{CV<:ColorValue}(c1::CV, c2::CV) = CV(max(getfield(c1,1),getfield(c2,1)), max(getfield(c1,2),getfield(c2,2)), max(getfield(c1,3),getfield(c2,3)))
+# Implementation
+scale{T<:Real,F<:Real}(scalei::ClampMin{T,F}, val::F) = convert(T, max(val, scalei.min))
+scale{T<:Real,F<:Real}(scalei::ClampMax{T,F}, val::F) = convert(T, min(val, scalei.max))
+scale{T<:Real,F<:Real}(scalei::ClampMinMax{T,F}, val::F) = convert(T,min(max(val, scalei.min), scalei.max))
+scale{CV<:ColorValue}(scalei::ClampMinMax{CV,CV}, val::CV) = mincv(maxcv(val, scalei.min), scalei.max)
+scale{T<:ColorValue, F<:ColorValue}(scalei::ClampMinMax{T,F}, val::F) = convert(T, mincv(maxcv(val, scalei.min), scalei.max))
 
-clip{T}(v::RGB{T}) = scale(ClipMinMax(RGB{T}), v)
-clip!{T<:Ufixed}(A::Array{RGB{T}}) = A
-function clip!{T}(A::Array{RGB{T}})
-    for i = 1:length(A)
-        A[i] = clip(A[i])
-    end
-    A
-end
+mincv{T}(c1::RGB{T}, c2::RGB{T}) = RGB{T}(min(getfield(c1,1),getfield(c2,1)), min(getfield(c1,2),getfield(c2,2)), min(getfield(c1,3),getfield(c2,3)))
+maxcv{T}(c1::RGB{T}, c2::RGB{T}) = RGB{T}(max(getfield(c1,1),getfield(c2,1)), max(getfield(c1,2),getfield(c2,2)), max(getfield(c1,3),getfield(c2,3)))
+
+# For certain Ufixed types and Clamp values, scale() should be a no-op. These are purely for efficiency.
+scale{T<:Ufixed}(scalei::ClampMin{T,T}, img::AbstractArray{T}) =
+    scalei.min == zero(T) ? img : invoke(scale, (ScaleInfo{T}, AbstractArray), scalei, img)
+scale{T<:Ufixed}(scalei::ClampMin{RGB{T},RGB{T}}, img::AbstractArray{RGB{T}}) =
+    scalei.min == zero(RGB{T}) ? img : invoke(scale, (ScaleInfo{T}, AbstractArray), scalei, img)
+scale{T<:Union(Ufixed8,Ufixed16)}(scalei::ClampMax{T,T}, img::AbstractArray{T}) =
+    scalei.max == one(T) ? img : invoke(scale, (ScaleInfo{T}, AbstractArray), scalei, img)
+scale{T<:Union(Ufixed8,Ufixed16)}(scalei::ClampMax{RGB{T},RGB{T}}, img::AbstractArray{RGB{T}}) =
+    scalei.max == one(RGB{T}) ? img : invoke(scale, (ScaleInfo{T}, AbstractArray), scalei, img)
+scale{T<:Union(Ufixed8,Ufixed16)}(scalei::ClampMinMax{T,T}, img::AbstractArray{T}) =
+    scalei.min == zero(T) && scalei.max == one(T) ? img : invoke(scale, (ScaleInfo{T}, AbstractArray), scalei, img)
+scale{T<:Union(Ufixed8,Ufixed16)}(scalei::ClampMinMax{RGB{T},RGB{T}}, img::AbstractArray{RGB{T}}) =
+    scalei.min == zero(RGB{T}) && scalei.max == one(RGB{T}) ? img : invoke(scale, (ScaleInfo{T}, AbstractArray), scalei, img)
+
+clamp{T}(v::RGB{T}) = scale(ClampMinMax(RGB{T}), v)
+
 
 ## ScaleMinMax
 
-# This scales and subtracts the min value
-type ScaleMinMax{To,From} <: ScaleInfo{To}
+# This subtracts the min value and scales
+immutable ScaleMinMax{To,From,S<:FloatingPoint} <: ScaleInfo{To}
     min::From
     max::From
-    s::Float64
+    s::S
 end
-ScaleMinMax{To,From}(::Type{To}, min::From, max::From, s::Real) = ScaleMinMax{To,From}(min, max, float64(s))
+ScaleMinMax{To,From}(::Type{To}, min::From, max::From, s::FloatingPoint) = ScaleMinMax{To,From,typeof(s)}(min, max, s)
+ScaleMinMax{To<:Real,From<:Real}(::Type{To}, mn::From, mx::From) = ScaleMinMax(To, mn, mx, 1.0f0/(mx-mn))
 
-function scale{To<:Integer,From<:Real}(scalei::ScaleMinMax{To,From}, val::From)
-    # Clip to range min:max and subtract min
-    t::From = (val > scalei.min) ? ((val < scalei.max) ? val-scalei.min : scalei.max-scalei.min) : zero(From)
-    convert(To, iround(scalei.s*t))
-end
+# ScaleMinMax constructors that take AbstractArray input
+ScaleMinMax{To<:FloatingPoint,From}(::Type{To}, img::AbstractArray{From}, mn::Real, mx::Real) = ScaleMinMax(To, convert(From,mn), convert(From,mx), 1.0f0/(mx-mn))
+ScaleMinMax{To}(::Type{To}, img::AbstractArray) = ScaleMinMax(To, img, minfinite(img), maxfinite(img))
+ScaleMinMax(img::AbstractArray) = ScaleMinMax(Ufixed8, img)
+ScaleMinMax(img::AbstractArray, mn::Real, mx::Real) = ScaleMinMax(Ufixed8, img, mn, mx)
 
 function scale{To<:Real,From<:Real}(scalei::ScaleMinMax{To,From}, val::From)
     t::From = (val > scalei.min) ? ((val < scalei.max) ? val-scalei.min : scalei.max-scalei.min) : zero(From)
     convert(To, scalei.s*t)
 end
 
-# ScaleMinMax constructors that take AbstractArray input
-scaleminmax{To<:Integer,From}(::Type{To}, img::AbstractArray{From}, mn::Real, mx::Real) = ScaleMinMax{To,From}(convert(From,mn), convert(From,mx), float64(typemax(To)/(mx-mn)))
-scaleminmax{To<:FloatingPoint,From}(::Type{To}, img::AbstractArray{From}, mn::Real, mx::Real) = ScaleMinMax{To,From}(convert(From,mn), convert(From,mx), 1.0/(mx-mn))
-scaleminmax{To}(::Type{To}, img::AbstractArray) = scaleminmax(To, img, minfinite(img), maxfinite(img))
-scaleminmax(img::AbstractArray) = scaleminmax(Uint8, img)
-scaleminmax(img::AbstractArray, mn::Real, mx::Real) = scaleminmax(Uint8, img, mn, mx)
-scaleminmax{To<:Real,From<:Real}(::Type{To}, mn::From, mx::From) = ScaleMinMax{To,From}(mn, mx, 255.0/(mx-mn))
-function scaleminmax{To}(::Type{To}, img::AbstractImage, tindex::Integer)
-    1 <= tindex <= nimages(img) || error("The image does not have a time slice of ", tindex)
-    imsl = sliceim(img, "t", 1)
-    scaleminmax(To, imsl)
-end
-scaleminmax(img::AbstractImage, tindex::Integer) = scaleminmax(Uint8, img, tindex)
+scale{To,From}(scalei::ScaleMinMax{To,From}, img::AbstractArray{From}) =
+    scalei.min == typemin(From) && scalei.max == typemax(From) && scalei.s == 1.0 ?
+        scale(ScaleNone{To}, img) :
+        invoke(scale, (ScaleInfo{To}, AbstractArray), scalei, img)
 
 ## ScaleSigned
 
-# Multiplies by a scaling factor and then clips to the range [-1,1].
+# Multiplies by a scaling factor and then clamps to the range [-1,1].
 # Intended for positive/negative coloring
-type ScaleSigned <: ScaleInfo{Float64}
-    s::Float64
+immutable ScaleSigned{S<:FloatingPoint} <: ScaleInfo{S}
+    s::S
 end
+ScaleSigned{S<:FloatingPoint}(s::S) = ScaleSigned{S}(s)
 
-scalesigned(img::AbstractArray) = ScaleSigned(1.0/maxabsfinite(img))
+scalesigned(img::AbstractArray) = ScaleSigned(1.0f0/maxabsfinite(img))
 function scalesigned(img::AbstractImage, tindex::Integer)
     1 <= tindex <= nimages(img) || error("The image does not have a time slice of ", tindex)
     imsl = sliceim(img, "t", 1)
-    ScaleSigned(1.0/maxabsfinite(imsl))
+    ScaleSigned(1.0f0/maxabsfinite(imsl))
 end
 
-function scale(scalei::ScaleSigned, val::Real)
-    sval::Float64 = scalei.s*val
-    return sval>1.0 ? 1.0 : (sval<-1.0 ? -1.0 : sval)
-end
+scale(scalei::ScaleSigned, val::Real) = clamppm(scalei.s*val)
 
+clamppm{T}(sval::T) = ifelse(sval>one(T), one(T), ifelse(sval<-one(T), -one(T), sval))
 
 ## ScaleAutoMinMax
 
 # Works only on whole arrays, not values
-type ScaleAutoMinMax{T} <: ScaleInfo{T} end
-ScaleAutoMinMax() = ScaleAutoMinMax{Uint8}()
+immutable ScaleAutoMinMax{T} <: ScaleInfo{T} end
+ScaleAutoMinMax() = ScaleAutoMinMax{Ufixed8}()
 
 scale!{T}(out::AbstractImage, scalei::ScaleAutoMinMax{T}, img::Union(StridedArray,AbstractImageDirect)) = scale!(out, take(scalei, img), img)
 scale!{T}(out, scalei::ScaleAutoMinMax{T}, img::Union(StridedArray,AbstractImageDirect)) = scale!(out, take(scalei, img), img)
 
 take(scalei::ScaleInfo, img::AbstractArray) = scalei
-take{T}(scalei::ScaleAutoMinMax{T}, img::AbstractArray) = scaleminmax(T, img)
+take{T}(scalei::ScaleAutoMinMax{T}, img::AbstractArray) = ScaleMinMax(T, img)
 take{To,From}(scalei::ScaleMinMax{To}, img::AbstractArray{From}) = ScaleMinMax(To, convert(From, scalei.min), convert(From, scalei.max), scalei.s)
 
 
-## ScaleInfo defaults
 
-scaleinfo{T}(::Type{Any}, img::AbstractArray{T}) = ScaleNone{T}()
 
+#### ScaleInfo defaults
+
+# scaleinfo{T}(::Type{Any}, img::AbstractArray{T}) = ScaleNone{T}()
+
+scaleinfo{T<:Ufixed}(img::AbstractArray{T}) = ScaleNone(img)  # do we need to restrict to Ufixed8 & Ufixed16?
+scaleinfo{CV<:Union(ColorValue,AbstractAlphaColorValue)}(img::AbstractArray{CV}) = _scaleinfocv(CV, img)
+_scaleinfocv{CV}(::Type{CV}, img) = _scaleinfocv(eltype(CV), img)
+_scaleinfocv{T<:Ufixed}(::Type{T}, img) = ScaleNone(img)
+_scaleinfocv{T<:FloatingPoint}(::Type{T}, img) = scaleinfo(RGB{Ufixed8}, img)
 function scaleinfo{T}(img::AbstractArray{T})
     cs = colorspace(img)
     if cs == "RGB24" || cs == "ARGB32"
         return ScaleNone{T}()
     end
-    scaleinfo(Uint8, img)
+    scaleinfo(Ufixed8, img)
 end
-scaleinfo{T<:Unsigned}(::Type{T}, img::AbstractArray{T}) = ScaleNone{T}()
-scaleinfo{T<:Signed}(::Type{T}, img::AbstractArray{T}) = ScaleNone{T}()
-scaleinfo{To<:FloatingPoint,From}(::Type{To}, img::AbstractArray{From}) = ScaleNone{To}()
-scaleinfo{To<:Unsigned,From<:Unsigned}(::Type{To}, img::AbstractArray{From}) = scaleinfo_uint(To, img)
-scaleinfo{To<:Unsigned,From<:Union(Integer,FloatingPoint)}(::Type{To}, img::AbstractArray{From}) = scaleinfo_uint(To, img)
-function scaleinfo{T}(::Type{RGB{T}}, img::AbstractArray)
-    l = climdefault(img)
-    ScaleMinMax(T, l[1], l[2], 1.0/(l[2]-l[1]))
-end
-scaleinfo(::Type{RGB{Ufixed8}}, img::AbstractArray{RGB{Ufixed8}}) = ScaleNone{RGB(Ufixed8)}()
+# scaleinfo{T<:FloatingPoint}(img::AbstractArray{RGB{T}}) = scaleinfo(RGB{Ufixed8}, img)
 
-function scaleinfo_uint{To<:Unsigned,From<:Unsigned}(::Type{To}, img::AbstractArray{From})
+scaleinfo{T<:Ufixed}(::Type{T}, img::AbstractArray{T}) = ScaleNone(img)
+for (T,n) in ((Ufixed10, 2), (Ufixed12, 4), (Ufixed14, 6), (Ufixed16, 8))
+    @eval scaleinfo(::Type{Ufixed8}, img::AbstractArray{$T}) = BitShift(Ufixed8,$n)
+end
+scaleinfo{To<:Ufixed,From<:FloatingPoint}(::Type{To}, img::AbstractArray{From}) =
+    ClampMinMax(To, zero(From), one(From))
+scaleinfo{T}(::Type{T}, img::AbstractArray{T}) = ScaleNone(img)
+scaleinfo{To<:Ufixed}(::Type{RGB{To}}, img::AbstractArray{RGB{To}}) = ScaleNone(img)
+scaleinfo{To<:Ufixed,From<:FloatingPoint}(::Type{RGB{To}}, img::AbstractArray{RGB{From}}) =
+    ClampMinMax(RGB{To}, zero(RGB{From}), one(RGB{From}))
+
+#=
+function scaleinfo_uint{To<:Ufixed8,From<:Ufixed8}(::Type{To}, img::AbstractArray{From})
     l = limits(img)
     n = max(0, iceil(log2(l[2]/(float64(typemax(To))+1))))
     BitShift{To, n}()
@@ -226,7 +219,7 @@ scaleinfo_uint{From<:Unsigned}(img::AbstractArray{From}) = ScaleNone{From}()
 scaleinfo_uint{From<:Integer}(img::AbstractArray{From}) = scaleinfo_uint(unsigned(From), img)
 scaleinfo_uint{From<:FloatingPoint}(img::AbstractArray{From}) = scaleinfo_uint(Uint8, img)
 scaleinfo_uint{T<:Ufixed}(img::AbstractArray{RGB{T}}) = ScaleNone(RGB{T})
-scaleinfo_uint{T<:FloatingPoint}(img::AbstractArray{RGB{T}}) = ClipMinMax(RGB{T})
+scaleinfo_uint{T<:FloatingPoint}(img::AbstractArray{RGB{T}}) = ClampMinMax(RGB{T})
 
 climdefault{T<:Integer}(img::AbstractArray{T}) = limits(img)
 function climdefault{T<:FloatingPoint}(img::AbstractArray{T})
@@ -236,14 +229,7 @@ function climdefault{T<:FloatingPoint}(img::AbstractArray{T})
     end
     l
 end
-
-unsigned{T<:Unsigned}(::Type{T}) = T
-unsigned(::Type{Bool}) = Uint8
-unsigned(::Type{Int8}) = Uint8
-unsigned(::Type{Int16}) = Uint16
-unsigned(::Type{Int32}) = Uint32
-unsigned(::Type{Int64}) = Uint64
-unsigned(::Type{Int128}) = Uint128
+=#
 
 minfinite(A::AbstractArray) = minimum(A)
 function minfinite{T<:FloatingPoint}(A::AbstractArray{T})
@@ -280,8 +266,8 @@ function maxabsfinite{T<:FloatingPoint}(A::AbstractArray{T})
     ret
 end
 
-sc(img::AbstractArray) = scale(scaleminmax(img), img)
-sc(img::AbstractArray, mn::Real, mx::Real) = scale(scaleminmax(img, mn, mx), img)
+sc(img::AbstractArray) = scale(ScaleMinMax(img), img)
+sc(img::AbstractArray, mn::Real, mx::Real) = scale(ScaleMinMax(img, mn, mx), img)
 
 convert{T}(::Type{AbstractImageDirect{T,2}},M::Tridiagonal) = error("Not defined") # prevent ambiguity warning
 
@@ -289,20 +275,9 @@ convert{T,S}(::Type{Image{T}}, img::AbstractImageDirect{S}) = scale(scaleinfo(T,
 
 float32(img::AbstractImageDirect) = scale(scaleinfo(Float32, img), img)
 float64(img::AbstractImageDirect) = scale(scaleinfo(Float64, img), img)
-function float32sc(img::AbstractImageDirect)
-    l = climdefault(img)
-    scalei = ScaleMinMax(Float32, l[1], l[2], 1.0f0/(l[2]-l[1]))
-    scale(scalei, img)
-end
-function float64sc(img::AbstractImageDirect)
-    l = climdefault(img)
-    scalei = ScaleMinMax(Float64, l[1], l[2], 1.0/(l[2]-l[1]))
-    scale(scalei, img)
-end
 
-uint8sc(img::AbstractImageDirect) = scale(scaleinfo(Uint8, img), img)
-uint16sc(img::AbstractImageDirect) = scale(scaleinfo(Uint16, img), img)
-uint32sc(img::AbstractImageDirect) = scale(scaleinfo(Uint32, img), img)
+ufixedsc{T<:Ufixed}(::Type{T}, img::AbstractImageDirect) = scale(scaleinfo(T, img), img)
+ufixed8sc(img::AbstractImageDirect) = ufixedsc(Ufixed8, img)
 
 convert{C<:ColorValue}(::Type{Image{C}}, img::Image{C}) = img
 convert{Cdest<:ColorValue,Csrc<:ColorValue}(::Type{Image{Cdest}}, img::Union(AbstractArray{Csrc},AbstractImageDirect{Csrc})) = share(img, convert(Array{Cdest}, data(img)))

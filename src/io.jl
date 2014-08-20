@@ -176,7 +176,7 @@ end
 import Base.mimewritable
 Base.mimewritable(::MIME"image/png", img::AbstractImage) = sdims(img) == 2 && timedim(img) == 0
 
-function _writemime(stream::IO, ::MIME"image/png", img::AbstractImage; scalei=scaleinfo_uint(img))
+function _writemime(stream::IO, ::MIME"image/png", img::AbstractImage; scalei=scaleinfo(img))
     assert2d(img)
     if isa(img, AbstractImageIndexed)
         # For now, convert to direct
@@ -197,9 +197,9 @@ function _writemime(stream::IO, ::MIME"image/png", img::AbstractImage; scalei=sc
     blob = LibMagick.getblob(wand, "png")
     write(stream, blob)
 end
-writemime(stream::IO, mime::MIME"image/png", img::AbstractImage{RGB}; scalei = scaleinfo_uint(img)) = _writemime(stream, mime, img, scalei=scalei)
+writemime(stream::IO, mime::MIME"image/png", img::AbstractImage{RGB}; scalei = scaleinfo(Ufixed8,img)) = _writemime(stream, mime, img, scalei=scalei)
 writemime{C<:ColorValue}(stream::IO, mime::MIME"image/png", img::AbstractImage{C}; kwargs...) = writemime(stream, mime, convert(Image{RGB}, img); kwargs...)
-writemime(stream::IO, mime::MIME"image/png", img::AbstractImage; scalei = scaleinfo_uint(img)) = _writemime(stream, mime, img, scalei=scalei)
+writemime(stream::IO, mime::MIME"image/png", img::AbstractImage; scalei = scaleinfo(Ufixed8,img)) = _writemime(stream, mime, img, scalei=scalei)
 
 #### Implementation of specific formats ####
 
@@ -209,7 +209,7 @@ imread(filename::String, ::Type{OSXNative}) = LibOSXNative.imread(filename)
 
 #### ImageMagick library
 
-typedict = [1 => Uint8, 8 => Uint8, 16 => Uint16, 32 => Uint32]
+const ufixedtype = [1=>Bool, 8=>Ufixed8, 10=>Ufixed10, 12=>Ufixed12, 14=>Ufixed14, 16=>Ufixed16]
 
 function imread(filename::String, ::Type{ImageMagick})
     wand = LibMagick.MagickWand()
@@ -224,22 +224,31 @@ function imread(filename::String, ::Type{ImageMagick})
     end
     havealpha = LibMagick.getimagealphachannel(wand)
     cs = LibMagick.getimagecolorspace(wand)
-    nc, cs = LibMagick.nchannels(imtype, cs, havealpha)
     depth = LibMagick.getimagedepth(wand)
-    T = typedict[iceil(depth/8)*8]
-    if T == Uint8 && cs == "RGB"
-        T = RGB{Ufixed8}
-        nc = 1
+    T = ufixedtype[depth]
+    if havealpha
+        if cs == "sRGB"
+            if ENDIAN_BOM == 0x04030201
+                T, cs = BGRA{T}, "BGRA"
+            else
+                T, cs = ARGB{T}, "ARGB"
+            end
+        else
+            T, cs = GrayAlpha{T}, "IA"
+        end
+    else
+        if cs == "sRGB"
+            T, cs = RGB{T}, "RGB"
+        else
+            cs = "I"
+        end
     end
     # Allocate the buffer and get the pixel data
-    buf = (nc > 1) ? Array(T, nc, sz...) : Array(T, sz...)
+    buf = Array(T, sz...)
     LibMagick.exportimagepixels!(buf, wand, cs)
-    prop = ["spatialorder" => ["x", "y"], "limits" => (zero(T), typemax(T))]
-    if !isa(T, ColorValue)
-        prop["colorspace"] = cs
-    end
-    if nc > 1
-        prop["colordim"] = 1
+    prop = (Any=>Any)["spatialorder" => ["x", "y"]]
+    if cs == "I"
+        prop["colorspace"] = "Gray"
     end
     if n > 1
         prop["timedim"] = ndims(buf)
@@ -249,7 +258,7 @@ end
 
 imread{C<:ColorValue}(filename::String, ::Type{ImageMagick}, ::Type{C}) = convert(Image{C}, imread(filename, ImageMagick))
 
-function imwrite(img, filename::String, ::Type{ImageMagick}; scalei = scaleinfo_uint(img))
+function imwrite(img, filename::String, ::Type{ImageMagick}; scalei = scaleinfo(img))
     wand = image2wand(img, scalei)
     LibMagick.writeimage(wand, filename)
 end
@@ -267,7 +276,13 @@ function image2wand(img, scalei)
     end
     wand = LibMagick.MagickWand()
     cs = colorspace(imgw)
-    LibMagick.constituteimage(to_explicit(to_contiguous(data(imgw))), wand, cs)
+    if cs == "Gray"
+        cs = "I"
+    elseif cs == "GrayAlpha"
+        cs = "IA"
+    end
+    tmp = to_explicit(to_contiguous(data(imgw)))
+    LibMagick.constituteimage(tmp, wand, cs)
     LibMagick.resetiterator(wand)
     wand
 end
@@ -280,6 +295,10 @@ to_explicit(A::AbstractArray) = A
 to_explicit{T<:Ufixed}(A::AbstractArray{T}) = reinterpret(FixedPointNumbers.rawtype(T), A)
 to_explicit{T<:Ufixed}(A::AbstractArray{RGB{T}}) = reinterpret(FixedPointNumbers.rawtype(T), A, tuple(3, size(A)...))
 to_explicit{T<:FloatingPoint}(A::AbstractArray{RGB{T}}) = to_explicit(scale(ClipMinMax(RGB{Ufixed8}, zero(RGB{T}), one(RGB{T})), A))
+to_explicit{T<:Ufixed}(A::AbstractArray{GrayAlpha{T}}) = reinterpret(FixedPointNumbers.rawtype(T), A, tuple(2, size(A)...))
+to_explicit{T<:FloatingPoint}(A::AbstractArray{GrayAlpha{T}}) = to_explicit(scale(ClipMinMax(GrayAlpha{Ufixed8}, zero(GrayAlpha{T}), one(GrayAlpha{T})), A))
+to_explicit{T<:Ufixed}(A::AbstractArray{BGRA{T}}) = reinterpret(FixedPointNumbers.rawtype(T), A, tuple(4, size(A)...))
+to_explicit{T<:FloatingPoint}(A::AbstractArray{BGRA{T}}) = to_explicit(scale(ClipMinMax(BGRA{Ufixed8}, zero(BGRA{T}), one(BGRA{T})), A))
 
 # Write grayscale values in horizontal-major order
 function writegray(stream, img, scalei::ScaleInfo)
@@ -489,8 +508,6 @@ function parse_netpbm_maxval(stream::IO)
     parseint(maxvalline)
 end
 
-const ufixedtype = [10=>Ufixed10, 12=>Ufixed12, 14=>Ufixed14, 16=>Ufixed16]
-
 function imread{S<:IO}(stream::S, ::Type{PPMBinary})
     w, h = parse_netpbm_size(stream)
     maxval = parse_netpbm_maxval(stream)
@@ -518,7 +535,7 @@ function imread{S<:IO}(stream::S, ::Type{PPMBinary})
         error("Image file may be corrupt. Are there really more than 16 bits in this image?")
     end
     T = eltype(dat)
-    Image(dat, ["colorspace" => "RGB", "spatialorder" => ["x", "y"], "limits" => (zero(T),one(T))])
+    Image(dat, (Any=>Any)["spatialorder" => ["x", "y"]])
 end
 
 function imread{S<:IO}(stream::S, ::Type{PGMBinary})
@@ -545,7 +562,7 @@ function imread{S<:IO}(stream::S, ::Type{PGMBinary})
         error("Image file may be corrupt. Are there really more than 16 bits in this image?")
     end
     T = eltype(dat)
-    Image(dat, ["colorspace" => "Gray", "spatialorder" => ["x", "y"], "limits" => (zero(T),one(T))])
+    Image(dat, ["colorspace" => "Gray", "spatialorder" => ["x", "y"]])
 end
 
 function imread{S<:IO}(stream::S, ::Type{PBMBinary})
@@ -564,33 +581,30 @@ end
 
 function imwrite(img, filename::String, ::Type{PPMBinary})
     open(filename, "w") do stream
+        write(stream, "P6\n")
+        write(stream, "# ppm file written by Julia\n")
         imwrite(img, stream, PPMBinary)
     end
 end
 
 function imwrite(img, s::IO, ::Type{PPMBinary})
-    write(s, "P6\n")
-    write(s, "# ppm file written by Julia\n")
     w, h = widthheight(img)
-    bitdepth = 8*sizeof(eltype(img))
-    if eltype(img) == RGB{Ufixed8}
+    T = eltype(img)
+    if T <: RGB && eltype(T) <: Ufixed  # once we get triangular dispatch we can make this a standalone function
+        mx = reinterpret(FixedPointNumbers.rawtype(eltype(T)), one(eltype(T)))
+        write(s, "$w $h\n$mx\n")
+        scalei = (T == RGB{Ufixed8} || T == RGB{Ufixed16}) ? ScaleNone{T}() : ClipMax(T)
+        writegray(s, img, scalei)
+    elseif T<: RGB && eltype(T) <: FloatingPoint
+        Tf = eltype(T)
         write(s, "$w $h\n255\n")
-        scalei = ScaleNone{RGB{Ufixed8}}()
+        scalei = ScaleMinMax(Uint8, zero(Tf), one(Tf), 255)
         writegray(s, img, scalei)
     else
-        if eltype(img) <: FloatingPoint
-            bitdepth = 8
-        end
         cs = colorspace(img)
-        if cs == "RGB24"
-            bitdepth = 8
-        elseif cs == "ARGB32"
-            bitdepth = 8
-        end
-        T = typedict[bitdepth]
-        mx = int(typemax(T))
+        cs == "RGB24" || cs == "ARGB32" || error("Unsupported element type $T")
         scalei = scaleinfo(T, img)
-        write(s, "$w $h\n$mx\n")
+        write(s, "$w $h\n255\n")
         writecolor(s, img, scalei)
     end
 end
