@@ -7,7 +7,7 @@ if !isempty(mpath)
     push!(DL_LOAD_PATH, mpath)
     push!(DL_LOAD_PATH, joinpath(mpath,"lib"))
 end
-libnames = ["libMagickWand"]
+libnames = ["libMagickWand", "CORE_RL_wand_"]
 suffixes = ["", "-Q16", "-6.Q16", "-Q8"]
 options = ["", "HDRI"]
 extensions = ["", ".so.4", ".so.5"]
