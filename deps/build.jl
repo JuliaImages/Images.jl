@@ -20,17 +20,38 @@ libwand = library_dependency("libwand", aliases = aliases)
     provides(Yum, "ImageMagick", libwand)
 end
 
-# @windows_only begin
-#     libwand = library_dependency("CORE_RL_wand_")
-# 
-#     const OS_ARCH = WORD_SIZE == 64 ? "x86_64" : "x86"
-# 
-#     if WORD_SIZE == 32
-#         provides(Binaries,URI("http://www.imagemagick.org/download/binaries/ImageMagick-6.8.8-6-Q16-windows-dll.exe"),libwand,os = :Windows)
-#     else
-#         provides(Binaries,URI("http://www.imagemagick.org/download/binaries/ImageMagick-6.8.8-6-Q16-windows-x64-dll.exe"),libwand,os = :Windows)
-#     end
-# end
+# TODO: remove me when upstream is fixed
+@windows_only push!(BinDeps.defaults, BuildProcess)
+
+@windows_only begin
+    const OS_ARCH = (WORD_SIZE == 64) ? "x64" : "x86"
+
+    # Will need to be updated for releases
+    # TODO: checksums: we have gpg
+    magick_exe = "ImageMagick-6.8.9-7-Q16-$(OS_ARCH)-dll.exe"
+
+    magick_tmpdir = BinDeps.downloadsdir(libwand)
+    magick_url = "http://www.imagemagick.org/download/binaries/$(magick_exe)"
+    magick_libdir = joinpath(BinDeps.libdir(libwand), OS_ARCH)
+
+    innounp_url = "https://julialang.s3.amazonaws.com/bin/winnt/extras/innounp.exe"
+
+    provides(BuildProcess,
+        (@build_steps begin
+            CreateDirectory(magick_tmpdir)
+            CreateDirectory(magick_libdir)
+            FileDownloader(magick_url, joinpath(magick_tmpdir, magick_exe))
+            FileDownloader(innounp_url, joinpath(magick_tmpdir, "innounp.exe"))
+            @build_steps begin
+                ChangeDirectory(magick_tmpdir)
+                info("Installing ImageMagick library")
+                `innounp.exe -q -y -b -e -x -d$(magick_libdir) $(magick_exe)`
+            end
+        end),
+        libwand,
+        os = :Windows,
+        unpacked_dir = magick_libdir)
+end
 
 @osx_only begin
     if Pkg.installed("Homebrew") === nothing
