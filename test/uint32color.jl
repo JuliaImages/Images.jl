@@ -1,3 +1,7 @@
+A = reinterpret(Ufixed8, [uint8(1:24)], (3, 2, 4))
+img = reinterpret(RGB{Ufixed8}, A, (2,4))
+@test separate(img) == permutedims(A, (2,3,1))
+
 # color conversion
 gray = linspace(0.0,1.0,5) # a 1-dimensional image
 gray8 = iround(Uint8, 255*gray)

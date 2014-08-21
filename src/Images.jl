@@ -171,6 +171,7 @@ export # types
     rgb2hsi,
     rgb2ntsc,
     rgb2ycbcr,
+    separate,
     uint32color,
     uint32color!,
     ycbcr2rgb,

@@ -1,4 +1,4 @@
-using Images, FixedPointNumbers
+using Images, FixedPointNumbers, Color
 using Base.Test
 
 urlbase = "http://www.imagemagick.org/Usage/images/"

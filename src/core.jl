@@ -170,26 +170,68 @@ function copy!(imgdest::AbstractImage, imgsrc::AbstractImage, prop1::ASCIIString
     imgdest
 end
 
+# reinterpret: ColorValue->Fractional
+reinterpret{T<:Fractional,CV<:ColorValue}(::Type{T}, img::Vector{CV}) = _reinterpret(T, eltype(CV), img)
+reinterpret{T<:Fractional,CV<:ColorValue}(::Type{T}, img::Array{CV})  = _reinterpret(T, eltype(CV), img)
+reinterpret{T<:Fractional,CV<:ColorValue}(::Type{T}, img::AbstractArray{CV}) = _reinterpret(T, eltype(CV), img)
+_reinterpret{T<:Fractional,CV<:ColorValue}(::Type{T}, ::Type{T}, img::AbstractArray{CV}) =
+    reinterpret(T, img, tuple(div(sizeof(CV), sizeof(T)), size(img)...))
+function _reinterpret{T<:Fractional,CV<:ColorValue}(::Type{T}, ::Type{T}, img::AbstractImageDirect{CV})
+    A = _reinterpret(T, T, data(img))
+    props = copy(properties(img))
+    props["colorspace"] = colorspace(img)
+    props["colordim"] = 1
+    Image(A, props)
+end
+_reinterpret{T,S,CV<:ColorValue}(::Type{T}, ::Type{S}, img::AbstractArray{CV}) =
+    error("reinterpret cannot change the element type, try reinterpret($S, img)")
+
+# reinterpret: Fractional->ColorValue
+# We have to distinguish two forms of call:
+#   form 1: reinterpret(RGB, img)
+#   form 2: reinterpret(RGB{Ufixed8}, img)
+reinterpret{T<:Fractional,CV<:ColorValue}(::Type{CV}, img::Vector{T}) = _reinterpret(CV, eltype(CV), img)
+reinterpret{T<:Fractional,CV<:ColorValue}(::Type{CV}, img::Array{T})  = _reinterpret(CV, eltype(CV), img)
+reinterpret{T<:Fractional,CV<:ColorValue}(::Type{CV}, img::AbstractArray{T}) = _reinterpret(CV, eltype(CV), img)
+_reinterpret{T<:Fractional,CV<:ColorValue}(::Type{CV}, ::TypeVar, img::AbstractArray{T}) =
+    _reinterpret(CV{T}, T, img)   # form 1 (turn into a form 2 call by filling in the element type of the array)
+_reinterpret{T<:Fractional,CV<:ColorValue}(::Type{CV}, TT::DataType, img::AbstractArray{T}) =
+    __reinterpret(CV, TT, img)    # form 2
+__reinterpret{T<:Fractional,CV<:ColorValue}(::Type{CV}, ::Type{T}, img::AbstractArray{T}) =
+    reinterpret(CV, img, size(img)[2:end])
+# In the following, the second argument is the concrete element type of CV
+function __reinterpret{T<:Fractional,CV<:ColorValue}(::Type{CV}, ::Type{T}, img::AbstractImageDirect{T})
+    A = __reinterpret(CV, T, data(img))
+    props = copy(properties(img))
+    haskey(props, "colorspace") && delete!(props, "colorspace")
+    haskey(props, "colordim") && delete!(props, "colordim")
+    Image(A, props)
+end
+__reinterpret{T,S,CV<:ColorValue}(::Type{CV}, ::Type{S}, img::AbstractArray{T}) =
+    error("reinterpret cannot change the element type, try reinterpret($(CV.name), img)")
+
+
 # convert
+convert{T<:Real}(::Type{Image{T}}, img::Image{T}) = img
 convert{T}(::Type{Image{T}}, img::Image{T}) = img
 convert(::Type{Image}, A::AbstractArray) = Image(A, properties(A))
 # Convert an indexed image (cmap) to a direct image
-function convert{II<:AbstractImageIndexed}(::Type{Image}, img::II)
-    if size(img.cmap, 2) == 1
-        data = reshape(img.cmap[img.data[:]], size(img.data))
-        prop = img.properties
-        return Image(data, prop)
-    else
-        newsz = tuple(size(img.data)...,size(img.cmap,2))
-        data = reshape(img.cmap[img.data[:],:], newsz)
-        prop = copy(img.properties)
-        prop["colordim"] = length(newsz)
-        return Image(data, prop)
-    end
+function convert{T,N,A,C<:AbstractVector}(::Type{Image}, img::ImageCmap{T,N,A,C})
+    data = reshape(img.cmap[vec(img.data)], size(img.data))
+    Image(data, properties(img))
 end
-# Convert an Image to an array. We convert the image into the canonical storage order convention for arrays. We restrict this to 2d images because for plain arrays this convention exists only for 2d.
+function convert{T,N,A,C<:AbstractMatrix}(::Type{Image}, img::ImageCmap{T,N,A,C})
+    newsz = tuple(size(img.data)...,size(img.cmap,2))
+    data = reshape(img.cmap[vec(img.data),:], newsz)
+    prop = copy(img.properties)
+    prop["colordim"] = length(newsz)
+    return Image(data, prop)
+end
+# Convert an Image to an array. We convert the image into the canonical storage order convention for arrays.
+# We restrict this to 2d images because for plain arrays this convention exists only for 2d.
 # In other cases---or if you don't want the storage order altered---just grab the .data field and perform whatever manipulations you need directly.
-function convert{T}(::Type{Array{T}}, img::AbstractImage)
+convert{T,N}(::Type{Array{T}}, img::AbstractImageDirect{T,N}) = convert(Array{T,N}, img)
+function convert{T,N}(::Type{Array{T,N}}, img::AbstractImageDirect{T,N})
     assert2d(img)
     dat = convert(Array{T}, data(img))
     # put in canonical storage order
@@ -206,6 +248,21 @@ function convert{T}(::Type{Array{T}}, img::AbstractImage)
     end
 end
 convert(::Type{Array}, img::AbstractImage) = convert(Array{eltype(img)}, img)
+
+function separate{CV<:ColorValue}(img::AbstractImage{CV})
+    A = separate(convert(Array, img))
+    props = copy(properties(img))
+    props["colorspace"] = colorspace(img)
+    props["colordim"] = ndims(A)
+    Image(A, props)
+end
+function separate{CV<:ColorValue}(A::AbstractArray{CV})
+    T = eltype(CV)
+    nchannels = div(sizeof(CV), sizeof(T))
+    permutedims(reinterpret(T, A, tuple(nchannels, size(A)...)), [2:ndims(A)+1,1])
+end
+separate(A::AbstractArray) = A
+
 # See scaling for conversion of Arrays to Images
 
 

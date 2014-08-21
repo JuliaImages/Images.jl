@@ -272,7 +272,7 @@ sc(img::AbstractArray, mn::Real, mx::Real) = scale(ScaleMinMax(img, mn, mx), img
 
 convert{T}(::Type{AbstractImageDirect{T,2}},M::Tridiagonal) = error("Not defined") # prevent ambiguity warning
 
-convert{T,S}(::Type{Image{T}}, img::AbstractImageDirect{S}) = scale(scaleinfo(T, img), img)
+convert{T<:Real,S<:Real}(::Type{Image{T}}, img::AbstractImageDirect{S}) = scale(scaleinfo(T, img), img)
 
 float32(img::AbstractImageDirect) = scale(scaleinfo(Float32, img), img)
 float64(img::AbstractImageDirect) = scale(scaleinfo(Float64, img), img)
