@@ -197,7 +197,7 @@ function _writemime(stream::IO, ::MIME"image/png", img::AbstractImage; scalei=sc
     blob = LibMagick.getblob(wand, "png")
     write(stream, blob)
 end
-writemime(stream::IO, mime::MIME"image/png", img::AbstractImage{RGB}; scalei = scaleinfo(Ufixed8,img)) = _writemime(stream, mime, img, scalei=scalei)
+writemime{C<:RGB}(stream::IO, mime::MIME"image/png", img::AbstractImage{C}; scalei = scaleinfo(C,img)) = _writemime(stream, mime, img, scalei=scalei)
 writemime{C<:ColorValue}(stream::IO, mime::MIME"image/png", img::AbstractImage{C}; kwargs...) = writemime(stream, mime, convert(Image{RGB}, img); kwargs...)
 writemime(stream::IO, mime::MIME"image/png", img::AbstractImage; scalei = scaleinfo(Ufixed8,img)) = _writemime(stream, mime, img, scalei=scalei)
 
