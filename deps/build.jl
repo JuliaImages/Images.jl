@@ -34,18 +34,18 @@ end
     magick_url = "http://www.imagemagick.org/download/binaries/$(magick_exe)"
     magick_libdir = joinpath(BinDeps.libdir(libwand), OS_ARCH)
 
+    innounp_url = "https://julialang.s3.amazonaws.com/bin/winnt/extras/innounp.exe"
+
     provides(BuildProcess,
         (@build_steps begin
             CreateDirectory(magick_tmpdir)
             CreateDirectory(magick_libdir)
             FileDownloader(magick_url, joinpath(magick_tmpdir, magick_exe))
+            FileDownloader(innounp_url, joinpath(magick_tmpdir, "innounp.exe"))
             @build_steps begin
                 ChangeDirectory(magick_tmpdir)
-
-                info("Installing ImageMagick dependency")
-                info("  Please accept installation authorization, if prompted")
-
-                `$(magick_exe) /silent /noicons /noreboot /dir=$(magick_libdir)`
+                info("Installing ImageMagick library")
+                `innounp.exe -q -y -b -e -x -d$(magick_libdir) $(magick_exe)`
             end
         end),
         libwand,
