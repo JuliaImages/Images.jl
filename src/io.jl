@@ -192,7 +192,7 @@ function _writemime(stream::IO, ::MIME"image/png", img::AbstractImage; scalei=sc
     if eltype(A) != eltype(img)
         A = truncround(eltype(img), A)
     end
-    wand = image2wand(share(img, A), scalei)
+    wand = image2wand(share(img, A), scalei, nothing)
 #     LibMagick.setimagecompression(wand, LibMagick.NoCompression)
     blob = LibMagick.getblob(wand, "png")
     write(stream, blob)
