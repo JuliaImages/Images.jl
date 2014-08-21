@@ -4,52 +4,6 @@ An image processing library for [Julia](http://julialang.org/).
 
 [![Status](http://iainnz.github.io/packages.julialang.org/badges/Images_0.3.svg)](http://iainnz.github.io/packages.julialang.org/badges/Images_0.3.svg) [![Coverage Status](https://coveralls.io/repos/timholy/Images.jl/badge.png?branch=master)](https://coveralls.io/r/timholy/Images.jl?branch=master)
 
-## Aims
-
-Images are very diverse.
-You might be working with a single photograph, or you
-might be processing MRI scans from databases of hundreds of subjects.
-In the
-former case, you might not need much information about the image; perhaps just
-the pixel data itself suffices.
-In the latter case, you probably need to
-know a lot of extra details, like the patient's ID number and characteristics of
-the image like the physical size of a voxel in all three dimensions.
-
-Even the raw pixel data can come in several different flavors:
-- For example, you might represent each pixel as a `Uint32` because you are encoding red, green, and blue in separate 8-bit words within each integer---visualization libraries like Cairo use these kinds of representations, and you might want to interact with those libraries efficiently.
-Alternatively, perhaps you're an astronomer and your camera has such high precision that 16 bits aren't enough to encode grayscale intensities.
-- If you're working with videos (images collected over time), you might have arrays that are too big to load into memory at once.
-You still need to be able to "talk about" the array as a whole, but it may not be trivial to adjust the byte-level representation to match some pre-conceived storage order.
-
-To handle this diversity, we've endeavored to take a "big tent" philosophy.
-We avoid imposing a strict programming model, because we don't want to make life
-difficult for people who have relatively simple needs.
-If you do all your image
-processing with plain arrays (as is typical in Matlab, for example), that should
-work just fine---you just have to respect certain conventions, like a
-`m`-by-`n`-by-`3` array always means an RGB image with the third dimension
-encoding color.
-You can call the routines that are in this package, and write
-your own custom algorithms that assume the same format.
-
-But if your images don't fit neatly into these assumptions, you can choose to
-represent your images using other schemes; you can then tag them with enough
-metadata that there's no ambiguity about the meaning of anything.
-The algorithms
-in this package are already set to look for certain types of metadata, and
-adjust their behavior accordingly.
-
-One of the potential downsides of flexibility is complexity---it makes it harder
-to write generic algorithms that work with all these different representations.
-We've tried to mitigate this downside by providing many short utility functions
-that abstract away much of the complexity.
-Many algorithms require just a
-handful of extra lines to work generically.
-Or if you just want to get
-something running, it usually only takes a couple of lines of code to assert
-that the input is in the format you expect.
-
 ## Installation
 
 Install via the package manager,
@@ -60,29 +14,119 @@ Pkg.add("Images")
 
 It's helpful to have ImageMagick installed on your system, as Images relies on it for reading and writing many common image types.
 For unix platforms, adding the Images package should install ImageMagick for you automatically.
-If this fails, try installing it [manually](http://www.imagemagick.org/download/binaries/).
-Depending on where it installs, you may need to set the `MAGICK_HOME` environment variable to help Julia find the library (or set your `DL_LOAD_PATH`).
-
-Note that on older RedHat-based distributions, the packaged version of the library may be too old.
-If that is the case, a newer library may be [required](http://dl.nux.ro/rpm/nux-imagemagick.repo).
-You may need to edit the `releasever` parameter to match your installation.
-
-On Macs, there is now experimental support for reading images using the built-in OS X frameworks.
-For many common image types, this reader will be tried before ImageMagick.  This reader
-is now enabled by default on Macs; if you need to disable it in favor of ImageMagick,
-just comment out line 105 of `src/io.jl`, which reads `img = imread(filename, OSXNative)`.
-
-On Windows it is mandatory to have ImageMagick previously installed because the installer requires user interaction so it cannot be done by the package alone. Get the current version from http://www.imagemagick.org/script/binary-releases.php#windows (e.g. ImageMagick-6.8.8-7-Q16-x86-dll.exe) and make sure that the "Install development headers and libraries for C and C++" checkbox is selected. You may choose to let the installer add the installation directory to the system path or provide it separately. In the later case you may add it to your `.juliarc.jl` file as (for example) `push!(Base.DL_LOAD_PATH, "C:/programs/ImageMagick-6.8.8"`)
-
-When manual intervention is necessary, you may need to restart Julia for the necessary changes to take effect.
+**On Windows, currently you need to install ImageMagick manually** if you want to read/write most image file formats.
+More details about manual installation and troubleshooting can be found in the [installation help](doc/install.md).
 
 ## Image viewing
 
 If you're using the IJulia notebook, images will be displayed [automatically](http://htmlpreview.github.com/?https://github.com/timholy/Images.jl/blob/master/ImagesDemo.html).
 
-Julia code for the display of images has been moved to [ImageView](https://github.com/timholy/ImageView.jl).
+Julia code for the display of images can be found in [ImageView](https://github.com/timholy/ImageView.jl).
+Installation of this package is recommended but not required.
 
-## Documentation ##
+## TestImages
+
+When testing ideas or just following along with the documentation, it can be useful to have some images to work with.
+The [TestImages](https://github.com/timholy/TestImages.jl) package bundles several "standard" images for you.
+To load one of the images from this package, say
+```
+using TestImages
+img = testimage("mandrill")
+```
+The examples below will assume you're loading a particular file from your disk, but you can substitute those
+commands with `testimage`.
+
+## Getting started
+
+For these examples you'll need to install both `Images` and `ImageView`.
+Load the code for these packages with
+
+```julia
+using Images, ImageView
+```
+
+### Loading your first image
+
+You likely have a number of images already at your disposal, and you can use these, TestImages.jl, or
+run `readremote.jl` in the `test/` directory.
+(This requires an internet connection.)
+These will be deposited inside an `Images` directory inside your temporary directory
+(e.g., `/tmp` on Linux systems). The `"rose.png"` image in this example comes from the latter.
+
+Let's begin by reading an image from a file:
+```
+julia> img = imread("rose.png")
+RGB Image with:
+  data: 70x46 Array{RGB{Ufixed8},2}
+  properties:
+    spatialorder:  x y
+```
+If you're using Images through IJulia, rather than this text output you probably see the image itself.
+This is nice, but often it's quite helpful to see the structure of these Image objects.
+This happens automatically at the REPL, or within IJulia you can call
+```
+show(img)
+```
+to see the output above.
+
+As you can see, this is an RGB image. It is stored as a two-dimensional `Array` of `RGB{Ufixed8}`.
+To see what this pixel type is, we can do the following:
+```
+julia> img[1,1]
+RGB{Ufixed8}(Ufixed8(0.188),Ufixed8(0.184),Ufixed8(0.176))
+```
+This extracts the first pixel, the one visually at the upper-left of the image. You can see that
+an `RGB` (which comes from the [Color](https://github.com/JuliaLang/Color.jl) package) is a triple of values.
+The `Ufixed8` type (which comes from the [FixedPointNumbers](https://github.com/JeffBezanson/FixedPointNumbers.jl) package)
+represents fractional numbers, having values between 0 and 1 inclusive, using just 1 byte (8 bits).
+If you've previously used other image processing libraries, you may be used to thinking of two basic
+image types, floating point-valued and integer-valued. In those libraries, `1.0` commonly means "saturated"
+for floating point-valued images, whereas for a `Uint8` image 255 means saturated.
+`Images.jl` unifies these two types so that `1` always means saturated, making it easier to write
+generic algorithms and visualization packages, while still allowing one to use efficient (or C-compatible)
+raw representations.
+
+You can see that this image has `properties`, in this case just the single property `"spatialorder"`.
+`["x", "y"]` indicates that, after color, the image data are in "horizontal-major" order,
+meaning that a pixel at spatial location `(x,y)` would be addressed as `img[x,y]`.
+`["y", "x"]` would indicate vertical-major. Consequently, this image is 70 pixels wide and 46 pixels high.
+
+Note that the image was loaded in "non-permuted" form, i.e., following the direct representation on disk.
+If you prefer to work with plain arrays, you can convert it:
+```
+julia> imA = convert(Array, img);
+
+julia> summary(imA)
+"46x70 Array{RGB{Ufixed8},2}"
+```
+You can see that this permuted the dimensions into vertical-major order, but
+preserved this as an `Array{RGB}`. If you prefer to extract into an array of the
+elementary type in color-last order (typical of Matlab), you can use
+```
+julia> imA = separate(img)
+RGB Image with:
+  data: 46x70x3 Array{Ufixed8,3}
+  properties:
+    colorspace: RGB
+    colordim: 3
+    spatialorder:  x y
+```
+You can see that two new properties were added: `"colordim"`, which specifies which dimension of the array
+is used to encode color, and `"colorspace"`. Compare this to
+```
+julia> imA = reinterpret(Ufixed8, img)
+RGB Image with:
+  data: 3x70x46 Array{Ufixed8,3}
+  properties:
+    colorspace: RGB
+    colordim: 1
+    spatialorder:  x y
+```
+`convert(Array, img)` and `separate(img)` make copies of the data,
+whereas `reinterpret` just gives you a new view of the same underlying memory as `img`.
+
+
+## Further documentation ##
 
 Detailed documentation about the design of the library
 and the available functions
