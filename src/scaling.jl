@@ -36,7 +36,7 @@ ScaleNone{T}(A::AbstractArray{T}) = ScaleNone{T}()
 # Implementation
 scale{T<:Real}(scalei::ScaleNone{T}, val::T) = val
 scale{T,S<:Real}(scalei::ScaleNone{T}, val::S) = convert(T, val)
-scale{T<:ColorValue}(scalei::ScaleNone{T}, val::T) = val
+scale{T<:ColorType}(scalei::ScaleNone{T}, val::T) = val
 scale(scalei::ScaleNone{Uint32}, val::ColorValue) = convert(Uint32, convert(RGB24, val))
 scale(scalei::ScaleNone{Uint32}, val::AlphaColorValue) = convert(Uint32, convert(RGBA32, val))
 
@@ -80,8 +80,8 @@ ClampMinMax{T}(::Type{RGB{T}}) = ClampMinMax(RGB{T},zero(RGB{T}),one(RGB{T}))
 scale{T<:Real,F<:Real}(scalei::ClampMin{T,F}, val::F) = convert(T, max(val, scalei.min))
 scale{T<:Real,F<:Real}(scalei::ClampMax{T,F}, val::F) = convert(T, min(val, scalei.max))
 scale{T<:Real,F<:Real}(scalei::ClampMinMax{T,F}, val::F) = convert(T,min(max(val, scalei.min), scalei.max))
-scale{CV<:ColorValue}(scalei::ClampMinMax{CV,CV}, val::CV) = mincv(maxcv(val, scalei.min), scalei.max)
-scale{T<:ColorValue, F<:ColorValue}(scalei::ClampMinMax{T,F}, val::F) = convert(T, mincv(maxcv(val, scalei.min), scalei.max))
+scale{CV<:ColorType}(scalei::ClampMinMax{CV,CV}, val::CV) = mincv(maxcv(val, scalei.min), scalei.max)
+scale{T<:ColorType, F<:ColorType}(scalei::ClampMinMax{T,F}, val::F) = convert(T, mincv(maxcv(val, scalei.min), scalei.max))
 
 mincv{T}(c1::RGB{T}, c2::RGB{T}) = RGB{T}(min(getfield(c1,1),getfield(c2,1)), min(getfield(c1,2),getfield(c2,2)), min(getfield(c1,3),getfield(c2,3)))
 maxcv{T}(c1::RGB{T}, c2::RGB{T}) = RGB{T}(max(getfield(c1,1),getfield(c2,1)), max(getfield(c1,2),getfield(c2,2)), max(getfield(c1,3),getfield(c2,3)))
@@ -172,7 +172,7 @@ take{To,From}(scalei::ScaleMinMax{To}, img::AbstractArray{From}) = ScaleMinMax(T
 # scaleinfo{T}(::Type{Any}, img::AbstractArray{T}) = ScaleNone{T}()
 
 scaleinfo{T<:Ufixed}(img::AbstractArray{T}) = ScaleNone(img)  # do we need to restrict to Ufixed8 & Ufixed16?
-scaleinfo{CV<:Union(ColorValue,AbstractAlphaColorValue)}(img::AbstractArray{CV}) = _scaleinfocv(CV, img)
+scaleinfo{CV<:ColorType}(img::AbstractArray{CV}) = _scaleinfocv(CV, img)
 _scaleinfocv{CV}(::Type{CV}, img) = _scaleinfocv(eltype(CV), img)
 _scaleinfocv{T<:Ufixed}(::Type{T}, img) = ScaleNone(img)
 _scaleinfocv{T<:FloatingPoint}(::Type{T}, img) = scaleinfo(RGB{Ufixed8}, img)

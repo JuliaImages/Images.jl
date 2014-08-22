@@ -198,7 +198,7 @@ function _writemime(stream::IO, ::MIME"image/png", img::AbstractImage; scalei=sc
     write(stream, blob)
 end
 writemime{C<:RGB}(stream::IO, mime::MIME"image/png", img::AbstractImage{C}; scalei = scaleinfo(C,img)) = _writemime(stream, mime, img, scalei=scalei)
-writemime{C<:ColorValue}(stream::IO, mime::MIME"image/png", img::AbstractImage{C}; kwargs...) = writemime(stream, mime, convert(Image{RGB}, img); kwargs...)
+writemime{C<:ColorType}(stream::IO, mime::MIME"image/png", img::AbstractImage{C}; kwargs...) = writemime(stream, mime, convert(Image{RGB}, img); kwargs...)
 writemime(stream::IO, mime::MIME"image/png", img::AbstractImage; scalei = scaleinfo(Ufixed8,img)) = _writemime(stream, mime, img, scalei=scalei)
 
 #### Implementation of specific formats ####
@@ -256,7 +256,7 @@ function imread(filename::String, ::Type{ImageMagick})
     Image(buf, prop)
 end
 
-imread{C<:ColorValue}(filename::String, ::Type{ImageMagick}, ::Type{C}) = convert(Image{C}, imread(filename, ImageMagick))
+imread{C<:ColorType}(filename::String, ::Type{ImageMagick}, ::Type{C}) = convert(Image{C}, imread(filename, ImageMagick))
 
 function imwrite(img, filename::String, ::Type{ImageMagick}; scalei = scaleinfo(img))
     wand = image2wand(img, scalei)

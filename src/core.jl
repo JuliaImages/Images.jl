@@ -101,7 +101,7 @@ function Overlay(channels::(AbstractArray...), colors, clim = ntuple(length(chan
 end
 
 # Returns the overlay as an image, if possible
-function OverlayImage(channels::(AbstractArray...), colors::(ColorValue...), args...)
+function OverlayImage(channels::(AbstractArray...), colors::(ColorType...), args...)
     ovr = Overlay(channels, colors, args...)
     for i = 1:length(channels)
         if isa(channels[i], AbstractImage)
@@ -171,43 +171,43 @@ function copy!(imgdest::AbstractImage, imgsrc::AbstractImage, prop1::ASCIIString
 end
 
 # reinterpret: ColorValue->Fractional
-reinterpret{T<:Fractional,CV<:ColorValue}(::Type{T}, img::Vector{CV}) = _reinterpret(T, eltype(CV), img)
-reinterpret{T<:Fractional,CV<:ColorValue}(::Type{T}, img::Array{CV})  = _reinterpret(T, eltype(CV), img)
-reinterpret{T<:Fractional,CV<:ColorValue}(::Type{T}, img::AbstractArray{CV}) = _reinterpret(T, eltype(CV), img)
-_reinterpret{T<:Fractional,CV<:ColorValue}(::Type{T}, ::Type{T}, img::AbstractArray{CV}) =
-    reinterpret(T, img, tuple(div(sizeof(CV), sizeof(T)), size(img)...))
-function _reinterpret{T<:Fractional,CV<:ColorValue}(::Type{T}, ::Type{T}, img::AbstractImageDirect{CV})
+reinterpret{T<:Fractional,CV<:ColorType}(::Type{T}, img::Vector{CV}) = _reinterpret(T, eltype(CV), img)
+reinterpret{T<:Fractional,CV<:ColorType}(::Type{T}, img::Array{CV})  = _reinterpret(T, eltype(CV), img)
+reinterpret{T<:Fractional,CV<:ColorType}(::Type{T}, img::AbstractArray{CV}) = _reinterpret(T, eltype(CV), img)
+_reinterpret{T<:Fractional,CV<:ColorType}(::Type{T}, ::Type{T}, img::AbstractArray{CV}) =
+    reinterpret(T, img, tuple(length(CV), size(img)...))
+function _reinterpret{T<:Fractional,CV<:ColorType}(::Type{T}, ::Type{T}, img::AbstractImageDirect{CV})
     A = _reinterpret(T, T, data(img))
     props = copy(properties(img))
     props["colorspace"] = colorspace(img)
     props["colordim"] = 1
     Image(A, props)
 end
-_reinterpret{T,S,CV<:ColorValue}(::Type{T}, ::Type{S}, img::AbstractArray{CV}) =
+_reinterpret{T,S,CV<:ColorType}(::Type{T}, ::Type{S}, img::AbstractArray{CV}) =
     error("reinterpret cannot change the element type, try reinterpret($S, img)")
 
 # reinterpret: Fractional->ColorValue
 # We have to distinguish two forms of call:
 #   form 1: reinterpret(RGB, img)
 #   form 2: reinterpret(RGB{Ufixed8}, img)
-reinterpret{T<:Fractional,CV<:ColorValue}(::Type{CV}, img::Vector{T}) = _reinterpret(CV, eltype(CV), img)
-reinterpret{T<:Fractional,CV<:ColorValue}(::Type{CV}, img::Array{T})  = _reinterpret(CV, eltype(CV), img)
-reinterpret{T<:Fractional,CV<:ColorValue}(::Type{CV}, img::AbstractArray{T}) = _reinterpret(CV, eltype(CV), img)
-_reinterpret{T<:Fractional,CV<:ColorValue}(::Type{CV}, ::TypeVar, img::AbstractArray{T}) =
+reinterpret{T<:Fractional,CV<:ColorType}(::Type{CV}, img::Vector{T}) = _reinterpret(CV, eltype(CV), img)
+reinterpret{T<:Fractional,CV<:ColorType}(::Type{CV}, img::Array{T})  = _reinterpret(CV, eltype(CV), img)
+reinterpret{T<:Fractional,CV<:ColorType}(::Type{CV}, img::AbstractArray{T}) = _reinterpret(CV, eltype(CV), img)
+_reinterpret{T<:Fractional,CV<:ColorType}(::Type{CV}, ::TypeVar, img::AbstractArray{T}) =
     _reinterpret(CV{T}, T, img)   # form 1 (turn into a form 2 call by filling in the element type of the array)
-_reinterpret{T<:Fractional,CV<:ColorValue}(::Type{CV}, TT::DataType, img::AbstractArray{T}) =
+_reinterpret{T<:Fractional,CV<:ColorType}(::Type{CV}, TT::DataType, img::AbstractArray{T}) =
     __reinterpret(CV, TT, img)    # form 2
-__reinterpret{T<:Fractional,CV<:ColorValue}(::Type{CV}, ::Type{T}, img::AbstractArray{T}) =
+__reinterpret{T<:Fractional,CV<:ColorType}(::Type{CV}, ::Type{T}, img::AbstractArray{T}) =
     reinterpret(CV, img, size(img)[2:end])
 # In the following, the second argument is the concrete element type of CV
-function __reinterpret{T<:Fractional,CV<:ColorValue}(::Type{CV}, ::Type{T}, img::AbstractImageDirect{T})
+function __reinterpret{T<:Fractional,CV<:ColorType}(::Type{CV}, ::Type{T}, img::AbstractImageDirect{T})
     A = __reinterpret(CV, T, data(img))
     props = copy(properties(img))
     haskey(props, "colorspace") && delete!(props, "colorspace")
     haskey(props, "colordim") && delete!(props, "colordim")
     Image(A, props)
 end
-__reinterpret{T,S,CV<:ColorValue}(::Type{CV}, ::Type{S}, img::AbstractArray{T}) =
+__reinterpret{T,S,CV<:ColorType}(::Type{CV}, ::Type{S}, img::AbstractArray{T}) =
     error("reinterpret cannot change the element type, try reinterpret($(CV.name), img)")
 
 
@@ -607,10 +607,10 @@ csinfer{C<:ColorValue}(::Type{C}) = string(C)
 csinfer(C) = "Unknown"
 colorspace(img::AbstractImage) = get(img.properties, "colorspace", "Unknown")
 
-colordim{C<:Union(ColorValue, AbstractAlphaColorValue)}(img::AbstractVector{C}) = 0
-colordim{C<:Union(ColorValue, AbstractAlphaColorValue)}(img::AbstractMatrix{C}) = 0
-colordim{C<:Union(ColorValue, AbstractAlphaColorValue)}(img::AbstractArray{C,3}) = 0
-colordim{C<:Union(ColorValue, AbstractAlphaColorValue)}(img::AbstractImage{C}) = 0
+colordim{C<:ColorType}(img::AbstractVector{C}) = 0
+colordim{C<:ColorType}(img::AbstractMatrix{C}) = 0
+colordim{C<:ColorType}(img::AbstractArray{C,3}) = 0
+colordim{C<:ColorType}(img::AbstractImage{C}) = 0
 colordim(img::AbstractMatrix) = 0
 colordim{T}(img::AbstractImageDirect{T,3}) = get(img, "colordim", 0)
 colordim{T}(img::AbstractArray{T,3}) = (size(img, defaultarraycolordim) == 3) ? 3 : 0

@@ -2,8 +2,11 @@ module ColorTypes
 
 using Color
 import Color.Fractional
+import Base: length
 
-export RGBA, ARGB, BGRA, Gray, GrayAlpha
+export RGBA, ARGB, BGRA, Gray, GrayAlpha, ColorType
+
+typealias ColorType Union(ColorValue, AbstractAlphaColorValue)
 
 typealias RGBA{T} AlphaColorValue{RGB{T}, T}
 
@@ -58,11 +61,20 @@ RGB4(r::Integer, g::Integer, b::Integer) = RGB4{Float64}(r, g, b)
 RGB4(r::Fractional, g::Fractional, b::Fractional) = (T = promote_type(typeof(r), typeof(g), typeof(b)); RGB4{T}(r, g, b))
 
 
-# For encoding GrayAlpha
+# Sometimes you want to be explicit about grayscale. Also needed for GrayAlpha.
 immutable Gray{T<:Fractional} <: ColorValue{T}
     val::T
 end
 
 typealias GrayAlpha{T} AlphaColorValue{Gray{T}, T}
+
+
+length(cv::ColorValue) = div(sizeof(cv), sizeof(eltype(cv)))
+# Because this can be called as `length(RGB)`, we might need to fill in a default element type.
+# But the compiler chokes if we ask it to create RGB{Float64}{Float64}, even if that's inside
+# the non-evaluated branch of a ternary expression, so we have to be sneaky about this.
+length{CV<:ColorValue}(::Type{CV}) = _length(CV, eltype(CV))
+_length{CV<:ColorValue}(::Type{CV}, ::TypeVar) = length(CV{Float64})
+_length{CV<:ColorValue}(::Type{CV}, ::DataType) = div(sizeof(CV), sizeof(eltype(CV)))
 
 end
