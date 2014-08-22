@@ -274,45 +274,18 @@ convert{T}(::Type{AbstractImageDirect{T,2}},M::Tridiagonal) = error("Not defined
 
 convert{T<:Real,S<:Real}(::Type{Image{T}}, img::AbstractImageDirect{S}) = scale(scaleinfo(T, img), img)
 
-float32(img::AbstractImageDirect) = scale(scaleinfo(Float32, img), img)
-float64(img::AbstractImageDirect) = scale(scaleinfo(Float64, img), img)
+for (fn,T) in ((:float32, Float32), (:float64, Float64), (:ufixed8, Ufixed8),
+               (:ufixed10, Ufixed10), (:ufixed12, Ufixed12), (:ufixed14, Ufixed14),
+               (:ufixed16, Ufixed16))
+    @eval begin
+        function $fn{C<:ColorType}(A::AbstractArray{C})
+            newC = eval(C.name.name){$T}
+            convert(Array{newC}, A)
+        end
+        $fn{C<:ColorType}(img::AbstractImage{C}) = share(img, $fn(data(img)))
+    end
+end
+
 
 ufixedsc{T<:Ufixed}(::Type{T}, img::AbstractImageDirect) = scale(scaleinfo(T, img), img)
 ufixed8sc(img::AbstractImageDirect) = ufixedsc(Ufixed8, img)
-
-convert{C<:ColorValue}(::Type{Image{C}}, img::Image{C}) = img
-convert{Cdest<:ColorValue,Csrc<:ColorValue}(::Type{Image{Cdest}}, img::Union(AbstractArray{Csrc},AbstractImageDirect{Csrc})) = share(img, convert(Array{Cdest}, data(img)))
-
-function convert{C<:ColorValue,T<:Union(Integer,FloatingPoint)}(::Type{Image{C}}, img::Union(AbstractArray{T},AbstractImageDirect{T}))
-    cs = colorspace(img)
-    if !(cs == "RGB" || cs == "RGBA")
-        error("Unsupported colorspace $cs of input image. Only RGB and RGBA are currently supported.")
-    end
-    scalei = scaleinfo(RGB, img)
-    cd = colordim(img)
-    d = data(img)
-    sz = size(img)
-    szout = sz[setdiff(1:ndims(img), cd)]
-    dout = Array(C, szout)
-    if cd == 1
-        s = stride(d,2)
-        for i in 0:length(dout)-1
-            tmp = RGB(scale(scalei,d[i*s+1]), scale(scalei,d[i*s+2]), scale(scalei,d[i*s+3]))
-            dout[i+1] = convert(C, tmp)
-        end
-    elseif cd == ndims(img)
-        s = stride(d,cd)
-        for i in 1:length(dout)
-            tmp = RGB(scale(scalei,d[i]), scale(scalei,d[i+s]), scale(scalei,d[i+2s]))
-            dout[i] = convert(C, tmp)
-        end
-    else
-        error("Not yet implemented")
-    end
-    p = copy(properties(img))
-    delete!(p, "colordim")
-    delete!(p, "limits")
-    delete!(p, "colorspace")
-    Image(dout, p)
-end
-

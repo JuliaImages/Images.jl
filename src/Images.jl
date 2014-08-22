@@ -6,6 +6,7 @@ importall Base
 
 using Color, FixedPointNumbers
 import Color: Fractional
+import FixedPointNumbers: ufixed8, ufixed10, ufixed12, ufixed14, ufixed16
 
 if VERSION.minor < 3
     using Cartesian
