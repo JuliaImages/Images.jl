@@ -194,7 +194,6 @@ Detailed documentation about the design of the library
 and the available functions
 can be found in the `doc/` directory. Here are some of the topics available:
 
-- [Getting started](doc/usage.md), a short demonstration
 - The [core](doc/core.md), i.e., the representation of images
 - [I/O](doc/extendingIO.md) and custom image file formats
 - [Function reference](doc/function_reference.md)
