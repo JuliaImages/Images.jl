@@ -16,8 +16,6 @@ before_install:
     - git config --global user.email "travis@example.net"
     - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
 script:
-    - julia -e 'Pkg.init(); run(`ln -s $(pwd()) $(Pkg.dir("Images"))`); Pkg.pin("Images"); Pkg.resolve()'
-    - if [ $JULIAVERSION = "julianightlies" ]; then julia --code-coverage test/runtests.jl; fi
-    - if [ $JULIAVERSION = "juliarelease" ]; then julia tests/test.jl; fi
-    - if [ $JULIAVERSION = "julianightlies" ]; then julia -e 'Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'; fi
-
+    - julia -e 'Pkg.init(); Pkg.clone(pwd())'
+    - if [ $JULIAVERSION = "julianightlies" ]; then julia -e 'Pkg.test("Images", coverage=true); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'; fi
+    - if [ $JULIAVERSION = "juliarelease" ]; then julia -e 'Pkg.test("Images")'; fi

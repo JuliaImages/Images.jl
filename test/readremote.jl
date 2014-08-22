@@ -50,6 +50,7 @@ imgc = imread(outname)
 # RGB
 file = getfile("rose.png")
 img = imread(file)
+@show colorspace(img)
 @test colorspace(img) == "RGB"
 @test ndims(img) == 2
 @test colordim(img) == 0
