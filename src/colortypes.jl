@@ -2,7 +2,7 @@ module ColorTypes
 
 using Color
 import Color.Fractional
-import Base: length
+import Base: length, promote_array_type
 
 export RGBA, ARGB, BGRA, Gray, GrayAlpha, ColorType
 
@@ -76,5 +76,16 @@ length(cv::ColorValue) = div(sizeof(cv), sizeof(eltype(cv)))
 length{CV<:ColorValue}(::Type{CV}) = _length(CV, eltype(CV))
 _length{CV<:ColorValue}(::Type{CV}, ::TypeVar) = length(CV{Float64})
 _length{CV<:ColorValue}(::Type{CV}, ::DataType) = div(sizeof(CV), sizeof(eltype(CV)))
+
+# Math on ColorValues
+(*)(f::Real, c::RGB) = RGB(f*c.r, f*c.g, f*c.b)
+(*)(c::RGB, f::Real) = (*)(f, c)
+(.*)(f::Real, c::RGB) = RGB(f*c.r, f*c.g, f*c.b)
+(.*)(c::RGB, f::Real) = (*)(f, c)
+(/)(c::RGB, f::Real) = (1.0/f)*c
+(+)(a::RGB, b::RGB) = RGB(a.r+b.r, a.g+b.g, a.b+b.b)
+
+# To help type inference
+promote_array_type{CV<:ColorType,T<:Real}(::Type{T}, ::Type{CV}) = eval(CV.name.name){promote_type(eltype(CV), T)}
 
 end

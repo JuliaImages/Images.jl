@@ -58,7 +58,7 @@ for N = 1:4
             k = 0
             @inbounds @nloops $N i dat begin
                 val = @nref $N dat i
-                buf[k+=1] = convert(RGB24, val)
+                buf[k+=1] = convert(RGB24, clamp(convert(RGB, val)))
             end
             buf
         end
