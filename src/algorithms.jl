@@ -389,8 +389,8 @@ end
 ###
 imfilter(img, kern, border, value) = copy(img, imfilter_inseparable(img, kern, border, value))
 # Do not combine these with the previous using a default value (see the 2d specialization below)
-imfilter(img, filter) = imfilter(img, filter, "replicate", 0)
-imfilter(img, filter, border) = imfilter(img, filter, border, 0)
+imfilter(img, filter) = imfilter(img, filter, "replicate", zero(eltype(img)))
+imfilter(img, filter, border) = imfilter(img, filter, border, zero(eltype(img)))
 
 imfilter_inseparable{T,K,N,M}(img::AbstractArray{T,N}, kern::AbstractArray{K,M}, border::String, value) =
     imfilter_inseparable(img, prep_kernel(img, kern), border, value)
