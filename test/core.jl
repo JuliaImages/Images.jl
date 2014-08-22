@@ -85,12 +85,15 @@ img2 = similar(imgd, (3,4,4))
 @test isa(img2, Image)
 @test size(img2) == (3,4,4)
 
-# ref/assign
+# getindex/setindex!
 prev = img[4]
 @test prev == B[4]
 img[4] = prev+1
 @test img.data[4] == prev+1
 @test img[4] == prev+1
+@test img[1,2] == prev+1
+img[1,2] = prev
+@test img[4] == prev
 
 # properties
 @test colorspace(img) == "RGB"

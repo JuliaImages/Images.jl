@@ -296,16 +296,17 @@ end
 #    img["x", 100:400, "t", 32]
 # where anything not mentioned by name is taken to include the whole range
 
+typealias RealIndex{T<:Real} Union(T, AbstractArray{T})
+
 # setindex!
 setindex!(img::AbstractImage, X, i::Real) = setindex!(img.data, X, i)
-setindex!{T<:Real}(img::AbstractImage, X, I::Union(Real,AbstractArray{T})) = setindex!(img.data, X, I)
-setindex!{T<:Real}(img::AbstractImage, X, I::Union(Real,AbstractArray{T}), J::Union(Real,AbstractArray{T})) = setindex!(img.data, X, I, J)
-setindex!{T<:Real}(img::AbstractImage, X, I::Union(Real,AbstractArray{T}), J::Union(Real,AbstractArray{T}),
-                   K::Union(Real,AbstractArray{T})) = setindex!(img.data, X, I, J, K)
-setindex!{T<:Real}(img::AbstractImage, X, I::Union(Real,AbstractArray{T}), J::Union(Real,AbstractArray{T}),
-                   K::Union(Real,AbstractArray{T}), L::Union(Real,AbstractArray{T})) = setindex!(img.data, X, I, J, K, L)
-setindex!{T<:Real}(img::AbstractImage, X, I::Union(Real,AbstractArray{T})...) = setindex!(img.data, X, I...)
-setindex!{T<:Real}(img::AbstractImage, X, dimname::String, ind::Union(Real,AbstractArray{T}), nameind...) = setindex!(img.data, X, coords(img, dimname, ind, nameind...)...)
+setindex!(img::AbstractImage, X, I::RealIndex) = setindex!(img.data, X, I)
+setindex!(img::AbstractImage, X, I::RealIndex, J::RealIndex) = setindex!(img.data, X, I, J)
+setindex!(img::AbstractImage, X, I::RealIndex, J::RealIndex, K::RealIndex) = setindex!(img.data, X, I, J, K)
+setindex!(img::AbstractImage, X, I::RealIndex, J::RealIndex,
+                   K::RealIndex, L::RealIndex) = setindex!(img.data, X, I, J, K, L)
+setindex!(img::AbstractImage, X, I::RealIndex...) = setindex!(img.data, X, I...)
+setindex!(img::AbstractImage, X, dimname::String, ind::RealIndex, nameind...) = setindex!(img.data, X, coords(img, dimname, ind, nameind...)...)
 
 # Adding a new property via setindex!
 setindex!(img::AbstractImage, X, propname::String) = setindex!(img.properties, X, propname)
@@ -316,15 +317,14 @@ delete!(img::AbstractImage, propname::String) = delete!(img.properties, propname
 
 # getindex, sub, and slice return a value or AbstractArray, not an Image
 getindex(img::AbstractImage, i::Real) = getindex(img.data, i)
-getindex(img::AbstractImage, I::Union(Real,AbstractVector)) = getindex(img.data, I)
-getindex(img::AbstractImage, I::Union(Real,AbstractVector), J::Union(Real,AbstractVector)) = getindex(img.data, I, J)
-getindex(img::AbstractImage, I::Union(Real,AbstractVector), J::Union(Real,AbstractVector),
-            K::Union(Real,AbstractVector)) = getindex(img.data, I, J, K)
-getindex(img::AbstractImage, I::Union(Real,AbstractVector), J::Union(Real,AbstractVector),
-            K::Union(Real,AbstractVector), L::Union(Real,AbstractVector)) = getindex(img.data, I, J, K, L)
-getindex(img::AbstractImage, I::Union(Real,AbstractVector)...) = getindex(img.data, I...)
+getindex(img::AbstractImage, I::RealIndex) = getindex(img.data, I)
+getindex(img::AbstractImage, I::RealIndex, J::RealIndex) = getindex(img.data, I, J)
+getindex(img::AbstractImage, I::RealIndex, J::RealIndex, K::RealIndex) = getindex(img.data, I, J, K)
+getindex(img::AbstractImage, I::RealIndex, J::RealIndex,
+            K::RealIndex, L::RealIndex) = getindex(img.data, I, J, K, L)
+getindex(img::AbstractImage, I::RealIndex...) = getindex(img.data, I...)
 
-# getindex{T<:Real}(img::AbstractImage, dimname::String, ind::Union(Real,AbstractArray{T}), nameind...) = getindex(img.data, coords(img, dimname, ind, nameind...)...)
+# getindex(img::AbstractImage, dimname::String, ind::RealIndex, nameind...) = getindex(img.data, coords(img, dimname, ind, nameind...)...)
 getindex(img::AbstractImage, dimname::ASCIIString, ind, nameind...) = getindex(img.data, coords(img, dimname, ind, nameind...)...)
 
 getindex(img::AbstractImage, propname::ASCIIString) = getindex(img.properties, propname)
@@ -338,7 +338,7 @@ slice(img::AbstractImage, I::RangeIndex...) = slice(img.data, I...)
 slice(img::AbstractImage, dimname::ASCIIString, ind::RangeIndex, nameind::RangeIndex...) = slice(img.data, coords(img, dimname, ind, nameind...)...)
 
 # getindexim, subim, and sliceim return an Image. The first two share properties, the last requires a copy.
-function getindexim{T<:Real}(img::AbstractImage, I::Union(Real,AbstractArray{T})...)
+function getindexim(img::AbstractImage, I::RealIndex...)
     ret = copy(img, data(img)[I...])
     cd = colordim(img)
     nd = ndims(ret)
