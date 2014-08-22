@@ -60,6 +60,7 @@ RGB Image with:
   data: 70x46 Array{RGB{Ufixed8},2}
   properties:
     spatialorder:  x y
+    pixelspacing:  1 1
 ```
 If you're using Images through IJulia, rather than this text output you probably see the image itself.
 This is nice, but often it's quite helpful to see the structure of these Image objects.
@@ -90,8 +91,8 @@ matter whether the element type is `Float64`, `Ufixed8`, or `Ufixed12`.
 This makes it easier to write generic algorithms and visualization packages,
 while still allowing one to use efficient (and C-compatible) raw representations.
 
-You can see that this image has `properties`, in this case just the single property `"spatialorder"`.
-We'll talk more about this property in the next section.
+You can see that this image has `properties`, of which there are two: `"spatialorder"` and `"pixelspacing"`.
+We'll talk more about these in the next section.
 
 Given an Image `img`, you can access the underlying array with `A = data(img)`.
 Images is designed to work with either plain arrays or with Image types---in general, though,
@@ -132,6 +133,7 @@ RGB Image with:
     colorspace: RGB
     colordim: 3
     spatialorder:  y x
+    pixelspacing:  1 1
 ```
 You can see that `"spatialorder"` was changed to reflect the new layout, and that
 two new properties were added: `"colordim"`, which specifies which dimension of the array
@@ -146,6 +148,7 @@ RGB Image with:
     colorspace: RGB
     colordim: 1
     spatialorder:  x y
+    pixelspacing:  1 1
 ```
 `reinterpret` just gives you a new view of the same underlying memory as `img`, whereas
 `convert(Array, img)` and `separate(img)` create new arrays if the memory-layout
@@ -158,6 +161,7 @@ RGB Image with:
   data: 46x70 Array{RGB{Ufixed8},2}
   properties:
     spatialorder:  y x
+    pixelspacing:  1 1
 ```
 or even change to a new colorspace like this:
 ```
@@ -166,9 +170,30 @@ HSV Image with:
   data: 70x46 Array{HSV{Float32},2}
   properties:
     spatialorder:  x y
+    pixelspacing:  1 1
 ```
 Many of the colorspaces supported by Color need a wider range of values than `[0,1]`,
 so it's necessary to convert to floating point.
+
+### Other properties, and usage of Units
+
+The `"pixelspacing"` property informs ImageView that this image has an aspect ratio 1.
+In scientific or medical imaging, you can use actual units to encode this property,
+for example through the [SIUnits](https://github.com/Keno/SIUnits.jl) package.
+For example, if you're doing microscopy you might specify
+```
+using SIUnits
+img["pixelspacing"] = [0.32Micro*Meter,0.32Micro*Meter]
+```
+If you're performing three-dimensional imaging, you might set different values for the
+different axes:
+```
+using SIUnits.ShortUnits
+mriscan["pixelspacing"] = [0.2mm, 0.2mm, 2mm]
+```
+
+ImageView includes facilities for scale bars, and by supplying your pixel spacing
+you can ensure that the scale bars are accurate.
 
 ### A brief demonstration of image processing
 

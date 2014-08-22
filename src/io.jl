@@ -246,7 +246,7 @@ function imread(filename::String, ::Type{ImageMagick})
     # Allocate the buffer and get the pixel data
     buf = Array(T, sz...)
     LibMagick.exportimagepixels!(buf, wand, cs)
-    prop = (Any=>Any)["spatialorder" => ["x", "y"]]
+    prop = (Any=>Any)["spatialorder" => ["x", "y"], "pixelspacing" => [1,1]]
     if cs == "I"
         prop["colorspace"] = "Gray"
     end
@@ -535,7 +535,7 @@ function imread{S<:IO}(stream::S, ::Type{PPMBinary})
         error("Image file may be corrupt. Are there really more than 16 bits in this image?")
     end
     T = eltype(dat)
-    Image(dat, (Any=>Any)["spatialorder" => ["x", "y"]])
+    Image(dat, (Any=>Any)["spatialorder" => ["x", "y"], "pixelspacing" => [1,1]])
 end
 
 function imread{S<:IO}(stream::S, ::Type{PGMBinary})
@@ -562,7 +562,7 @@ function imread{S<:IO}(stream::S, ::Type{PGMBinary})
         error("Image file may be corrupt. Are there really more than 16 bits in this image?")
     end
     T = eltype(dat)
-    Image(dat, ["colorspace" => "Gray", "spatialorder" => ["x", "y"]])
+    Image(dat, ["colorspace" => "Gray", "spatialorder" => ["x", "y"], "pixelspacing" => [1,1]])
 end
 
 function imread{S<:IO}(stream::S, ::Type{PBMBinary})
@@ -576,7 +576,7 @@ function imread{S<:IO}(stream::S, ::Type{PBMBinary})
             dat[offset+k, irow] = (tmp>>>(8-k))&0x01
         end
     end
-    Image(dat, ["spatialorder" => ["x", "y"]])
+    Image(dat, ["spatialorder" => ["x", "y"], "pixelspacing" => [1,1]])
 end
 
 function imwrite(img, filename::String, ::Type{PPMBinary})
