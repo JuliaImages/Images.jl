@@ -243,8 +243,14 @@ end
 convert(::Type{Array}, img::AbstractImage) = convert(Array{eltype(img)}, img)
 
 convert{C<:ColorType}(::Type{Image{C}}, img::Image{C}) = img
-convert{Cdest<:ColorType,Csrc<:ColorType}(::Type{Image{Cdest}}, img::Union(AbstractArray{Csrc},AbstractImageDirect{Csrc})) =
-    share(img, convert(Array{Cdest}, data(img)))
+convert{Cdest<:ColorType,Csrc<:ColorType}(::Type{Image{Cdest}}, img::AbstractImageDirect{Csrc}) =
+    share(img, _convert(Array{Cdest}, data(img)))  # FIXME when Julia issue ?? is fixed
+_convert{Cdest<:ColorType,Csrc<:ColorType,N}(::Type{Array{Cdest}}, img::AbstractArray{Csrc,N}) =
+    _convert(Array{Cdest}, eltype(Cdest), img)     # FIXME when Julia issue ?? is fixed
+_convert{Cdest<:ColorType,Csrc<:ColorType}(::Type{Array{Cdest}}, ::TypeVar, img::AbstractArray{Csrc}) =
+    convert(Array{Cdest{eltype(Csrc)}}, img)
+_convert{Cdest<:ColorType,Csrc<:ColorType}(::Type{Array{Cdest}}, ::DataType, img::AbstractArray{Csrc}) =
+    convert(Array{Cdest}, img)
 
 # Image{ColorType} -> Image{Numbers}
 function separate{CV<:ColorType}(img::AbstractImage{CV})

@@ -250,3 +250,6 @@ ims8 = separate(imrgb8)
 imrgb8_2 = convert(Image{RGB}, ims8)
 @test isa(imrgb8_2, Image{RGB{Ufixed8}})
 @test imrgb8_2 == imrgb8
+
+@test eltype(convert(Image{HSV{Float32}}, imrgb8)) == HSV{Float32}
+@test eltype(convert(Image{HSV}, float32(imrgb8))) == HSV{Float32}
