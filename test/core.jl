@@ -227,3 +227,23 @@ delete!(imgc, "pixelspacing")
 imgp = permutedims(imgc, ["x", "y", "color"])
 @test spacedirections(imgp) == Vector{SIUnits.SIQuantity{Float64,1,0,0,0,0,0,0}}[[0.0mm, 3.0mm],[2.0mm, 0.0mm]]
 @test pixelspacing(imgp) == [3.0mm, 2.0mm]
+
+# reinterpret, separate, more convert
+A8 = ufixed8(rand(0x00:0xff, 3, 5, 4))
+rawrgb8 = reinterpret(RGB, A8)
+@test eltype(rawrgb8) == RGB{Ufixed8}
+rawrgb32 = float32(rawrgb8)
+@test eltype(rawrgb32) == RGB{Float32}
+@test ufixed8(rawrgb32) == rawrgb8
+@test reinterpret(Ufixed8, rawrgb8) == A8
+imrgb8 = convert(Image, rawrgb8)
+@test spatialorder(imrgb8) == Images.yx
+im8 = reinterpret(Ufixed8, imrgb8)
+@test data(im8) == A8
+@test reinterpret(RGB, im8) == imrgb8
+ims8 = separate(imrgb8)
+@test colordim(ims8) == 3
+@test colorspace(ims8) == "RGB"
+imrgb8_2 = convert(Image{RGB}, ims8)
+@test isa(imrgb8_2, Image{RGB{Ufixed8}})
+@test imrgb8_2 == imrgb8

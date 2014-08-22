@@ -232,15 +232,8 @@ end
 # In other cases---or if you don't want the storage order altered---just grab the .data field and perform whatever manipulations you need directly.
 convert{T,N}(::Type{Array{T}}, img::AbstractImageDirect{T,N}) = convert(Array{T,N}, img)
 function convert{T,N}(::Type{Array{T,N}}, img::AbstractImageDirect{T,N})
-    assert2d(img)
+    p = permutation_canonical(img)
     dat = convert(Array{T}, data(img))
-    # put in canonical storage order
-    p = spatialpermutation(spatialorder(Matrix), img)
-    p = coords_spatial(img)[p]
-    cd = colordim(img)
-    if cd > 0
-        push!(p, cd)
-    end
     if issorted(p)
         return dat
     else
@@ -249,21 +242,54 @@ function convert{T,N}(::Type{Array{T,N}}, img::AbstractImageDirect{T,N})
 end
 convert(::Type{Array}, img::AbstractImage) = convert(Array{eltype(img)}, img)
 
-function separate{CV<:ColorValue}(img::AbstractImage{CV})
-    A = separate(convert(Array, img))
+convert{C<:ColorType}(::Type{Image{C}}, img::Image{C}) = img
+convert{Cdest<:ColorType,Csrc<:ColorType}(::Type{Image{Cdest}}, img::Union(AbstractArray{Csrc},AbstractImageDirect{Csrc})) =
+    share(img, convert(Array{Cdest}, data(img)))
+
+# Image{ColorType} -> Image{Numbers}
+function separate{CV<:ColorType}(img::AbstractImage{CV})
+    p = permutation_canonical(img)
+    so = spatialorder(img)[p]
+    if length(CV) > 1
+        p = [p+1, 1]
+    end
+    T = eltype(CV)
+    A = permutedims(reinterpret(T, data(img), tuple(length(CV), size(img)...)), p)
     props = copy(properties(img))
     props["colorspace"] = colorspace(img)
     props["colordim"] = ndims(A)
+    props["spatialorder"] = so
     Image(A, props)
 end
-function separate{CV<:ColorValue}(A::AbstractArray{CV})
+function separate{CV<:ColorType}(A::AbstractArray{CV})
     T = eltype(CV)
-    nchannels = div(sizeof(CV), sizeof(T))
-    permutedims(reinterpret(T, A, tuple(nchannels, size(A)...)), [2:ndims(A)+1,1])
+    permutedims(reinterpret(T, A, tuple(length(CV), size(A)...)), [2:ndims(A)+1,1])
 end
 separate(A::AbstractArray) = A
 
-# See scaling for conversion of Arrays to Images
+# Image{Numbers} -> Image{ColorType} (the opposite of separate)
+convert{C<:ColorType,T<:Fractional}(::Type{Image{C}}, img::Union(AbstractArray{T},AbstractImageDirect{T})) =
+    _convert(Image{C}, eltype(C), img)
+_convert{C<:ColorType,T<:Fractional}(::Type{Image{C}}, ::TypeVar, img::Union(AbstractArray{T},AbstractImageDirect{T})) =
+    _convert(Image{C{T}}, img)
+_convert{C<:ColorType,T<:Fractional}(::Type{Image{C}}, ::DataType, img::Union(AbstractArray{T},AbstractImageDirect{T})) =
+    _convert(Image{C}, img)
+function _convert{C<:ColorType,T<:Fractional}(::Type{Image{C}}, img::Union(AbstractArray{T},AbstractImageDirect{T}))
+    cd = colordim(img)
+    if cd > 0
+        p = [cd, setdiff(1:ndims(img), cd)]
+        A = permutedims(data(img), p)
+    else
+        A = data(img)
+    end
+    CV = eval(parse("$(colorspace(img)){$T}"))
+    ACV = convert(Array{C}, reinterpret(CV, A))
+    props = copy(properties(img))
+    haskey(props, "colordim") && delete!(props, "colordim")
+    haskey(props, "colorspace") && delete!(props, "colorspace")
+    Image(ACV, props)
+end
+
 
 
 # Indexing. In addition to conventional array indexing, support syntax like
@@ -544,12 +570,16 @@ end
 #     meaning (horizontal and vertical, respectively, irrespective of storage order).
 #     If supplied, you must have one entry per spatial dimension.
 
-properties(img::AbstractArray) = [
-    "colorspace" => colorspace(img),
-    "colordim" => colordim(img),
-    "timedim" => timedim(img),
-    "pixelspacing" => pixelspacing(img),
-    "spatialorder" => spatialorder(img)]
+properties(A::AbstractArray) = [
+    "colorspace" => colorspace(A),
+    "colordim" => colordim(A),
+    "timedim" => timedim(A),
+    "pixelspacing" => pixelspacing(A),
+    "spatialorder" => spatialorder(A)]
+properties{C<:ColorType}(A::AbstractArray{C}) = [
+    "timedim" => timedim(A),
+    "pixelspacing" => pixelspacing(A),
+    "spatialorder" => spatialorder(A)]
 properties(img::AbstractImage) = img.properties
 
 haskey(a::AbstractArray, k::String) = false
@@ -821,6 +851,17 @@ function permutedims(img::AbstractImage, p::Union(Vector{Int}, (Int...)), spatia
 end
 
 permutedims{S<:String}(img::AbstractImage, pstr::Union(Vector{S}, (S...)), spatialprops::Vector = spatialproperties(img)) = permutedims(img, dimindexes(img, pstr...), spatialprops)
+
+function permutation_canonical(img)
+    assert2d(img)
+    p = spatialpermutation(spatialorder(Matrix), img)
+    p = coords_spatial(img)[p]
+    cd = colordim(img)
+    if cd > 0
+        push!(p, cd)
+    end
+    p
+end
 
 # Define the transpose of a 2d image
 function ctranspose(img::AbstractImage)
