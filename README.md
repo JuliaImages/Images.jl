@@ -185,6 +185,7 @@ view(imgf)
 imgs = 2imgf
 view(imgs)
 ```
+![processing](figures/mandrill.jpg)
 
 
 ## Further documentation ##
