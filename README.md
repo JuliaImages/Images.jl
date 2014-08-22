@@ -45,7 +45,7 @@ Load the code for these packages with
 using Images, ImageView
 ```
 
-### Loading your first image
+### Loading your first image: how images are represented
 
 You likely have a number of images already at your disposal, and you can use these, TestImages.jl, or
 run `readremote.jl` in the `test/` directory.
@@ -77,44 +77,69 @@ RGB{Ufixed8}(Ufixed8(0.188),Ufixed8(0.184),Ufixed8(0.176))
 ```
 This extracts the first pixel, the one visually at the upper-left of the image. You can see that
 an `RGB` (which comes from the [Color](https://github.com/JuliaLang/Color.jl) package) is a triple of values.
-The `Ufixed8` type (which comes from the [FixedPointNumbers](https://github.com/JeffBezanson/FixedPointNumbers.jl) package)
-represents fractional numbers, having values between 0 and 1 inclusive, using just 1 byte (8 bits).
+The `Ufixed8` number type (which comes from the
+[FixedPointNumbers](https://github.com/JeffBezanson/FixedPointNumbers.jl) package)
+represents fractional numbers (those that can encode values between 0 and 1) using just 1 byte (8 bits).
 If you've previously used other image processing libraries, you may be used to thinking of two basic
-image types, floating point-valued and integer-valued. In those libraries, `1.0` commonly means "saturated"
-for floating point-valued images, whereas for a `Uint8` image 255 means saturated.
-`Images.jl` unifies these two types so that `1` always means saturated, making it easier to write
-generic algorithms and visualization packages, while still allowing one to use efficient (or C-compatible)
-raw representations.
+image types, floating point-valued and integer-valued. In those libraries, "saturated"
+(the color white for an RGB image) would be
+represented by `1.0` for floating point-valued images, 255 for a `Uint8` image,
+and `0x0fff` for an image collected by a 12-bit camera.
+`Images.jl`, via Color and FixedPointNumbers, unifies these so that `1` always means saturated, no
+matter whether the element type is `Float64`, `Ufixed8`, or `Ufixed12`.
+This makes it easier to write generic algorithms and visualization packages,
+while still allowing one to use efficient (and C-compatible) raw representations.
 
 You can see that this image has `properties`, in this case just the single property `"spatialorder"`.
-`["x", "y"]` indicates that, after color, the image data are in "horizontal-major" order,
-meaning that a pixel at spatial location `(x,y)` would be addressed as `img[x,y]`.
-`["y", "x"]` would indicate vertical-major. Consequently, this image is 70 pixels wide and 46 pixels high.
+We'll talk more about this property in the next section.
 
-Note that the image was loaded in "non-permuted" form, i.e., following the direct representation on disk.
-If you prefer to work with plain arrays, you can convert it:
+Given an Image `img`, you can access the underlying array with `A = data(img)`.
+Images is designed to work with either plain arrays or with Image types---in general, though,
+you're probably best off leaving things as an Image, particularly if you work
+with movies, 3d images, or other more complex objects.
+Likewise, you can retrieve the properties using `props = properties(img)`.
+
+### Storage order and changing the representation of images
+
+In the example above, the `"spatialorder"` property has value `["x", "y"]`.
+This indicates that the image data are in "horizontal-major" order,
+meaning that a pixel at spatial location `(x,y)` would be addressed as `img[x,y]`
+rather than `img[y,x]`. `["y", "x"]` would indicate vertical-major.
+Consequently, this image is 70 pixels wide and 46 pixels high.
+
+Images returns this image in horizontal-major order because this is how it was stored on disk.
+Because the Images package is designed to scale to terabyte-sized images, a general philosophy
+is to work with whatever format users provide without forcing changes to the raw array representation.
+Consequently, when you load an image, its representation will match that used in the file.
+
+Of course, if you prefer to work with plain arrays, you can convert it:
 ```
 julia> imA = convert(Array, img);
 
 julia> summary(imA)
 "46x70 Array{RGB{Ufixed8},2}"
 ```
-You can see that this permuted the dimensions into vertical-major order, but
-preserved this as an `Array{RGB}`. If you prefer to extract into an array of the
-elementary type in color-last order (typical of Matlab), you can use
+You can see that this permuted the dimensions into vertical-major order, consistent
+with the column-major order with which Julia stores `Arrays`. Note that this
+preserved the element type, returning an `Array{RGB}`.
+If you prefer to extract into an array of plain numbers in color-last order
+(typical of Matlab), you can use
 ```
-julia> imA = separate(img)
+julia> imsep = separate(img)
 RGB Image with:
   data: 46x70x3 Array{Ufixed8,3}
   properties:
     colorspace: RGB
     colordim: 3
-    spatialorder:  x y
+    spatialorder:  y x
 ```
-You can see that two new properties were added: `"colordim"`, which specifies which dimension of the array
-is used to encode color, and `"colorspace"`. Compare this to
+You can see that `"spatialorder"` was changed to reflect the new layout, and that
+two new properties were added: `"colordim"`, which specifies which dimension of the array
+is used to encode color, and `"colorspace"` so you know how to interpret these colors.
+
+Compare this to
 ```
-julia> imA = reinterpret(Ufixed8, img)
+julia> imr = reinterpret(Ufixed8, img)
 RGB Image with:
   data: 3x70x46 Array{Ufixed8,3}
   properties:
@@ -122,8 +147,44 @@ RGB Image with:
     colordim: 1
     spatialorder:  x y
 ```
-`convert(Array, img)` and `separate(img)` make copies of the data,
-whereas `reinterpret` just gives you a new view of the same underlying memory as `img`.
+`reinterpret` just gives you a new view of the same underlying memory as `img`, whereas
+`convert(Array, img)` and `separate(img)` create new arrays if the memory-layout
+needs alteration.
+
+You can go back to using ColorValues to encode your image this way:
+```
+julia> imcomb = convert(Image{RGB}, imsep)
+RGB Image with:
+  data: 46x70 Array{RGB{Ufixed8},2}
+  properties:
+    spatialorder:  y x
+```
+or even change to a new colorspace like this:
+```
+julia> convert(Image{HSV}, float32(img))
+HSV Image with:
+  data: 70x46 Array{HSV{Float32},2}
+  properties:
+    spatialorder:  x y
+```
+Many of the colorspaces supported by Color need a wider range of values than `[0,1]`,
+so it's necessary to convert to floating point.
+
+### A brief demonstration of image processing
+
+Now let's work through a more sophisticated example:
+```
+using Images, TestImages, ImageView
+img = testimage("mandrill")
+view(img)
+# Let's do some blurring
+kern = ones(7,7)/49
+imgf = imfilter(img, kern)
+view(imgf)
+# Let's make an oversaturated image
+imgs = 2imgf
+view(imgs)
+```
 
 
 ## Further documentation ##
