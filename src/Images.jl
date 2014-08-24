@@ -2,7 +2,10 @@ module Images
 
 import Base.Order: Ordering, ForwardOrdering, ReverseOrdering
 import Base.Graphics: width, height
-importall Base
+import Base: convert, copy, copy!, ctranspose, delete!, eltype, float32, float64,
+             get, getindex, haskey, length, maximum, minimum, ndims, one, parent,
+             permutedims, reinterpret, scale, scale!, setindex!, show, similar,
+             size, slice, squeeze, strides, sub, sum, write, writemime, zero
 
 using Color, FixedPointNumbers
 import Color: Fractional
