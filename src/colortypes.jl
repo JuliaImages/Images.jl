@@ -2,13 +2,11 @@ module ColorTypes
 
 using Color
 import Color.Fractional
-import Base: length, promote_array_type
+import Base: convert, length, promote_array_type
 
-export RGBA, ARGB, BGRA, Gray, GrayAlpha, ColorType
+export ARGB, BGR, RGB1, RGB4, BGRA, AbstractGray, Gray, GrayAlpha, AlphaColor, ColorType
 
 typealias ColorType Union(ColorValue, AbstractAlphaColorValue)
-
-typealias RGBA{T} AlphaColorValue{RGB{T}, T}
 
 # An alpha-channel-first memory layout
 immutable AlphaColor{C<:ColorValue, T<:Number} <: AbstractAlphaColorValue{C,T}
@@ -62,20 +60,23 @@ RGB4(r::Fractional, g::Fractional, b::Fractional) = (T = promote_type(typeof(r),
 
 
 # Sometimes you want to be explicit about grayscale. Also needed for GrayAlpha.
-immutable Gray{T<:Fractional} <: ColorValue{T}
+abstract AbstractGray{T} <: ColorValue{T}
+immutable Gray{T<:Fractional} <: AbstractGray{T}
     val::T
 end
 
 typealias GrayAlpha{T} AlphaColorValue{Gray{T}, T}
 
+convert(::Type{RGB}, x::Gray) = RGB(x.val, x.val, x.val)
+convert{T}(::Type{RGB{T}}, x::Gray) = (g = convert(T, x.val); RGB{T}(g, g, g))
 
-length(cv::ColorValue) = div(sizeof(cv), sizeof(eltype(cv)))
+length(cv::ColorType) = div(sizeof(cv), sizeof(eltype(cv)))
 # Because this can be called as `length(RGB)`, we might need to fill in a default element type.
 # But the compiler chokes if we ask it to create RGB{Float64}{Float64}, even if that's inside
 # the non-evaluated branch of a ternary expression, so we have to be sneaky about this.
-length{CV<:ColorValue}(::Type{CV}) = _length(CV, eltype(CV))
-_length{CV<:ColorValue}(::Type{CV}, ::TypeVar) = length(CV{Float64})
-_length{CV<:ColorValue}(::Type{CV}, ::DataType) = div(sizeof(CV), sizeof(eltype(CV)))
+length{CV<:ColorType}(::Type{CV}) = _length(CV, eltype(CV))
+_length{CV<:ColorType}(::Type{CV}, ::Type{Any}) = length(CV{Float64})
+_length{CV<:ColorType}(::Type{CV}, ::DataType)  = div(sizeof(CV), sizeof(eltype(CV)))
 
 # Math on ColorValues
 (*)(f::Real, c::RGB) = RGB(f*c.r, f*c.g, f*c.b)
@@ -86,6 +87,15 @@ _length{CV<:ColorValue}(::Type{CV}, ::DataType) = div(sizeof(CV), sizeof(eltype(
 (+)(a::RGB, b::RGB) = RGB(a.r+b.r, a.g+b.g, a.b+b.b)
 
 # To help type inference
-promote_array_type{CV<:ColorType,T<:Real}(::Type{T}, ::Type{CV}) = eval(CV.name.name){promote_type(eltype(CV), T)}
+for ACV in (ColorValue, AbstractRGB)
+    for CV in subtypes(ACV)
+        (length(CV.parameters) == 1 && isleaftype(CV{Float64})) || continue
+        @eval promote_array_type{T<:Real,S<:Real}(::Type{T}, ::Type{$CV{S}}) = $CV{promote_type(T, S)}
+        for AC in subtypes(AbstractAlphaColorValue)
+            length(AC.parameters) == 2 || continue
+            @eval promote_array_type{T<:Real,S<:Real}(::Type{T}, ::Type{$AC{$CV{S},S}}) = (TS = promote_type(T, S); $AC{$CV{TS}, TS})
+        end
+    end
+end
 
 end

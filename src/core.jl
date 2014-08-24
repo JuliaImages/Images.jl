@@ -193,8 +193,8 @@ _reinterpret{T,S,CV<:ColorType}(::Type{T}, ::Type{S}, img::AbstractArray{CV}) =
 reinterpret{T<:Fractional,CV<:ColorType}(::Type{CV}, img::Vector{T}) = _reinterpret(CV, eltype(CV), img)
 reinterpret{T<:Fractional,CV<:ColorType}(::Type{CV}, img::Array{T})  = _reinterpret(CV, eltype(CV), img)
 reinterpret{T<:Fractional,CV<:ColorType}(::Type{CV}, img::AbstractArray{T}) = _reinterpret(CV, eltype(CV), img)
-_reinterpret{T<:Fractional,CV<:ColorType}(::Type{CV}, ::TypeVar, img::AbstractArray{T}) =
-    _reinterpret(CV{T}, T, img)   # form 1 (turn into a form 2 call by filling in the element type of the array)
+_reinterpret{T<:Fractional,CV<:ColorType}(::Type{CV}, ::Type{Any}, img::AbstractArray{T}) =
+    __reinterpret(CV{T}, T, img)   # form 1 (turn into a form 2 call by filling in the element type of the array)
 _reinterpret{T<:Fractional,CV<:ColorType}(::Type{CV}, TT::DataType, img::AbstractArray{T}) =
     __reinterpret(CV, TT, img)    # form 2
 __reinterpret{T<:Fractional,CV<:ColorType}(::Type{CV}, ::Type{T}, img::AbstractArray{T}) =
@@ -244,10 +244,10 @@ convert(::Type{Array}, img::AbstractImage) = convert(Array{eltype(img)}, img)
 
 convert{C<:ColorType}(::Type{Image{C}}, img::Image{C}) = img
 convert{Cdest<:ColorType,Csrc<:ColorType}(::Type{Image{Cdest}}, img::AbstractImageDirect{Csrc}) =
-    share(img, _convert(Array{Cdest}, data(img)))  # FIXME when Julia issue ?? is fixed
+    copy(img, _convert(Array{Cdest}, data(img)))  # FIXME when Julia issue ?? is fixed
 _convert{Cdest<:ColorType,Csrc<:ColorType,N}(::Type{Array{Cdest}}, img::AbstractArray{Csrc,N}) =
     _convert(Array{Cdest}, eltype(Cdest), img)     # FIXME when Julia issue ?? is fixed
-_convert{Cdest<:ColorType,Csrc<:ColorType}(::Type{Array{Cdest}}, ::TypeVar, img::AbstractArray{Csrc}) =
+_convert{Cdest<:ColorType,Csrc<:ColorType}(::Type{Array{Cdest}}, ::Type{Any}, img::AbstractArray{Csrc}) =
     convert(Array{Cdest{eltype(Csrc)}}, img)
 _convert{Cdest<:ColorType,Csrc<:ColorType}(::Type{Array{Cdest}}, ::DataType, img::AbstractArray{Csrc}) =
     convert(Array{Cdest}, img)
@@ -276,7 +276,7 @@ separate(A::AbstractArray) = A
 # Image{Numbers} -> Image{ColorType} (the opposite of separate)
 convert{C<:ColorType,T<:Fractional}(::Type{Image{C}}, img::Union(AbstractArray{T},AbstractImageDirect{T})) =
     _convert(Image{C}, eltype(C), img)
-_convert{C<:ColorType,T<:Fractional}(::Type{Image{C}}, ::TypeVar, img::Union(AbstractArray{T},AbstractImageDirect{T})) =
+_convert{C<:ColorType,T<:Fractional}(::Type{Image{C}}, ::Type{Any}, img::Union(AbstractArray{T},AbstractImageDirect{T})) =
     _convert(Image{C{T}}, img)
 _convert{C<:ColorType,T<:Fractional}(::Type{Image{C}}, ::DataType, img::Union(AbstractArray{T},AbstractImageDirect{T})) =
     _convert(Image{C}, img)
