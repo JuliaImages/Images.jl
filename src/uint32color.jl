@@ -50,20 +50,23 @@ end
 # ColorValue arrays
 for N = 1:4
     @eval begin
-        function uint32color!{C<:ColorValue}(buf::Array{Uint32}, img::AbstractArray{C,$N})
+        function uint32color!{C<:ColorType}(buf::Array{Uint32}, img::AbstractArray{C,$N}, scalei = scaleinfo(Uint32, img))
             if size(buf) != size(img)
                 error("Size mismatch")
             end
             dat = data(img)
             k = 0
+            T32 = cvtypes(C)
             @inbounds @nloops $N i dat begin
                 val = @nref $N dat i
-                buf[k+=1] = convert(RGB24, clamp(convert(RGB, val)))
+                buf[k+=1] = convert(T32, scale(scalei, val))#clamp(convert(TP, val)))
             end
             buf
         end
     end
 end
+cvtypes{C<:ColorValue}(::Type{C}) = RGB24
+cvtypes{C<:AbstractAlphaColorValue}(::Type{C}) = ARGB32
 
 # Grayscale arrays
 for N = 1:4

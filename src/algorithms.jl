@@ -84,7 +84,7 @@ function getindex(o::Overlay, indexes::Integer...)
             rgb += scale(o.scalei[i], o.channels[i][indexes...])*o.colors[i]
         end
     end
-    clamp(rgb)
+    clamp01(rgb)
 end
 
 # Fix ambiguity warning
