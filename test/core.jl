@@ -44,21 +44,22 @@ img = ImageCmap(copy(B), cmap, (Any=>Any)["spatialorder" => Images.yx])
 @test colorspace(img) == "RGB"
 img = ImageCmap(copy(B), cmap, spatialorder=Images.yx)
 @test colorspace(img) == "RGB"
-cmap = uint8(repmat(linspace(12,255,20),1,3))
-img = ImageCmap(copy(B), cmap, ["colorspace" => "RGB", "pixelspacing" => [2.0, 3.0], "spatialorder" => Images.yx])
+cmap = reinterpret(RGB, repmat(reinterpret(Ufixed8, uint8(linspace(12,255,20)))',3,1))
+img = ImageCmap(copy(B), cmap, ["pixelspacing" => [2.0, 3.0], "spatialorder" => Images.yx])
 imgd = convert(Image, img)
-@test eltype(img) == Uint8
-@test eltype(imgd) == Uint8
+@test eltype(img) == RGB{Ufixed8}
+@test eltype(imgd) == RGB{Ufixed8}
 
 imgd["pixelspacing"] = [2.0mm, 3.0mm]
+imgds = separate(imgd)
 
-# img and imgd will be used in many more tests
+# img, imgd, and imgds will be used in many more tests
 
 # basic information
 @test size(img) == (3,5)
-@test size(imgd) == (3,5,3)
+@test size(imgd) == (3,5)
 @test ndims(img) == 2
-@test ndims(imgd) == 3
+@test ndims(imgd) == 2
 @test size(img,"y") == 3
 @test size(img,"x") == 5
 
@@ -98,7 +99,7 @@ img[1,2] = prev
 # properties
 @test colorspace(img) == "RGB"
 @test colordim(img) == 0
-@test colordim(imgd) == 3
+@test colordim(imgds) == 3
 @test timedim(img) == 0
 @test pixelspacing(img) == [2.0, 3.0]
 @test pixelspacing(imgd) == [2.0mm, 3.0mm]
@@ -116,7 +117,7 @@ copy!(tmp, imgd, "spatialorder", "pixelspacing")
 @test tmp["pixelspacing"] == [2.0mm, 3.0mm]
 
 @test storageorder(img) == Images.yx
-@test storageorder(imgd) == [Images.yx, "color"]
+@test storageorder(imgds) == [Images.yx, "color"]
 
 A = rand(4,4,3)
 @test colordim(A) == 3
@@ -136,12 +137,12 @@ s = sliceim(img, 2, 1:4)
 @test ndims(s) == 1
 @test sdims(s) == 1
 @test size(s) == (4,)
-s = sliceim(imgd, 2, 1:4, 1:3)
+s = sliceim(imgds, 2, 1:4, 1:3)
 @test ndims(s) == 2
 @test sdims(s) == 1
 @test colordim(s) == 2
 @test spatialorder(s) == ["x"]
-s = sliceim(imgd, 2:2, 1:4, 1:3)
+s = sliceim(imgds, 2:2, 1:4, 1:3)
 @test ndims(s) == 3
 @test sdims(s) == 2
 @test colordim(s) == 3
@@ -158,73 +159,73 @@ sd = SliceData(D, 3)
 C = slice(D, sd, 2)
 @test C == reshape(D[1:end, 1:end, 2], size(C))
 
-sd = SliceData(imgd, 2)
-s = sliceim(imgd, sd, 2)
+sd = SliceData(imgds, 2)
+s = sliceim(imgds, sd, 2)
 @test colordim(s) == 2
 @test colorspace(s) == "RGB"
 @test spatialorder(s) == ["y"]
-@test s.data == reshape(imgd[:,2,:], size(s))
-sd = SliceData(imgd, 3)
-s = sliceim(imgd, sd, 2)
+@test s.data == reshape(imgds[:,2,:], size(s))
+sd = SliceData(imgds, 3)
+s = sliceim(imgds, sd, 2)
 @test colordim(s) == 0
 @test colorspace(s) == "Unknown"
 @test spatialorder(s) == Images.yx
-@test s.data == imgd[:,:,2]
+@test s.data == imgds[:,:,2]
 reslice!(s, sd, 3)
-@test s.data == imgd[:,:,3]
+@test s.data == imgds[:,:,3]
 
 # named indexing
-@test dimindex(imgd, "color") == 3
-@test dimindex(imgd, "y") == 1
-@test dimindex(imgd, "z") == 0
-imgdp = permutedims(imgd, [3,1,2])
+@test dimindex(imgds, "color") == 3
+@test dimindex(imgds, "y") == 1
+@test dimindex(imgds, "z") == 0
+imgdp = permutedims(imgds, [3,1,2])
 @test dimindex(imgdp, "y") == 2
-@test coords(imgd, "x", 2:4) == (1:3, 2:4, 1:3) 
-@test coords(imgd, x=2:4, y=2:3) == (2:3, 2:4, 1:3) 
+@test coords(imgds, "x", 2:4) == (1:3, 2:4, 1:3)
+@test coords(imgds, x=2:4, y=2:3) == (2:3, 2:4, 1:3)
 @test img["y", 2, "x", 4] == B[2,4]
 @test img["x", 4, "y", 2] == B[2,4]
-chan = imgd["color", 2]
-Blookup = reshape(cmap[B[:],1], size(B))
+chan = imgds["color", 2]
+Blookup = reshape(green(cmap[B[:]]), size(B))
 @test chan == Blookup
 
-sd = SliceData(imgd, "x")
-s = sliceim(imgd, sd, 2)
+sd = SliceData(imgds, "x")
+s = sliceim(imgds, sd, 2)
 @test spatialorder(s) == ["y"]
-@test s.data == reshape(imgd[:,2,:], size(s))
-sd = SliceData(imgd, "y")
-s = sliceim(imgd, sd, 2)
+@test s.data == reshape(imgds[:,2,:], size(s))
+sd = SliceData(imgds, "y")
+s = sliceim(imgds, sd, 2)
 @test spatialorder(s) == ["x"]
-@test s.data == reshape(imgd[2,:,:], size(s))
-sd = SliceData(imgd, "x", "y")
-s = sliceim(imgd, sd, 2, 1)
-@test s.data == reshape(imgd[1,2,:], 3)
+@test s.data == reshape(imgds[2,:,:], size(s))
+sd = SliceData(imgds, "x", "y")
+s = sliceim(imgds, sd, 2, 1)
+@test s.data == reshape(imgds[1,2,:], 3)
 
 # spatial order, width/height, and permutations
-@test spatialpermutation(Images.yx, imgd) == [1,2]
-@test widthheight(imgd) == (5,3)
-C = convert(Array, imgd)
-@test C == imgd.data
-imgd["spatialorder"] = ["x", "y"]
-@test spatialpermutation(Images.xy, imgd) == [1,2]
-@test widthheight(imgd) == (3,5)
-C = convert(Array, imgd)
-@test C == permutedims(imgd.data, [2,1,3])
-imgd.properties["spatialorder"] = ["y", "x"]
-@test spatialpermutation(Images.xy, imgd) == [2,1]
-imgd.properties["spatialorder"] = ["x", "L"]
-@test spatialpermutation(Images.xy, imgd) == [1,2]
-imgd.properties["spatialorder"] = ["L", "x"]
-@test spatialpermutation(Images.xy, imgd) == [2,1]
+@test spatialpermutation(Images.yx, imgds) == [1,2]
+@test widthheight(imgds) == (5,3)
+C = convert(Array, imgds)
+@test C == imgds.data
+imgds["spatialorder"] = ["x", "y"]
+@test spatialpermutation(Images.xy, imgds) == [1,2]
+@test widthheight(imgds) == (3,5)
+C = convert(Array, imgds)
+@test C == permutedims(imgds.data, [2,1,3])
+imgds.properties["spatialorder"] = ["y", "x"]
+@test spatialpermutation(Images.xy, imgds) == [2,1]
+imgds.properties["spatialorder"] = ["x", "L"]
+@test spatialpermutation(Images.xy, imgds) == [1,2]
+imgds.properties["spatialorder"] = ["L", "x"]
+@test spatialpermutation(Images.xy, imgds) == [2,1]
 @test spatialpermutation(Images.xy, A) == [2,1]
 @test spatialpermutation(Images.yx, A) == [1,2]
 
-imgd.properties["spatialorder"] = Images.yx
-imgp = permutedims(imgd, ["x", "y", "color"])
-@test imgp.data == permutedims(imgd.data, [2,1,3])
-imgp = permutedims(imgd, ("color", "x", "y"))
-@test imgp.data == permutedims(imgd.data, [3,2,1])
+imgds.properties["spatialorder"] = Images.yx
+imgp = permutedims(imgds, ["x", "y", "color"])
+@test imgp.data == permutedims(imgds.data, [2,1,3])
+imgp = permutedims(imgds, ("color", "x", "y"))
+@test imgp.data == permutedims(imgds.data, [3,2,1])
 @test pixelspacing(imgp) == [3.0mm, 2.0mm]
-imgc = copy(imgd)
+imgc = copy(imgds)
 imgc["spacedirections"] = spacedirections(imgc)
 delete!(imgc, "pixelspacing")
 imgp = permutedims(imgc, ["x", "y", "color"])

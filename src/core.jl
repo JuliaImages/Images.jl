@@ -15,13 +15,13 @@ Image(data::AbstractArray, props::Dict) = Image{eltype(data),ndims(data),typeof(
 Image(data::AbstractArray; kwargs...) = Image(data, kwargs2dict(kwargs))
 
 # Indexed image (colormap)
-type ImageCmap{T,N,A<:AbstractArray,C<:AbstractArray} <: AbstractImageIndexed{T,N}
+type ImageCmap{T<:ColorType,N,A<:AbstractArray} <: AbstractImageIndexed{T,N}
     data::A
-    cmap::C
+    cmap::Vector{T}
     properties::Dict
 end
-ImageCmap(data::AbstractArray, cmap::AbstractArray, props::Dict) = ImageCmap{eltype(cmap),ndims(data),typeof(data),typeof(cmap)}(data, cmap, props)
-ImageCmap(data::AbstractArray, cmap::AbstractArray; kwargs...) = ImageCmap(data, cmap, kwargs2dict(kwargs))
+ImageCmap(data::AbstractArray, cmap::AbstractVector, props::Dict) = ImageCmap{eltype(cmap),ndims(data),typeof(data)}(data, cmap, props)
+ImageCmap(data::AbstractArray, cmap::AbstractVector; kwargs...) = ImageCmap(data, cmap, kwargs2dict(kwargs))
 
 # Convenience constructors
 grayim(A::AbstractImage) = A
@@ -45,7 +45,7 @@ function colorim{T<:Fractional}(A::AbstractArray{T,3}, colorspace)
         error("Both first and last dimensions are of size 3 or 4; impossible to guess which is for color. Use the Image constructor directly.")
     elseif 3 <= size(A, 1) <= 4  # Image as returned by imread for regular 2D RGB images
         Image(A; colorspace=colorspace, colordim=1, spatialorder=["x","y"])
-    elseif 3 <= size(A, 3) <= 4  # "Matlab"-style image, as returned by converT(Array, im).
+    elseif 3 <= size(A, 3) <= 4  # "Matlab"-style image, as returned by convert(Array, im).
         Image(A; colorspace=colorspace, colordim=3, spatialorder=["y","x"])
     else
         error("Neither the first nor the last dimension is of size 3. This doesn't look like an RGB image.")
@@ -216,16 +216,9 @@ convert{T<:Real}(::Type{Image{T}}, img::Image{T}) = img
 convert{T}(::Type{Image{T}}, img::Image{T}) = img
 convert(::Type{Image}, A::AbstractArray) = Image(A, properties(A))
 # Convert an indexed image (cmap) to a direct image
-function convert{T,N,A,C<:AbstractVector}(::Type{Image}, img::ImageCmap{T,N,A,C})
+function convert(::Type{Image}, img::ImageCmap)
     data = reshape(img.cmap[vec(img.data)], size(img.data))
-    Image(data, properties(img))
-end
-function convert{T,N,A,C<:AbstractMatrix}(::Type{Image}, img::ImageCmap{T,N,A,C})
-    newsz = tuple(size(img.data)...,size(img.cmap,2))
-    data = reshape(img.cmap[vec(img.data),:], newsz)
-    prop = copy(img.properties)
-    prop["colordim"] = length(newsz)
-    return Image(data, prop)
+    Image(data, copy(properties(img)))
 end
 # Convert an Image to an array. We convert the image into the canonical storage order convention for arrays.
 # We restrict this to 2d images because for plain arrays this convention exists only for 2d.
@@ -636,7 +629,7 @@ colorspace{T<:Union(Int32,Uint32)}(img::AbstractMatrix{T}) = "RGB24"
 colorspace(img::AbstractMatrix) = "Gray"
 colorspace{T}(img::AbstractArray{T,3}) = (size(img, defaultarraycolordim) == 3) ? "RGB" : error("Cannot infer colorspace of Array, use an AbstractImage type")
 colorspace(img::AbstractImage{Bool}) = "Binary"
-colorspace{T,N,A<:AbstractArray,C<:ColorValue}(img::ImageCmap{T,N,A,Array{C,1}}) = string(C.name)
+colorspace{T,N,A<:AbstractArray}(img::ImageCmap{T,N,A}) = string(T.name)
 colorspace(img::AbstractImageIndexed) = @get img "colorspace" csinfer(eltype(img.cmap))
 colorspace{T}(img::AbstractImageIndexed{T,2}) = @get img "colorspace" csinfer(eltype(img.cmap))
 csinfer{C<:ColorValue}(::Type{C}) = string(C)
