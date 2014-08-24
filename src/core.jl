@@ -61,9 +61,9 @@ colorim(A::AbstractArray{Uint16}, colorspace) = colorim(reinterpret(Ufixed16, A)
 abstract ScaleInfo{T}
 
 # An array type for colorized overlays of grayscale images
-type Overlay{AT<:(AbstractArray...),N,SIT<:(ScaleInfo...)} <: AbstractArray{RGB,N}
+type Overlay{T,AT<:(AbstractArray...),N,SIT<:(ScaleInfo...)} <: AbstractArray{RGB{T},N}
     channels::AT   # this holds the grayscale arrays
-    colors::Vector{RGB}
+    colors::Vector{RGB{T}}
     scalei::SIT
     visible::BitVector
 
@@ -86,10 +86,10 @@ type Overlay{AT<:(AbstractArray...),N,SIT<:(ScaleInfo...)} <: AbstractArray{RGB,
         new(channels, [convert(RGB, c) for c in colors], scalei, visible)
     end
 end
-Overlay(channels::(AbstractArray...), colors, scalei::(ScaleInfo...), visible = trues(length(channels))) =
-    Overlay{typeof(channels),ndims(channels[1]),typeof(scalei)}(channels,colors,scalei,convert(BitVector, visible))
+Overlay{T}(channels::(AbstractArray...), colors::Union(AbstractVector{RGB{T}}, (RGB{T}...)), scalei::(ScaleInfo...), visible = trues(length(channels))) =
+    Overlay{T,typeof(channels),ndims(channels[1]),typeof(scalei)}(channels,colors,scalei,convert(BitVector, visible))
 
-function Overlay(channels::(AbstractArray...), colors, clim = ntuple(length(channels), i->limits(channels[i])))
+function Overlay{T}(channels::(AbstractArray...), colors::Union(AbstractVector{RGB{T}}, (RGB{T}...)), clim = ntuple(length(channels), i->limits(channels[i])))
     n = length(channels)
     for i = 1:n
         if length(clim[i]) != 2
@@ -97,7 +97,7 @@ function Overlay(channels::(AbstractArray...), colors, clim = ntuple(length(chan
         end
     end
     scalei = ntuple(n, i->ScaleMinMax(Float32, channels[i], clim[i][1], clim[i][2]))
-    Overlay{typeof(channels),ndims(channels[1]),typeof(scalei)}(channels, colors, scalei, trues(n))
+    Overlay{T,typeof(channels),ndims(channels[1]),typeof(scalei)}(channels, colors, scalei, trues(n))
 end
 
 # Returns the overlay as an image, if possible
@@ -528,9 +528,9 @@ maximum(img::AbstractImageDirect) = maximum(img.data)
 # min/max deliberately not defined for AbstractImageIndexed
 
 # Overlays
-eltype{T}(o::Overlay{T}) = T
-ndims{T,N}(o::Overlay{T,N}) = N
-ndims{T,N}(::Type{Overlay{T,N}}) = N
+eltype{T}(o::Overlay{T}) = RGB{T}
+ndims{T,AT,N}(o::Overlay{T,AT,N}) = N
+ndims{T,AT,N}(::Type{Overlay{T,AT,N}}) = N
 
 size(o::Overlay) = size(o.channels[1])
 size(o::Overlay, i::Integer) = size(o.channels[1], i)
