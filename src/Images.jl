@@ -28,6 +28,7 @@ include("colortypes.jl")
 using .ColorTypes
 
 include("core.jl")
+include("overlays.jl")
 include("iterator.jl")
 const have_imagemagick = include("ioformats/libmagickwand.jl")
 @osx_only include("ioformats/OSXnative.jl")

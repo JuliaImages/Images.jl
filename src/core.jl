@@ -23,6 +23,9 @@ end
 ImageCmap(data::AbstractArray, cmap::AbstractVector, props::Dict) = ImageCmap{eltype(cmap),ndims(data),typeof(data)}(data, cmap, props)
 ImageCmap(data::AbstractArray, cmap::AbstractVector; kwargs...) = ImageCmap(data, cmap, kwargs2dict(kwargs))
 
+# Dispatch-based scaling/clipping/type conversion
+abstract ScaleInfo{T}
+
 # Convenience constructors
 grayim(A::AbstractImage) = A
 grayim(A::AbstractArray{Uint8,2})  = grayim(reinterpret(Ufixed8, A))
@@ -57,62 +60,6 @@ colorim(A::AbstractArray{Uint16}) = colorim(reinterpret(Ufixed16, A))
 colorim(A::AbstractArray{Uint8},  colorspace) = colorim(reinterpret(Ufixed8, A), colorspace)
 colorim(A::AbstractArray{Uint16}, colorspace) = colorim(reinterpret(Ufixed16, A), colorspace)
 
-# Dispatch-based scaling/clipping/type conversion
-abstract ScaleInfo{T}
-
-# An array type for colorized overlays of grayscale images
-type Overlay{T,AT<:(AbstractArray...),N,SIT<:(ScaleInfo...)} <: AbstractArray{RGB{T},N}
-    channels::AT   # this holds the grayscale arrays
-    colors::Vector{RGB{T}}
-    scalei::SIT
-    visible::BitVector
-
-    function Overlay(channels::(AbstractArray...), colors, scalei::(ScaleInfo...), visible::BitVector)
-        nc = length(channels)
-        for i = 1:nc
-            if ndims(channels[i]) != N
-                error("All arrays must have the same dimensionality")
-            end
-        end
-        sz = size(channels[1])
-        for i = 2:nc
-            if size(channels[i]) != sz
-                error("All arrays must have the same size")
-            end
-        end
-        if length(colors) != nc || length(scalei) != nc || length(visible) != nc
-            error("All input must have the same length")
-        end
-        new(channels, [convert(RGB, c) for c in colors], scalei, visible)
-    end
-end
-Overlay{T}(channels::(AbstractArray...), colors::Union(AbstractVector{RGB{T}}, (RGB{T}...)), scalei::(ScaleInfo...), visible = trues(length(channels))) =
-    Overlay{T,typeof(channels),ndims(channels[1]),typeof(scalei)}(channels,colors,scalei,convert(BitVector, visible))
-
-function Overlay{T}(channels::(AbstractArray...), colors::Union(AbstractVector{RGB{T}}, (RGB{T}...)), clim = ntuple(length(channels), i->limits(channels[i])))
-    n = length(channels)
-    for i = 1:n
-        if length(clim[i]) != 2
-            error("clim must be a 2-vector")
-        end
-    end
-    scalei = ntuple(n, i->ScaleMinMax(Float32, channels[i], clim[i][1], clim[i][2]))
-    Overlay{T,typeof(channels),ndims(channels[1]),typeof(scalei)}(channels, colors, scalei, trues(n))
-end
-
-# Returns the overlay as an image, if possible
-function OverlayImage(channels::(AbstractArray...), colors::(ColorType...), args...)
-    ovr = Overlay(channels, colors, args...)
-    for i = 1:length(channels)
-        if isa(channels[i], AbstractImage)
-            prop = copy(properties(channels[i]))
-            haskey(prop, "colorspace") && delete!(prop, "colorspace")
-            haskey(prop, "limits") && delete!(prop, "limits")
-            return Image(ovr, prop)
-        end
-    end
-    colorim(ovr)
-end
 
 #### Core operations ####
 
@@ -526,16 +473,6 @@ data(img::AbstractImage) = img.data
 minimum(img::AbstractImageDirect) = minimum(img.data)
 maximum(img::AbstractImageDirect) = maximum(img.data)
 # min/max deliberately not defined for AbstractImageIndexed
-
-# Overlays
-eltype{T}(o::Overlay{T}) = RGB{T}
-ndims{T,AT,N}(o::Overlay{T,AT,N}) = N
-ndims{T,AT,N}(::Type{Overlay{T,AT,N}}) = N
-
-size(o::Overlay) = size(o.channels[1])
-size(o::Overlay, i::Integer) = size(o.channels[1], i)
-
-show(io::IO, o::Overlay) = print(io, summary(o), " with colors ", o.colors)
 
 function squeeze(img::AbstractImage, dims)
     imgret = copy(img, squeeze(data(img), dims))

@@ -34,7 +34,3 @@ ovr = Images.Overlay((gray, 0*gray), (RGB(1,0,1), RGB(0,1,0)), ((0,1),(0,1)))
 buf = Images.uint32color(ovr)
 nogreen = [uint32(g)<<16 | uint32(g) for g in gray8]
 @assert buf == nogreen
-ovr = Images.Overlay((gray, gray), (RGB(1,0,1), RGB(0,1,0)), ((0,1),(0,1)))
-ovr.visible[2] = false
-buf = Images.uint32color(ovr)
-@assert buf == nogreen
