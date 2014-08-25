@@ -23,6 +23,7 @@ end
 # end
 
 const is_little_endian = ENDIAN_BOM == 0x04030201
+immutable TypeConst{N} end  # for passing compile-time constants to functions
 
 include("colortypes.jl")
 using .ColorTypes
@@ -35,7 +36,6 @@ const have_imagemagick = include("ioformats/libmagickwand.jl")
 include("io.jl")
 include("scaling.jl")
 include("labeledarrays.jl")
-include("uint32color.jl")
 include("algorithms.jl")
 include("connected.jl")
 
@@ -247,6 +247,8 @@ export # types
 @deprecate ClipMax      ClampMax
 @deprecate ClipMinMax   ClampMinMax
 @deprecate climdefault(img) zero(eltype(img)), one(eltype(img))
+@deprecate ScaleMinMax{T<:Real}(img::AbstractArray{T}, mn, mx) ScaleMinMax(Ufixed8, img, mn, mx)
+@deprecate ScaleMinMax{T<:ColorValue}(img::AbstractArray{T}, mn, mx) ScaleMinMax(RGB{Ufixed8}, img, mn, mx)
 
 if VERSION < v"0.3-"
   __init__()

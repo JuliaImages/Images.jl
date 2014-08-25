@@ -176,7 +176,7 @@ end
 import Base.mimewritable
 Base.mimewritable(::MIME"image/png", img::AbstractImage) = sdims(img) == 2 && timedim(img) == 0
 
-function _writemime(stream::IO, ::MIME"image/png", img::AbstractImage; scalei=scaleinfo(img))
+function _writemime(stream::IO, ::MIME"image/png", img::AbstractImage; scalei=scaleinfo(ImageMagick, img))
     assert2d(img)
     if isa(img, AbstractImageIndexed)
         # For now, convert to direct
@@ -258,7 +258,7 @@ end
 
 imread{C<:ColorType}(filename::String, ::Type{ImageMagick}, ::Type{C}) = convert(Image{C}, imread(filename, ImageMagick))
 
-function imwrite(img, filename::String, ::Type{ImageMagick}; scalei = scaleinfo(img))
+function imwrite(img, filename::String, ::Type{ImageMagick}; scalei = scaleinfo(ImageMagick, img))
     wand = image2wand(img, scalei)
     LibMagick.writeimage(wand, filename)
 end

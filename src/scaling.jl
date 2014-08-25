@@ -31,6 +31,8 @@ scale{T<:Real}(scalei::ScaleNone{T}, val::Real) = convert(T, val)
 scale1(scalei::Union(ScaleNone{RGB24},ScaleNone{ARGB32}), val::Fractional) = convert(Ufixed8, val)
 scale1{CT<:ColorType}(scalei::ScaleNone{CT}, val::Fractional) = convert(eltype(CT), val)
 
+scale{T<:ColorType}(scalei::ScaleNone{T}, img::AbstractImageIndexed{T}) = convert(Image{T}, img)
+scale{C<:ColorType}(scalei::ScaleNone{C}, img::AbstractImageDirect{C}) = img  # ambiguity resolution
 scale{T}(scalei::ScaleNone{T}, img::AbstractArray{T}) = img
 
 
@@ -87,10 +89,10 @@ scale{To<:Real}(::Clamp01{To}, val::Real) = clamp01(To, val)
 scale1{CT<:ColorType}(::Clamp01{CT}, val::Real) = clamp01(eltype(CT), val)
 
 # Also available as a stand-alone function
-clamp01{T}(::Type{T}, x::Real) = min(max(convert(T, x), zero(T)), one(T))
+clamp01{T}(::Type{T}, x::Real) = convert(T, min(max(x, zero(x)), one(x)))
 clamp01(x::Real) = clamp01(typeof(x), x)
 clamp01{To}(::Type{RGB{To}}, x::AbstractRGB) = RGB{To}(clamp01(To, x.r), clamp01(To, x.g), clamp01(To, x.b))
-clamp01{T}(x::AbstractRGB{T}) = RGB{T}(clamp01(T, x.r), clamp01(T, x.g), clamp01(T, x.b))
+clamp01{T}(x::AbstractRGB{T}) = clamp01(RGB{T}, x)
 
 ## ScaleMinMax
 # This clamps, subtracts the min value, then scales
@@ -126,16 +128,22 @@ end
 # Multiplies by a scaling factor and then clamps to the range [-1,1].
 # Intended for positive/negative coloring
 
-immutable ScaleSigned{S<:FloatingPoint} <: ScaleInfo{S}
+immutable ScaleSigned{T, S<:FloatingPoint} <: ScaleInfo{T}
     s::S
 end
-ScaleSigned{S<:FloatingPoint}(s::S) = ScaleSigned{S}(s)
+ScaleSigned{T}(::Type{T}, s::FloatingPoint) = ScaleSigned{T, typeof(s)}(s)
 
-ScaleSigned(img::AbstractArray) = ScaleSigned(1.0f0/maxabsfinite(img))
+ScaleSigned{T}(::Type{T}, img::AbstractArray) = ScaleSigned(T, 1.0f0/maxabsfinite(img))
+ScaleSigned(img::AbstractArray) = ScaleSigned(Float32, img)
 
-scale(scalei::ScaleSigned, val::Real) = clamppm(scalei.s*val)
+scale{T}(scalei::ScaleSigned{T}, val::Real) = clamppm(T, scalei.s*val)
+function scale{C<:Union(RGB24, RGB{Ufixed8})}(scalei::ScaleSigned{C}, val::Real)
+    x = clamppm(scalei.s*val)
+    g = Ufixed8(abs(x))
+    ifelse(x >= 0, C(g, zero(Ufixed8), g), C(zero(Ufixed8), g, zero(Ufixed8)))
+end
 
-clamppm{T}(sval::T) = ifelse(sval>one(T), one(T), ifelse(sval<-one(T), -one(T), sval))
+clamppm(x::Real) = ifelse(x >= 0, min(x, one(x)), max(x, -one(x)))
 
 ## ScaleAutoMinMax
 # Works only on whole arrays, not values
@@ -147,11 +155,12 @@ ScaleAutoMinMax() = ScaleAutoMinMax{Ufixed8}()
 
 
 # Conversions to RGB{T}, RGBA{T}, RGB24, ARGB32,
-# for grayscale, AbstractRGB, and abstract ARGB inputs
+# for grayscale, AbstractRGB, and abstract ARGB inputs.
+# This essentially "vectorizes" scale using scale1
 for SI in (ScaleInfo, Clamp)
     for ST in subtypes(SI)
         ST.abstract && continue
-        ST == ScaleSigned && continue
+        ST == ScaleSigned && continue  # ScaleSigned gives an RGB from a scalar, so don't "vectorize" it
         @eval begin
             # Grayscale and GrayAlpha inputs
             scale(scalei::$ST{RGB24}, g::Gray) = scale(scalei, g.val)
@@ -204,9 +213,32 @@ function scale{T}(scalei::ScaleInfo{T}, img::AbstractArray)
     out = similar(img, T)
     scale!(out, scalei, img)
 end
-function scale{T}(scalei::ScaleInfo{T}, img::AbstractImageIndexed)
+
+scale{C<:ColorType,R<:Real}(scalei::ScaleNone{C}, img::AbstractImageDirect{R}) = scalecd(scalei, img)  # ambiguity resolution
+scale{C<:ColorType,R<:Real}(scalei::ScaleInfo{C}, img::AbstractImageDirect{R}) = scalecd(scalei, img)
+function scalecd{C<:ColorType,R<:Real}(scalei::ScaleInfo{C}, img::AbstractImageDirect{R})
+    # For this case we have to check whether color is defined along an array axis
+    cd = colordim(img)
+    if cd > 0
+        dims = setdiff(1:ndims(img), cd)
+        out = similar(img, C, size(img)[dims])
+        scale!(out, scalei, img, TypeConst{cd})
+    else
+        out = similar(img, C)
+        scale!(out, scalei, img)
+    end
+    out   # note this isn't type-stable
+end
+
+function scale{T<:ColorType}(scalei::ScaleInfo{T}, img::AbstractImageIndexed)
     out = Image(Array(T, size(img)), properties(img))
     scale!(out, scalei, img)
+end
+
+# Trivial representation mismatches
+function scale!{T<:Union(RGB24, ARGB32)}(buf::AbstractArray{Uint32}, scalei::ScaleInfo{T}, img)
+    scale!(reinterpret(T, buf), scalei, img)
+    buf
 end
 
 @ngenerate N typeof(out) function scale!{T,T1,N}(out::AbstractArray{T,N}, scalei::ScaleInfo{T}, img::AbstractArray{T1,N})
@@ -234,6 +266,30 @@ take{To,From}(scalei::ScaleMinMax{To}, img::AbstractArray{From}) = ScaleMinMax(T
     out
 end
 
+# For when color is encoded along dimension CD
+# NC is the number of color channels
+# This is a very flexible implementation: color can be stored along any dimension, and it handles conversions to
+# many different colorspace representations.
+for (CT, NC) in ((Union(AbstractRGB,RGB24), 3), (Union(AbstractRGBA,ARGB32), 4), (Union(GrayAlpha,AGray32), 2))
+    for N = 1:4
+        N1 = N+1
+        @eval begin
+function scale!{T<:$CT,T1,CD}(out::AbstractArray{T,$N}, scalei::ScaleInfo{T}, img::AbstractArray{T1,$N1}, ::Type{TypeConst{CD}})
+    si = take(scalei, img)
+    dimg = data(img)
+    dout = data(out)
+    # Set up the index along the color axis
+    # We really only need dimension CD, but this will suffice
+    @nexprs $NC k->(@nexprs $N1 d->(j_k_d = k))
+    # Loop over all the elements in the output, performing the conversion on each color component
+    @nloops $N i dout d->(d<CD ? (@nexprs $NC k->(j_k_d = i_d)) : (@nexprs $NC k->(j_k_{d+1} = i_d))) begin
+        @inbounds @nref($N, dout, i) = @ncall $NC T k->(scale1(si, @nref($N1, dimg, j_k)))
+    end
+    out
+end
+        end
+    end
+end
 
 
 #### ScaleInfo defaults
@@ -241,13 +297,22 @@ end
 
 const bitshiftto8 = ((Ufixed10, 2), (Ufixed12, 4), (Ufixed14, 6), (Ufixed16, 8))
 
+# typealias GrayType{T<:Fractional} Union(T, Gray{T})
+typealias GrayArray{T<:Fractional} Union(AbstractArray{T}, AbstractArray{Gray{T}})
+# note, though, that we need to override for AbstractImage in case the "colorspace" property is defined differently
+
 # scaleinfo{T}(::Type{T}, img::AbstractArray{T}) = ScaleNone(img)
-println("Defining scaleinfo methods")
 # Grayscale methods
 for (T,n) in bitshiftto8
-    @eval scaleinfo(::Type{Ufixed8}, img::AbstractArray{$T}) = BitShift{Ufixed8,$n}()
+    @eval scaleinfo(::Type{Ufixed8}, img::GrayArray{$T}) = BitShift{Ufixed8,$n}()
+    @eval scaleinfo(::Type{Gray{Ufixed8}}, img::GrayArray{$T}) = BitShift{Gray{Ufixed8},$n}()
 end
 scaleinfo{T<:Ufixed,F<:FloatingPoint}(::Type{T}, img::AbstractArray{F}) = ClampMinMax(T, zero(F), one(F))
+scaleinfo{F<:Fractional}(::Type{RGB24}, img::GrayArray{F}) = ClampMinMax(RGB24, zero(F), one(F))
+scaleinfo{F<:Fractional}(::Type{ARGB32}, img::AbstractArray{F}) = ClampMinMax(ARGB32, zero(F), one(F))
+scaleinfo(::Type{RGB24}, img::AbstractArray{RGB24}) = ScaleNone{RGB24}()
+scaleinfo(::Type{ARGB32}, img::AbstractArray{ARGB32}) = ScaleNone{ARGB32}()
+
 
 # Color->RGB24/ARGB32
 for C in subtypes(AbstractRGB)
@@ -265,64 +330,45 @@ for C in subtypes(AbstractRGB)
         @eval scaleinfo{F<:FloatingPoint}(::Type{ARGB32}, img::AbstractArray{$AC{$C{F},F}}) = ClampMinMax(ARGB32, zero(F), one(F))
     end
 end
-scaleinfo{CV<:ColorValue}(::Type{Uint32}, img::AbstractArray{CV}) = scaleinfo(RGB24, img)
+
+# Uint32 conversions will use ARGB32 for images that have an alpha channel,
+# and RGB24 when not
+scaleinfo{CV<:Union(Fractional,ColorValue)}(::Type{Uint32}, img::AbstractArray{CV}) = scaleinfo(RGB24, img)
 scaleinfo{CV<:AbstractAlphaColorValue}(::Type{Uint32}, img::AbstractArray{CV}) = scaleinfo(ARGB32, img)
+scaleinfo(::Type{Uint32}, img::AbstractArray{Uint32}) = ScaleNone{Uint32}()  # define and use a Ufixed18 if you need 32 bits for your camera!
 
 # ImageMagick. Converts to RGB and uses Ufixed.
 scaleinfo{T<:Ufixed}(::Type{ImageMagick}, img::AbstractArray{T}) = ScaleNone{T}()
 scaleinfo{T<:FloatingPoint}(::Type{ImageMagick}, img::AbstractArray{T}) = ClampMinMax(Ufixed8, zero(T), one(T))
 for ACV in (ColorValue, AbstractRGB,AbstractGray)
     for CV in subtypes(ACV)
-        (length(CV.parameters) == 1 && isleaftype(CV{Float64})) || continue
-        @show CV
+        (length(CV.parameters) == 1 && !(CV.abstract)) || continue
         CVnew = CV<:AbstractGray ? Gray : RGB
         @eval scaleinfo{T<:Ufixed}(::Type{ImageMagick}, img::AbstractArray{$CV{T}}) = ScaleNone{$CVnew{T}}()
         @eval scaleinfo{T<:FloatingPoint}(::Type{ImageMagick}, img::AbstractArray{$CV{T}}) =
             Clamp01{$CVnew{Ufixed8}}()
         CVnew = CV<:AbstractGray ? Gray : BGR
         for AC in subtypes(AbstractAlphaColorValue)
-            length(AC.parameters) == 2 || continue
+            (length(AC.parameters) == 2 && !(AC.abstract)) || continue
             @eval scaleinfo{T<:Ufixed}(::Type{ImageMagick}, img::AbstractArray{$AC{$CV{T},T}}) = ScaleNone{$AC{$CVnew{T},T}}()
             @eval scaleinfo{T<:FloatingPoint}(::Type{ImageMagick}, img::AbstractArray{$AC{$CV{T},T}}) = Clamp01{$AC{$CVnew{Ufixed8}, Ufixed8}}()
         end
     end
 end
 
+# Backwards-compatibility
+uint32color(img) = scale(scaleinfo(Uint32, img), img)
+uint32color!(buf, img::AbstractArray) = scale!(buf, scaleinfo(Uint32, img), img)
+uint32color!(buf, img::AbstractArray, si::ScaleInfo) = scale!(buf, si, img)
+uint32color!{T,N}(buf::Array{Uint32,N}, img::AbstractImageDirect{T,N}) =
+    scale!(buf, scaleinfo(Uint32, img), img)
+uint32color!{T,N,N1}(buf::Array{Uint32,N}, img::AbstractImageDirect{T,N1}) =
+    scale!(buf, scaleinfo(Uint32, img), img, TypeConst{colordim(img)})
+uint32color!{T,N}(buf::Array{Uint32,N}, img::AbstractImageDirect{T,N}, si::ScaleInfo) =
+    scale!(buf, si, img)
+uint32color!{T,N,N1}(buf::Array{Uint32,N}, img::AbstractImageDirect{T,N1}, si::ScaleInfo) =
+    scale!(buf, si, img, TypeConst{colordim(img)})
 
-minfinite(A::AbstractArray) = minimum(A)
-function minfinite{T<:FloatingPoint}(A::AbstractArray{T})
-    ret = nan(T)
-    for a in A
-        ret = isfinite(a) ? (ret < a ? ret : a) : ret
-    end
-    ret
-end
-
-maxfinite(A::AbstractArray) = maximum(A)
-function maxfinite{T<:FloatingPoint}(A::AbstractArray{T})
-    ret = nan(T)
-    for a in A
-        ret = isfinite(a) ? (ret > a ? ret : a) : ret
-    end
-    ret
-end
-
-function maxabsfinite(A::AbstractArray)
-    ret = abs(A[1])
-    for i = 2:length(A)
-        a = abs(A[i])
-        ret = a > ret ? a : ret
-    end
-    ret
-end
-function maxabsfinite{T<:FloatingPoint}(A::AbstractArray{T})
-    ret = nan(T)
-    for sa in A
-        a = abs(sa)
-        ret = isfinite(a) ? (ret > a ? ret : a) : ret
-    end
-    ret
-end
 
 sc(img::AbstractArray) = scale(ScaleMinMax(img), img)
 sc(img::AbstractArray, mn::Real, mx::Real) = scale(ScaleMinMax(img, mn, mx), img)

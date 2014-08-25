@@ -134,6 +134,43 @@ for N = 1:4
     end
 end
 
+
+minfinite(A::AbstractArray) = minimum(A)
+function minfinite{T<:FloatingPoint}(A::AbstractArray{T})
+    ret = nan(T)
+    for a in A
+        ret = isfinite(a) ? (ret < a ? ret : a) : ret
+    end
+    ret
+end
+
+maxfinite(A::AbstractArray) = maximum(A)
+function maxfinite{T<:FloatingPoint}(A::AbstractArray{T})
+    ret = nan(T)
+    for a in A
+        ret = isfinite(a) ? (ret > a ? ret : a) : ret
+    end
+    ret
+end
+
+function maxabsfinite(A::AbstractArray)
+    ret = abs(A[1])
+    for i = 2:length(A)
+        a = abs(A[i])
+        ret = a > ret ? a : ret
+    end
+    ret
+end
+function maxabsfinite{T<:FloatingPoint}(A::AbstractArray{T})
+    ret = nan(T)
+    for sa in A
+        a = abs(sa)
+        ret = isfinite(a) ? (ret > a ? ret : a) : ret
+    end
+    ret
+end
+
+
 function sobel()
     f = [1.0 2.0 1.0; 0.0 0.0 0.0; -1.0 -2.0 -1.0]
     return f, f'
