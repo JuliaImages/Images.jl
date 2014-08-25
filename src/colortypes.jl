@@ -1,10 +1,10 @@
 module ColorTypes
 
-using Color
+using Color, FixedPointNumbers
 import Color.Fractional
 import Base: convert, length, promote_array_type
 
-export ARGB, BGR, RGB1, RGB4, BGRA, AbstractGray, Gray, GrayAlpha, AlphaColor, ColorType
+export ARGB, BGR, RGB1, RGB4, BGRA, AbstractGray, Gray, GrayAlpha, AGray32, AlphaColor, ColorType
 
 typealias ColorType Union(ColorValue, AbstractAlphaColorValue)
 
@@ -65,7 +65,23 @@ immutable Gray{T<:Fractional} <: AbstractGray{T}
     val::T
 end
 
+immutable Gray24 <: ColorValue{Uint8}
+    color::Uint32
+end
+Gray24() = Gray24(0)
+Gray24(val::Uint8) = (g = uint32(val); g<<16 | g<<8 | g)
+Gray24(val::Ufixed8) = Gray24(reinterpret(val))
+
+
 typealias GrayAlpha{T} AlphaColorValue{Gray{T}, T}
+
+immutable AGray32 <: AbstractAlphaColorValue{Gray24, Uint8}
+    color::Uint32
+end
+AGray32() = AGray32(0)
+AGray32(val::Uint8, alpha::Uint8) = (g = uint32(val); uint32(alpha)<<24 | g<<16 | g<<8 | g)
+AGray32(val::Ufixed8, alpha::Ufixed8) = AGray32(reinterpret(val), reinterpret(alpha))
+
 
 convert(::Type{RGB}, x::Gray) = RGB(x.val, x.val, x.val)
 convert{T}(::Type{RGB{T}}, x::Gray) = (g = convert(T, x.val); RGB{T}(g, g, g))
@@ -89,10 +105,10 @@ _length{CV<:ColorType}(::Type{CV}, ::DataType)  = div(sizeof(CV), sizeof(eltype(
 # To help type inference
 for ACV in (ColorValue, AbstractRGB)
     for CV in subtypes(ACV)
-        (length(CV.parameters) == 1 && isleaftype(CV{Float64})) || continue
+        (length(CV.parameters) == 1 && !(CV.abstract)) || continue
         @eval promote_array_type{T<:Real,S<:Real}(::Type{T}, ::Type{$CV{S}}) = $CV{promote_type(T, S)}
         for AC in subtypes(AbstractAlphaColorValue)
-            length(AC.parameters) == 2 || continue
+            (length(AC.parameters) == 2 && !(AC.abstract)) || continue
             @eval promote_array_type{T<:Real,S<:Real}(::Type{T}, ::Type{$AC{$CV{S},S}}) = (TS = promote_type(T, S); $AC{$CV{TS}, TS})
         end
     end
