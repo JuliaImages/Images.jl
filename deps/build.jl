@@ -17,6 +17,7 @@ libwand = library_dependency("libwand", aliases = aliases)
 @linux_only begin
     provides(AptGet, "libmagickwand4", libwand)
     provides(AptGet, "libmagickwand5", libwand)
+    provides(Pacman, "imagemagick", libwand)
     provides(Yum, "ImageMagick", libwand)
 end
 
