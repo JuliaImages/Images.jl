@@ -228,14 +228,13 @@ function _convert{C<:ColorType,T<:Fractional}(::Type{Image{C}}, img::Union(Abstr
     else
         A = data(img)
     end
-    CV = eval(parse("$(colorspace(img)){$T}"))
+    CV = getcolortype(colorspace(img), T)
     ACV = convert(Array{C}, reinterpret(CV, A))
     props = copy(properties(img))
     haskey(props, "colordim") && delete!(props, "colordim")
     haskey(props, "colorspace") && delete!(props, "colorspace")
     Image(ACV, props)
 end
-
 
 
 # Indexing. In addition to conventional array indexing, support syntax like
@@ -572,6 +571,23 @@ colorspace{T}(img::AbstractImageIndexed{T,2}) = @get img "colorspace" csinfer(el
 csinfer{C<:ColorValue}(::Type{C}) = string(C)
 csinfer(C) = "Unknown"
 colorspace(img::AbstractImage) = get(img.properties, "colorspace", "Unknown")
+
+colorspacedict = (ASCIIString=>Any)[]
+for ACV in (ColorValue, AbstractRGB, AbstractGray)
+    for CV in subtypes(ACV)
+        (length(CV.parameters) == 1 && !(CV.abstract)) || continue
+        str = string(CV.name)
+        colorspacedict[str] = CV
+    end
+end
+function getcolortype{T}(str::ASCIIString, ::Type{T})
+    if endswith(str, "A")
+        CV = colorspacedict[str[1:end-1]]
+        return AlphaColorValue{CV{T}, T}
+    end
+    CV = colorspacedict[str]
+    return CV{T}
+end
 
 colordim{C<:ColorType}(img::AbstractVector{C}) = 0
 colordim{C<:ColorType}(img::AbstractMatrix{C}) = 0
