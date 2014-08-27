@@ -45,12 +45,11 @@ outname = joinpath(writedir, "wmark_image.png")
 imwrite(img, outname)
 sleep(0.2)
 imgc = imread(outname)
-# @test img.data == imgc.data   # libmagick bug: doesn't write GrayAlpha properly?
+@test img.data == imgc.data   # libmagick bug: doesn't write GrayAlpha properly?
 
 # RGB
 file = getfile("rose.png")
 img = imread(file)
-@show colorspace(img)
 @test colorspace(img) == "RGB"
 @test ndims(img) == 2
 @test colordim(img) == 0

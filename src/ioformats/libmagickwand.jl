@@ -255,7 +255,7 @@ function getimagecolorspace(wand::MagickWand)
 end
 
 # set the colorspace
-function setimagecolorspace(wand::MagickWand, cs::ASCIIString) 
+function setimagecolorspace(wand::MagickWand, cs::ASCIIString)
     status = ccall((:MagickSetImageColorspace, libwand), Cint, (Ptr{Void},Cint), wand.ptr, IMColordict[cs])
     status == 0 && error(wand)
     nothing
