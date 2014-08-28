@@ -114,4 +114,14 @@ for ACV in (ColorValue, AbstractRGB)
     end
 end
 
+for (CV, CVstr, fields) in ((BGR,  "BGR",  (:(c.r),:(c.g),:(c.b))),
+                            (RGB1, "RGB1", (:(c.r),:(c.g),:(c.b))),
+                            (RGB4, "RGB4", (:(c.r),:(c.g),:(c.b))),
+                            (ARGB, "ARGB", (:(c.c.r),:(c.c.g),:(c.c.b),:(c.alpha))),
+                            (BGRA, "BGRA", (:(c.c.r),:(c.c.g),:(c.c.b),:(c.alpha))),
+                            (Gray, "Gray", (:(c.val),)),
+                            (GrayAlpha, "GrayAlpha", (:(c.c.val),:(c.alpha))))
+    Color.makeshow(CV, CVstr, fields)
+end
+
 end
