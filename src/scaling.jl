@@ -235,13 +235,7 @@ function scale{T<:ColorType}(scalei::ScaleInfo{T}, img::AbstractImageIndexed)
     scale!(out, scalei, img)
 end
 
-# Trivial representation mismatches
-function scale!{T<:Union(RGB24, ARGB32)}(buf::AbstractArray{Uint32}, scalei::ScaleInfo{T}, img)
-    scale!(reinterpret(T, buf), scalei, img)
-    buf
-end
-
-@ngenerate N typeof(out) function scale!{T,T1,N}(out::AbstractArray{T,N}, scalei::ScaleInfo{T}, img::AbstractArray{T1,N})
+@ngenerate N typeof(out) function scale!{T,T1,T2,N}(out::AbstractArray{T,N}, scalei::ScaleInfo{T1}, img::AbstractArray{T2,N})
     si = take(scalei, img)
     dimg = data(img)
     dout = data(out)
