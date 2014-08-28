@@ -83,6 +83,10 @@ imgds = separate(imgd)
 @test strides(img) == (1,3)
 @test strides(imgd) == (1,3)
 @test strides(imgds) == (1,3,15)
+@test nimages(img) == 1
+@test ncolorelem(img) == 1
+@test ncolorelem(imgd) == 1
+@test ncolorelem(imgds) == 3
 
 # printing
 iob = IOBuffer()

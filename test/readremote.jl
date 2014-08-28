@@ -78,3 +78,25 @@ imgc = imread(outname)
 # Indexed
 file = getfile("present.gif")
 img = imread(file)
+@test nimages(img) == 1
+
+# Images with a temporal dimension
+fname = "swirl_video.gif"
+#fname = "bunny_anim.gif"  # this one has transparency but LibMagick gets confused about its size
+file = getfile(fname)  # this also has transparency
+img = imread(file)
+@test timedim(img) == 3
+@test nimages(img) == 26
+outname = joinpath(writedir, fname)
+imwrite(img, outname)
+imgc = imread(outname)
+# Something weird happens after the 2nd image (compression?), and one starts getting subtle differences.
+# So don't compare the values.
+# Also take the opportunity to test some things with temporal images
+@test storageorder(img) == ["x", "y", "t"]
+@test haskey(img, "timedim") == true
+@test timedim(img) == 3
+s = getindexim(img, 1:5, 1:5, 3)
+@test timedim(s) == 0
+s = sliceim(img, :, :, 5)
+@test timedim(s) == 0
