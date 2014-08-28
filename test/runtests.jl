@@ -1,3 +1,4 @@
+include("colortypes.jl")
 include("core.jl")
 include("io.jl")
 include("readnrrd.jl")

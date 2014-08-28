@@ -2,7 +2,7 @@ module ColorTypes
 
 using Color, FixedPointNumbers
 import Color.Fractional
-import Base: convert, length, promote_array_type
+import Base: convert, length, promote_array_type, promote_rule
 
 export ARGB, BGR, RGB1, RGB4, BGRA, AbstractGray, Gray, GrayAlpha, AGray32, AlphaColor, ColorType
 
@@ -16,7 +16,7 @@ immutable AlphaColor{C<:ColorValue, T<:Number} <: AbstractAlphaColorValue{C,T}
     AlphaColor(x1::T, x2::T, x3::T, alpha::T) = new(alpha, C(x1, x2, x3))
     AlphaColor(c::C, alpha::T) = new(alpha, c)
 end
-AlphaColor{T<:Fractional}(c::ColorValue{T}, alpha::T = one(T)) = AlphaColor{T}(c, alpha)
+AlphaColor{T<:Fractional}(c::ColorValue{T}, alpha::T = one(T)) = AlphaColor{typeof(c),T}(c, alpha)
 
 typealias ARGB{T} AlphaColor{RGB{T}, T}
 
@@ -90,26 +90,53 @@ length(cv::ColorType) = div(sizeof(cv), sizeof(eltype(cv)))
 # Because this can be called as `length(RGB)`, we might need to fill in a default element type.
 # But the compiler chokes if we ask it to create RGB{Float64}{Float64}, even if that's inside
 # the non-evaluated branch of a ternary expression, so we have to be sneaky about this.
-length{CV<:ColorType}(::Type{CV}) = _length(CV, eltype(CV))
-_length{CV<:ColorType}(::Type{CV}, ::Type{Any}) = length(CV{Float64})
-_length{CV<:ColorType}(::Type{CV}, ::DataType)  = div(sizeof(CV), sizeof(eltype(CV)))
+length{CV<:ColorValue}(::Type{CV}) = _length(CV, eltype(CV))
+_length{CV<:ColorValue}(::Type{CV}, ::Type{Any}) = length(CV{Float64})
+_length{CV<:ColorValue}(::Type{CV}, ::DataType)  = div(sizeof(CV), sizeof(eltype(CV)))
+length{CV,T}(::Type{AlphaColorValue{CV,T}}) = length(CV)+1
+length{CV,T}(::Type{AlphaColor{CV,T}}) = length(CV)+1
 
-# Math on ColorValues
-(*)(f::Real, c::RGB) = RGB(f*c.r, f*c.g, f*c.b)
-(*)(c::RGB, f::Real) = (*)(f, c)
-(.*)(f::Real, c::RGB) = RGB(f*c.r, f*c.g, f*c.b)
-(.*)(c::RGB, f::Real) = (*)(f, c)
-(/)(c::RGB, f::Real) = (1.0/f)*c
-(+)(a::RGB, b::RGB) = RGB(a.r+b.r, a.g+b.g, a.b+b.b)
+# Return types for arithmetic operations
+multype(a::Type,b::Type) = typeof(one(a)*one(b))
+sumtype(a::Type,b::Type) = typeof(one(a)+one(b))
+divtype(a::Type,b::Type) = typeof(one(a)/one(b))
+
+# Math on ColorValues. These implementations encourage inlining and,
+# for the case of Ufixed types, nearly halve the number of multiplications.
+for CV in subtypes(AbstractRGB)
+    @eval begin
+        (*){R<:Real,T}(f::R, c::$CV{T}) = $CV{multype(R,T)}(f*c.r, f*c.g, f*c.b)
+        function (*){R<:FloatingPoint,T<:Ufixed}(f::R, c::$CV{T})
+            fs = f/reinterpret(one(T))
+            $CV{multype(R,T)}(fs*reinterpret(c.r), fs*reinterpret(c.g), fs*reinterpret(c.b))
+        end
+        function (*){R<:Ufixed,T<:Ufixed}(f::R, c::$CV{T})
+            fs = reinterpret(f)/widen(reinterpret(one(T)))^2
+            $CV{multype(R,T)}(fs*reinterpret(c.r), fs*reinterpret(c.g), fs*reinterpret(c.b))
+        end
+        (*)(c::$CV, f::Real) = (*)(f, c)
+        (.*)(f::Real, c::$CV) = (*)(f, c)
+        (.*)(c::$CV, f::Real) = (*)(f, c)
+        (/)(c::$CV, f::Real) = (one(f)/f)*c
+        (./)(c::$CV, f::Real) = (/)(c, f)
+        function (/){R<:FloatingPoint,T<:Ufixed}(c::$CV{T}, f::R)
+            fs = one(R)/(f*reinterpret(one(T)))
+            $CV{divtype(R,T)}(fs*reinterpret(c.r), fs*reinterpret(c.g), fs*reinterpret(c.b))
+        end
+        (+){S,T}(a::$CV{S}, b::$CV{T}) = $CV{sumtype(S,T)}(a.r+b.r, a.g+b.g, a.b+b.b)
+    end
+end
 
 # To help type inference
 for ACV in (ColorValue, AbstractRGB)
     for CV in subtypes(ACV)
         (length(CV.parameters) == 1 && !(CV.abstract)) || continue
         @eval promote_array_type{T<:Real,S<:Real}(::Type{T}, ::Type{$CV{S}}) = $CV{promote_type(T, S)}
+        @eval promote_rule{T<:Fractional,S<:Fractional}(::Type{$CV{T}}, ::Type{$CV{S}}) = $CV{promote_type(T, S)}
         for AC in subtypes(AbstractAlphaColorValue)
             (length(AC.parameters) == 2 && !(AC.abstract)) || continue
             @eval promote_array_type{T<:Real,S<:Real}(::Type{T}, ::Type{$AC{$CV{S},S}}) = (TS = promote_type(T, S); $AC{$CV{TS}, TS})
+            @eval promote_rule{T<:Fractional,S<:Fractional}(::Type{$CV{T}}, ::Type{$CV{S}}) = $CV{promote_type(T, S)}
         end
     end
 end
