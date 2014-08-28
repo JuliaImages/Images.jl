@@ -35,7 +35,8 @@ grayim(A::AbstractArray{Uint16,3}) = grayim(reinterpret(Ufixed16, A))
 grayim{T}(A::AbstractArray{T,2}) = Image(A; colorspace="Gray", spatialorder=["x","y"])
 grayim{T}(A::AbstractArray{T,3}) = Image(A; colorspace="Gray", spatialorder=["x","y","z"])
 
-function colorim{T<:Fractional}(A::AbstractArray{T,3})
+colorim(A::AbstractImage) = A
+function colorim{T}(A::AbstractArray{T,3})
     if size(A, 1) == 4 || size(A, 3) == 4
         error("The array looks like a 4-channel color image. Please specify the colorspace explicitly (e.g. \"ARGB\" or \"RGBA\".)")
     end
@@ -43,11 +44,16 @@ function colorim{T<:Fractional}(A::AbstractArray{T,3})
     colorim(A, "RGB")
 end
 
-function colorim{T<:Fractional}(A::AbstractArray{T,3}, colorspace)
+function colorim{T}(A::AbstractArray{T,3}, colorspace)
     if 3 <= size(A, 1) <= 4 && 3 <= size(A, 3) <= 4
         error("Both first and last dimensions are of size 3 or 4; impossible to guess which is for color. Use the Image constructor directly.")
     elseif 3 <= size(A, 1) <= 4  # Image as returned by imread for regular 2D RGB images
-        Image(A; colorspace=colorspace, colordim=1, spatialorder=["x","y"])
+        if T<:Fractional
+            CT = getcolortype(colorspace, eltype(A))
+            Image(reinterpret(CT, A); spatialorder=["x","y"])
+        else
+            Image(A; colorspace=colorspace, colordim=1, spatialorder=["x","y"])
+        end
     elseif 3 <= size(A, 3) <= 4  # "Matlab"-style image, as returned by convert(Array, im).
         Image(A; colorspace=colorspace, colordim=3, spatialorder=["y","x"])
     else
@@ -55,10 +61,10 @@ function colorim{T<:Fractional}(A::AbstractArray{T,3}, colorspace)
     end
 end
 
-colorim(A::AbstractArray{Uint8})  = colorim(reinterpret(Ufixed8, A))
-colorim(A::AbstractArray{Uint16}) = colorim(reinterpret(Ufixed16, A))
-colorim(A::AbstractArray{Uint8},  colorspace) = colorim(reinterpret(Ufixed8, A), colorspace)
-colorim(A::AbstractArray{Uint16}, colorspace) = colorim(reinterpret(Ufixed16, A), colorspace)
+colorim(A::AbstractArray{Uint8,3})  = colorim(reinterpret(Ufixed8, A))
+colorim(A::AbstractArray{Uint16,3}) = colorim(reinterpret(Ufixed16, A))
+colorim(A::AbstractArray{Uint8,3},  colorspace) = colorim(reinterpret(Ufixed8, A), colorspace)
+colorim(A::AbstractArray{Uint16,3}, colorspace) = colorim(reinterpret(Ufixed16, A), colorspace)
 
 
 #### Core operations ####
@@ -581,12 +587,20 @@ for ACV in (ColorValue, AbstractRGB, AbstractGray)
     end
 end
 function getcolortype{T}(str::ASCIIString, ::Type{T})
-    if endswith(str, "A")
-        CV = colorspacedict[str[1:end-1]]
-        return AlphaColorValue{CV{T}, T}
+    if haskey(colorspacedict, str)
+        CV = colorspacedict[str]
+        return CV{T}
+    else
+        if endswith(str, "A")
+            CV = colorspacedict[str[1:end-1]]
+            return AlphaColorValue{CV{T}, T}
+        elseif beginswith(str, "A")
+            CV = colorspacedict[str[2:end]]
+            return AlphaColor{CV{T}, T}
+        else
+            error("colorspace $str not recognized")
+        end
     end
-    CV = colorspacedict[str]
-    return CV{T}
 end
 
 colordim{C<:ColorType}(img::AbstractVector{C}) = 0

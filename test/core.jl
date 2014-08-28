@@ -10,6 +10,7 @@ img = Image(B, colorspace="RGB", colordim=1)  # keyword constructor
 img = grayim(B)
 @test colorspace(img) == "Gray"
 @test colordim(B) == 0
+@test grayim(img) == img
 Bf = grayim(uint8(B))  # this is recommended for "integer-valued" images (or even better, directly as a Ufixed type)
 @test eltype(Bf) == Ufixed8
 @test colorspace(Bf) == "Gray"
@@ -19,14 +20,31 @@ Bf = grayim(uint16(B))
 BfCV = reinterpret(Gray{Ufixed8}, uint8(B)) # colorspace encoded as a ColorValue (enables multiple dispatch)
 @test colorspace(BfCV) == "Gray"
 @test colordim(BfCV) == 0
+Bf3 = grayim(reshape(uint8(1:36), 3,4,3))
+@test eltype(Bf3) == Ufixed8
+Bf3 = grayim(reshape(uint16(1:36), 3,4,3))
+@test eltype(Bf3) == Ufixed16
+Bf3 = grayim(reshape(float32(1:36), 3,4,3))
+@test eltype(Bf3) == Float32
 
 # colorim
-@test colordim(colorim(rand(Uint8, 3, 5, 5))) == 1
+C = colorim(rand(Uint8, 3, 5, 5))
+@test eltype(C) == RGB{Ufixed8}
+@test colordim(C) == 0
+@test colorim(C) == C
+C = colorim(rand(Uint16, 4, 5, 5), "ARGB")
+@test eltype(C) == ARGB{Ufixed16}
+C = colorim(rand(1:20, 3, 5, 5))
+@test eltype(C) == Int
+@test colordim(C) == 1
+@test colorspace(C) == "RGB"
+@test eltype(colorim(rand(Uint16, 3, 5, 5))) == RGB{Ufixed16}
+@test eltype(colorim(rand(3, 5, 5))) == RGB{Float64}
 @test colordim(colorim(rand(Uint8, 5, 5, 3))) == 3
 @test spatialorder(colorim(rand(Uint8, 3, 5, 5))) == ["x", "y"]
 @test spatialorder(colorim(rand(Uint8, 5, 5, 3))) == ["y", "x"]
-@test colordim(colorim(rand(Uint8, 4, 5, 5), "RGBA")) == 1
-@test colordim(colorim(rand(Uint8, 4, 5, 5), "ARGB")) == 1
+@test eltype(colorim(rand(Uint8, 4, 5, 5), "RGBA")) == RGBA{Ufixed8}
+@test eltype(colorim(rand(Uint8, 4, 5, 5), "ARGB")) == ARGB{Ufixed8}
 @test colordim(colorim(rand(Uint8, 5, 5, 4), "RGBA")) == 3
 @test colordim(colorim(rand(Uint8, 5, 5, 4), "ARGB")) == 3
 @test spatialorder(colorim(rand(Uint8, 4, 5, 5), "ARGB")) == ["x", "y"]
