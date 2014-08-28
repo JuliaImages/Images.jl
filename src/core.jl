@@ -152,8 +152,14 @@ _reinterpret{T<:Fractional,CV<:ColorType}(::Type{CV}, TT::DataType, img::Abstrac
     __reinterpret(CV, TT, img)    # form 2
 __reinterpret{T<:Fractional,CV<:ColorType}(::Type{CV}, ::Type{T}, img::AbstractArray{T}) =
     reinterpret(CV, img, size(img)[2:end])
+__reinterpret{T<:Fractional,CV<:AbstractGray}(::Type{CV}, ::Type{T}, img::AbstractArray{T}) =
+    reinterpret(CV, img, size(img))
 # In the following, the second argument is the concrete element type of CV
-function __reinterpret{T<:Fractional,CV<:ColorType}(::Type{CV}, ::Type{T}, img::AbstractImageDirect{T})
+__reinterpret{T<:Fractional,CV<:AbstractGray}(::Type{CV}, ::Type{T}, img::AbstractImageDirect{T}) =
+    ___reinterpret(CV, T, img)
+__reinterpret{T<:Fractional,CV<:ColorType}(::Type{CV}, ::Type{T}, img::AbstractImageDirect{T}) =
+    ___reinterpret(CV, T, img)
+function ___reinterpret{T<:Fractional,CV<:ColorType}(::Type{CV}, ::Type{T}, img::AbstractImageDirect{T})
     A = __reinterpret(CV, T, data(img))
     props = copy(properties(img))
     haskey(props, "colorspace") && delete!(props, "colorspace")
@@ -167,6 +173,7 @@ __reinterpret{T,S,CV<:ColorType}(::Type{CV}, ::Type{S}, img::AbstractArray{T}) =
 # convert
 convert{T<:Real}(::Type{Image{T}}, img::Image{T}) = img
 convert{T}(::Type{Image{T}}, img::Image{T}) = img
+convert(::Type{Image}, img::Image) = img
 convert(::Type{Image}, A::AbstractArray) = Image(A, properties(A))
 # Convert an indexed image (cmap) to a direct image
 function convert(::Type{Image}, img::ImageCmap)
@@ -175,9 +182,10 @@ function convert(::Type{Image}, img::ImageCmap)
 end
 # Convert an Image to an array. We convert the image into the canonical storage order convention for arrays.
 # We restrict this to 2d images because for plain arrays this convention exists only for 2d.
-# In other cases---or if you don't want the storage order altered---just grab the .data field and perform whatever manipulations you need directly.
+# In other cases---or if you don't want the storage order altered---just use data(img)
 convert{T,N}(::Type{Array{T}}, img::AbstractImageDirect{T,N}) = convert(Array{T,N}, img)
 function convert{T,N}(::Type{Array{T,N}}, img::AbstractImageDirect{T,N})
+    assert2d(img)  # only well-defined in 2d
     p = permutation_canonical(img)
     dat = convert(Array{T}, data(img))
     if issorted(p)
@@ -293,9 +301,11 @@ function getindexim(img::AbstractImage, I::RealIndex...)
     ret = copy(img, data(img)[I...])
     cd = colordim(img)
     nd = ndims(ret)
-    if cd > nd
-        ret["colordim"] = 0
+    if cd > nd || (cd > 0 && length(I[cd]) < size(img, cd))
         ret["colorspace"] = "Unknown"
+        if cd > nd
+            ret["colordim"] = 0
+        end
     end
     td = timedim(img)
     if td > nd
@@ -333,7 +343,7 @@ function sliceim(img::AbstractImage, I::RangeIndex...)
         else
             ret.properties["colordim"] = dimmap[cd]
             if I[cd] != 1:size(img, cd)
-                ret.properties["colorspace"] = "channels"
+                ret.properties["colorspace"] = "Unknown"
             end
         end
     end

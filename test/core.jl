@@ -80,6 +80,9 @@ imgds = separate(imgd)
 @test ndims(imgd) == 2
 @test size(img,"y") == 3
 @test size(img,"x") == 5
+@test strides(img) == (1,3)
+@test strides(imgd) == (1,3)
+@test strides(imgds) == (1,3,15)
 
 # printing
 iob = IOBuffer()
@@ -103,6 +106,9 @@ img2 = similar(img, (4,4))
 img2 = similar(imgd, (3,4,4))
 @test isa(img2, Image)
 @test size(img2) == (3,4,4)
+@test copy(B, A) == A
+@test share(A, B) == B
+@test share(img, B) == B
 
 # getindex/setindex!
 prev = img[4]
@@ -147,6 +153,12 @@ s = sub(img, 2, 1:4)
 @test ndims(s) == 2
 @test sdims(s) == 2
 @test size(s) == (1,4)
+@test data(s) == B[2, 1:4]
+s = getindexim(img, 2, 1:4)
+@test ndims(s) == 2
+@test sdims(s) == 2
+@test size(s) == (1,4)
+@test data(s) == B[2, 1:4]
 s = subim(img, 2, 1:4)
 @test ndims(s) == 2
 @test sdims(s) == 2
@@ -164,7 +176,42 @@ s = sliceim(imgds, 2:2, 1:4, 1:3)
 @test ndims(s) == 3
 @test sdims(s) == 2
 @test colordim(s) == 3
+@test colorspace(s) == "RGB"
+s = getindexim(imgds, 2:2, 1:4, 2)
+@test ndims(s) == 2
+@test sdims(s) == 2
+@test colordim(s) == 0
+@test colorspace(s) == "Unknown"
+s = sliceim(imgds, 2:2, 1:4, 2)
+@test ndims(s) == 2
+@test sdims(s) == 2
+@test colordim(s) == 0
+@test colorspace(s) == "Unknown"
+s = sliceim(imgds, 2:2, 1:4, 1:2)
+@test ndims(s) == 3
+@test sdims(s) == 2
+@test colordim(s) == 3
+@test colorspace(s) == "Unknown"
 @test spatialorder(s) == ["y","x"]
+s = sub(img, "y", 2)
+@test ndims(s) == 2
+@test sdims(s) == 2
+@test size(s) == (1,5)
+s = slice(img, "y", 2)
+@test ndims(s) == 1
+@test size(s) == (5,)
+@test_throws ErrorException subim(img, [1,3,2],1:4)
+@test_throws ErrorException sliceim(img, [1,3,2],1:4)
+@test size(getindexim(imgds, :, 1:2, :)) == (size(imgds,1), 2, 3)
+
+s = permutedims(imgds, (3,1,2))
+@test colordim(s) == 1
+ss = getindexim(s, 2, :, :)
+@test colorspace(ss) == "Unknown"
+@test colordim(ss) == 1
+sss = squeeze(ss, 1)
+@test colorspace(ss) == "Unknown"
+@test colordim(sss) == 0
 
 # reslicing
 D = randn(3,5,4)
@@ -251,6 +298,19 @@ imgp = permutedims(imgc, ["x", "y", "color"])
 @test pixelspacing(imgp) == [3.0mm, 2.0mm]
 
 # reinterpret, separate, more convert
+a = RGB{Float64}[RGB(1,1,0)]
+af = reinterpret(Float64, a)
+@test vec(af) == [1.0,1.0,0.0]
+@test size(af) == (3,1)
+@test_throws ErrorException reinterpret(Float32, a)
+anew = reinterpret(RGB, af)
+@test anew == a
+anew = reinterpret(RGB, vec(af))
+@test anew[1] == a[1]
+@test ndims(anew) == 0
+anew = reinterpret(RGB{Float64}, af)
+@test anew == a
+@test_throws ErrorException reinterpret(RGB{Float32}, af)
 A8 = ufixed8(rand(0x00:0xff, 3, 5, 4))
 rawrgb8 = reinterpret(RGB, A8)
 @test eltype(rawrgb8) == RGB{Ufixed8}
@@ -260,15 +320,24 @@ rawrgb32 = float32(rawrgb8)
 @test reinterpret(Ufixed8, rawrgb8) == A8
 imrgb8 = convert(Image, rawrgb8)
 @test spatialorder(imrgb8) == Images.yx
+@test convert(Image, imrgb8) === imrgb8
+@test convert(Image{RGB{Ufixed8}}, imrgb8) === imrgb8
 im8 = reinterpret(Ufixed8, imrgb8)
 @test data(im8) == A8
 @test reinterpret(RGB, im8) == imrgb8
 ims8 = separate(imrgb8)
 @test colordim(ims8) == 3
 @test colorspace(ims8) == "RGB"
+@test convert(Image, ims8) === ims8
+@test convert(Image{Ufixed8}, ims8) === ims8
+@test separate(ims8) === ims8
 imrgb8_2 = convert(Image{RGB}, ims8)
 @test isa(imrgb8_2, Image{RGB{Ufixed8}})
 @test imrgb8_2 == imrgb8
+A = reinterpret(Ufixed8, Uint8[1 2; 3 4])
+imgray = convert(Image{Gray{Ufixed8}}, A)
+@test spatialorder(imgray) == Images.yx
+@test data(imgray) == reinterpret(Gray{Ufixed8}, uint8([1 2; 3 4]))
 
 @test eltype(convert(Image{HSV{Float32}}, imrgb8)) == HSV{Float32}
 @test eltype(convert(Image{HSV}, float32(imrgb8))) == HSV{Float32}
