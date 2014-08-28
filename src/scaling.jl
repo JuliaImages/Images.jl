@@ -192,8 +192,8 @@ for SI in (ScaleInfo, Clamp)
             scale(scalei::$ST{RGB24}, rgb::AbstractRGB) =
                 convert(RGB24, RGB{Ufixed8}(scale1(scalei, rgb.r), scale1(scalei, rgb.g), scale1(scalei, rgb.b)))
             scale{C<:AbstractRGB, TC}(scalei::$ST{ARGB32}, argb::AbstractAlphaColorValue{C,TC}) =
-                convert(ARGB32, ARGB{Ufixed8}(scale1(scalei, argb.r), scale1(scalei, argb.g),
-                                              scale1(scalei, argb.b), scale1(scalei, argb.alpha)))
+                convert(ARGB32, ARGB{Ufixed8}(scale1(scalei, argb.c.r), scale1(scalei, argb.c.g),
+                                              scale1(scalei, argb.c.b), scale1(scalei, argb.alpha)))
             scale{T}(scalei::$ST{RGB{T}}, rgb::AbstractRGB) =
                 RGB{T}(scale1(scalei, rgb.r), scale1(scalei, rgb.g), scale1(scalei, rgb.b))
             scale{T, C<:AbstractRGB, TC}(scalei::$ST{ARGB{T}}, argb::AbstractAlphaColorValue{C,TC}) =
