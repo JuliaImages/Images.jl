@@ -654,9 +654,80 @@ separable algorithm.
 
 <br />
 ```
+imgradients(img, [method], [border])
+```
+Edge-detection filtering. `method` is one of `"sobel"`, `"prewitt"`, `"ando3"`, `"ando4"`, `"ando4_sep"`, `"ando5"`, or `"ando5_sep"`, defaulting to `"ando3"` (see the functions of the same name for more information).  `border` is any of the boundary conditions specified in `padarray`.
+
+Returns a tuple containing `x` (horizontal) and `y` (vertical) gradient images of the same size as `img`, calculated using the requested method and border.
+
+<br />
+```
+magnitude(grad_x, grad_y)
+```
+Calculates the magnitude of the gradient images given by `grad_x` and `grad_y`.  Equivalent to ``sqrt(grad_x.^2 + grad_y.^2)``.
+
+Returns a magnitude image the same size as `grad_x` and `grad_y`.
+
+<br />
+```
+phase(grad_x, grad_y)
+```
+Calculates the rotation angle of the gradient images given by `grad_x` and `grad_y`. Equivalent to ``atan2(-grad_y, grad_x)``.  When a both ``grad_x[i]`` and ``grad_y[i]`` are zero, the corresponding angle is set to zero.
+
+Returns a phase image the same size as `grad_x` and `grad_y`, with values in [-pi,pi].
+
+<br />
+```
+orientation(grad_x, grad_y)
+```
+Calculates the orientation angle of the strongest edge from gradient images given by `grad_x` and `grad_y`. Equivalent to ``atan2(grad_x, grad_y)``.  When a both `grad_x[i]` and `grad_y[i]` are zero, the corresponding angle is set to zero.
+
+Returns a phase image the same size as `grad_x` and `grad_y`, with values in [-pi,pi].
+
+<br />
+```
+magnitude_phase(grad_x, grad_y)
+```
+Convenience function for calculating the magnitude and phase of the gradient images given in `grad_x` and `grad_y`.  Returns a tuple containing the magnitude and phase images.  See `magnitude` and `phase` for details.
+
+<br />
+```
 imedge(img, [method], [border])
 ```
-Edge-detection filtering. `method` is either `"sobel"` or `"prewitt"`. `border` is any of the boundary conditions specified in `padarray`.
+Edge-detection filtering. `method` is one of `"sobel"`, `"prewitt"`, `"ando3"`, `"ando4"`, `"ando4_sep"`, `"ando5"`, or `"ando5_sep"`, defaulting to `"ando3"` (see the functions of the same name for more information). `border` is any of the boundary conditions specified in `padarray`.
+
+Returns a tuple `(grad_x, grad_y, mag, orient)`, which are the horizontal gradient, vertical gradient, and the magnitude and orientation of the strongest edge, respectively.
+
+<br />
+```
+thin_edges(img, gradientangle, [border])
+thin_edges_subpix(img, gradientangle, [border])
+thin_edges_nonmaxsup(img, gradientangle, [border]; [radius::Float64=1.35], [theta=pi/180])
+thin_edges_nonmaxsup_subpix(img, gradientangle, [border]; [radius::Float64=1.35], [theta=pi/180])
+```
+Edge thinning for 2D edge images.  Currently the only algorithm available is non-maximal suppression, which takes an edge image and its gradient angle, and checks each edge point for local maximality in the direction of the gradient.  The returned image is non-zero only at maximal edge locations.
+
+`border` is any of the boundary conditions specified in `padarray`.
+
+In addition to the maximal edge image, the `_subpix` versions of these functions also return an estimate of the subpixel location of each local maxima, as a 2D array or image of `Base.Graphics.Point` objects.  Additionally, each local maxima is adjusted to the estimated value at the subpixel location.
+
+Currently, the `_nonmaxsup` functions are identical to the first two function calls, except that they also accept additional keyword arguments.  `radius` indicates the step size to use when searching in the direction of the gradient; values between 1.2 and 1.5 are suggested (default 1.35).  `theta` indicates the step size to use when discretizing angles in the `gradientangle` image, in radians (default: 1 degree in radians = pi/180).
+
+Example:
+
+    g = rgb2gray(rgb_image)
+    gx, gy = imgradients(g)
+    mag, grad_angle = magnitude_phase(gx,gy)
+    mag[mag .< 0.5] = 0.0  # Threshold magnitude image    
+    thinned, subpix =  thin_edges_subpix(mag, gradient)
+
+<br />
+```
+thin_edges_nonmaxsup!(out, img, gradientangle, [border]; [radius::Float64=1.35], [theta=pi/180])
+thin_edges_nonmaxsup_subpix!(out, location, img, gradientangle, [border]; [radius::Float64=1.35], [theta=pi/180])
+```
+
+For advanced usage, these versions will put results into preallocated arrays or images.  `out` must be the same size and type as `img`.  `location` must be an array of type `Graphics.Point` and must be the same size as `img`.
 
 <br />
 ```
@@ -720,8 +791,25 @@ returns a laplacian-of-gaussian kernel.
 ```
 sobel()
 prewitt()
+ando3()
+ando4()
+ando4_sep()
+ando5()
+ando5_sep()
 ```
-Return x- and y- Sobel and Prewitt derivative filters.
+Return x- and y- derivative filters of the specified type:
+
+Name          | Description
+--------------|------------------------------
+`"sobel"`     | Sobel filter
+`"prewitt"`   | Prewitt filter
+`"ando3"`     | Optimal 3x3 filter from Ando 2000
+`"ando4"`     | Optimal 4x4 filter from Ando 2000
+`"ando4_sep"` | Separable approximation of `"ando4"`
+`"ando5"`     | Optimal 5x5 filter from Ando 2000
+`"ando5_sep"` | Separable approximation of `"ando5"`
+
+The ando filters were derived in Ando Shigeru, IEEE Trans. Pat. Anal. Mach. Int., vol. 22 no 3, March 2000.  As written in the paper, the 4x4 and 5x5 papers are not separable, so the `"ando4_sep"` and `"ando5_sep"` filters are provided as separable (and therefore faster) approximations of `"ando4"` and `"ando5"`, respectively.
 
 ### Nonlinear filtering and transformation
 
@@ -751,6 +839,11 @@ maxfinite(img)
 maxabsfinite(img)
 ```
 Return the minimum and maximum value in the image, respectively, ignoring any values that are not finite (Inf or NaN).
+
+```
+meanfinite(img, region)
+```
+Calculate the mean value along the dimensions listed in `region`, ignoring any non-finite values.
 
 <br />
 ```

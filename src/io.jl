@@ -192,8 +192,7 @@ function _writemime(stream::IO, ::MIME"image/png", img::AbstractImage; scalei=sc
     if eltype(A) != eltype(img)
         A = truncround(eltype(img), A)
     end
-    wand = image2wand(share(img, A), scalei)
-#     LibMagick.setimagecompression(wand, LibMagick.NoCompression)
+    wand = image2wand(share(img, A), scalei, nothing)
     blob = LibMagick.getblob(wand, "png")
     write(stream, blob)
 end
@@ -265,12 +264,12 @@ end
 
 imread{C<:ColorType}(filename::String, ::Type{ImageMagick}, ::Type{C}) = convert(Image{C}, imread(filename, ImageMagick))
 
-function imwrite(img, filename::String, ::Type{ImageMagick}; scalei = scaleinfo(ImageMagick, img))
-    wand = image2wand(img, scalei)
+function imwrite(img, filename::String, ::Type{ImageMagick}; scalei = scaleinfo(ImageMagick, img), quality = nothing)
+    wand = image2wand(img, scalei, quality)
     LibMagick.writeimage(wand, filename)
 end
 
-function image2wand(img, scalei)
+function image2wand(img, scalei, quality)
     if isa(img, AbstractImageIndexed)
         # For now, convert to direct
         img = convert(Image, img)
@@ -290,6 +289,9 @@ function image2wand(img, scalei)
     end
     tmp = to_explicit(to_contiguous(data(imgw)))
     LibMagick.constituteimage(tmp, wand, cs)
+    if quality != nothing
+        LibMagick.setimagecompressionquality(wand, quality)
+    end
     LibMagick.resetiterator(wand)
     wand
 end

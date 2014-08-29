@@ -2,10 +2,10 @@ module Images
 
 import Base.Order: Ordering, ForwardOrdering, ReverseOrdering
 import Base.Graphics: width, height
-import Base: clamp, convert, copy, copy!, ctranspose, delete!, eltype, float32, float64,
-             get, getindex, haskey, length, maximum, minimum, ndims, one, parent,
+import Base: atan2, clamp, convert, copy, copy!, ctranspose, delete!, eltype, float32, float64,
+             get, getindex, haskey, hypot, length, maximum, minimum, ndims, one, parent,
              permutedims, reinterpret, scale, scale!, setindex!, show, showcompact, similar,
-             size, slice, squeeze, strides, sub, sum, write, writemime, zero
+             size, slice, sqrt, squeeze, strides, sub, sum, write, writemime, zero
 
 using Color, FixedPointNumbers
 import Color: Fractional
@@ -37,6 +37,7 @@ include("scaling.jl")
 include("labeledarrays.jl")
 include("algorithms.jl")
 include("connected.jl")
+include("edge.jl")
 
 __init__() = LibMagick.init()
 
@@ -192,6 +193,9 @@ export # types
     uint32sc,
 
     # algorithms
+    ando3,
+    ando4,
+    ando5,
     backdiffx,
     backdiffy,
     dilate,
@@ -211,6 +215,7 @@ export # types
     imfilter_gaussian!,
     imfilter_LoG,
     imgaussiannoise,
+    imgradients,
     imlaplacian,
     imlineardiffusion,
     imlog,
@@ -219,14 +224,23 @@ export # types
 #     imthresh,
     label_components,
     label_components!,
+    magnitude,
+    magnitude_phase,
+    meanfinite,
     ncc,
+    orientation,
     padarray,
+    phase,
     prewitt,
     sad,
     sadn,
     sobel,
     ssd,
     ssdn,
+    thin_edges,
+    thin_edges_subpix,
+    thin_edges_nonmaxsup,
+    thin_edges_nonmaxsup_subpix,
 
     # phantoms
     shepp_logan

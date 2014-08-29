@@ -24,6 +24,7 @@ end
 (-){T}(img::AbstractImageDirect{T,2}, A::Diagonal) = copy(img, data(img)-A) # fixes an ambiguity warning
 (-)(img::AbstractImageDirect, A::AbstractArray) = copy(img, data(img)-data(A))
 # (-)(A::AbstractArray, img::AbstractImageDirect) = limadj(copy(img, data(A) - data(img)), limminus(limits(A), limits(img)))
+(-)(img::AbstractImageDirect) = share(img, -data(img))
 (.-)(img::AbstractImageDirect, A::BitArray) = copy(img, data(img).-A)
 (.-)(img::AbstractImageDirect, A::AbstractArray) = copy(img, data(img).-data(A))
 (*)(img::AbstractImageDirect, n::Number) = (.*)(img, n)
@@ -43,6 +44,10 @@ end
 (./)(img::AbstractImageDirect, A::AbstractArray) = copy(img, data(img)./A)
 # (./)(A::AbstractArray, img::AbstractImageDirect) = limadj(copy(img, A./data(img))
 (.^)(img::AbstractImageDirect, p::Number) = copy(img, data(img).^p)
+sqrt(img::AbstractImageDirect) = share(img, sqrt(data(img)))
+atan2(img::AbstractImageDirect) = share(img, atan2(data(img)))
+hypot(img::AbstractImageDirect) = share(img, hypot(data(img)))
+
 
 function sum(img::AbstractImageDirect, region::Union(AbstractVector,Tuple,Integer))
     f = prod(size(img)[[region...]])
@@ -51,6 +56,47 @@ function sum(img::AbstractImageDirect, region::Union(AbstractVector,Tuple,Intege
         out["colorspace"] = "Unknown"
     end
     out
+end
+
+meanfinite(A::AbstractArray, region) = mean(A, region)
+function meanfinite{T<:FloatingPoint}(A::AbstractArray{T}, region)
+    sz = Base.reduced_dims(A, region)
+    K = zeros(Int, sz)
+    S = zeros(T, sz)
+    sumfinite!(S, K, A)
+    copy(A, S./K)
+end
+# Note that you have to zero S and K upon entry
+@ngenerate N typeof((S,K)) function sumfinite!{T,N}(S, K, A::AbstractArray{T,N})
+    isempty(A) && return S, K
+    @nexprs N d->(sizeS_d = size(S,d))
+    sizeA1 = size(A, 1)
+    if size(S, 1) == 1 && sizeA1 > 1
+        # When we are reducing along dim == 1, we can accumulate to a temporary
+        @inbounds @nloops N i d->(d>1? (1:size(A,d)) : (1:1)) d->(j_d = sizeS_d==1 ? 1 : i_d) begin
+            s = @nref(N, S, j)
+            k = @nref(N, K, j)
+            for i_1 = 1:sizeA1
+                tmp = @nref(N, A, i)
+                if isfinite(tmp)
+                    s += tmp
+                    k += 1
+                end
+            end
+            @nref(N, S, j) = s
+            @nref(N, K, j) = k
+        end
+    else
+        # Accumulate to array storage
+        @inbounds @nloops N i A d->(j_d = sizeS_d==1 ? 1 : i_d) begin
+            tmp = @nref(N, A, i)
+            if isfinite(tmp)
+                @nref(N, S, j) += tmp
+                @nref(N, K, j) += 1
+            end
+        end
+    end
+    S, K
 end
 
 # Logical operations
@@ -170,16 +216,6 @@ function maxabsfinite{T<:FloatingPoint}(A::AbstractArray{T})
     ret
 end
 
-
-function sobel()
-    f = [1.0 2.0 1.0; 0.0 0.0 0.0; -1.0 -2.0 -1.0]
-    return f, f'
-end
-
-function prewitt()
-    f = [1.0 1.0 1.0; 0.0 0.0 0.0; -1.0 -1.0 -1.0]
-    return f, f'
-end
 
 # average filter
 function imaverage(filter_size=[3,3])
@@ -337,7 +373,7 @@ end
 ###
 ### imfilter
 ###
-imfilter(img, kern, border, value) = copy(img, imfilter_inseparable(img, kern, border, value))
+imfilter(img, kern, border, value) = imfilter_inseparable(img, kern, border, value)
 # Do not combine these with the previous using a default value (see the 2d specialization below)
 imfilter(img, filter) = imfilter(img, filter, "replicate", zero(eltype(img)))
 imfilter(img, filter, border) = imfilter(img, filter, border, zero(eltype(img)))
@@ -346,10 +382,15 @@ imfilter_inseparable{T,K,N,M}(img::AbstractArray{T,N}, kern::AbstractArray{K,M},
     imfilter_inseparable(img, prep_kernel(img, kern), border, value)
 
 function imfilter_inseparable{T,K,N}(img::AbstractArray{T,N}, kern::AbstractArray{K,N}, border::String, value)
-    prepad  = [div(size(kern,i)-1, 2) for i = 1:N]
-    postpad = [div(size(kern,i),   2) for i = 1:N]
-    A = padarray(img, prepad, postpad, border, convert(T, value))
-    result = _imfilter!(Array(typeof(one(T)*one(K)), size(img)), A, data(kern))
+    if border == "inner"
+        result = Array(typeof(one(T)*one(K)), ntuple(N, d->max(0, size(img,d)-size(kern,d)+1)))
+        _imfilter!(result, img, kern)
+    else
+        prepad  = [div(size(kern,i)-1, 2) for i = 1:N]
+        postpad = [div(size(kern,i),   2) for i = 1:N]
+        A = padarray(img, prepad, postpad, border, convert(T, value))
+        result = _imfilter!(Array(typeof(one(T)*one(K)), size(img)), A, data(kern))
+    end
     copy(img, result)
 end
 
@@ -374,7 +415,7 @@ function imfilter{T}(img::AbstractArray{T}, kern::AbstractMatrix, border::String
     ss = sqrt(s)
     sz1 = ones(Int, ndims(img)); sz1[sc[1]] = size(kern, 1)
     sz2 = ones(Int, ndims(img)); sz2[sc[2]] = size(kern, 2)
-    tmp = imfilter_inseparable(img, reshape(u*ss, sz1...), border, value)
+    tmp = imfilter_inseparable(data(img), reshape(u*ss, sz1...), border, value)
     copy(img, imfilter_inseparable(tmp, reshape(v*ss, sz2...), border, value))
 end
 
@@ -1029,23 +1070,7 @@ function imstretch{T}(img::AbstractArray{T}, m::Number, slope::Number)
     share(img, 1./(1 + (m./(data(img) + eps(T))).^slope))
 end
 
-function imedge{T}(img::AbstractArray{T}, method::String, border::String)
-    # needs more methods
-    if method == "sobel"
-        s1, s2 = sobel()
-        img1 = imfilter(img, s1, border)
-        img2 = imfilter(img, s2, border)
-        return img1, img2, sqrt(img1.^2 + img2.^2), atan2(img2, img1)
-    elseif method == "prewitt"
-        s1, s2 = prewitt()
-        img1 = imfilter(img, s1, border)
-        img2 = imfilter(img, s2, border)
-        return img1, img2, sqrt(img1.^2 + img2.^2), atan2(img2, img1)
-    end
-end
-
-imedge{T}(img::AbstractArray{T}, method::String) = imedge(img, method, "replicate")
-imedge{T}(img::AbstractArray{T}) = imedge(img, "sobel", "replicate")
+# image gradients
 
 # forward and backward differences 
 # can be very helpful for discretized continuous models 

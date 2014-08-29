@@ -96,6 +96,7 @@ clamp01{T}(x::AbstractRGB{T}) = clamp01(RGB{T}, x)
 
 clamp(x::AbstractRGB) = clamp01(x)
 
+
 ## ScaleMinMax
 # This clamps, subtracts the min value, then scales
 

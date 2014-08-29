@@ -17,18 +17,19 @@ export MagickWand,
     resetiterator,
     setimagecolorspace,
     setimagecompression,
+    setimagecompressionquality,
     setimageformat,
     writeimage
 
 
 # Find the library
-mpath = get(ENV, "MAGICK_HOME", "") # If MAGICK_HOME is defined, add to library search path
-mpaths = isempty(mpath) ? ASCIIString[] : [mpath, joinpath(mpath, "lib")]
-libnames = ["libMagickWand", "CORE_RL_wand_"]
-suffixes = ["", "-Q16", "-6.Q16", "-Q8"]
-options = ["", "HDRI"]
-const libwand = find_library(vec(libnames.*transpose(suffixes).*reshape(options,(1,1,length(options)))), mpaths)
-const have_imagemagick = !isempty(libwand)
+depsfile = Pkg.dir("Images","deps","deps.jl")
+if isfile(depsfile)
+    include(depsfile)
+else
+    error("Images not properly installed. Please run Pkg.build(\"Images\") then restart Julia.")
+end
+const have_imagemagick = isdefined(:libwand)
 
 # Initialize the library
 function init()
@@ -80,7 +81,6 @@ IMColordict["IA"] = IMColordict["GrayAlpha"]
 IMColordict["RGBA"] = IMColordict["sRGB"]
 IMColordict["ARGB"] = IMColordict["sRGB"]
 IMColordict["BGRA"] = IMColordict["sRGB"]
-
 
 function nchannels(imtype::String, cs::String, havealpha = false)
     n = 3
@@ -268,6 +268,13 @@ end
 # set the compression
 function setimagecompression(wand::MagickWand, compression::Integer) 
     status = ccall((:MagickSetImageCompression, libwand), Cint, (Ptr{Void},Cint), wand.ptr, int32(compression))
+    status == 0 && error(wand)
+    nothing
+end
+
+function setimagecompressionquality(wand::MagickWand, quality::Integer)
+    0 < quality <= 100 || error("quality setting must be in the (inclusive) range 1-100.\nSee http://www.imagemagick.org/script/command-line-options.php#quality for details")
+    status = ccall((:MagickSetImageCompressionQuality, libwand), Cint, (Ptr{Void}, Cint), wand.ptr, quality)
     status == 0 && error(wand)
     nothing
 end

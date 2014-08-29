@@ -56,9 +56,16 @@ let
     A = rand(5,5,3)
     img = Images.colorim(A, "RGB")
     s12 = sum(img, (1,2))
-    @test colorspace(s12) == "RGB"
+    @test Images.colorspace(s12) == "RGB"
     s3 = sum(img, (3,))
-    @test colorspace(s3) == "Unknown"
+    @test Images.colorspace(s3) == "Unknown"
+    A = [NaN, 1, 2, 3]
+    @test_approx_eq Images.meanfinite(A, 1) [2]
+    A = [NaN 1 2 3;
+         NaN 6 5 4]
+    @test_approx_eq Images.meanfinite(A, 1) [NaN 3.5 3.5 3.5]
+    @test_approx_eq Images.meanfinite(A, 2) [2, 5]'
+    @test_approx_eq Images.meanfinite(A, (1,2)) [3.5]
 end
 
 # Array padding
@@ -124,10 +131,15 @@ Aimg = permutedims(convert(Images.Image, A), [3,1,2])
 @test_approx_eq Images.imfilter(Aimg, kern) permutedims(Af, [3,1,2])
 @assert approx_equal(Images.imfilter(ones(4,4),ones(1,3),"replicate"), 3.0)
 
+A = zeros(5,5); A[3,3] = 1
+kern = rand(3,3)
+Af = Images.imfilter(A, kern, "inner")
+@test Af == rot180(kern)
+
 @assert approx_equal(Images.imfilter_gaussian(ones(4,4), [5,5]), 1.0)
 
 A = zeros(Int, 9, 9); A[5, 5] = 1
-@test maximum(abs(Images.imfilter_LoG(A, [1,1]) - imlog(1.0))) < EPS
+@test maximum(abs(Images.imfilter_LoG(A, [1,1]) - Images.imlog(1.0))) < EPS
 
 # restriction
 A = reshape(uint16(1:60), 4, 5, 3)
