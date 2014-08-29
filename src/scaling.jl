@@ -94,6 +94,8 @@ clamp01(x::Real) = clamp01(typeof(x), x)
 clamp01{To}(::Type{RGB{To}}, x::AbstractRGB) = RGB{To}(clamp01(To, x.r), clamp01(To, x.g), clamp01(To, x.b))
 clamp01{T}(x::AbstractRGB{T}) = clamp01(RGB{T}, x)
 
+clamp(x::AbstractRGB) = clamp01(x)
+
 ## ScaleMinMax
 # This clamps, subtracts the min value, then scales
 

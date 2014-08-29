@@ -1,10 +1,10 @@
 module ColorTypes
 
 using Color, FixedPointNumbers
-import Color.Fractional
-import Base: convert, length, promote_array_type, promote_rule
+import Color: Fractional, _convert
+import Base: clamp, convert, length, promote_array_type, promote_rule
 
-export ARGB, BGR, RGB1, RGB4, BGRA, AbstractGray, Gray, GrayAlpha, AGray32, AlphaColor, ColorType
+export ARGB, BGR, RGB1, RGB4, BGRA, AbstractGray, Gray, GrayAlpha, AGray32, YIQ, AlphaColor, ColorType
 
 typealias ColorType Union(ColorValue, AbstractAlphaColorValue)
 
@@ -85,6 +85,37 @@ AGray32(val::Ufixed8, alpha::Ufixed8) = AGray32(reinterpret(val), reinterpret(al
 
 convert(::Type{RGB}, x::Gray) = RGB(x.val, x.val, x.val)
 convert{T}(::Type{RGB{T}}, x::Gray) = (g = convert(T, x.val); RGB{T}(g, g, g))
+
+# YIQ (NTSC)
+immutable YIQ{T<:FloatingPoint} <: ColorValue{T}
+    y::T
+    i::T
+    q::T
+
+    YIQ(y::Number, i::Number, q::Number) = new(y, i, q)
+end
+YIQ(y::FloatingPoint, i::FloatingPoint, q::FloatingPoint) = (T = promote_type(typeof(y), typeof(i), typeof(q)); YIQ{T}(y, i, q))
+
+clamp{T}(c::YIQ{T}) = YIQ{T}(clamp(c.y, zero(T), one(T)),
+                             clamp(c.i, convert(T,-0.5957), convert(T,0.5957)),
+                             clamp(c.q, convert(T,-0.5226), convert(T,0.5226)))
+
+function convert{T}(::Type{YIQ{T}}, c::AbstractRGB)
+    rgb = clamp(c)
+    YIQ{T}(0.299*rgb.r+0.587*rgb.g+0.114*rgb.b,
+           0.595716*rgb.r-0.274453*rgb.g-0.321263*rgb.b,
+           0.211456*rgb.r-0.522591*rgb.g+0.311135*rgb.b)
+end
+convert{T}(::Type{YIQ}, c::AbstractRGB{T}) = convert(YIQ{T}, c)
+
+function _convert{T}(::Type{RGB{T}}, c::YIQ)
+    cc = clamp(c)
+    RGB{T}(cc.y+0.9563*cc.i+0.6210*cc.q,
+           cc.y-0.2721*cc.i-0.6474*cc.q,
+           cc.y-1.1070*cc.i+1.7046*cc.q)
+end
+
+## Generic algorithms
 
 length(cv::ColorType) = div(sizeof(cv), sizeof(eltype(cv)))
 # Because this can be called as `length(RGB)`, we might need to fill in a default element type.

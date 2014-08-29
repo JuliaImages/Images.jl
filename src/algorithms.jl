@@ -961,24 +961,6 @@ end
 imgaussiannoise{T}(img::AbstractArray{T}, variance::Number) = imgaussiannoise(img, variance, 0)
 imgaussiannoise{T}(img::AbstractArray{T}) = imgaussiannoise(img, 0.01, 0)
 
-function rgb2ntsc{T}(img::Array{T})
-    trans = [0.299 0.587 0.114; 0.596 -0.274 -0.322; 0.211 -0.523 0.312]
-    out = zeros(T, size(img))
-    for i = 1:size(img,1), j = 1:size(img,2)
-        out[i,j,:] = trans * vec(img[i,j,:])
-    end
-    return out
-end
-
-function ntsc2rgb{T}(img::Array{T})
-    trans = [1 0.956 0.621; 1 -0.272 -0.647; 1 -1.106 1.703]
-    out = zeros(T, size(img))
-    for i = 1:size(img,1), j = 1:size(img,2)
-        out[i,j,:] = trans * vec(img[i,j,:])
-    end
-    return out
-end
-
 function rgb2ycbcr{T}(img::Array{T})
     trans = [65.481 128.533 24.966; -37.797 -74.203 112; 112 -93.786 -18.214]
     offset = [16.0; 128.0; 128.0]

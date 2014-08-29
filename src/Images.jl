@@ -75,6 +75,7 @@ export # types
     RGBA,
     RGB1,
     RGB4,
+    YIQ,
 
     AbstractImage,
     AbstractImageDirect,
@@ -171,10 +172,8 @@ export # types
     imadjustintensity,
     indexedcolor,
     lut,
-    ntsc2rgb,
     rgb2gray,
     rgb2hsi,
-    rgb2ntsc,
     rgb2ycbcr,
     separate,
     uint32color,
@@ -237,7 +236,9 @@ export # Deprecated exports
     ClipMax,
     ClipMinMax,
     float32sc,
-    float64sc
+    float64sc,
+    ntsc2rgb,
+    rgb2ntsc
 
 
 @deprecate scaleminmax  ScaleMinMax
@@ -251,6 +252,11 @@ export # Deprecated exports
 @deprecate climdefault(img) zero(eltype(img)), one(eltype(img))
 @deprecate ScaleMinMax{T<:Real}(img::AbstractArray{T}, mn, mx) ScaleMinMax(Ufixed8, img, mn, mx)
 @deprecate ScaleMinMax{T<:ColorValue}(img::AbstractArray{T}, mn, mx) ScaleMinMax(RGB{Ufixed8}, img, mn, mx)
+@deprecate ntsc2rgb(A::AbstractArray)  convert(Array{RGB}, A)
+@deprecate ntsc2rgb(A::AbstractImage)  convert(Image{RGB}, A)
+@deprecate rgb2ntsc(A::AbstractArray)  convert(Array{YIQ}, A)
+@deprecate rgb2ntsc(A::AbstractImage)  convert(Image{YIQ}, A)
+
 
 if VERSION < v"0.3-"
   __init__()

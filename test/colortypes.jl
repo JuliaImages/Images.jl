@@ -13,6 +13,7 @@ using Base.Test, Color, FixedPointNumbers
 @test length(ColorTypes.Gray24) == 4
 # @test length(ColorTypes.AGray32) == 4
 @test length(ColorTypes.ARGB{Float32}) == 4
+@test length(ColorTypes.YIQ) == 3
 c = ColorTypes.AlphaColor(RGB{Ufixed8}(0.8,0.2,0.4), Ufixed8(0.5))
 @test length(c) == 4
 
@@ -54,3 +55,13 @@ show(iob, c)
 ca = AlphaColorValue(c, Ufixed16(0.2))
 show(iob, ca)
 @test takebuf_string(iob) == "GrayAlpha{Ufixed16}(0.8,0.2)"
+
+# YIQ
+@test convert(ColorTypes.YIQ, RGB(1,0,0)) == ColorTypes.YIQ(0.299, 0.595716, 0.211456)
+@test convert(ColorTypes.YIQ, RGB(0,1,0)) == ColorTypes.YIQ(0.587, -0.274453, -0.522591)
+@test convert(ColorTypes.YIQ, RGB(0,0,1)) == ColorTypes.YIQ(0.114, -0.321263, 0.311135)
+@test convert(RGB, ColorTypes.YIQ(1.0,0.0,0.0)) == RGB(1,1,1)
+v = 0.5957
+@test convert(RGB, ColorTypes.YIQ(0.0,1.0,0.0)) == RGB(0.9563*v,-0.2721*v,-1.1070*v)  # will be clamped to v
+v = -0.5226
+@test convert(RGB, ColorTypes.YIQ(0.0,0.0,-1.0)) == RGB(0.6210*v,-0.6474*v,1.7046*v)  # will be clamped to v
