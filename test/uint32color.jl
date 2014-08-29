@@ -31,8 +31,3 @@ buf = scale(Images.scaleinfo(Uint32, img), img) # Images.uint32color(img)
 @assert compare32(buf, gray32) # == gray32
 b = blue(img)
 @assert b == gray
-
-ovr = Images.Overlay((gray, 0*gray), (RGB(1,0,1), RGB(0,1,0)), ((0,1),(0,1)))
-buf = scale(Images.scaleinfo(Uint32, ovr), ovr) # Images.uint32color(ovr)
-nogreen = [uint32(g)<<16 | uint32(g) for g in gray8]
-@assert compare32(buf, nogreen)

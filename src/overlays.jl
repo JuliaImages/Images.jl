@@ -33,15 +33,22 @@ end
 # Returns the overlay as an image, if possible
 function OverlayImage(channels::(AbstractArray...), colors::(ColorType...), arg)
     ovr = Overlay(channels, colors, arg)
+    local prop
+    haveprop = false
     for i = 1:length(channels)
         if isa(channels[i], AbstractImage)
             prop = copy(properties(channels[i]))
-            haskey(prop, "colorspace") && delete!(prop, "colorspace")
-            haskey(prop, "limits") && delete!(prop, "limits")
-            return Image(ovr, prop)
+            haveprop = true
+            break
         end
     end
-    colorim(ovr)
+    if !haveprop
+        prop = properties(channels[1])
+    end
+    haskey(prop, "colorspace") && delete!(prop, "colorspace")
+    haskey(prop, "colordim")   && delete!(prop, "colordim")
+    haskey(prop, "limits")     && delete!(prop, "limits")
+    Image(ovr, prop)
 end
 
 for NC = 1:3
@@ -65,7 +72,7 @@ end
     end
 end
 
-
+setindex!(O::Overlay, val, I::Real...) = error("Overlays are read-only. Convert to Image{RGB} to adjust values.")
 
 
 #### Other Overlay support functions ####
@@ -75,11 +82,11 @@ size(o::Overlay) = isempty(o.channels) ? (0,) : size(o.channels[1])
 size(o::Overlay, d::Integer) = isempty(o.channels) ? 0 : size(o.channels[1],d)
 nchannels(o::Overlay) = length(o.channels)
 
-similar(o::Overlay) = Array(RGB, size(o))
-similar(o::Overlay, ::NTuple{0}) = Array(RGB, size(o))
+similar(o::Overlay) = Array(eltype(o), size(o))
+similar(o::Overlay, ::NTuple{0}) = Array(eltype(o), size(o))
 similar{T}(o::Overlay, ::Type{T}) = Array(T, size(o))
 similar{T}(o::Overlay, ::Type{T}, sz::Int64) = Array(T, sz)
 similar{T}(o::Overlay, ::Type{T}, sz::Int64...) = Array(T, sz)
 similar{T}(o::Overlay, ::Type{T}, sz) = Array(T, sz)
 
-show(io::IO, o::Overlay) = print(io, summary(o), " with colors ", o.colors)
+showcompact(io::IO, o::Overlay) = print(io, summary(o), " with colors ", o.colors)

@@ -1,5 +1,6 @@
 include("colortypes.jl")
 include("core.jl")
+include("overlays.jl")
 include("io.jl")
 include("readnrrd.jl")
 @linux_only include("readremote.jl")
