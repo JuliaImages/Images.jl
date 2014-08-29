@@ -58,21 +58,21 @@ scale1{CT<:ColorType,N}(scalei::BitShift{CT,N}, val::Ufixed) = _scale(eltype(CT)
 # The Clamp types just enforce bounds, but do not scale or offset
 
 # Types and constructors
-abstract Clamp{T} <: ScaleInfo{T}
-immutable ClampMin{T,From} <: Clamp{T}
+abstract AbstractClamp{T} <: ScaleInfo{T}
+immutable ClampMin{T,From} <: AbstractClamp{T}
     min::From
 end
 ClampMin{T,From}(::Type{T}, min::From) = ClampMin{T,From}(min)
-immutable ClampMax{T,From} <: Clamp{T}
+immutable ClampMax{T,From} <: AbstractClamp{T}
     max::From
 end
 ClampMax{T,From}(::Type{T}, max::From) = ClampMax{T,From}(max)
-immutable ClampMinMax{T,From} <: Clamp{T}
+immutable ClampMinMax{T,From} <: AbstractClamp{T}
     min::From
     max::From
 end
 ClampMinMax{T,From}(::Type{T}, min::From, max::From) = ClampMinMax{T,From}(min,max)
-immutable Clamp01{T} <: Clamp{T} end  # specialized for clamping between 0 and 1
+immutable Clamp{T} <: AbstractClamp{T} end  # specialized for clamping colorvalues (e.g., 0 to 1 for RGB, also fractional)
 
 # Implementation
 scale{T<:Real,F<:Real}(scalei::ClampMin{T,F}, val::F) = convert(T, max(val, scalei.min))
@@ -85,8 +85,8 @@ scale1{CT<:ColorType,F<:Fractional}(scalei::ClampMin{CT,F}, val::F) = convert(el
 scale1{CT<:ColorType,F<:Fractional}(scalei::ClampMax{CT,F}, val::F) = convert(eltype(CT), min(val, scalei.max))
 scale1{CT<:ColorType,F<:Fractional}(scalei::ClampMinMax{CT,F}, val::F) = convert(eltype(CT), min(max(val, scalei.min), scalei.max))
 
-scale{To<:Real}(::Clamp01{To}, val::Real) = clamp01(To, val)
-scale1{CT<:ColorType}(::Clamp01{CT}, val::Real) = clamp01(eltype(CT), val)
+scale{To<:Real}(::Clamp{To}, val::Real) = clamp01(To, val)
+scale1{CT<:Union(AbstractRGB,AbstractRGBA)}(::Clamp{CT}, val::Real) = clamp01(eltype(CT), val)
 
 # Also available as a stand-alone function
 clamp01{T}(::Type{T}, x::Real) = convert(T, min(max(x, zero(x)), one(x)))
@@ -157,7 +157,7 @@ ScaleAutoMinMax() = ScaleAutoMinMax{Ufixed8}()
 # Conversions to RGB{T}, RGBA{T}, RGB24, ARGB32,
 # for grayscale, AbstractRGB, and abstract ARGB inputs.
 # This essentially "vectorizes" scale using scale1
-for SI in (ScaleInfo, Clamp)
+for SI in (ScaleInfo, AbstractClamp)
     for ST in subtypes(SI)
         ST.abstract && continue
         ST == ScaleSigned && continue  # ScaleSigned gives an RGB from a scalar, so don't "vectorize" it
@@ -340,12 +340,12 @@ for ACV in (ColorValue, AbstractRGB,AbstractGray)
         CVnew = CV<:AbstractGray ? Gray : RGB
         @eval scaleinfo{T<:Ufixed}(::Type{ImageMagick}, img::AbstractArray{$CV{T}}) = ScaleNone{$CVnew{T}}()
         @eval scaleinfo{T<:FloatingPoint}(::Type{ImageMagick}, img::AbstractArray{$CV{T}}) =
-            Clamp01{$CVnew{Ufixed8}}()
+            Clamp{$CVnew{Ufixed8}}()
         CVnew = CV<:AbstractGray ? Gray : BGR
         for AC in subtypes(AbstractAlphaColorValue)
             (length(AC.parameters) == 2 && !(AC.abstract)) || continue
             @eval scaleinfo{T<:Ufixed}(::Type{ImageMagick}, img::AbstractArray{$AC{$CV{T},T}}) = ScaleNone{$AC{$CVnew{T},T}}()
-            @eval scaleinfo{T<:FloatingPoint}(::Type{ImageMagick}, img::AbstractArray{$AC{$CV{T},T}}) = Clamp01{$AC{$CVnew{Ufixed8}, Ufixed8}}()
+            @eval scaleinfo{T<:FloatingPoint}(::Type{ImageMagick}, img::AbstractArray{$AC{$CV{T},T}}) = Clamp{$AC{$CVnew{Ufixed8}, Ufixed8}}()
         end
     end
 end

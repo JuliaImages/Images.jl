@@ -2,9 +2,9 @@ module Images
 
 import Base.Order: Ordering, ForwardOrdering, ReverseOrdering
 import Base.Graphics: width, height
-import Base: convert, copy, copy!, ctranspose, delete!, eltype, float32, float64,
+import Base: clamp, convert, copy, copy!, ctranspose, delete!, eltype, float32, float64,
              get, getindex, haskey, length, maximum, minimum, ndims, one, parent,
-             permutedims, reinterpret, scale, scale!, setindex!, show, similar,
+             permutedims, reinterpret, scale, scale!, setindex!, show, showcompact, similar,
              size, slice, squeeze, strides, sub, sum, write, writemime, zero
 
 using Color, FixedPointNumbers
@@ -82,9 +82,10 @@ export # types
     Image,
     ImageCmap,
     BitShift,
-    ClipMin,
-    ClipMax,
-    ClipMinMax,
+    ClampMin,
+    ClampMax,
+    ClampMinMax,
+    Clamp,
     LabeledArray,
     Overlay,
     OverlayImage,
@@ -125,11 +126,11 @@ export # types
     maxabsfinite,
     maxfinite,
     minfinite,
+    nchannels,
     ncolorelem,
     nimages,
     pixelspacing,
     properties,
-    refim,
     rerange!,
     reslice!,
     restrict,
@@ -182,8 +183,6 @@ export # types
     
     # Scaling of intensity
     climdefault,
-    float32sc,
-    float64sc,
     sc,
     scale,
     scaleinfo,
@@ -233,10 +232,14 @@ export # types
     # phantoms
     shepp_logan
 
+export # Deprecated exports
+    ClipMin,
+    ClipMax,
+    ClipMinMax,
+    float32sc,
+    float64sc
 
-@deprecate cairoRGB     uint32color!
-@deprecate refim        getindexim
-@deprecate scaledefault climdefault
+
 @deprecate scaleminmax  ScaleMinMax
 @deprecate float32sc    float32
 @deprecate float64sc    float64
