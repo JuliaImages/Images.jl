@@ -2,9 +2,9 @@ module ColorTypes
 
 using Color, FixedPointNumbers
 import Color: Fractional, _convert
-import Base: clamp, convert, length, promote_array_type, promote_rule
+import Base: ==, clamp, convert, length, promote_array_type, promote_rule
 
-export ARGB, BGR, RGB1, RGB4, BGRA, AbstractGray, Gray, GrayAlpha, AGray32, YIQ, AlphaColor, ColorType
+export ARGB, BGR, RGB1, RGB4, BGRA, AbstractGray, Gray, GrayAlpha, Gray24, AGray32, YIQ, AlphaColor, ColorType
 
 typealias ColorType Union(ColorValue, AbstractAlphaColorValue)
 
@@ -64,6 +64,9 @@ abstract AbstractGray{T} <: ColorValue{T}
 immutable Gray{T<:Fractional} <: AbstractGray{T}
     val::T
 end
+# convert{T}(::Type{Gray{T}}, x::Gray{T}) = x
+# convert{T}(::Type{T}, x::Gray{T}) = x.val
+# convert{T}(::Type{Gray{T}}, x::T) = Gray{T}(x)
 
 immutable Gray24 <: ColorValue{Uint8}
     color::Uint32
@@ -71,6 +74,8 @@ end
 Gray24() = Gray24(0)
 Gray24(val::Uint8) = (g = uint32(val); g<<16 | g<<8 | g)
 Gray24(val::Ufixed8) = Gray24(reinterpret(val))
+
+convert(::Type{Uint32}, g::Gray24) = g.color
 
 
 typealias GrayAlpha{T} AlphaColorValue{Gray{T}, T}
@@ -81,6 +86,8 @@ end
 AGray32() = AGray32(0)
 AGray32(val::Uint8, alpha::Uint8) = (g = uint32(val); uint32(alpha)<<24 | g<<16 | g<<8 | g)
 AGray32(val::Ufixed8, alpha::Ufixed8) = AGray32(reinterpret(val), reinterpret(alpha))
+
+convert(::Type{Uint32}, g::AGray32) = g.color
 
 
 convert(::Type{RGB}, x::Gray) = RGB(x.val, x.val, x.val)
@@ -181,5 +188,15 @@ for (CV, CVstr, fields) in ((BGR,  "BGR",  (:(c.r),:(c.g),:(c.b))),
                             (GrayAlpha, "GrayAlpha", (:(c.c.val),:(c.alpha))))
     Color.makeshow(CV, CVstr, fields)
 end
+
+for T in (RGB24, ARGB32, Gray24, AGray32)
+    @eval begin
+        ==(x::Uint32, y::$T) = x == convert(Uint32, y)
+        ==(x::$T, y::Uint32) = ==(y, x)
+    end
+end
+=={T}(x::Gray{T}, y::Gray{T}) = x.val == y.val
+=={T}(x::T, y::Gray{T}) = x == convert(T, y)
+=={T}(x::Gray{T}, y::T) = ==(y, x)
 
 end

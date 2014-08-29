@@ -26,7 +26,7 @@ s = similar(ovr, RGB{Float32}, (3,2))
 buf = Images.uint32color(ovr) #scale(Images.scaleinfo(Uint32, ovr), ovr) # Images.uint32color(ovr)
 gray8 = uint8(255*gray)
 nogreen = [uint32(g)<<16 | uint32(g) for g in gray8]
-@assert compare32(buf, nogreen)
+@test buf == nogreen
 
 ovr = Images.Overlay((gray, 0*gray), [RGB(1,0,1), RGB(0,1,0)], ([0,1],[0,1]))
 @test_throws ErrorException Images.Overlay((gray, 0*gray), (RGB(1,0,1), RGB(0,1,0)), ((0,),(0,1)))
