@@ -34,17 +34,41 @@ mapi = BitShift{Ufixed8,7}()
 @chk map(mapi, 0xf0ffuf16) 0xffuf8
 mapi = BitShift{ARGB32,4}()
 @chk map(mapi, 0xffuf8) ARGB32(0xff0f0f0f)
+mapi = BitShift{RGB24,2}()
+@chk map(mapi, Gray(0xffuf8)) RGB24(0x003f3f3f)
+mapi = BitShift{ARGB32,2}()
+@chk map(mapi, Gray(0xffuf8)) ARGB32(0xff3f3f3f)
+@chk map(mapi, GrayAlpha{Ufixed8}(Gray(0xffuf8),0x3fuf8)) ARGB32(0x0f3f3f3f)
+mapi = BitShift{RGB{Ufixed8},2}()
+@chk map(mapi, Gray(0xffuf8)) RGB(0x3fuf8, 0x3fuf8, 0x3fuf8)
+mapi = BitShift{ARGB{Ufixed8},2}()
+@chk map(mapi, Gray(0xffuf8)) ARGB{Ufixed8}(0x3fuf8, 0x3fuf8, 0x3fuf8, 0xffuf8)
+@chk map(mapi, GrayAlpha{Ufixed8}(Gray(0xffuf8),0x3fuf8)) ARGB{Ufixed8}(0x3fuf8, 0x3fuf8, 0x3fuf8, 0x0fuf8)
+mapi = BitShift{RGBA{Ufixed8},2}()
+@chk map(mapi, Gray(0xffuf8)) RGBA{Ufixed8}(0x3fuf8, 0x3fuf8, 0x3fuf8, 0xffuf8)
+@chk map(mapi, GrayAlpha{Ufixed8}(Gray(0xffuf8),0x3fuf8)) RGBA{Ufixed8}(0x3fuf8, 0x3fuf8, 0x3fuf8, 0x0fuf8)
+mapi = BitShift(ARGB{Ufixed8}, 8)
+@chk map(mapi, RGB{Ufixed16}(1.0,0.8,0.6)) ARGB{Ufixed8}(1.0,0.8,0.6,1.0)
+mapi = BitShift(RGBA{Ufixed8}, 8)
+@chk map(mapi, RGB{Ufixed16}(1.0,0.8,0.6)) RGBA{Ufixed8}(1.0,0.8,0.6,1.0)
 
 # Clamp
 mapi = ClampMin(Float32, 0.0)
 @chk map(mapi,  1.2) 1.2f0
 @chk map(mapi, -1.2) 0.0f0
+mapi = ClampMin(RGB24, 0.0f0)
+@chk map(mapi, RGB{Float32}(-5.3,0.4,0.8)) RGB24(0x000066cc)
 mapi = ClampMax(Float32, 1.0)
 @chk map(mapi,  1.2)  1.0f0
 @chk map(mapi, -1.2) -1.2f0
+mapi = ClampMax(RGB24, 1.0f0)
+@chk map(mapi, RGB{Float32}(0.2,1.3,0.8)) RGB24(0x0033ffcc)
 mapi = ClampMinMax(Float32, 0.0, 1.0)
 @chk map(mapi,  1.2) 1.0f0
 @chk map(mapi, -1.2) 0.0f0
+mapi = ClampMinMax(ARGB32, 0.0f0, 1.0f0)
+@chk map(mapi, RGB{Float32}(-0.2,1.3,0.8)) ARGB32(0xff00ffcc)
+@chk map(mapi, ARGB{Float32}(-0.2,1.3,0.8,0.6)) ARGB32(0x9900ffcc)
 mapi = Clamp(Float32)
 @chk map(mapi,  1.2) 1.0f0
 @chk map(mapi, -1.2) 0.0f0
@@ -70,6 +94,8 @@ mapi = Clamp(RGBA{Ufixed8})
 @chk map(mapi, 0.2) RGBA{Ufixed8}(0.2,0.2,0.2,1.0)
 @chk map(mapi, GrayAlpha{Float32}(Gray(0.2),1.2)) RGBA{Ufixed8}(0.2,0.2,0.2,1.0)
 @chk map(mapi, GrayAlpha{Float32}(Gray(-.4),0.8)) RGBA{Ufixed8}(0.0,0.0,0.0,0.8)
+
+@chk clamp(RGB{Float32}(-0.2,0.5,1.8)) RGB{Float32}(0.0,0.5,1.0)
 @chk clamp(ARGB{Float64}(1.2,0.5,-.3,0.2)) ARGB{Float64}(1.0,0.5,0.0,0.2)
 @chk clamp(RGBA{Float64}(1.2,0.5,-.3,0.2)) RGBA{Float64}(1.0,0.5,0.0,0.2)
 
@@ -82,6 +108,16 @@ mapi = ScaleMinMax(Ufixed8, 100, 1000)
 @chk map(mapi, 550) Ufixed8(0.5)
 mapinew = ScaleMinMax(Ufixed8, [100,500,1000])
 @test mapinew == mapi
+mapinew = ScaleMinMax(Ufixed8, [0,500,2000], convert(Uint16, 100), convert(Uint16, 1000))
+@test mapinew == mapi
+mapi = ScaleMinMax(ARGB32, 100, 1000)
+@chk map(mapi, 100) ARGB32(0x00,0x00,0x00,0xff)
+@chk map(mapi, 550) ARGB32(0x80,0x80,0x80,0xff)
+@chk map(mapi,2000) ARGB32(0xff,0xff,0xff,0xff)
+mapi = ScaleMinMax(RGB{Float32}, 100, 1000)
+@chk map(mapi,  50) RGB(0.0f0, 0.0f0, 0.0f0)
+@chk map(mapi, 550) RGB{Float32}(0.5, 0.5, 0.5)
+@chk map(mapi,2000) RGB(1.0f0, 1.0f0, 1.0f0)
 
 # ScaleSigned
 mapi = ScaleSigned(Float32, 1/5)
@@ -99,6 +135,8 @@ mapi = ScaleSigned(RGB24, 1.0f0/10)
 mapi = ScaleAutoMinMax()
 A = [100,550,1000]
 @chk map(mapi, A) ufixed8([0.0,0.5,1.0])
+mapi = ScaleAutoMinMax(RGB24)
+@chk map(mapi, A) RGB24[0x00000000, 0x00808080, 0x00ffffff]
 
 # scaling, ssd
 img = Images.grayim(fill(typemax(Uint16), 3, 3))
@@ -158,3 +196,10 @@ buf = map(Images.mapinfo(Uint32, img), img) # Images.uint32color(img)
 @test buf == gray32
 b = blue(img)
 @test b == gray
+
+# map and indexed images
+img = Images.ImageCmap([1 2 3; 3 2 1], [RGB{Ufixed16}(1.0,0.6,0.4), RGB{Ufixed16}(0.2, 0.4, 0.6), RGB{Ufixed16}(0.5,0.5,0.5)])
+mapi = MapNone(RGB{Ufixed8})
+imgd = map(mapi, img)
+cmap = [RGB{Ufixed8}(1.0,0.6,0.4), RGB{Ufixed8}(0.2, 0.4, 0.6), RGB{Ufixed8}(0.5,0.5,0.5)]
+@test imgd == reshape(cmap[[1,3,2,2,3,1]], (2,3))

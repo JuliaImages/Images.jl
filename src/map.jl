@@ -26,6 +26,7 @@ abstract MapInfo{T}
 immutable MapNone{T} <: MapInfo{T}; end
 
 # Constructors
+MapNone{T}(::Type{T}) = MapNone{T}()
 MapNone{T}(val::T) = MapNone{T}()
 MapNone{T}(A::AbstractArray{T}) = MapNone{T}()
 
@@ -45,8 +46,7 @@ map{T}(mapi::MapNone{T}, img::AbstractArray{T}) = img
 #    map(BitShift{Uint8,7}(), 0xf0ff) == 0xff rather than 0xe1 even though 0xf0ff>>>7 == 0x01e1
 
 immutable BitShift{T,N} <: MapInfo{T} end
-
-# Must directly use BitShift{T,N}() to construct, because passing an argument N would not be type stable
+BitShift{T}(::Type{T}, n::Int) = BitShift{T,n}()  # note that this is not type-stable
 
 # Implementation
 immutable BS{N} end
@@ -134,7 +134,7 @@ immutable ScaleMinMax{To,From,S<:FloatingPoint} <: MapInfo{To}
 end
 
 ScaleMinMax{To,From}(::Type{To}, min::From, max::From, s::FloatingPoint) = ScaleMinMax{To,From,typeof(s)}(min, max, s)
-ScaleMinMax{To<:Fractional,From<:Real}(::Type{To}, mn::From, mx::From) = ScaleMinMax(To, mn, mx, 1.0f0/(mx-mn))
+ScaleMinMax{To<:Union(Fractional,ColorType),From<:Real}(::Type{To}, mn::From, mx::From) = ScaleMinMax(To, mn, mx, 1.0f0/(mx-mn))
 
 # ScaleMinMax constructors that take AbstractArray input
 ScaleMinMax{To,From}(::Type{To}, img::AbstractArray{From}, mn::Real, mx::Real) = ScaleMinMax(To, convert(From,mn), convert(From,mx), 1.0f0/(mx-mn))
@@ -144,11 +144,11 @@ function map{To<:Real,From<:Real}(mapi::ScaleMinMax{To,From}, val::From)
     t = ifelse(val < mapi.min, zero(From), ifelse(val > mapi.max, mapi.max-mapi.min, val-mapi.min))
     convert(To, mapi.s*t)
 end
-function map1{To<:Union(RGB24,ARGB32),From<:Fractional}(mapi::ScaleMinMax{To,From}, val::From)
+function map1{To<:Union(RGB24,ARGB32),From}(mapi::ScaleMinMax{To,From}, val::From)
     t = ifelse(val < mapi.min, zero(From), ifelse(val > mapi.max, mapi.max-mapi.min, val-mapi.min))
     convert(Ufixed8, mapi.s*t)
 end
-function map1{To<:ColorType,From<:Fractional}(mapi::ScaleMinMax{To,From}, val::From)
+function map1{To<:ColorType,From}(mapi::ScaleMinMax{To,From}, val::From)
     t = ifelse(val < mapi.min, zero(From), ifelse(val > mapi.max, mapi.max-mapi.min, val-mapi.min))
     convert(eltype(To), mapi.s*t)
 end
@@ -201,7 +201,7 @@ for SI in (MapInfo, AbstractClamp)
                 x = map1(mapi, g)
                 convert(ARGB32, ARGB{Ufixed8}(x,x,x,0xffuf8))
             end
-            function map(mapi::$ST{ARGB32}, g::GrayAlpha)
+            function map{T}(mapi::$ST{ARGB32}, g::GrayAlpha{T})
                 x = map1(mapi, g.c.val)
                 convert(ARGB32, ARGB{Ufixed8}(x,x,x,map1(mapi, g.alpha)))
             end
@@ -219,6 +219,7 @@ for SI in (MapInfo, AbstractClamp)
                 x = map1(mapi, g.c.val)
                 ARGB{T}(x,x,x,map1(mapi, g.alpha))
             end
+            map{T}(mapi::$ST{RGBA{T}}, g::Gray) = map(mapi, g.val)
             function map{T}(mapi::$ST{RGBA{T}}, g::Real)
                 x = map1(mapi, g)
                 RGBA{T}(x,x,x)
@@ -233,14 +234,20 @@ for SI in (MapInfo, AbstractClamp)
             map{C<:AbstractRGB, TC}(mapi::$ST{ARGB32}, argb::AbstractAlphaColorValue{C,TC}) =
                 convert(ARGB32, ARGB{Ufixed8}(map1(mapi, argb.c.r), map1(mapi, argb.c.g),
                                               map1(mapi, argb.c.b), map1(mapi, argb.alpha)))
+            map(mapi::$ST{ARGB32}, rgb::AbstractRGB) =
+                convert(ARGB32, ARGB{Ufixed8}(map1(mapi, rgb.r), map1(mapi, rgb.g), map1(mapi, rgb.b)))
             map{T}(mapi::$ST{RGB{T}}, rgb::AbstractRGB) =
                 RGB{T}(map1(mapi, rgb.r), map1(mapi, rgb.g), map1(mapi, rgb.b))
             map{T, C<:AbstractRGB, TC}(mapi::$ST{ARGB{T}}, argb::AbstractAlphaColorValue{C,TC}) =
                 ARGB{T}(map1(mapi, argb.c.r), map1(mapi, argb.c.g),
-                                      map1(mapi, argb.c.b), map1(mapi, argb.alpha))
+                        map1(mapi, argb.c.b), map1(mapi, argb.alpha))
             map{T, C<:AbstractRGB, TC}(mapi::$ST{RGBA{T}}, argb::AbstractAlphaColorValue{C,TC}) =
                 RGBA{T}(map1(mapi, argb.c.r), map1(mapi, argb.c.g),
                         map1(mapi, argb.c.b), map1(mapi, argb.alpha))
+            map{T}(mapi::$ST{ARGB{T}}, rgb::AbstractRGB) =
+                ARGB{T}(map1(mapi, rgb.r), map1(mapi, rgb.g), map1(mapi, rgb.b))
+            map{T}(mapi::$ST{RGBA{T}}, rgb::AbstractRGB) =
+                RGBA{T}(map1(mapi, rgb.r), map1(mapi, rgb.g), map1(mapi, rgb.b))
         end
     end
 end
