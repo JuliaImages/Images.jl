@@ -9,12 +9,12 @@ export ARGB, BGR, RGB1, RGB4, BGRA, AbstractGray, Gray, GrayAlpha, Gray24, AGray
 typealias ColorType Union(ColorValue, AbstractAlphaColorValue)
 
 # An alpha-channel-first memory layout
-immutable AlphaColor{C<:ColorValue, T<:Number} <: AbstractAlphaColorValue{C,T}
+immutable AlphaColor{C<:ColorValue, T<:Fractional} <: AbstractAlphaColorValue{C,T}
     alpha::T
     c::C
 
-    AlphaColor(x1::T, x2::T, x3::T, alpha::T) = new(alpha, C(x1, x2, x3))
-    AlphaColor(c::C, alpha::T) = new(alpha, c)
+    AlphaColor(x1::Real, x2::Real, x3::Real, alpha::Real = 1.0) = new(alpha, C(x1, x2, x3))
+    AlphaColor(c::ColorValue, alpha::Real) = new(alpha, c)
 end
 AlphaColor{T<:Fractional}(c::ColorValue{T}, alpha::T = one(T)) = AlphaColor{typeof(c),T}(c, alpha)
 
@@ -27,7 +27,7 @@ immutable BGR{T<:Fractional} <: AbstractRGB{T}
     g::T
     r::T
 
-    BGR(r::Number, g::Number, b::Number) = new(b, g, r)
+    BGR(r::Real, g::Real, b::Real) = new(b, g, r)
 end
 BGR(r::Integer, g::Integer, b::Integer) = BGR{Float64}(r, g, b)
 BGR(r::Fractional, g::Fractional, b::Fractional) = (T = promote_type(typeof(r), typeof(g), typeof(b)); BGR{T}(r, g, b))
@@ -42,7 +42,7 @@ immutable RGB1{T<:Fractional} <: AbstractRGB{T}
     g::T
     b::T
 
-    RGB1(r::Number, g::Number, b::Number) = new(one(T), r, g, b)
+    RGB1(r::Real, g::Real, b::Real) = new(one(T), r, g, b)
 end
 RGB1(r::Integer, g::Integer, b::Integer) = RGB1{Float64}(r, g, b)
 RGB1(r::Fractional, g::Fractional, b::Fractional) = (T = promote_type(typeof(r), typeof(g), typeof(b)); RGB1{T}(r, g, b))
@@ -53,7 +53,7 @@ immutable RGB4{T<:Fractional} <: AbstractRGB{T}
     b::T
     alphadummy::T
 
-    RGB4(r::Number, g::Number, b::Number) = new(r, g, b, one(T))
+    RGB4(r::Real, g::Real, b::Real) = new(r, g, b, one(T))
 end
 RGB4(r::Integer, g::Integer, b::Integer) = RGB4{Float64}(r, g, b)
 RGB4(r::Fractional, g::Fractional, b::Fractional) = (T = promote_type(typeof(r), typeof(g), typeof(b)); RGB4{T}(r, g, b))
@@ -64,9 +64,10 @@ abstract AbstractGray{T} <: ColorValue{T}
 immutable Gray{T<:Fractional} <: AbstractGray{T}
     val::T
 end
-# convert{T}(::Type{Gray{T}}, x::Gray{T}) = x
-# convert{T}(::Type{T}, x::Gray{T}) = x.val
-# convert{T}(::Type{Gray{T}}, x::T) = Gray{T}(x)
+convert{T}(::Type{Gray{T}}, x::Gray{T}) = x
+convert{T,S}(::Type{Gray{T}}, x::Gray{S}) = Gray{T}(x.val)
+convert{T<:Real}(::Type{T}, x::Gray) = convert(T, x.val)
+convert{T}(::Type{Gray{T}}, x::Real) = Gray{T}(x)
 
 immutable Gray24 <: ColorValue{Uint8}
     color::Uint32
@@ -99,7 +100,7 @@ immutable YIQ{T<:FloatingPoint} <: ColorValue{T}
     i::T
     q::T
 
-    YIQ(y::Number, i::Number, q::Number) = new(y, i, q)
+    YIQ(y::Real, i::Real, q::Real) = new(y, i, q)
 end
 YIQ(y::FloatingPoint, i::FloatingPoint, q::FloatingPoint) = (T = promote_type(typeof(y), typeof(i), typeof(q)); YIQ{T}(y, i, q))
 

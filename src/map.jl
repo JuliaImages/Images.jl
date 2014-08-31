@@ -31,6 +31,7 @@ MapNone{T}(A::AbstractArray{T}) = MapNone{T}()
 
 # Implementation
 map{T<:Real}(mapi::MapNone{T}, val::Real) = convert(T, val)
+map{C<:ColorValue}(mapi::MapNone{C}, c::ColorValue) = convert(C, c)
 map1(mapi::Union(MapNone{RGB24},MapNone{ARGB32}), val::Fractional) = convert(Ufixed8, val)
 map1{CT<:ColorType}(mapi::MapNone{CT}, val::Fractional) = convert(eltype(CT), val)
 
@@ -76,6 +77,7 @@ immutable ClampMinMax{T,From} <: AbstractClamp{T}
 end
 ClampMinMax{T,From}(::Type{T}, min::From, max::From) = ClampMinMax{T,From}(min,max)
 immutable Clamp{T} <: AbstractClamp{T} end  # specialized for clamping colorvalues (e.g., 0 to 1 for RGB, also fractional)
+Clamp{T}(::Type{T}) = Clamp{T}()
 
 # Implementation
 map{T<:Real,F<:Real}(mapi::ClampMin{T,F}, val::F) = convert(T, max(val, mapi.min))
@@ -89,16 +91,38 @@ map1{CT<:ColorType,F<:Fractional}(mapi::ClampMax{CT,F}, val::F) = convert(eltype
 map1{CT<:ColorType,F<:Fractional}(mapi::ClampMinMax{CT,F}, val::F) = convert(eltype(CT), min(max(val, mapi.min), mapi.max))
 
 map{To<:Real}(::Clamp{To}, val::Real) = clamp01(To, val)
-map1{CT<:Union(AbstractRGB,AbstractRGBA)}(::Clamp{CT}, val::Real) = clamp01(eltype(CT), val)
+map1{CT<:AbstractRGB}(::Clamp{CT}, val::Real) = clamp01(eltype(CT), val)
+map1{CT<:AbstractRGB,T}(::Clamp{AlphaColor{CT,T}}, val::Real) = clamp01(T, val)
+map1{CT<:AbstractRGB,T}(::Clamp{AlphaColorValue{CT,T}}, val::Real) = clamp01(T, val)
 
 # Also available as a stand-alone function
 clamp01{T}(::Type{T}, x::Real) = convert(T, min(max(x, zero(x)), one(x)))
 clamp01(x::Real) = clamp01(typeof(x), x)
-clamp01{To}(::Type{RGB{To}}, x::AbstractRGB) = RGB{To}(clamp01(To, x.r), clamp01(To, x.g), clamp01(To, x.b))
-clamp01{T}(x::AbstractRGB{T}) = clamp01(RGB{T}, x)
+for CV in subtypes(AbstractRGB)
+    @eval begin
+        clamp01{T}(x::$CV{T}) = clamp01($CV{T}, x)
+        clamp01{To}(::Type{$CV{To}}, x::AbstractRGB) = $CV{To}(clamp01(To, x.r), clamp01(To, x.g), clamp01(To, x.b))
+        clamp01{T}(x::AlphaColor{$CV{T},T}) = clamp01(AlphaColor{$CV{T},T}, x)
+        clamp01{T}(x::AlphaColorValue{$CV{T},T}) = clamp01(AlphaColorValue{$CV{T},T}, x)
+        clamp01{To,CV2<:AbstractRGB}(::Type{AlphaColor{$CV{To},To}}, x::AlphaColor{CV2}) =
+            AlphaColor{$CV{To},To}(clamp01(To, x.c.r), clamp01(To, x.c.g), clamp01(To, x.c.b), clamp01(To, x.alpha))
+        clamp01{To,CV2<:AbstractRGB}(::Type{AlphaColorValue{$CV{To},To}}, x::AlphaColorValue{CV2}) =
+            AlphaColorValue{$CV{To},To}(clamp01(To, x.c.r), clamp01(To, x.c.g), clamp01(To, x.c.b), clamp01(To, x.alpha))
+        clamp01{To,CV2<:AbstractRGB}(::Type{AlphaColor{$CV{To},To}}, x::AlphaColorValue{CV2}) =
+            AlphaColor{$CV{To},To}(clamp01(To, x.c.r), clamp01(To, x.c.g), clamp01(To, x.c.b), clamp01(To, x.alpha))
+        clamp01{To,CV2<:AbstractRGB}(::Type{AlphaColorValue{$CV{To},To}}, x::AlphaColor{CV2}) =
+            AlphaColorValue{$CV{To},To}(clamp01(To, x.c.r), clamp01(To, x.c.g), clamp01(To, x.c.b), clamp01(To, x.alpha))
+    end
+end
 
+# clamp is generic for any colorspace; this version does the right thing for any RGB type
 clamp(x::AbstractRGB) = clamp01(x)
-
+for CV in subtypes(AbstractRGB)
+    @eval begin
+        clamp{T}(x::AlphaColorValue{$CV{T},T}) = clamp01(x)
+        clamp{T}(x::AlphaColor{$CV{T},T}) = clamp01(x)
+    end
+end
 
 ## ScaleMinMax
 # This clamps, subtracts the min value, then scales
@@ -142,7 +166,7 @@ ScaleSigned{T}(::Type{T}, s::FloatingPoint) = ScaleSigned{T, typeof(s)}(s)
 ScaleSigned{T}(::Type{T}, img::AbstractArray) = ScaleSigned(T, 1.0f0/maxabsfinite(img))
 ScaleSigned(img::AbstractArray) = ScaleSigned(Float32, img)
 
-map{T}(mapi::ScaleSigned{T}, val::Real) = clamppm(T, mapi.s*val)
+map{T}(mapi::ScaleSigned{T}, val::Real) = convert(T, clamppm(mapi.s*val))
 function map{C<:Union(RGB24, RGB{Ufixed8})}(mapi::ScaleSigned{C}, val::Real)
     x = clamppm(mapi.s*val)
     g = Ufixed8(abs(x))
@@ -155,6 +179,7 @@ clamppm(x::Real) = ifelse(x >= 0, min(x, one(x)), max(x, -one(x)))
 # Works only on whole arrays, not values
 
 immutable ScaleAutoMinMax{T} <: MapInfo{T} end
+ScaleAutoMinMax{T}(::Type{T}) = ScaleAutoMinMax{T}()
 ScaleAutoMinMax() = ScaleAutoMinMax{Ufixed8}()
 
 
@@ -174,7 +199,7 @@ for SI in (MapInfo, AbstractClamp)
             map(mapi::$ST{ARGB32}, g::Gray) = map(mapi, g.val)
             function map(mapi::$ST{ARGB32}, g::Real)
                 x = map1(mapi, g)
-                convert(ARGB32, ARGB{Ufixed8}(x,x,x))
+                convert(ARGB32, ARGB{Ufixed8}(x,x,x,0xffuf8))
             end
             function map(mapi::$ST{ARGB32}, g::GrayAlpha)
                 x = map1(mapi, g.c.val)
@@ -188,11 +213,19 @@ for SI in (MapInfo, AbstractClamp)
             map{T}(mapi::$ST{ARGB{T}}, g::Gray) = map(mapi, g.val)
             function map{T}(mapi::$ST{ARGB{T}}, g::Real)
                 x = map1(mapi, g)
-                AlphaColor{RGB{T}, T}(x,x,x)
+                ARGB{T}(x,x,x)
             end
-            function map{T}(mapi::$ST{ARGB{T}}, g::GrayAlpha)
+            function map{T,S}(mapi::$ST{ARGB{T}}, g::GrayAlpha{S})
                 x = map1(mapi, g.c.val)
-                AlphaColor{RGB{T}, T}(x,x,x,map1(mapi, g.alpha))
+                ARGB{T}(x,x,x,map1(mapi, g.alpha))
+            end
+            function map{T}(mapi::$ST{RGBA{T}}, g::Real)
+                x = map1(mapi, g)
+                RGBA{T}(x,x,x)
+            end
+            function map{T,S}(mapi::$ST{RGBA{T}}, g::GrayAlpha{S})
+                x = map1(mapi, g.c.val)
+                RGBA{T}(x,x,x,map1(mapi, g.alpha))
             end
             # AbstractRGB and abstract ARGB inputs
             map(mapi::$ST{RGB24}, rgb::AbstractRGB) =
@@ -203,8 +236,11 @@ for SI in (MapInfo, AbstractClamp)
             map{T}(mapi::$ST{RGB{T}}, rgb::AbstractRGB) =
                 RGB{T}(map1(mapi, rgb.r), map1(mapi, rgb.g), map1(mapi, rgb.b))
             map{T, C<:AbstractRGB, TC}(mapi::$ST{ARGB{T}}, argb::AbstractAlphaColorValue{C,TC}) =
-                AlphaColor{RGB{T}, T}(map1(mapi, argb.c.r), map1(mapi, argb.c.g),
+                ARGB{T}(map1(mapi, argb.c.r), map1(mapi, argb.c.g),
                                       map1(mapi, argb.c.b), map1(mapi, argb.alpha))
+            map{T, C<:AbstractRGB, TC}(mapi::$ST{RGBA{T}}, argb::AbstractAlphaColorValue{C,TC}) =
+                RGBA{T}(map1(mapi, argb.c.r), map1(mapi, argb.c.g),
+                        map1(mapi, argb.c.b), map1(mapi, argb.alpha))
         end
     end
 end
@@ -272,7 +308,7 @@ end
 # NC is the number of color channels
 # This is a very flexible implementation: color can be stored along any dimension, and it handles conversions to
 # many different colorspace representations.
-for (CT, NC) in ((Union(AbstractRGB,RGB24), 3), (Union(AbstractRGBA,ARGB32), 4), (Union(GrayAlpha,AGray32), 2))
+for (CT, NC) in ((Union(AbstractRGB,RGB24), 3), (Union(RGBA,ARGB,ARGB32), 4), (Union(GrayAlpha,AGray32), 2))
     for N = 1:4
         N1 = N+1
         @eval begin
