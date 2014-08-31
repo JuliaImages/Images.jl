@@ -3,8 +3,8 @@ module Images
 import Base.Order: Ordering, ForwardOrdering, ReverseOrdering
 import Base.Graphics: width, height
 import Base: atan2, clamp, convert, copy, copy!, ctranspose, delete!, eltype, float32, float64,
-             get, getindex, haskey, hypot, length, maximum, minimum, ndims, one, parent,
-             permutedims, reinterpret, scale, scale!, setindex!, show, showcompact, similar,
+             get, getindex, haskey, hypot, length, map, map!, maximum, minimum, ndims, one,
+             parent, permutedims, reinterpret, setindex!, show, showcompact, similar,
              size, slice, sqrt, squeeze, strides, sub, sum, write, writemime, zero
 
 using Color, FixedPointNumbers
@@ -29,11 +29,11 @@ include("colortypes.jl")
 using .ColorTypes
 
 include("core.jl")
+include("map.jl")
 include("overlays.jl")
 const have_imagemagick = include("ioformats/libmagickwand.jl")
 @osx_only include("ioformats/OSXnative.jl")
 include("io.jl")
-include("scaling.jl")
 include("labeledarrays.jl")
 include("algorithms.jl")
 include("connected.jl")
@@ -89,12 +89,12 @@ export # types
     ClampMinMax,
     Clamp,
     LabeledArray,
+    MapInfo,
+    MapNone,
     Overlay,
     OverlayImage,
     ScaleAutoMinMax,
-    ScaleInfo,
     ScaleMinMax,
-    ScaleNone,
     ScaleSigned,
     SliceData,
 
@@ -182,12 +182,9 @@ export # types
     ycbcr2rgb,
     
     # Scaling of intensity
-    climdefault,
     sc,
     scale,
-    scaleinfo,
-    scaleminmax,
-    scalesigned,
+    mapinfo,
     uint8sc,
     uint16sc,
     uint32sc,
@@ -249,10 +246,15 @@ export # Deprecated exports
     ClipMin,
     ClipMax,
     ClipMinMax,
+    ScaleInfo,
+    climdefault,
     float32sc,
     float64sc,
     ntsc2rgb,
-    rgb2ntsc
+    rgb2ntsc,
+    scaleinfo,
+    scaleminmax,
+    scalesigned
 
 
 @deprecate scaleminmax  ScaleMinMax
@@ -270,7 +272,12 @@ export # Deprecated exports
 @deprecate ntsc2rgb(A::AbstractImage)  convert(Image{RGB}, A)
 @deprecate rgb2ntsc(A::AbstractArray)  convert(Array{YIQ}, A)
 @deprecate rgb2ntsc(A::AbstractImage)  convert(Image{YIQ}, A)
+@deprecate scaleinfo    mapinfo
+@deprecate scale(mapi::MapInfo, A) map(mapi, A)
+@deprecate scale!(dest, mapi::MapInfo, A) map!(mapi, dest, A)
 
+
+const ScaleInfo = MapInfo  # can't deprecate types?
 
 if VERSION < v"0.3-"
   __init__()

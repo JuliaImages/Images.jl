@@ -23,9 +23,6 @@ end
 ImageCmap(data::AbstractArray, cmap::AbstractVector, props::Dict) = ImageCmap{eltype(cmap),ndims(data),typeof(data)}(data, cmap, props)
 ImageCmap(data::AbstractArray, cmap::AbstractVector; kwargs...) = ImageCmap(data, cmap, kwargs2dict(kwargs))
 
-# Dispatch-based scaling/clipping/type conversion
-abstract ScaleInfo{T}
-
 # Convenience constructors
 grayim(A::AbstractImage) = A
 grayim(A::AbstractArray{Uint8,2})  = grayim(reinterpret(Ufixed8, A))

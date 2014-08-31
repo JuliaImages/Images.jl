@@ -176,7 +176,7 @@ end
 import Base.mimewritable
 Base.mimewritable(::MIME"image/png", img::AbstractImage) = sdims(img) == 2 && timedim(img) == 0
 
-function _writemime(stream::IO, ::MIME"image/png", img::AbstractImage; scalei=scaleinfo(ImageMagick, img))
+function _writemime(stream::IO, ::MIME"image/png", img::AbstractImage; mapi=mapinfo(ImageMagick, img))
     assert2d(img)
     if isa(img, AbstractImageIndexed)
         # For now, convert to direct
@@ -192,13 +192,13 @@ function _writemime(stream::IO, ::MIME"image/png", img::AbstractImage; scalei=sc
     if eltype(A) != eltype(img)
         A = truncround(eltype(img), A)
     end
-    wand = image2wand(share(img, A), scalei, nothing)
+    wand = image2wand(share(img, A), mapi, nothing)
     blob = LibMagick.getblob(wand, "png")
     write(stream, blob)
 end
-writemime{C<:RGB}(stream::IO, mime::MIME"image/png", img::AbstractImage{C}; scalei = scaleinfo(C,img)) = _writemime(stream, mime, img, scalei=scalei)
+writemime{C<:RGB}(stream::IO, mime::MIME"image/png", img::AbstractImage{C}; mapi = mapinfo(C,img)) = _writemime(stream, mime, img, mapi=mapi)
 writemime{C<:ColorType}(stream::IO, mime::MIME"image/png", img::AbstractImage{C}; kwargs...) = writemime(stream, mime, convert(Image{RGB}, img); kwargs...)
-writemime(stream::IO, mime::MIME"image/png", img::AbstractImage; scalei = scaleinfo(Ufixed8,img)) = _writemime(stream, mime, img, scalei=scalei)
+writemime(stream::IO, mime::MIME"image/png", img::AbstractImage; mapi = mapinfo(Ufixed8,img)) = _writemime(stream, mime, img, mapi=mapi)
 
 #### Implementation of specific formats ####
 
@@ -264,17 +264,17 @@ end
 
 imread{C<:ColorType}(filename::String, ::Type{ImageMagick}, ::Type{C}) = convert(Image{C}, imread(filename, ImageMagick))
 
-function imwrite(img, filename::String, ::Type{ImageMagick}; scalei = scaleinfo(ImageMagick, img), quality = nothing)
-    wand = image2wand(img, scalei, quality)
+function imwrite(img, filename::String, ::Type{ImageMagick}; mapi = mapinfo(ImageMagick, img), quality = nothing)
+    wand = image2wand(img, mapi, quality)
     LibMagick.writeimage(wand, filename)
 end
 
-function image2wand(img, scalei, quality)
+function image2wand(img, mapi, quality)
     if isa(img, AbstractImageIndexed)
         # For now, convert to direct
         img = convert(Image, img)
     end
-    imgw = scale(scalei, img)
+    imgw = map(mapi, img)
     imgw = permutedims_horizontal(imgw)
     have_color = colordim(imgw)!=0
     if ndims(imgw) > 3+have_color
@@ -296,6 +296,27 @@ function image2wand(img, scalei, quality)
     wand
 end
 
+# ImageMagick mapinfo client. Converts to RGB and uses Ufixed.
+mapinfo{T<:Ufixed}(::Type{ImageMagick}, img::AbstractArray{T}) = MapNone{T}()
+mapinfo{T<:FloatingPoint}(::Type{ImageMagick}, img::AbstractArray{T}) = ClampMinMax(Ufixed8, zero(T), one(T))
+for ACV in (ColorValue, AbstractRGB,AbstractGray)
+    for CV in subtypes(ACV)
+        (length(CV.parameters) == 1 && !(CV.abstract)) || continue
+        CVnew = CV<:AbstractGray ? Gray : RGB
+        @eval mapinfo{T<:Ufixed}(::Type{ImageMagick}, img::AbstractArray{$CV{T}}) = MapNone{$CVnew{T}}()
+        @eval mapinfo{T<:FloatingPoint}(::Type{ImageMagick}, img::AbstractArray{$CV{T}}) =
+            Clamp{$CVnew{Ufixed8}}()
+        CVnew = CV<:AbstractGray ? Gray : BGR
+        for AC in subtypes(AbstractAlphaColorValue)
+            (length(AC.parameters) == 2 && !(AC.abstract)) || continue
+            @eval mapinfo{T<:Ufixed}(::Type{ImageMagick}, img::AbstractArray{$AC{$CV{T},T}}) = MapNone{$AC{$CVnew{T},T}}()
+            @eval mapinfo{T<:FloatingPoint}(::Type{ImageMagick}, img::AbstractArray{$AC{$CV{T},T}}) = Clamp{$AC{$CVnew{Ufixed8}, Ufixed8}}()
+        end
+    end
+end
+
+
+
 # Make the data contiguous in memory, this is necessary for imagemagick since it doesn't handle stride.
 to_contiguous(A::AbstractArray) = A
 to_contiguous(A::SubArray) = copy(A)
@@ -303,41 +324,41 @@ to_contiguous(A::SubArray) = copy(A)
 to_explicit(A::AbstractArray) = A
 to_explicit{T<:Ufixed}(A::AbstractArray{T}) = reinterpret(FixedPointNumbers.rawtype(T), A)
 to_explicit{T<:Ufixed}(A::AbstractArray{RGB{T}}) = reinterpret(FixedPointNumbers.rawtype(T), A, tuple(3, size(A)...))
-to_explicit{T<:FloatingPoint}(A::AbstractArray{RGB{T}}) = to_explicit(scale(ClipMinMax(RGB{Ufixed8}, zero(RGB{T}), one(RGB{T})), A))
+to_explicit{T<:FloatingPoint}(A::AbstractArray{RGB{T}}) = to_explicit(map(ClipMinMax(RGB{Ufixed8}, zero(RGB{T}), one(RGB{T})), A))
 to_explicit{T<:Ufixed}(A::AbstractArray{GrayAlpha{T}}) = reinterpret(FixedPointNumbers.rawtype(T), A, tuple(2, size(A)...))
-to_explicit{T<:FloatingPoint}(A::AbstractArray{GrayAlpha{T}}) = to_explicit(scale(ClipMinMax(GrayAlpha{Ufixed8}, zero(GrayAlpha{T}), one(GrayAlpha{T})), A))
+to_explicit{T<:FloatingPoint}(A::AbstractArray{GrayAlpha{T}}) = to_explicit(map(ClipMinMax(GrayAlpha{Ufixed8}, zero(GrayAlpha{T}), one(GrayAlpha{T})), A))
 to_explicit{T<:Ufixed}(A::AbstractArray{BGRA{T}}) = reinterpret(FixedPointNumbers.rawtype(T), A, tuple(4, size(A)...))
-to_explicit{T<:FloatingPoint}(A::AbstractArray{BGRA{T}}) = to_explicit(scale(ClipMinMax(BGRA{Ufixed8}, zero(BGRA{T}), one(BGRA{T})), A))
+to_explicit{T<:FloatingPoint}(A::AbstractArray{BGRA{T}}) = to_explicit(map(ClipMinMax(BGRA{Ufixed8}, zero(BGRA{T}), one(BGRA{T})), A))
 
 # Write values in permuted order
 let method_cache = Dict()
 global writepermuted
-function writepermuted(stream, img, scalei::ScaleInfo, perm; gray2color::Bool = false)
+function writepermuted(stream, img, mapi::MapInfo, perm; gray2color::Bool = false)
     cd = colordim(img)
     key = (perm, cd, gray2color)
     if !haskey(method_cache, key)
-        scalefunc = cd > 0 ? (:scale1) : (:scale)
+        mapfunc = cd > 0 ? (:map1) : (:map)
         loopsyms = [symbol(string("i_",d)) for d = 1:ndims(img)]
         body = gray2color ? quote
-                g = $scalefunc(scalei, img[$(loopsyms...)])
+                g = $mapfunc(mapi, img[$(loopsyms...)])
                 write(stream, g)
                 write(stream, g)
                 write(stream, g)
             end : quote
-                write(stream, $scalefunc(scalei, img[$(loopsyms...)]))
+                write(stream, $mapfunc(mapi, img[$(loopsyms...)]))
             end
         loopargs = [:($(loopsyms[d]) = 1:size(img, $d)) for d = 1:ndims(img)]
         loopexpr = Expr(:for, Expr(:block, loopargs[perm[end:-1:1]]...), body)
         f = @eval begin
             local _writefunc_
-            function _writefunc_(stream, img, scalei)
+            function _writefunc_(stream, img, mapi)
                 $loopexpr
             end
         end
     else
         f = method_cache[key]
     end
-    f(stream, img, scalei)
+    f(stream, img, mapi)
     nothing
 end
 end
@@ -463,23 +484,23 @@ pnmmax{T<:FloatingPoint}(::Type{T}) = 255
 pnmmax{T<:Ufixed}(::Type{T}) = reinterpret(FixedPointNumbers.rawtype(T), one(T))
 pnmmax{T<:Unsigned}(::Type{T}) = typemax(T)
 
-function imwrite{T<:ColorValue}(img::AbstractArray{T}, s::IO, ::Type{PPMBinary}, scalei = scaleinfo(ImageMagick, img))
+function imwrite{T<:ColorValue}(img::AbstractArray{T}, s::IO, ::Type{PPMBinary}, mapi = mapinfo(ImageMagick, img))
     w, h = widthheight(img)
     TE = eltype(T)
     mx = pnmmax(TE)
     write(s, "$w $h\n$mx\n")
     p = permutation_horizontal(img)
-    writepermuted(s, img, scalei, p; gray2color = T <: AbstractGray)
+    writepermuted(s, img, mapi, p; gray2color = T <: AbstractGray)
 end
 
-function imwrite{T}(img::AbstractArray{T}, s::IO, ::Type{PPMBinary}, scalei = scaleinfo(ImageMagick, img))
+function imwrite{T}(img::AbstractArray{T}, s::IO, ::Type{PPMBinary}, mapi = mapinfo(ImageMagick, img))
     w, h = widthheight(img)
     cs = colorspace(img)
     in(cs, ("RGB", "Gray")) || error("colorspace $cs not supported")
     mx = pnmmax(T)
     write(s, "$w $h\n$mx\n")
     p = permutation_horizontal(img)
-    writepermuted(s, img, scalei, p; gray2color = cs == "Gray")
+    writepermuted(s, img, mapi, p; gray2color = cs == "Gray")
 end
 
 

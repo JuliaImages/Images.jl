@@ -19,10 +19,10 @@ for N = 1:4
     @eval begin
         # All but the last of these are inside the @eval loop simply to avoid ambiguity warnings.
         # These first two are additional ones needed to avoid ambiguity warnings.
-        _uint32color_gray!{T}(buf::Array{Uint32}, A::LabeledArray{T,$N}, scalei::ScaleSigned) = error("Cannot use ScaleSigned with a labeled array")
-        _uint32color_gray!{T,L<:LabeledArray}(buf::Array{Uint32}, A::SubArray{T,$N,L}, scalei::ScaleSigned) = error("Cannot use ScaleSigned with a labeled array")
+        _uint32color_gray!{T}(buf::Array{Uint32}, A::LabeledArray{T,$N}, mapi::ScaleSigned) = error("Cannot use ScaleSigned with a labeled array")
+        _uint32color_gray!{T,L<:LabeledArray}(buf::Array{Uint32}, A::SubArray{T,$N,L}, mapi::ScaleSigned) = error("Cannot use ScaleSigned with a labeled array")
         
-        function _uint32color_gray!{T}(buf::Array{Uint32}, A::LabeledArray{T,$N}, scalei::ScaleInfo = scaleinfo(Uint8, A))
+        function _uint32color_gray!{T}(buf::Array{Uint32}, A::LabeledArray{T,$N}, mapi::MapInfo = mapinfo(Uint8, A))
             if size(buf) != size(A)
                 error("Size mismatch")
             end
@@ -30,7 +30,7 @@ for N = 1:4
             label = A.label
             col = A.colors
             for i = 1:length(dat)
-                gr = scale(scalei, dat[i])
+                gr = map(mapi, dat[i])
                 lbl = label[i]
                 if lbl == 0
                     buf[i] = rgb24(gr,gr,gr)
@@ -43,7 +43,7 @@ for N = 1:4
 
         # For SubArrays, we can't efficiently use linear indexing, and in any event
         # we want to broadcast label where necessary
-        function _uint32color_gray!{T,A<:LabeledArray}(buf::Array{Uint32}, S::SubArray{T,$N,A}, scalei::ScaleInfo = scaleinfo(Uint8, A))
+        function _uint32color_gray!{T,A<:LabeledArray}(buf::Array{Uint32}, S::SubArray{T,$N,A}, mapi::MapInfo = mapinfo(Uint8, A))
             if size(buf) != size(S)
                 error("Size mismatch")
             end
@@ -53,14 +53,14 @@ for N = 1:4
             newindexes = RangeIndex[size(plabel,i)==1 ? (isa(indexes[i], Int) ? 1 : (1:1)) : indexes[i]  for i = 1:ndims(plabel)]
             label = slice(plabel, newindexes...)
             col = S.parent.colors
-            _uint32color_labeled(buf, dat, label, col, scalei) # type of label can't be inferred, use function boundary
+            _uint32color_labeled(buf, dat, label, col, mapi) # type of label can't be inferred, use function boundary
         end
         
-        function _uint32color_labeled{T}(buf, dat::AbstractArray{T,$N}, label, col, scalei)
+        function _uint32color_labeled{T}(buf, dat::AbstractArray{T,$N}, label, col, mapi)
             k = 0
             @inbounds @nloops $N i buf begin
                 val = @nref $N dat i
-                gr = scale(scalei, val)
+                gr = map(mapi, val)
                 lbl = @nref $N label i
                 if lbl == 0
                     buf[k+=1] = rgb24(gr,gr,gr)
