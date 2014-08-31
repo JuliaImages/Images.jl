@@ -25,31 +25,6 @@ img2 = img ./ A
 img2 = (2img).^2
 imgu = Images.grayim(Uint8[1 240; 10 128])  # from #101
 
-# scaling, ssd
-img = Images.grayim(fill(typemax(Uint16), 3, 3))
-scalei = Images.scaleinfo(Ufixed8, img)
-img8 = scale(scalei, img)
-@assert all(img8 .== typemax(Ufixed8))
-mnA, mxA = 1.0, -1.0
-while mnA > 0 || mxA < 0
-    A = randn(3,3)
-    mnA, mxA = extrema(A)
-end
-offset = 30.0
-img = convert(Images.Image, A .+ offset)
-scalei = Images.ScaleMinMax(Ufixed8, offset, offset+mxA, 1/mxA)
-imgs = scale(scalei, img)
-@assert minimum(imgs) == 0
-@assert maximum(imgs) == 1
-@assert eltype(imgs) == Ufixed8
-imgs = Images.imadjustintensity(img, [])
-mnA = minimum(A)
-@assert Images.ssd(imgs, (A.-mnA)/(mxA-mnA)) < eps()
-A = reshape(1:9, 3, 3)
-B = scale(Images.ClampMin(Float32, 3), A)
-@assert eltype(B) == Float32 && B == [3 4 7; 3 5 8; 3 6 9]
-B = scale(Images.ClampMax(Uint8, 7), A)
-@assert eltype(B) == Uint8 && B == [1 4 7; 2 5 7; 3 6 7]
 
 # Reductions
 let

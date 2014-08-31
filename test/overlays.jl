@@ -23,7 +23,7 @@ s = similar(ovr, RGB{Float32})
 @test isa(s, Vector{RGB{Float32}}) && length(s) == 5
 s = similar(ovr, RGB{Float32}, (3,2))
 @test isa(s, Matrix{RGB{Float32}}) && size(s) == (3,2)
-buf = Images.uint32color(ovr) #scale(Images.scaleinfo(Uint32, ovr), ovr) # Images.uint32color(ovr)
+buf = Images.uint32color(ovr)
 gray8 = uint8(255*gray)
 nogreen = [uint32(g)<<16 | uint32(g) for g in gray8]
 @test buf == nogreen
