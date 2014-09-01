@@ -58,12 +58,6 @@ storagetype(::Type{Float64}) = DOUBLEPIXEL
 storagetype{T<:Ufixed}(::Type{T}) = storagetype(FixedPointNumbers.rawtype(T))
 storagetype{CV<:ColorValue}(::Type{CV}) = storagetype(eltype(CV))
 storagetype{CV<:AbstractAlphaColorValue}(::Type{CV}) = storagetype(eltype(CV))
-# storagetype{T<:Ufixed,CV}(::Type{T}) = storagetype(Uint16)
-# storagetype{T<:Ufixed}(::Type{RGB{T}}) = storagetype(Uint16)
-# storagetype(::Type{BGRA{Ufixed8}}) = storagetype(Uint8)
-# storagetype{T<:Ufixed}(::Type{BGRA{T}}) = storagetype(Uint16)
-# storagetype(::Type{GrayAlpha{Ufixed8}}) = storagetype(Uint8)
-# storagetype{T<:Ufixed}(::Type{GrayAlpha{T}}) = storagetype(Uint16)
 
 # Image type
 const IMType = ["BilevelType", "GrayscaleType", "GrayscaleMatteType", "PaletteType", "PaletteMatteType", "TrueColorType", "TrueColorMatteType", "ColorSeparationType", "ColorSeparationMatteType", "OptimizeType", "PaletteBilevelMatteType"]
