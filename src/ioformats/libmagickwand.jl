@@ -287,6 +287,24 @@ pixelsetcolor(wand::PixelWand, colorstr::ByteString) = ccall((:PixelSetColor, li
 
 relinquishmemory(p) = ccall((:MagickRelinquishMemory, libwand), Ptr{Uint8}, (Ptr{Uint8},), p)
 
+# get library information
+# If you pass in "*", you get the full list of options
+function queryoptions(pattern::String)
+    nops = Cint[0]
+    pops = ccall((:MagickQueryConfigureOptions, libwand), Ptr{Ptr{Uint8}}, (Ptr{Uint8}, Ptr{Cint}), pattern, nops)
+    ret = Array(ASCIIString, nops[1])
+    for i = 1:nops[1]
+        ret[i] = bytestring(unsafe_load(pops, i))
+    end
+    ret
+end
+
+# queries the value of a particular option
+function queryoption(option::String)
+    p = ccall((:MagickQueryConfigureOption, libwand), Ptr{Uint8}, (Ptr{Uint8},), option)
+    bytestring(p)
+end
+
 # Implementation of fdopen
 # Delete this once 0.3 or greater is common, and use the CFILE mechanism
 function fdopen(s::IO)
