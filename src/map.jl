@@ -196,6 +196,7 @@ for SI in (MapInfo, AbstractClamp)
             # Grayscale and GrayAlpha inputs
             map(mapi::$ST{RGB24}, g::Gray) = map(mapi, g.val)
             map(mapi::$ST{RGB24}, g::Real) = (x = map1(mapi, g); convert(RGB24, RGB{Ufixed8}(x,x,x)))
+            map{T}(mapi::$ST{RGB24}, g::GrayAlpha{T}) = map(mapi, g.c.val)
             map(mapi::$ST{ARGB32}, g::Gray) = map(mapi, g.val)
             function map(mapi::$ST{ARGB32}, g::Real)
                 x = map1(mapi, g)
@@ -231,6 +232,9 @@ for SI in (MapInfo, AbstractClamp)
             # AbstractRGB and abstract ARGB inputs
             map(mapi::$ST{RGB24}, rgb::AbstractRGB) =
                 convert(RGB24, RGB{Ufixed8}(map1(mapi, rgb.r), map1(mapi, rgb.g), map1(mapi, rgb.b)))
+            map{C<:AbstractRGB, TC}(mapi::$ST{RGB24}, argb::AbstractAlphaColorValue{C,TC}) =
+                convert(RGB24, RGB{Ufixed8}(map1(mapi, argb.c.r), map1(mapi, argb.c.g),
+                                            map1(mapi, argb.c.b)))
             map{C<:AbstractRGB, TC}(mapi::$ST{ARGB32}, argb::AbstractAlphaColorValue{C,TC}) =
                 convert(ARGB32, ARGB{Ufixed8}(map1(mapi, argb.c.r), map1(mapi, argb.c.g),
                                               map1(mapi, argb.c.b), map1(mapi, argb.alpha)))
@@ -238,6 +242,8 @@ for SI in (MapInfo, AbstractClamp)
                 convert(ARGB32, ARGB{Ufixed8}(map1(mapi, rgb.r), map1(mapi, rgb.g), map1(mapi, rgb.b)))
             map{T}(mapi::$ST{RGB{T}}, rgb::AbstractRGB) =
                 RGB{T}(map1(mapi, rgb.r), map1(mapi, rgb.g), map1(mapi, rgb.b))
+            map{T,C<:AbstractRGB, TC}(mapi::$ST{RGB{T}}, argb::AbstractAlphaColorValue{C,TC}) =
+                RGB{T}(map1(mapi, argb.c.r), map1(mapi, argb.c.g), map1(mapi, argb.c.b))
             map{T, C<:AbstractRGB, TC}(mapi::$ST{ARGB{T}}, argb::AbstractAlphaColorValue{C,TC}) =
                 ARGB{T}(map1(mapi, argb.c.r), map1(mapi, argb.c.g),
                         map1(mapi, argb.c.b), map1(mapi, argb.alpha))
@@ -353,6 +359,7 @@ for (T,n) in bitshiftto8
     @eval mapinfo(::Type{Gray{Ufixed8}}, img::GrayArray{$T}) = BitShift{Gray{Ufixed8},$n}()
 end
 mapinfo{T<:Ufixed,F<:FloatingPoint}(::Type{T}, img::AbstractArray{F}) = ClampMinMax(T, zero(F), one(F))
+mapinfo{T<:FloatingPoint, R<:Real}(::Type{T}, img::AbstractArray{R}) = MapNone(T)
 mapinfo{F<:Fractional}(::Type{RGB24}, img::GrayArray{F}) = ClampMinMax(RGB24, zero(F), one(F))
 mapinfo{F<:Fractional}(::Type{ARGB32}, img::AbstractArray{F}) = ClampMinMax(ARGB32, zero(F), one(F))
 mapinfo(::Type{RGB24}, img::AbstractArray{RGB24}) = MapNone{RGB24}()
@@ -360,19 +367,25 @@ mapinfo(::Type{ARGB32}, img::AbstractArray{ARGB32}) = MapNone{ARGB32}()
 
 
 # Color->RGB24/ARGB32
-for C in subtypes(AbstractRGB)
+for C in tuple(subtypes(AbstractRGB)..., Gray)
     @eval mapinfo(::Type{RGB24}, img::AbstractArray{$C{Ufixed8}}) = MapNone{RGB24}()
+    @eval mapinfo(::Type{ARGB32}, img::AbstractArray{$C{Ufixed8}}) = MapNone{ARGB32}()
     for (T, n) in bitshiftto8
         @eval mapinfo(::Type{RGB24}, img::AbstractArray{$C{$T}}) = BitShift{RGB24, $n}()
+        @eval mapinfo(::Type{ARGB32}, img::AbstractArray{$C{$T}}) = BitShift{ARGB32, $n}()
     end
     @eval mapinfo{F<:FloatingPoint}(::Type{RGB24}, img::AbstractArray{$C{F}}) = ClampMinMax(RGB24, zero(F), one(F))
+    @eval mapinfo{F<:FloatingPoint}(::Type{ARGB32}, img::AbstractArray{$C{F}}) = ClampMinMax(ARGB32, zero(F), one(F))
     for AC in subtypes(AbstractAlphaColorValue)
         length(AC.parameters) == 2 || continue
         @eval mapinfo(::Type{ARGB32}, img::AbstractArray{$AC{$C{Ufixed8},Ufixed8}}) = MapNone{ARGB32}()
+        @eval mapinfo(::Type{RGB24}, img::AbstractArray{$AC{$C{Ufixed8},Ufixed8}}) = MapNone{RGB24}()
         for (T, n) in bitshiftto8
             @eval mapinfo(::Type{ARGB32}, img::AbstractArray{$AC{$C{$T},$T}}) = BitShift{ARGB32, $n}()
+            @eval mapinfo(::Type{RGB24}, img::AbstractArray{$AC{$C{$T},$T}}) = BitShift{RGB24, $n}()
         end
         @eval mapinfo{F<:FloatingPoint}(::Type{ARGB32}, img::AbstractArray{$AC{$C{F},F}}) = ClampMinMax(ARGB32, zero(F), one(F))
+        @eval mapinfo{F<:FloatingPoint}(::Type{RGB24}, img::AbstractArray{$AC{$C{F},F}}) = ClampMinMax(RGB24, zero(F), one(F))
     end
 end
 
@@ -380,7 +393,7 @@ end
 # and RGB24 when not
 mapinfo{CV<:Union(Fractional,ColorValue)}(::Type{Uint32}, img::AbstractArray{CV}) = mapinfo(RGB24, img)
 mapinfo{CV<:AbstractAlphaColorValue}(::Type{Uint32}, img::AbstractArray{CV}) = mapinfo(ARGB32, img)
-mapinfo(::Type{Uint32}, img::AbstractArray{Uint32}) = MapNone{Uint32}()  # define and use a Ufixed18 if you need 32 bits for your camera!
+mapinfo(::Type{Uint32}, img::AbstractArray{Uint32}) = MapNone{Uint32}()
 
 # ImageMagick client is defined in io.jl
 

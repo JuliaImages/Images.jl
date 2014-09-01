@@ -32,7 +32,10 @@ outname = joinpath(writedir, "jigsaw_tmpl.png")
 imwrite(img, outname)
 imgc = imread(outname)
 @test img.data == imgc.data
-
+@test reinterpret(Uint32, data(map(mapinfo(RGB24, img), img))) ==
+    map(x->x&0x00ffffff, reinterpret(Uint32, data(map(mapinfo(ARGB32, img), img))))
+@test mapinfo(Uint32, img) == mapinfo(RGB24, img)
+@test data(convert(Image{Float32}, img)) == float32(data(img))
 
 # Gray with alpha channel
 file = getfile("wmark_image.png")
@@ -46,6 +49,9 @@ imwrite(img, outname)
 sleep(0.2)
 imgc = imread(outname)
 @test img.data == imgc.data   # libmagick bug: doesn't write GrayAlpha properly?
+@test reinterpret(Uint32, data(map(mapinfo(RGB24, img), img))) ==
+    map(x->x&0x00ffffff, reinterpret(Uint32, data(map(mapinfo(ARGB32, img), img))))
+@test mapinfo(Uint32, img) == mapinfo(ARGB32, img)
 
 # RGB
 file = getfile("rose.png")
@@ -61,6 +67,9 @@ T = eltype(imgc)
 lim = limits(imgc)
 @test (typeof(lim[1]) == typeof(lim[2]) == T)  # issue #62
 @test img.data == imgc.data
+@test reinterpret(Uint32, data(map(mapinfo(RGB24, img), img))) ==
+    map(x->x&0x00ffffff, reinterpret(Uint32, data(map(mapinfo(ARGB32, img), img))))
+@test mapinfo(Uint32, img) == mapinfo(RGB24, img)
 
 # RGBA with 16 bit depth
 file = getfile("autumn_leaves.png")
@@ -74,11 +83,17 @@ imwrite(img, outname)
 sleep(0.2)
 imgc = imread(outname)
 @test img.data == imgc.data
+@test reinterpret(Uint32, data(map(mapinfo(RGB24, img), img))) ==
+    map(x->x&0x00ffffff, reinterpret(Uint32, data(map(mapinfo(ARGB32, img), img))))
+@test mapinfo(Uint32, img) == mapinfo(ARGB32, img)
 
 # Indexed
 file = getfile("present.gif")
 img = imread(file)
 @test nimages(img) == 1
+@test reinterpret(Uint32, data(map(mapinfo(RGB24, img), img))) ==
+    map(x->x&0x00ffffff, reinterpret(Uint32, data(map(mapinfo(ARGB32, img), img))))
+@test mapinfo(Uint32, img) == mapinfo(RGB24, img)
 
 # Images with a temporal dimension
 fname = "swirl_video.gif"
@@ -100,3 +115,6 @@ s = getindexim(img, 1:5, 1:5, 3)
 @test timedim(s) == 0
 s = sliceim(img, :, :, 5)
 @test timedim(s) == 0
+imgt = sliceim(img,"t",1)
+@test reinterpret(Uint32, data(map(mapinfo(RGB24, imgt), imgt))) ==
+    map(x->x&0x00ffffff, reinterpret(Uint32, data(map(mapinfo(ARGB32, imgt), imgt))))
