@@ -21,7 +21,9 @@ cf = RGB{Float32}(0.1,0.2,0.3)
 ccmp = RGB{Float32}(0.2,0.4,0.6)
 @test 2*cf == ccmp
 @test cf*2 == ccmp
+@test ccmp/2 == cf
 @test 2.0f0*cf == ccmp
+@test eltype(2.0*cf) == Float64
 cu = RGB{Ufixed8}(0.1,0.2,0.3)
 @test 2*cu == RGB(2*cu.r, 2*cu.g, 2*cu.b)
 @test 2.0f0*cu == RGB(2.0f0*cu.r, 2.0f0*cu.g, 2.0f0*cu.b)

@@ -162,6 +162,7 @@ for CV in subtypes(AbstractRGB)
         (.*)(f::Real, c::$CV) = (*)(f, c)
         (.*)(c::$CV, f::Real) = (*)(f, c)
         (/)(c::$CV, f::Real) = (one(f)/f)*c
+        (/)(c::$CV, f::Integer) = (one(eltype(c))/f)*c
         (./)(c::$CV, f::Real) = (/)(c, f)
         function (/){R<:FloatingPoint,T<:Ufixed}(c::$CV{T}, f::R)
             fs = one(R)/(f*reinterpret(one(T)))
