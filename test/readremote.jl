@@ -76,6 +76,22 @@ convert(Array{Gray}, img)
 convert(Image{Gray}, img)
 imgs = separate(img)
 @test permutedims(convert(Image{Gray}, imgs), [2,1]) == convert(Image{Gray}, img)
+# Make sure that all the operations in README will work:
+buf = Array(Uint32, size(img))
+uint32color(img)
+uint32color!(buf, img)
+imA = convert(Array, img)
+uint32color(imA)
+uint32color!(buf, imA)
+uint32color(imgs)
+uint32color!(buf, imgs)
+imr = reinterpret(Ufixed8, img)
+uint32color(imr)
+uint32color!(buf, imr)
+imhsv = convert(Image{HSV}, float32(img))
+uint32color(imhsv)
+uint32color!(buf, imhsv)
+
 
 # RGBA with 16 bit depth
 file = getfile("autumn_leaves.png")

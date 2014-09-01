@@ -330,7 +330,7 @@ for (CT, NC) in ((Union(AbstractRGB,RGB24), 3), (Union(RGBA,ARGB,ARGB32), 4), (U
     for N = 1:4
         N1 = N+1
         @eval begin
-function map!{T<:$CT,T1,CD}(mapi::MapInfo{T}, out::AbstractArray{T,$N}, img::AbstractArray{T1,$N1}, ::Type{TypeConst{CD}})
+function map!{T<:$CT,T1,T2,CD}(mapi::MapInfo{T}, out::AbstractArray{T1,$N}, img::AbstractArray{T2,$N1}, ::Type{TypeConst{CD}})
     mi = take(mapi, img)
     dimg = data(img)
     dout = data(out)
@@ -393,6 +393,10 @@ for C in tuple(subtypes(AbstractRGB)..., Gray)
         @eval mapinfo{F<:FloatingPoint}(::Type{RGB24}, img::AbstractArray{$AC{$C{F},F}}) = ClampMinMax(RGB24, zero(F), one(F))
     end
 end
+
+mapinfo{CT<:ColorType}(::Type{RGB24},  img::AbstractArray{CT}) = MapNone{RGB24}()
+mapinfo{CT<:ColorType}(::Type{ARGB32}, img::AbstractArray{CT}) = MapNone{ARGB32}()
+
 
 # Uint32 conversions will use ARGB32 for images that have an alpha channel,
 # and RGB24 when not
