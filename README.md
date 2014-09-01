@@ -13,9 +13,8 @@ Pkg.add("Images")
 ```
 
 It's helpful to have ImageMagick installed on your system, as Images relies on it for reading and writing many common image types.
-For unix platforms, adding the Images package should install ImageMagick for you automatically.
-**On Windows, currently you need to install ImageMagick manually** if you want to read/write most image file formats.
-More details about manual installation and troubleshooting can be found in the [installation help](doc/install.md).
+ImageMagick _should_ be installed for your automatically. In case of trouble,
+more details about manual installation and troubleshooting can be found in the [installation help](doc/install.md).
 
 ## Image viewing
 
@@ -39,10 +38,12 @@ commands with `testimage`.
 ## Getting started
 
 For these examples you'll need to install both `Images` and `ImageView`.
-Load the code for these packages with
+Depending on your task, it's also very useful to have two other packages
+loaded, `Color` and `FixedPointNumbers`.
+Load the code for all of these packages with
 
 ```julia
-using Images, ImageView
+using Images, Color, FixedPointNumbers, ImageView
 ```
 
 ### Loading your first image: how images are represented
@@ -57,8 +58,9 @@ Let's begin by reading an image from a file:
 ```
 julia> img = imread("rose.png")
 RGB Image with:
-  data: 70x46 Array{RGB{Ufixed8},2}
+  data: 70x46 Array{RGB{UfixedBase{Uint8,8}},2}
   properties:
+    IMcs: sRGB
     spatialorder:  x y
     pixelspacing:  1 1
 ```
@@ -70,17 +72,19 @@ show(img)
 ```
 to see the output above.
 
-As you can see, this is an RGB image. It is stored as a two-dimensional `Array` of `RGB{Ufixed8}`.
+The first line tells you that this is an RGB image.
+It is stored as a two-dimensional `Array` of `RGB{UfixedBase{Uint8,8}}`.
 To see what this pixel type is, we can do the following:
 ```
 julia> img[1,1]
-RGB{Ufixed8}(Ufixed8(0.188),Ufixed8(0.184),Ufixed8(0.176))
+RGB{Ufixed8}(0.188,0.184,0.176)
 ```
 This extracts the first pixel, the one visually at the upper-left of the image. You can see that
 an `RGB` (which comes from the [Color](https://github.com/JuliaLang/Color.jl) package) is a triple of values.
 The `Ufixed8` number type (which comes from the
-[FixedPointNumbers](https://github.com/JeffBezanson/FixedPointNumbers.jl) package)
-represents fractional numbers (those that can encode values between 0 and 1) using just 1 byte (8 bits).
+[FixedPointNumbers](https://github.com/JeffBezanson/FixedPointNumbers.jl) package), and whose long
+name is `UfixedBase{Uint8,8}`)
+represents fractional numbers, those that can encode values that lie between 0 and 1, using just 1 byte (8 bits).
 If you've previously used other image processing libraries, you may be used to thinking of two basic
 image types, floating point-valued and integer-valued. In those libraries, "saturated"
 (the color white for an RGB image) would be
@@ -88,11 +92,18 @@ represented by `1.0` for floating point-valued images, 255 for a `Uint8` image,
 and `0x0fff` for an image collected by a 12-bit camera.
 `Images.jl`, via Color and FixedPointNumbers, unifies these so that `1` always means saturated, no
 matter whether the element type is `Float64`, `Ufixed8`, or `Ufixed12`.
-This makes it easier to write generic algorithms and visualization packages,
+This makes it easier to write generic algorithms and visualization code,
 while still allowing one to use efficient (and C-compatible) raw representations.
 
-You can see that this image has `properties`, of which there are two: `"spatialorder"` and `"pixelspacing"`.
-We'll talk more about these in the next section.
+You can see that this image has `properties`, of which there are three:
+`"IMcs"`, `"spatialorder"` and `"pixelspacing"`.
+We'll talk more about the latter two in the next section.
+The `"IMcs"` is really for internal use by ImageMagick; it says that the colorspace
+is `"sRGB"`, although (depending on which version of the library you have)
+you may see it say `"RGB"`.
+Such differences are due to [changes](http://www.imagemagick.org/script/color-management.php)
+in how ImageMagick handles colorspaces, and the fact that both older
+and newer versions of the library are still widespread.
 
 Given an Image `img`, you can access the underlying array with `A = data(img)`.
 Images is designed to work with either plain arrays or with Image types---in general, though,
@@ -118,7 +129,7 @@ Of course, if you prefer to work with plain arrays, you can convert it:
 julia> imA = convert(Array, img);
 
 julia> summary(imA)
-"46x70 Array{RGB{Ufixed8},2}"
+"46x70 Array{RGB{UfixedBase{Uint8,8}},2}"
 ```
 You can see that this permuted the dimensions into vertical-major order, consistent
 with the column-major order with which Julia stores `Arrays`. Note that this
@@ -128,8 +139,9 @@ If you prefer to extract into an array of plain numbers in color-last order
 ```
 julia> imsep = separate(img)
 RGB Image with:
-  data: 46x70x3 Array{Ufixed8,3}
+  data: 46x70x3 Array{UfixedBase{Uint8,8},3}
   properties:
+    IMcs: sRGB
     colorspace: RGB
     colordim: 3
     spatialorder:  y x
@@ -143,14 +155,15 @@ Compare this to
 ```
 julia> imr = reinterpret(Ufixed8, img)
 RGB Image with:
-  data: 3x70x46 Array{Ufixed8,3}
+  data: 3x70x46 Array{UfixedBase{Uint8,8},3}
   properties:
+    IMcs: sRGB
     colorspace: RGB
     colordim: 1
     spatialorder:  x y
     pixelspacing:  1 1
 ```
-`reinterpret` just gives you a new view of the same underlying memory as `img`, whereas
+`reinterpret` gives you a new view of the same underlying memory as `img`, whereas
 `convert(Array, img)` and `separate(img)` create new arrays if the memory-layout
 needs alteration.
 
@@ -158,22 +171,41 @@ You can go back to using ColorValues to encode your image this way:
 ```
 julia> imcomb = convert(Image{RGB}, imsep)
 RGB Image with:
-  data: 46x70 Array{RGB{Ufixed8},2}
+  data: 46x70 Array{RGB{UfixedBase{Uint8,8}},2}
   properties:
+    IMcs: sRGB
     spatialorder:  y x
     pixelspacing:  1 1
 ```
 or even change to a new colorspace like this:
 ```
-julia> convert(Image{HSV}, float32(img))
+julia> imhsv = convert(Image{HSV}, float32(img))
 HSV Image with:
   data: 70x46 Array{HSV{Float32},2}
   properties:
+    IMcs: sRGB
     spatialorder:  x y
     pixelspacing:  1 1
 ```
 Many of the colorspaces supported by Color need a wider range of values than `[0,1]`,
 so it's necessary to convert to floating point.
+
+If you say `view(imhsv)`, you may be surprised to see something that looks
+like the original RGB image. Since the colorspace is known, it converts
+to RGB before rendering it. If, for example, you wanted to see what a
+"pure-V" image looks like, you can do this:
+```julia
+imv = share(imhsv, [HSV(0, 0, imhsv[i,j].v) for i = 1:size(imhsv,1),j = 1:size(imhsv,2)])
+view(imv)
+```
+and a pure-H image like this:
+```julia
+imh = share(imhsv, [HSV(imhsv[i,j].h, 0.5, 0.5) for i = 1:size(imhsv,1),j = 1:size(imhsv,2)])
+view(imh)
+```
+(Hue without saturation or value generates gray or black, so we used a constant different from zero for these parameters.)
+
+![raw](doc/figures/rose_hsv.png)
 
 ### Other properties, and usage of Units
 
@@ -203,14 +235,14 @@ using Images, TestImages, ImageView
 img = testimage("mandrill")
 view(img)
 # Let's do some blurring
-kern = ones(7,7)/49
+kern = ones(Float32,7,7)/49
 imgf = imfilter(img, kern)
 view(imgf)
 # Let's make an oversaturated image
 imgs = 2imgf
 view(imgs)
 ```
-![processing](figures/mandrill.jpg)
+![processing](doc/figures/mandrill.jpg)
 
 
 ## Further documentation ##
@@ -231,4 +263,8 @@ that once lived in Julia's `extras/` directory.
 That file had several authors, of which the primary were
 Jeff Bezanson, Stefan Kroboth, Tim Holy, Mike Nolta, and Stefan Karpinski.
 This repository has been quite heavily reworked;
-the current package maintainer is Tim Holy.
+the current package maintainer is Tim Holy, and
+important contributions have been made by Ron Rock,
+Kevin Squire, Lucas Beyer, Elliot Saba, Isaiah Norton,
+Daniel Perry, Waldir Pimenta, Tobias Knopp,
+Jason Merrill, Dahua Lin, and several others.
