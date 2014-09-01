@@ -222,40 +222,39 @@ function imread(filename::String, ::Type{ImageMagick})
         sz = tuple(sz..., n)
     end
     havealpha = LibMagick.getimagealphachannel(wand)
+    prop = (Any=>Any)["spatialorder" => ["x", "y"], "pixelspacing" => [1,1]]
     cs = LibMagick.getimagecolorspace(wand)
     if imtype == "GrayscaleType" || imtype == "GrayscaleMatteType"
         cs = "Gray"
     end
+    prop["IMcs"] = cs
     depth = LibMagick.getimagedepth(wand)
     T = ufixedtype[depth]
+    channelorder = cs
     if havealpha
-        if cs == "sRGB" || cs == "RGB"
+        if channelorder == "sRGB" || channelorder == "RGB"
             if is_little_endian
-                T, cs = BGRA{T}, "BGRA"
+                T, channelorder = BGRA{T}, "BGRA"
             else
-                T, cs = ARGB{T}, "ARGB"
+                T, channelorder = ARGB{T}, "ARGB"
             end
-        elseif cs == "Gray"
-            T, cs = GrayAlpha{T}, "IA"
+        elseif channelorder == "Gray"
+            T, channelorder = GrayAlpha{T}, "IA"
         else
-            error("Cannot parse colorspace $cs")
+            error("Cannot parse colorspace $channelorder")
         end
     else
-        if cs == "sRGB" || cs == "RGB"
-            T, cs = RGB{T}, "RGB"
-        elseif cs == "Gray"
-            cs = "I"
+        if channelorder == "sRGB" || channelorder == "RGB"
+            T, channelorder = RGB{T}, "RGB"
+        elseif channelorder == "Gray"
+            T, channelorder = Gray{T}, "I"
         else
-            error("Cannot parse colorspace $cs")
+            error("Cannot parse colorspace $channelorder")
         end
     end
     # Allocate the buffer and get the pixel data
     buf = Array(T, sz...)
-    LibMagick.exportimagepixels!(buf, wand, cs)
-    prop = (Any=>Any)["spatialorder" => ["x", "y"], "pixelspacing" => [1,1]]
-    if cs == "I"
-        prop["colorspace"] = "Gray"
-    end
+    LibMagick.exportimagepixels!(buf, wand, cs, channelorder)
     if n > 1
         prop["timedim"] = ndims(buf)
     end
@@ -281,14 +280,22 @@ function image2wand(img, mapi, quality)
         error("At most 3 dimensions are supported")
     end
     wand = LibMagick.MagickWand()
-    cs = colorspace(imgw)
-    if cs == "Gray"
-        cs = "I"
-    elseif cs == "GrayAlpha"
-        cs = "IA"
+    if haskey(img, "IMcs")
+        cs = img["IMcs"]
+    else
+        cs = colorspace(imgw)
+        if in(cs, ("RGB", "RGBA", "ARGB", "BGRA"))
+            cs = "sRGB"
+        end
+    end
+    channelorder = colorspace(imgw)
+    if channelorder == "Gray"
+        channelorder = "I"
+    elseif channelorder == "GrayAlpha"
+        channelorder = "IA"
     end
     tmp = to_explicit(to_contiguous(data(imgw)))
-    LibMagick.constituteimage(tmp, wand, cs)
+    LibMagick.constituteimage(tmp, wand, cs, channelorder)
     if quality != nothing
         LibMagick.setimagecompressionquality(wand, quality)
     end
@@ -325,6 +332,8 @@ to_explicit(A::AbstractArray) = A
 to_explicit{T<:Ufixed}(A::AbstractArray{T}) = reinterpret(FixedPointNumbers.rawtype(T), A)
 to_explicit{T<:Ufixed}(A::AbstractArray{RGB{T}}) = reinterpret(FixedPointNumbers.rawtype(T), A, tuple(3, size(A)...))
 to_explicit{T<:FloatingPoint}(A::AbstractArray{RGB{T}}) = to_explicit(map(ClipMinMax(RGB{Ufixed8}, zero(RGB{T}), one(RGB{T})), A))
+to_explicit{T<:Ufixed}(A::AbstractArray{Gray{T}}) = reinterpret(FixedPointNumbers.rawtype(T), A, size(A))
+to_explicit{T<:FloatingPoint}(A::AbstractArray{Gray{T}}) = to_explicit(map(ClipMinMax(Gray{Ufixed8}, zero(Gray{T}), one(Gray{T})), A))
 to_explicit{T<:Ufixed}(A::AbstractArray{GrayAlpha{T}}) = reinterpret(FixedPointNumbers.rawtype(T), A, tuple(2, size(A)...))
 to_explicit{T<:FloatingPoint}(A::AbstractArray{GrayAlpha{T}}) = to_explicit(map(ClipMinMax(GrayAlpha{Ufixed8}, zero(GrayAlpha{T}), one(GrayAlpha{T})), A))
 to_explicit{T<:Ufixed}(A::AbstractArray{BGRA{T}}) = reinterpret(FixedPointNumbers.rawtype(T), A, tuple(4, size(A)...))

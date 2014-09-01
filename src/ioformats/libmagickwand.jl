@@ -68,13 +68,6 @@ const CStoIMTypedict = ["Gray" => "GrayscaleType", "GrayAlpha" => "GrayscaleMatt
 # Colorspace
 const IMColorspace = ["RGB", "Gray", "Transparent", "OHTA", "Lab", "XYZ", "YCbCr", "YCC", "YIQ", "YPbPr", "YUV", "CMYK", "sRGB"]
 const IMColordict = Dict(IMColorspace, 1:length(IMColorspace))
-IMColordict["RGB"] = IMColordict["sRGB"]  # our RGB is really sRGB
-IMColordict["I"] = IMColordict["Gray"]
-IMColordict["GrayAlpha"] = IMColordict["Gray"]
-IMColordict["IA"] = IMColordict["GrayAlpha"]
-IMColordict["RGBA"] = IMColordict["sRGB"]
-IMColordict["ARGB"] = IMColordict["sRGB"]
-IMColordict["BGRA"] = IMColordict["sRGB"]
 
 function nchannels(imtype::String, cs::String, havealpha = false)
     n = 3
@@ -132,27 +125,28 @@ function error(wand::PixelWand)
     error(msg)
 end
 
-function getsize(buffer, colorspace)
-    if colorspace == "I"
+function getsize(buffer, channelorder)
+    if channelorder == "I"
         return size(buffer, 1), size(buffer, 2), size(buffer, 3)
     else
         return size(buffer, 2), size(buffer, 3), size(buffer, 4)
     end
 end
-getsize{C<:Union(ColorValue,AbstractAlphaColorValue)}(buffer::AbstractArray{C}, colorspace) = size(buffer, 1), size(buffer, 2), size(buffer, 3)
+getsize{C<:Union(ColorValue,AbstractAlphaColorValue)}(buffer::AbstractArray{C}, channelorder) = size(buffer, 1), size(buffer, 2), size(buffer, 3)
 
-colorsize(buffer, colorspace) = colorspace == "I" ? 1 : size(buffer, 1)
-colorsize{C<:Union(ColorValue,AbstractAlphaColorValue)}(buffer::AbstractArray{C}, colorspace) = 1
+colorsize(buffer, channelorder) = channelorder == "I" ? 1 : size(buffer, 1)
+colorsize{C<:Union(ColorValue,AbstractAlphaColorValue)}(buffer::AbstractArray{C}, channelorder) = 1
 
 bitdepth{C<:ColorType}(buffer::AbstractArray{C}) = 8*eltype(C)
 bitdepth{T}(buffer::AbstractArray{T}) = 8*sizeof(T)
 
-function exportimagepixels!{T}(buffer::AbstractArray{T}, wand::MagickWand,  colorspace::ASCIIString; x = 0, y = 0)
-    cols, rows, nimages = getsize(buffer, colorspace)
-    ncolors = colorsize(buffer, colorspace)
+# colorspace is included for consistency with constituteimage, but it is not used
+function exportimagepixels!{T}(buffer::AbstractArray{T}, wand::MagickWand,  colorspace::ASCIIString, channelorder::ASCIIString; x = 0, y = 0)
+    cols, rows, nimages = getsize(buffer, channelorder)
+    ncolors = colorsize(buffer, channelorder)
     p = pointer(buffer)
     for i = 1:nimages
-        status = ccall((:MagickExportImagePixels, libwand), Cint, (Ptr{Void}, Cssize_t, Cssize_t, Csize_t, Csize_t, Ptr{Uint8}, Cint, Ptr{Void}), wand.ptr, x, y, cols, rows, colorspace, storagetype(T), p)
+        status = ccall((:MagickExportImagePixels, libwand), Cint, (Ptr{Void}, Cssize_t, Cssize_t, Csize_t, Csize_t, Ptr{Uint8}, Cint, Ptr{Void}), wand.ptr, x, y, cols, rows, channelorder, storagetype(T), p)
         status == 0 && error(wand)
         nextimage(wand)
         p += sizeof(T)*cols*rows*ncolors
@@ -167,13 +161,13 @@ end
 #     nothing
 # end
 
-function constituteimage{T<:Unsigned}(buffer::AbstractArray{T}, wand::MagickWand, colorspace::ASCIIString; x = 0, y = 0)
-    cols, rows, nimages = getsize(buffer, colorspace)
-    ncolors = colorsize(buffer, colorspace)
+function constituteimage{T<:Unsigned}(buffer::AbstractArray{T}, wand::MagickWand, colorspace::ASCIIString, channelorder::ASCIIString; x = 0, y = 0)
+    cols, rows, nimages = getsize(buffer, channelorder)
+    ncolors = colorsize(buffer, channelorder)
     p = pointer(buffer)
     depth = bitdepth(buffer)
     for i = 1:nimages
-        status = ccall((:MagickConstituteImage, libwand), Cint, (Ptr{Void}, Cssize_t, Cssize_t, Ptr{Uint8}, Cint, Ptr{Void}), wand.ptr, cols, rows, colorspace, storagetype(T), p)
+        status = ccall((:MagickConstituteImage, libwand), Cint, (Ptr{Void}, Cssize_t, Cssize_t, Ptr{Uint8}, Cint, Ptr{Void}), wand.ptr, cols, rows, channelorder, storagetype(T), p)
         status == 0 && error(wand)
         setimagecolorspace(wand, colorspace)
         status = ccall((:MagickSetImageDepth, libwand), Cint, (Ptr{Void}, Csize_t), wand.ptr, depth)

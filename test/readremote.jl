@@ -27,7 +27,7 @@ img = imread(file)
 @test colorspace(img) == "Gray"
 @test ndims(img) == 2
 @test colordim(img) == 0
-@test eltype(img) == Ufixed8
+@test eltype(img) == Gray{Ufixed8}
 outname = joinpath(writedir, "jigsaw_tmpl.png")
 imwrite(img, outname)
 imgc = imread(outname)
@@ -35,7 +35,7 @@ imgc = imread(outname)
 @test reinterpret(Uint32, data(map(mapinfo(RGB24, img), img))) ==
     map(x->x&0x00ffffff, reinterpret(Uint32, data(map(mapinfo(ARGB32, img), img))))
 @test mapinfo(Uint32, img) == mapinfo(RGB24, img)
-@test data(convert(Image{Float32}, img)) == float32(data(img))
+@test data(convert(Image{Gray{Float32}}, img)) == float32(data(img))
 
 # Gray with alpha channel
 file = getfile("wmark_image.png")
