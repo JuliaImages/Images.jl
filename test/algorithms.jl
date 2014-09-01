@@ -23,7 +23,6 @@ img2 = img2 .- 0.5
 img3 = 2img .* img2
 img2 = img ./ A
 img2 = (2img).^2
-imgu = Images.grayim(Uint8[1 240; 10 128])  # from #101
 
 
 # Reductions
