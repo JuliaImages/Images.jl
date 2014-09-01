@@ -40,6 +40,10 @@ let
     @test_approx_eq Images.meanfinite(A, 1) [NaN 3.5 3.5 3.5]
     @test_approx_eq Images.meanfinite(A, 2) [2, 5]'
     @test_approx_eq Images.meanfinite(A, (1,2)) [3.5]
+    A = float32(rand(3,5,5))
+    img = Images.colorim(A, "RGB")
+    dc = data(meanfinite(img, 1))-reinterpret(RGB{Float32}, mean(A, 2), (1,5))
+    @test maximum(map(abs, dc)) < 1e-6
 end
 
 # Array padding

@@ -56,14 +56,26 @@ function sum(img::AbstractImageDirect, region::Union(AbstractVector,Tuple,Intege
     out
 end
 
-meanfinite(A::AbstractArray, region) = mean(A, region)
-function meanfinite{T<:FloatingPoint}(A::AbstractArray{T}, region)
+meanfinite{T<:Real}(A::AbstractArray{T}, region) = _meanfinite(A, T, region)
+meanfinite{CT<:ColorType}(A::AbstractArray{CT}, region) = _meanfinite(A, eltype(CT), region)
+function _meanfinite{T<:FloatingPoint}(A::AbstractArray, ::Type{T}, region)
     sz = Base.reduced_dims(A, region)
     K = zeros(Int, sz)
-    S = zeros(T, sz)
+    S = zeros(eltype(A), sz)
     sumfinite!(S, K, A)
-    copy(A, S./K)
+    S./K
 end
+_meanfinite(A::AbstractArray, ::Type, region) = mean(A, region)  # non floating-point
+
+function meanfinite{T<:FloatingPoint}(img::AbstractImageDirect{T}, region)
+    r = meanfinite(data(img), region)
+    out = copy(img, r)
+    if in(colordim(img), region)
+        out["colorspace"] = "Unknown"
+    end
+    out
+end
+meanfinite(img::AbstractImageIndexed, region) = meanfinite(convert(Image, img), region)
 # Note that you have to zero S and K upon entry
 @ngenerate N typeof((S,K)) function sumfinite!{T,N}(S, K, A::AbstractArray{T,N})
     isempty(A) && return S, K

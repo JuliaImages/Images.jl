@@ -2,7 +2,7 @@ module ColorTypes
 
 using Color, FixedPointNumbers
 import Color: Fractional, _convert
-import Base: ==, clamp, convert, length, one, promote_array_type, promote_rule, zero
+import Base: ==, abs, clamp, convert, isfinite, isinf, isnan, length, one, promote_array_type, promote_rule, zero
 
 export ARGB, BGR, RGB1, RGB4, BGRA, AbstractGray, Gray, GrayAlpha, Gray24, AGray32, YIQ, AlphaColor, ColorType
 
@@ -169,6 +169,14 @@ for CV in subtypes(AbstractRGB)
             $CV{divtype(R,T)}(fs*reinterpret(c.r), fs*reinterpret(c.g), fs*reinterpret(c.b))
         end
         (+){S,T}(a::$CV{S}, b::$CV{T}) = $CV{sumtype(S,T)}(a.r+b.r, a.g+b.g, a.b+b.b)
+        (-){S,T}(a::$CV{S}, b::$CV{T}) = $CV{sumtype(S,T)}(a.r-b.r, a.g-b.g, a.b-b.b)
+        isfinite{T<:Ufixed}(c::$CV{T}) = true
+        isfinite{T<:FloatingPoint}(c::$CV{T}) = isfinite(c.r) && isfinite(c.g) && isfinite(c.b)
+        isnan{T<:Ufixed}(c::$CV{T}) = false
+        isnan{T<:FloatingPoint}(c::$CV{T}) = isnan(c.r) && isnan(c.g) && isnan(c.b)
+        isinf{T<:Ufixed}(c::$CV{T}) = false
+        isinf{T<:FloatingPoint}(c::$CV{T}) = isinf(c.r) && isinf(c.g) && isinf(c.b)
+        abs(c::$CV) = abs(c.r)+abs(c.g)+abs(c.b) # enables @test_approx_eq and similar
     end
 end
 
@@ -182,6 +190,7 @@ for ACV in (ColorValue, AbstractRGB)
             (length(AC.parameters) == 2 && !(AC.abstract)) || continue
             @eval promote_array_type{T<:Real,S<:Real}(::Type{T}, ::Type{$AC{$CV{S},S}}) = (TS = promote_type(T, S); $AC{$CV{TS}, TS})
             @eval promote_rule{T<:Fractional,S<:Fractional}(::Type{$CV{T}}, ::Type{$CV{S}}) = $CV{promote_type(T, S)}
+            @eval promote_rule{T<:Fractional,S<:Integer}(::Type{$CV{T}}, ::Type{S}) = $CV{promote_type(T, S)} # for Array{RGB}./Array{Int}
         end
     end
 end
