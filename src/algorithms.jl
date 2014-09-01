@@ -443,14 +443,14 @@ end
 
 for N = 1:5
     @eval begin
-        function copyreal!{T<:Real}(dst::Array{T,$N}, src, I::(Range1{Int}...))
+        function copyreal!{T<:Real}(dst::Array{T,$N}, src, I::(UnitRange{Int}...))
             @nexprs $N d->(I_d = I[d])
             @nloops $N i dst d->(j_d = first(I_d)+i_d-1) begin
                 (@nref $N dst i) = real(@nref $N src j)
             end
             dst
         end
-        function copyreal!{T<:Complex}(dst::Array{T,$N}, src, I::(Range1{Int}...))
+        function copyreal!{T<:Complex}(dst::Array{T,$N}, src, I::(UnitRange{Int}...))
             @nexprs $N d->I_d = I[d]
             @nloops $N i dst d->(j_d = first(I_d)+i_d-1) begin
                 (@nref $N dst i) = @nref $N src j
@@ -458,60 +458,6 @@ for N = 1:5
             dst
         end
     end
-end
-
-function imfilter_fft_old{T}(img::StridedMatrix{T}, filter::Matrix{T}, border::String, value)
-    si, sf = size(img), size(filter)
-    fw = iceil(([sf...] - 1) / 2)
-    A = padarray(img, fw, fw, border, convert(T, value))
-    # correlation instead of convolution
-    filter = rot180(filter)
-    # check if separable
-    SVD = svdfact(filter)
-    U, S, Vt = SVD[:U], SVD[:S], SVD[:Vt]
-    separable = true
-    for i = 2:length(S)
-        separable &= (abs(S[i]) < sqrt(eps(T)))
-    end
-    if separable
-        # conv2 isn't suitable for this (kernel center should be the actual center of the kernel)
-        y = U[:,1]*sqrt(S[1])
-        x = vec(Vt[1,:])*sqrt(S[1])
-        sa = size(A)
-        m = length(y)+sa[1]
-        n = length(x)+sa[2]
-        B = zeros(T, m, n)
-        B[int(length(y)/2)+1:sa[1]+int(length(y)/2),int(length(x)/2)+1:sa[2]+int(length(x)/2)] = A
-        yp = zeros(T, m)
-        halfy = int((m-length(y)-1)/2)
-        yp[halfy+1:halfy+length(y)] = y
-        y = fft(yp)
-        xp = zeros(T, n)
-        halfx = int((n-length(x)-1)/2)
-        xp[halfx+1:halfx+length(x)] = x
-        x = fft(xp)
-        C = fftshift(ifft(fft(B) .* (y * x.')))
-        if T <: Real
-            C = real(C)
-        end
-    else
-        #C = conv2(A, filter)
-        sa, sb = size(A), size(filter)
-        At = zeros(T, sa[1]+sb[1]-1, sa[2]+sb[2]-1)
-        Bt = zeros(T, sa[1]+sb[1]-1, sa[2]+sb[2]-1)
-        halfa1 = ifloor((size(At,1)-sa[1])/2)
-        halfa2 = ifloor((size(At,2)-sa[2])/2)
-        halfb1 = ifloor((size(Bt,1)-sb[1])/2)
-        halfb2 = ifloor((size(Bt,2)-sb[2])/2)
-        At[halfa1+1:halfa1+sa[1], halfa2+1:halfa2+sa[2]] = A
-        Bt[halfb1+1:halfb1+sb[1], halfb2+1:halfb2+sb[2]] = filter
-        C = fftshift(ifft(fft(At).*fft(Bt)))
-        if T <: Real
-            C = real(C)
-        end
-    end
-    sc = size(C)
-    out = C[int(sc[1]/2-si[1]/2):int(sc[1]/2+si[1]/2)-1, int(sc[2]/2-si[2]/2):int(sc[2]/2+si[2]/2)-1]
 end
 
 
