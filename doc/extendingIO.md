@@ -29,13 +29,6 @@ and to write,
 ```
 imwrite(img, "filename.fmt")
 ```
-When using ImageMagick, by default this encodes color data as a dimension of the
-array. You can alternately say
-```
-using Color
-img = imread("filename.fmt",RGB)
-```
-and the image will be imported as an array of RGB values.
 
 You can read from streams and control format this way:
 ```

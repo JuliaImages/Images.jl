@@ -14,12 +14,11 @@ If you're working with RGB color, your best approach is to encode color as a
 `ColorValue`, as defined in the `Color` package.
 That package provides many utility functions for analyzing and manipulating
 colors.
-Alternatively, you can use a third dimension of size 3 or
-encode your images as either `Uint32` or `Int32` and work with
-24-bit color. (If you need to use `Uint32` simply to store pixel intensities,
-you should not use plain arrays.)
+Alternatively, you can use a third dimension of size 3, or
+encode your images as either `RGB24` or `ARGB32`, which use an internal
+`Uint32` representation of color.
 
-It's worth noting that these conventions are sometimes inconvenient.
+It's worth noting that these Matlab conventions are sometimes inconvenient.
 For example, the `x` coordinate (horizontal) is second and the `y` coordinate
 (vertical) is first; in other words, one uses `img[y,x]` to address a pixel that
 is displayed at a
@@ -56,7 +55,9 @@ custom image type, it is more likely that you'll want to derive from either
 images (where intensity is looked up in a colormap table).
 
 In practice, it is assumed that `AbstractImages` have at least two fields,
-called `data` and `properties`. These are the only two fields in the first
+called `data` and `properties`. (In code, you should not use these directly, instead
+using the functions `data` and `properties` to extract these.)
+These are the only two fields in the first
 concrete image type, called `Image`:
 
 ```julia
@@ -108,7 +109,7 @@ Assignment, `sub`, and `slice` work similarly. In other words, for indexing an
 If you load your image data using Image's `imread`, note that the storage order is
 not changed from the on-disk representation. Therefore, a 2D RGB image will
 most likely be stored in color-horizontal-vertical order, meaning that a
-pixel at `(x,y)` is accessed as `img[:,x,y]`. Note that this is quite different
+pixel at `(x,y)` is accessed as `img[x,y]`. Note that this is quite different
 from Matlab's default representation.
 
 If you are indexing over an extended region and want to get back an `Image`,
@@ -136,9 +137,9 @@ The `properties` dictionary can contain any information you want to store along
 with your images. Typically, each property is also affiliated with an accessor
 function of the same name.
 
-Let's illustrate this with one of the default properties, `"colorspace"`. The
-value of this property is a string, such as `"RGB"` or `"Gray"` or `"HSV"`. You
-can extract the value of this field using a function:
+Let's illustrate this with one of the default properties, `"colorspace"`.
+The value of this property is a string, such as `"RGB"` or `"Gray"` or `"HSV"`.
+You can extract the value of this field using a function:
 ```
 cs = colorspace(img)
 ```
@@ -148,22 +149,23 @@ represented as plain `Array`s don't have a `properties` dictionary; if we are to
 write generic code, we don't want to have to wonder whether this information is
 available. So for plain arrays, there are a number of defaults specified for the
 output of the `colorspace` function, depending on the element type and size of
-the array.
+the array. Likewise, images stored as `ColorValue` arrays have no need of a
+`"colorspace"` property, because the colorspace is encoded in the type parameters.
 
 Here is a list of the properties supported in `core.jl`:
 
 - `colorspace`: "RGB", "RGBA", "Gray", "Binary", "24bit", "Lab", "HSV", etc.
+If your image is represented as a ColorValue array, you cannot override
+that choice by specifying a `colorspace` property.
+(Use `reinterpret` if you want to change the interpretation without changing the raw values.)
 - `colordim`: the array dimension used to store color information, or 0 if there
 is no dimension corresponding to color
 - `timedim`: the array dimension used for time (i.e., sequence), or 0 for single
 images
-- `limits`: (minvalue,maxvalue) for this type of image (e.g., (0,255) for Uint8
-images, even if pixels do not reach these values).
-Particularly useful for scientific imaging when using cameras of bit depth higher than
-8 (but not necessarily as high as 16).
-- `scalei`: a property that controls default contrast scaling upon display. This should be a [`ScaleInfo`](https://github.com/timholy/Images.jl/blob/master/doc/function_reference.md#intensity-scaling)
+- `scalei`: a property that controls default contrast scaling upon display.
+This should be a [`MapInfo`](https://github.com/timholy/Images.jl/blob/master/doc/function_reference.md#intensity-scaling)
 value, to be used for setting the contrast upon display. In the absence of this property,
-the `limits` property will be used, if available, to choose contrast limits.
+the range 0 to 1 will be used.
 - `pixelspacing`: the spacing between adjacent pixels along spatial dimensions
 - `spacedirections`: more detailed information about the orientation of array axes
 relative to an external coordinate system (see the [function reference](function_reference.md)).
