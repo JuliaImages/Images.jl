@@ -173,7 +173,6 @@ export # types
     imadjustintensity,
     indexedcolor,
     lut,
-    rgb2gray,
     rgb2hsi,
     rgb2ycbcr,
     separate,
@@ -251,6 +250,7 @@ export # Deprecated exports
     float32sc,
     float64sc,
     ntsc2rgb,
+    rgb2gray,
     rgb2ntsc,
     scaleinfo,
     scaleminmax,
@@ -275,6 +275,7 @@ export # Deprecated exports
 @deprecate scaleinfo    mapinfo
 @deprecate scale(mapi::MapInfo, A) map(mapi, A)
 @deprecate scale!(dest, mapi::MapInfo, A) map!(mapi, dest, A)
+@deprecate rgb2gray(img::AbstractArray)  convert(Array{Gray}, img)
 
 
 const ScaleInfo = MapInfo  # can't deprecate types?

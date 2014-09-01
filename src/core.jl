@@ -182,7 +182,8 @@ end
 # Convert an Image to an array. We convert the image into the canonical storage order convention for arrays.
 # We restrict this to 2d images because for plain arrays this convention exists only for 2d.
 # In other cases---or if you don't want the storage order altered---just use data(img)
-convert{T,N}(::Type{Array{T}}, img::AbstractImageDirect{T,N}) = convert(Array{T,N}, img)
+convert{T<:Real,N}(::Type{Array{T}}, img::AbstractImageDirect{T,N}) = convert(Array{T,N}, img)
+convert{T<:ColorType,N}(::Type{Array{T}}, img::AbstractImageDirect{T,N}) = convert(Array{T,N}, img)
 function convert{T,N}(::Type{Array{T,N}}, img::AbstractImageDirect{T,N})
     assert2d(img)  # only well-defined in 2d
     p = permutation_canonical(img)
@@ -204,6 +205,8 @@ _convert{Cdest<:ColorType,Csrc<:ColorType}(::Type{Array{Cdest}}, ::Type{Any}, im
     convert(Array{Cdest{eltype(Csrc)}}, img)
 _convert{Cdest<:ColorType,Csrc<:ColorType}(::Type{Array{Cdest}}, ::DataType, img::AbstractArray{Csrc}) =
     convert(Array{Cdest}, img)
+convert{Cdest<:ColorType,Csrc<:ColorType,N}(::Type{Array{Cdest}}, img::AbstractImageDirect{Csrc,N}) =
+    _convert(Array{Cdest}, convert(Array{Csrc,N}, img))
 
 # Image{ColorType} -> Image{Numbers}
 function separate{CV<:ColorType}(img::AbstractImage{CV})

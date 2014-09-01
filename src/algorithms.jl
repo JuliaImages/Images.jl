@@ -145,41 +145,6 @@ for (funcname, fieldname) in ((:red, :r), (:green, :g), (:blue, :b))
     end
 end
 
-for N = 1:4
-    N1 = N-1
-    @eval begin
-        function rgb2gray{T}(img::AbstractArray{T,$N})
-            cs = colorspace(img)
-            if cs == "Gray"
-                return img
-            end
-            if cs != "RGB"
-                error("Color space of image is $cs, not RGB")
-            end
-            strds = strides(img)
-            cd = colordim(img)
-            cstrd = strds[cd]
-            sz = [size(img,d) for d=1:$N]
-            sz[cd] = 1
-            szgray = sz[setdiff(1:$N,cd)]
-            out = Array(T, szgray...)::Array{T,$N1}
-            wr, wg, wb = 0.299, 0.587, 0.114    # Rec 601 luma conversion
-            dat = data(img)
-            indx = 0
-            @nexprs $N d->(strd_d = strds[d])
-            @nexprs $N d->(sz_d = sz[d])
-            @nexprs $N d->(k_d = 1)
-            @nloops $N i d->1:sz_d d->(k_{d-1}=k_d+strd_d*(i_d-1)) begin
-                out[indx+=1] = truncround(T,wr*dat[k_0] + wg*dat[k_0+cstrd] + wb*dat[k_0+2cstrd])
-            end
-            p = copy(properties(img))
-            p["colorspace"] = "Gray"
-            p["colordim"] = 0
-            Image(out, p)
-        end
-    end
-end
-
 
 minfinite(A::AbstractArray) = minimum(A)
 function minfinite{T<:FloatingPoint}(A::AbstractArray{T})

@@ -70,6 +70,12 @@ lim = limits(imgc)
 @test reinterpret(Uint32, data(map(mapinfo(RGB24, img), img))) ==
     map(x->x&0x00ffffff, reinterpret(Uint32, data(map(mapinfo(ARGB32, img), img))))
 @test mapinfo(Uint32, img) == mapinfo(RGB24, img)
+convert(Array{Gray{Ufixed8}}, img)
+convert(Image{Gray{Ufixed8}}, img)
+convert(Array{Gray}, img)
+convert(Image{Gray}, img)
+imgs = separate(img)
+@test permutedims(convert(Image{Gray}, imgs), [2,1]) == convert(Image{Gray}, img)
 
 # RGBA with 16 bit depth
 file = getfile("autumn_leaves.png")

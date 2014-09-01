@@ -207,7 +207,7 @@ import Base.Graphics.Point
 
 if !applicable(zero, Point)
     import Base.zero
-    zero(Point) = Point(0.0,0.0)
+    zero(::Type{Point}) = Point(0.0,0.0)
 end
 
 # Used to encode the sign, integral, and fractional components of

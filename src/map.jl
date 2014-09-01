@@ -138,17 +138,22 @@ ScaleMinMax{To<:Union(Fractional,ColorType),From<:Real}(::Type{To}, mn::From, mx
 
 # ScaleMinMax constructors that take AbstractArray input
 ScaleMinMax{To,From}(::Type{To}, img::AbstractArray{From}, mn::Real, mx::Real) = ScaleMinMax(To, convert(From,mn), convert(From,mx), 1.0f0/(mx-mn))
+ScaleMinMax{To,From,R<:Real}(::Type{To}, img::AbstractArray{From}, mn::Gray{R}, mx::Gray{R}) = ScaleMinMax(To, convert(From,mn), convert(From,mx), 1.0f0/(mx.val-mn.val))
 ScaleMinMax{To}(::Type{To}, img::AbstractArray) = ScaleMinMax(To, img, minfinite(img), maxfinite(img))
 
 function map{To<:Real,From<:Real}(mapi::ScaleMinMax{To,From}, val::From)
     t = ifelse(val < mapi.min, zero(From), ifelse(val > mapi.max, mapi.max-mapi.min, val-mapi.min))
     convert(To, mapi.s*t)
 end
-function map1{To<:Union(RGB24,ARGB32),From}(mapi::ScaleMinMax{To,From}, val::From)
+function map1{To<:Union(RGB24,ARGB32),From<:Real}(mapi::ScaleMinMax{To,From}, val::From)
     t = ifelse(val < mapi.min, zero(From), ifelse(val > mapi.max, mapi.max-mapi.min, val-mapi.min))
     convert(Ufixed8, mapi.s*t)
 end
-function map1{To<:ColorType,From}(mapi::ScaleMinMax{To,From}, val::From)
+function map1{To<:Union(RGB24,ARGB32),From<:Fractional}(mapi::ScaleMinMax{To,Gray{From}}, val::From)
+    t = ifelse(val < mapi.min.val, zero(From), ifelse(val > mapi.max.val, mapi.max.val-mapi.min.val, val-mapi.min.val))
+    convert(Ufixed8, mapi.s*t)
+end
+function map1{To<:ColorType,From<:Real}(mapi::ScaleMinMax{To,From}, val::From)
     t = ifelse(val < mapi.min, zero(From), ifelse(val > mapi.max, mapi.max-mapi.min, val-mapi.min))
     convert(eltype(To), mapi.s*t)
 end

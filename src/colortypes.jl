@@ -2,7 +2,7 @@ module ColorTypes
 
 using Color, FixedPointNumbers
 import Color: Fractional, _convert
-import Base: ==, clamp, convert, length, promote_array_type, promote_rule
+import Base: ==, clamp, convert, length, one, promote_array_type, promote_rule, zero
 
 export ARGB, BGR, RGB1, RGB4, BGRA, AbstractGray, Gray, GrayAlpha, Gray24, AGray32, YIQ, AlphaColor, ColorType
 
@@ -68,6 +68,11 @@ convert{T}(::Type{Gray{T}}, x::Gray{T}) = x
 convert{T,S}(::Type{Gray{T}}, x::Gray{S}) = Gray{T}(x.val)
 convert{T<:Real}(::Type{T}, x::Gray) = convert(T, x.val)
 convert{T}(::Type{Gray{T}}, x::Real) = Gray{T}(x)
+
+convert{T}(::Type{Gray{T}}, x::AbstractRGB) = convert(Gray{T}, 0.299*x.r + 0.587*x.g + 0.114*x.b)  # Rec 601 luma conversion
+
+zero{T}(::Type{Gray{T}}) = Gray{T}(zero(T))
+ one{T}(::Type{Gray{T}}) = Gray{T}(one(T))
 
 immutable Gray24 <: ColorValue{Uint8}
     color::Uint32
