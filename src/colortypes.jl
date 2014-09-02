@@ -173,9 +173,9 @@ for CV in subtypes(AbstractRGB)
         isfinite{T<:Ufixed}(c::$CV{T}) = true
         isfinite{T<:FloatingPoint}(c::$CV{T}) = isfinite(c.r) && isfinite(c.g) && isfinite(c.b)
         isnan{T<:Ufixed}(c::$CV{T}) = false
-        isnan{T<:FloatingPoint}(c::$CV{T}) = isnan(c.r) && isnan(c.g) && isnan(c.b)
+        isnan{T<:FloatingPoint}(c::$CV{T}) = isnan(c.r) || isnan(c.g) || isnan(c.b)
         isinf{T<:Ufixed}(c::$CV{T}) = false
-        isinf{T<:FloatingPoint}(c::$CV{T}) = isinf(c.r) && isinf(c.g) && isinf(c.b)
+        isinf{T<:FloatingPoint}(c::$CV{T}) = isinf(c.r) || isinf(c.g) || isinf(c.b)
         abs(c::$CV) = abs(c.r)+abs(c.g)+abs(c.b) # enables @test_approx_eq and similar
     end
 end

@@ -811,8 +811,8 @@ for N = 1:5
     @eval begin
         function restrict!{T}(out::AbstractArray{T,$N}, A::AbstractArray, dim)
             if isodd(size(A, dim))
-                half = convert(T, 0.5)
-                quarter = convert(T, 0.25)
+                half = convert(eltype(T), 0.5)
+                quarter = convert(eltype(T), 0.25)
                 indx = 0
                 if dim == 1
                     @nloops $N i d->(d==1 ? (1:1) : (1:size(A,d))) d->(j_d = d==1 ? i_d+1 : i_d) begin
@@ -857,8 +857,8 @@ for N = 1:5
                     end
                 end
             else
-                threeeighths = convert(T, 0.375)
-                oneeighth = convert(T, 0.125)
+                threeeighths = convert(eltype(T), 0.375)
+                oneeighth = convert(eltype(T), 0.125)
                 indx = 0
                 if dim == 1
                     @nloops $N i d->(d==1 ? (1:1) : (1:size(A,d))) d->(j_d = i_d) begin
@@ -875,7 +875,7 @@ for N = 1:5
                         out[indx+=1] = oneeighth*c+threeeighths*d
                     end
                 else
-                    fill!(out, 0)
+                    fill!(out, zero(T))
                     strd = stride(out, dim)
                     stride_1 = 1
                     @nexprs $N d->(stride_{d+1} = stride_d*size(out,d))

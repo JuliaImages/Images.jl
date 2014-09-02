@@ -161,6 +161,7 @@ imgs = map(mapi, img)
 @assert maximum(imgs) == 1
 @assert eltype(imgs) == Ufixed8
 imgs = Images.imadjustintensity(img, [])
+@test_throws ErrorException Images.imadjustintensity(img, [1])
 mnA = minimum(A)
 @assert Images.ssd(imgs, (A.-mnA)/(mxA-mnA)) < eps()
 A = reshape(1:9, 3, 3)

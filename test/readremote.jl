@@ -91,7 +91,7 @@ uint32color!(buf, imr)
 imhsv = convert(Image{HSV}, float32(img))
 uint32color(imhsv)
 uint32color!(buf, imhsv)
-
+@test pixelspacing(restrict(img)) == [2.0,2.0]
 
 # RGBA with 16 bit depth
 file = getfile("autumn_leaves.png")

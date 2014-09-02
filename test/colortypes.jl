@@ -35,6 +35,16 @@ f = Ufixed8(0.5)
 @test cu/2 == RGB(cu.r/2,cu.g/2,cu.b/2)
 @test cu/0.5f0 == RGB(cu.r/0.5f0, cu.g/0.5f0, cu.b/0.5f0)
 @test cf+cf == ccmp
+@test isfinite(cf)
+@test !isinf(cf)
+@test !isnan(cf)
+@test isfinite(RGB(NaN, 1, 0.5)) == false
+@test isinf(RGB(NaN, 1, 0.5)) == false
+@test isnan(RGB(NaN, 1, 0.5)) == true
+@test isfinite(RGB(1, Inf, 0.5)) == false
+@test isinf(RGB(1, Inf, 0.5)) == true
+@test isnan(RGB(1, Inf, 0.5)) == false
+@test_approx_eq abs(RGB(0.1,0.2,0.3)) 0.6
 
 acu = RGB{Ufixed8}[cu]
 acf = RGB{Float32}[cf]
