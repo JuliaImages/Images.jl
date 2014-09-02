@@ -259,6 +259,7 @@ export # Deprecated exports
 
 
 @deprecate scaleminmax  ScaleMinMax
+@deprecate scaleminmax(img::AbstractArray, min::Real, max::Real)  ScaleMinMax(RGB24, img, min, max)
 @deprecate float32sc    float32
 @deprecate float64sc    float64
 @deprecate uint8sc      ufixed8sc

@@ -128,6 +128,68 @@ function _convert{T}(::Type{RGB{T}}, c::YIQ)
            cc.y-1.1070*cc.i+1.7046*cc.q)
 end
 
+# Y'CbCr
+immutable YCbCr{T<:FloatingPoint} <: ColorValue{T}
+    y::T
+    cb::T
+    cr::T
+
+    YCbCr(y::Real, cb::Real, cr::Real) = new(y, cb, cr)
+end
+function YCbCr(y::FloatingPoint, cb::FloatingPoint, cr::FloatingPoint)
+    T = promote_type(typeof(y), typeof(cb), typeof(cr))
+    YCbCr{T}(y, cb, cr)
+end
+
+clamp{T}(c::YCbCr{T}) = YCbCr{T}(clamp(c.y, convert(T,16), convert(T,235)),
+                                 clamp(c.cb, convert(T,16), convert(T,240)),
+                                 clamp(c.cr, convert(T,16), convert(T,240)))
+
+function convert{T}(::Type{YCbCr{T}}, c::AbstractRGB)
+    rgb = clamp(c)
+    YCbCr{T}(16+65.481*rgb.r+128.553*rgb.g+24.966*rgb.b,
+             128-37.797*rgb.r-74.203*rgb.g+112*rgb.b,
+             128+112*rgb.r-93.786*rgb.g-18.214*rgb.b)
+end
+convert{T}(::Type{YCbCr}, c::AbstractRGB{T}) = convert(YCbCr{T}, c)
+
+function _convert{T}(::Type{RGB{T}}, c::YCbCr)
+    cc = clamp(c)
+    ny = cc.y - 16
+    ncb = cc.cb - 128
+    ncr = cc.cr - 128
+    RGB{T}(0.004567ny - 1.39135e-7ncb + 0.0062586ncr,
+           0.004567ny - 0.00153646ncb - 0.0031884ncr,
+           0.004567ny + 0.00791058ncb - 2.79201e-7ncr)
+end
+
+# HSI
+immutable HSI{T<:FloatingPoint} <: ColorValue{T}
+    h::T
+    s::T
+    i::T
+
+    HSI(h::Real, s::Real, i::Real) = new(h, s, i)
+end
+function HSI(h::FloatingPoint, s::FloatingPoint, i::FloatingPoint)
+    T = promote_type(typeof(h), typeof(s), typeof(i))
+    HSI{T}(h, s, i)
+end
+
+function convert{T}(::Type{HSI{T}}, c::AbstractRGB)
+    rgb = clamp(c)
+    α = (2rgb.r - rgb.g - rgb.b)/2
+    β = 0.8660254*(rgb.g - rgb.b)
+    h = atan2(β, α)
+    i = (rgb.r + rgb.g + rgb.b)/3
+    s = 1-min(rgb.r, rgb.g, rgb.b)/i
+    s = ifelse(i > 0, s, zero(s))
+    HSI{T}(h, s, i)
+end
+convert{T}(::Type{HSI}, c::AbstractRGB{T}) = convert(HSI{T}, c)
+
+# TODO: HSI->RGB
+
 ## Generic algorithms
 
 length(cv::ColorType) = div(sizeof(cv), sizeof(eltype(cv)))
