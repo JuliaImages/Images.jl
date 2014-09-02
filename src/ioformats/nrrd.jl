@@ -353,7 +353,7 @@ function imwrite(img, sheader::IO, ::Type{Images.NRRDFile}; props::Dict = Dict{A
 end
 
 function parse_vector_int(s::String)
-    ss = split(s, r"[ ,;]", false)
+    ss = split_nokeep(s, r"[ ,;]")
     v = Array(Int, length(ss))
     for i = 1:length(ss)
         v[i] = int(ss[i])
@@ -362,7 +362,7 @@ function parse_vector_int(s::String)
 end
 
 function parse_vector_float(s::String)
-    ss = split(s, r"[ ,;]", false)
+    ss = split_nokeep(s, r"[ ,;]")
     v = Array(Float64, length(ss))
     for i = 1:length(ss)
         v[i] = float(ss[i])
@@ -373,6 +373,12 @@ end
 function parse_vector_strings(s::String)
     (first(s) == '"' && last(s) == '"') || error("Strings must be delimited with quotes")
     split(s[2:end-1], "\" \"")
+end
+
+if VERSION < v"0.4-dev"
+    split_nokeep(a, b) = split(a, b, false)
+else
+    split_nokeep(a, b) = split(a, b, keep=false)
 end
 
 function stream2name(s::IO)
