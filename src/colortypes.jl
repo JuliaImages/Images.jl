@@ -4,7 +4,7 @@ using Color, FixedPointNumbers, Base.Cartesian
 import Color: Fractional, _convert
 import Base: ==, abs, clamp, convert, isfinite, isinf, isnan, length, one, promote_array_type, promote_rule, zero
 
-export ARGB, BGR, RGB1, RGB4, BGRA, AbstractGray, Gray, GrayAlpha, Gray24, AGray32, YIQ, AlphaColor, ColorType
+export ARGB, BGR, RGB1, RGB4, BGRA, AbstractGray, Gray, GrayAlpha, Gray24, AGray32, YIQ, AlphaColor, ColorType, noeltype
 
 typealias ColorType Union(ColorValue, AbstractAlphaColorValue)
 
@@ -140,6 +140,13 @@ _length{CV<:ColorValue}(::Type{CV}, ::DataType)  = div(sizeof(CV), sizeof(eltype
 length{CV,T}(::Type{AlphaColorValue{CV,T}}) = length(CV)+1
 length{CV,T}(::Type{AlphaColor{CV,T}}) = length(CV)+1
 
+for ACV in (ColorValue, AbstractRGB, AbstractGray, AbstractAlphaColorValue)
+    for CV in subtypes(ACV)
+        length(CV.parameters) == 1 || continue
+        @eval noeltype{T}(::Type{$CV{T}}) = $CV
+    end
+end
+
 # Return types for arithmetic operations
 multype(a::Type,b::Type) = typeof(one(a)*one(b))
 sumtype(a::Type,b::Type) = typeof(one(a)+one(b))
@@ -202,6 +209,7 @@ for CV in subtypes(AbstractRGB)
         isinf{T<:Ufixed}(c::$CV{T}) = false
         isinf{T<:FloatingPoint}(c::$CV{T}) = isinf(c.r) || isinf(c.g) || isinf(c.b)
         abs(c::$CV) = abs(c.r)+abs(c.g)+abs(c.b) # should this have a different name?
+        abs{T<:Ufixed}(c::$CV{T}) = float32(c.r)+float32(c.g)+float32(c.b) # should this have a different name?
     end
 end
 

@@ -42,4 +42,4 @@ a = float32(rand(3,2))
 b = float32(rand(3,2))
 ovr = Images.OverlayImage((a,b), (RGB{Ufixed8}(1,0,1), RGB{Ufixed8}(0,1,0)), ((0,1),(0,1)))
 @test isa(ovr, Images.Image)
-@test ovr[1,2] == RGB{Float32}(a[1,2],b[1,2],a[1,2])
+@test abs(ovr[1,2] - RGB{Float32}(a[1,2],b[1,2],a[1,2])) < 1e-5

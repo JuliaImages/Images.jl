@@ -90,6 +90,7 @@ end
 # filtering
 EPS = 1e-14
 imgcol = Images.colorim(rand(3,5,6))
+imgcolf = convert(Image{RGB{Ufixed8}}, imgcol)
 for T in (Float64, Int)
     A = zeros(T,3,3); A[2,2] = 1
     kern = rand(3,3)
@@ -101,6 +102,7 @@ for T in (Float64, Int)
 end
 kern = zeros(3,3); kern[2,2] = 1
 @test maximum(map(abs, imgcol - Images.imfilter(imgcol, kern))) < EPS
+@test maximum(map(abs, imgcolf - Images.imfilter(imgcolf, kern))) < EPS
 for T in (Float64, Int)
     # Separable kernels
     A = zeros(T,3,3); A[2,2] = 1
@@ -120,6 +122,7 @@ kern = rand(3,2)
 @test maximum(abs(Images.imfilter_fft(A, kern)[:,1:2] - rot180(kern))) < EPS
 kern = zeros(3,3); kern[2,2] = 1
 @test maximum(map(abs, imgcol - Images.imfilter_fft(imgcol, kern))) < EPS
+@test maximum(map(abs, imgcolf - Images.imfilter_fft(imgcolf, kern))) < EPS
 
 @test approx_equal(Images.imfilter(ones(4,4), ones(3,3)), 9.0)
 @test approx_equal(Images.imfilter(ones(3,3), ones(3,3)), 9.0)
@@ -153,6 +156,7 @@ B = copy(A)
 B[isfinite(B)] = 2
 @test_approx_eq Images.imfilter_gaussian(A, [10^3,0]) B
 @test maximum(map(abs, Images.imfilter_gaussian(imgcol, [10^3,10^3]) - mean(imgcol))) < 1e-4
+@test maximum(map(abs, Images.imfilter_gaussian(imgcolf, [10^3,10^3]) - mean(imgcolf))) < 1e-4
 
 A = zeros(Int, 9, 9); A[5, 5] = 1
 @test maximum(abs(Images.imfilter_LoG(A, [1,1]) - Images.imlog(1.0))) < EPS
