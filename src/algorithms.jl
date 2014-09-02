@@ -1,24 +1,29 @@
 #### Math with images ####
 
+
 (+)(img::AbstractImageDirect{Bool}, n::Bool) = img .+ n
-(+)(img::AbstractImageDirect, n::Number) = img .+ n
 (+)(n::Bool, img::AbstractImageDirect{Bool}) = n .+ img
+(+)(img::AbstractImageDirect, n::Number) = img .+ n
+(+)(img::AbstractImageDirect, n::AbstractRGB) = img .+ n
 (+)(n::Number, img::AbstractImageDirect) = n .+ img
+(+)(n::AbstractRGB, img::AbstractImageDirect) = n .+ img
 (.+)(img::AbstractImageDirect, n::Number) = share(img, data(img).+n)
 (.+)(n::Number, img::AbstractImageDirect) = share(img, data(img).+n)
-(+)(img::AbstractImageDirect, A::BitArray) = share(img, data(img)+A)
 if isdefined(:UniformScaling)
     (+){Timg,TA<:Number}(img::AbstractImageDirect{Timg,2}, A::UniformScaling{TA}) = share(img, data(img)+A)
     (-){Timg,TA<:Number}(img::AbstractImageDirect{Timg,2}, A::UniformScaling{TA}) = share(img, data(img)-A)
 end
+(+)(img::AbstractImageDirect, A::BitArray) = share(img, data(img)+A)
 (+)(img::AbstractImageDirect, A::AbstractArray) = share(img, data(img)+data(A))
 (.+)(img::AbstractImageDirect, A::BitArray) = share(img, data(img).+A)
 (.+)(img::AbstractImageDirect, A::AbstractArray) = share(img, data(img).+data(A))
 (-)(img::AbstractImageDirect{Bool}, n::Bool) = img .- n
 (-)(img::AbstractImageDirect, n::Number) = img .- n
+(-)(img::AbstractImageDirect, n::AbstractRGB) = img .- n
 (.-)(img::AbstractImageDirect, n::Number) = share(img, data(img).-n)
 (-)(n::Bool, img::AbstractImageDirect{Bool}) = n .- img
 (-)(n::Number, img::AbstractImageDirect) = n .- img
+(-)(n::AbstractRGB, img::AbstractImageDirect) = n .- img
 (.-)(n::Number, img::AbstractImageDirect) = share(img, n.-data(img))
 (-)(img::AbstractImageDirect, A::BitArray) = share(img, data(img)-A)
 (-){T}(img::AbstractImageDirect{T,2}, A::Diagonal) = share(img, data(img)-A) # fixes an ambiguity warning
@@ -426,19 +431,36 @@ imfilter_fft(img, filter, border) = imfilter_fft(img, filter, border, 0)
 imfilter_fft_inseparable{T,K,N,M}(img::AbstractArray{T,N}, kern::AbstractArray{K,M}, border::String, value) =
     imfilter_fft_inseparable(img, prep_kernel(img, kern), border, value)
 
-function imfilter_fft_inseparable{T,K,N}(img::AbstractArray{T,N}, kern::AbstractArray{K,N}, border::String, value)
+function imfilter_fft_inseparable{T<:ColorType,K,N,M}(img::AbstractArray{T,N}, kern::AbstractArray{K,M}, border::String, value)
+    A = reinterpret(eltype(T), data(img))
+    kernrs = reshape(kern, tuple(1, size(kern)...))
+    B = imfilter_fft_inseparable(A, prep_kernel(A, kernrs), border, value)
+    reinterpret(T, B)
+end
+
+function imfilter_fft_inseparable{T<:Real,K,N}(img::AbstractArray{T,N}, kern::AbstractArray{K,N}, border::String, value)
     prepad  = [div(size(kern,i)-1, 2) for i = 1:N]
     postpad = [div(size(kern,i),   2) for i = 1:N]
     fullpad = [nextprod([2,3], size(img,i) + prepad[i] + postpad[i]) - size(img, i) - prepad[i] for i = 1:N]
     A = padarray(img, prepad, fullpad, border, convert(T, value))
-    krn = zeros(typeof(one(T)*one(K)), size(A))
+    krn = zeros(eltype(one(T)*one(K)), size(A))
     indexesK = ntuple(N, d->[size(krn,d)-prepad[d]+1:size(krn,d),1:size(kern,d)-prepad[d]])
-    krn[indexesK...] = rot180(kern)
+    krn[indexesK...] = reflect(kern)
     AF = ifft(fft(A).*fft(krn))
     out = Array(T, size(img))
     indexesA = ntuple(N, d->postpad[d]+1:size(img,d)+postpad[d])
     copyreal!(out, AF, indexesA)
     out
+end
+
+# Generalization of rot180
+@ngenerate N Array{T,N} function reflect{T,N}(A::AbstractArray{T,N})
+    B = Array(T, size(A))
+    @nexprs N d->(n_d = size(A, d)+1)
+    @nloops N i A d->(j_d = n_d - i_d) begin
+        @nref(N, B, j) = @nref(N, A, i)
+    end
+    B
 end
 
 for N = 1:5
@@ -460,8 +482,6 @@ for N = 1:5
     end
 end
 
-
-
 # IIR filtering with Gaussians
 # See
 #  Young, van Vliet, and van Ginkel, "Recursive Gabor Filtering",
@@ -474,6 +494,12 @@ end
 # Note these two papers use different sign conventions for the coefficients.
 
 # Note: astype is ignored for FloatingPoint input
+function imfilter_gaussian{CT<:ColorType}(img::AbstractArray{CT}, sigma; emit_warning = true, astype::Type=Float64)
+    A = reinterpret(eltype(CT), data(img))
+    ret = imfilter_gaussian(A, [0,sigma]; emit_warning=emit_warning, astype=astype)
+    share(img, reinterpret(CT, ret))
+end
+
 function imfilter_gaussian{T<:FloatingPoint}(img::AbstractArray{T}, sigma::Vector; emit_warning = true, astype::Type=Float64)
     if all(sigma .== 0)
         return img
@@ -492,8 +518,9 @@ function imfilter_gaussian{T<:FloatingPoint}(img::AbstractArray{T}, sigma::Vecto
     share(img, A)
 end
 
-function imfilter_gaussian{T<:Integer,TF<:FloatingPoint}(img::AbstractArray{T}, sigma::Vector; emit_warning = true, astype::Type{TF}=Float64)
-    A = convert(Array{astype}, data(img))
+# For these types, you can't have NaNs
+function imfilter_gaussian{T<:Union(Integer,Ufixed),TF<:FloatingPoint}(img::AbstractArray{T}, sigma::Vector; emit_warning = true, astype::Type{TF}=Float64)
+    A = convert(Array{TF}, data(img))
     if all(sigma .== 0)
         return share(img, A)
     end

@@ -1,6 +1,6 @@
 module ColorTypes
 
-using Color, FixedPointNumbers
+using Color, FixedPointNumbers, Base.Cartesian
 import Color: Fractional, _convert
 import Base: ==, abs, clamp, convert, isfinite, isinf, isnan, length, one, promote_array_type, promote_rule, zero
 
@@ -170,14 +170,65 @@ for CV in subtypes(AbstractRGB)
         end
         (+){S,T}(a::$CV{S}, b::$CV{T}) = $CV{sumtype(S,T)}(a.r+b.r, a.g+b.g, a.b+b.b)
         (-){S,T}(a::$CV{S}, b::$CV{T}) = $CV{sumtype(S,T)}(a.r-b.r, a.g-b.g, a.b-b.b)
+        (+)(A::AbstractArray{$CV}, b::AbstractRGB) = (.+)(A, b)
+        (-)(A::AbstractArray{$CV}, b::AbstractRGB) = (.-)(A, b)
+        (+)(b::AbstractRGB, A::AbstractArray{$CV}) = (.+)(b, A)
+        (-)(b::AbstractRGB, A::AbstractArray{$CV}) = (.-)(b, A)
+        function (.+){T}(A::AbstractArray{$CV{T}}, b::AbstractRGB)
+            bT = convert($CV{T}, b)
+            out = similar(A)
+            add!(out, A, bT)
+        end
+        (.+){T}(b::AbstractRGB, A::AbstractArray{$CV{T}}) = (.+)(A, b)
+        function (.-){T}(A::AbstractArray{$CV{T}}, b::AbstractRGB)
+            bT = convert($CV{T}, b)
+            out = similar(A)
+            sub!(out, A, bT)
+        end
+        function (.-){T}(A::AbstractArray{$CV{T}}, b::AbstractRGB)
+            bT = convert($CV{T}, b)
+            out = similar(A)
+            sub!(out, A, bT)
+        end
+        function (.-){T}(b::AbstractRGB, A::AbstractArray{$CV{T}})
+            bT = convert($CV{T}, b)
+            out = similar(A)
+            sub!(out, bT, A)
+        end
         isfinite{T<:Ufixed}(c::$CV{T}) = true
         isfinite{T<:FloatingPoint}(c::$CV{T}) = isfinite(c.r) && isfinite(c.g) && isfinite(c.b)
         isnan{T<:Ufixed}(c::$CV{T}) = false
         isnan{T<:FloatingPoint}(c::$CV{T}) = isnan(c.r) || isnan(c.g) || isnan(c.b)
         isinf{T<:Ufixed}(c::$CV{T}) = false
         isinf{T<:FloatingPoint}(c::$CV{T}) = isinf(c.r) || isinf(c.g) || isinf(c.b)
-        abs(c::$CV) = abs(c.r)+abs(c.g)+abs(c.b) # enables @test_approx_eq and similar
+        abs(c::$CV) = abs(c.r)+abs(c.g)+abs(c.b) # should this have a different name?
     end
+end
+
+@ngenerate N typeof(out) function add!{T,N}(out, A::AbstractArray{T,N}, b::T)
+    @inbounds begin
+        @nloops N i A begin
+            @nref(N, out, i) = @nref(N, A, i) + b
+        end
+    end
+    out
+end
+# need a separate sub! because of unsigned types
+@ngenerate N typeof(out) function sub!{T,N}(out, A::AbstractArray{T,N}, b::AbstractRGB)
+    @inbounds begin
+        @nloops N i A begin
+            @nref(N, out, i) = @nref(N, A, i) - b
+        end
+    end
+    out
+end
+@ngenerate N typeof(out) function sub!{T,N}(out, b::AbstractRGB, A::AbstractArray{T,N})
+    @inbounds begin
+        @nloops N i A begin
+            @nref(N, out, i) = b - @nref(N, A, i)
+        end
+    end
+    out
 end
 
 # To help type inference

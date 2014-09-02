@@ -23,7 +23,15 @@ img2 = img2 .- 0.5
 img3 = 2img .* img2
 img2 = img ./ A
 img2 = (2img).^2
-
+# Same operations with ColorValue images
+img = Images.colorim(zeros(Float32,3,4,5))
+img2 = (img .+ RGB{Float32}(1,1,1))/2
+@test all(img2 .== RGB{Float32}(1,1,1)/2)
+img3 = 2img2
+@test all(img3 .== RGB{Float32}(1,1,1))
+A = fill(2, 4, 5)
+@test all(A.*img2 .== fill(RGB{Float32}(1,1,1), 4, 5))
+img2 = img2 .- RGB{Float32}(1,1,1)/2
 
 # Reductions
 let
@@ -81,6 +89,7 @@ end
 
 # filtering
 EPS = 1e-14
+imgcol = Images.colorim(rand(3,5,5))
 for T in (Float64, Int)
     A = zeros(T,3,3); A[2,2] = 1
     kern = rand(3,3)
@@ -90,6 +99,8 @@ for T in (Float64, Int)
     kern = rand(3,2)
     @test maximum(abs(Images.imfilter(A, kern)[:,1:2] - rot180(kern))) < EPS
 end
+kern = zeros(3,3); kern[2,2] = 1
+@test maximum(map(abs, imgcol - Images.imfilter(imgcol, kern))) < EPS
 for T in (Float64, Int)
     # Separable kernels
     A = zeros(T,3,3); A[2,2] = 1
@@ -107,6 +118,8 @@ kern = rand(2,3)
 @test maximum(abs(Images.imfilter_fft(A, kern)[1:2,:] - rot180(kern))) < EPS
 kern = rand(3,2)
 @test maximum(abs(Images.imfilter_fft(A, kern)[:,1:2] - rot180(kern))) < EPS
+kern = zeros(3,3); kern[2,2] = 1
+@test maximum(map(abs, imgcol - Images.imfilter_fft(imgcol, kern))) < EPS
 
 @test approx_equal(Images.imfilter(ones(4,4), ones(3,3)), 9.0)
 @test approx_equal(Images.imfilter(ones(3,3), ones(3,3)), 9.0)
@@ -139,6 +152,7 @@ A[3,1] = 3
 B = copy(A)
 B[isfinite(B)] = 2
 @test_approx_eq Images.imfilter_gaussian(A, [10^3,0]) B
+@test maximum(map(abs, Images.imfilter_gaussian(imgcol, [10^3,10^3]) - mean(imgcol))) < 1e-4
 
 A = zeros(Int, 9, 9); A[5, 5] = 1
 @test maximum(abs(Images.imfilter_LoG(A, [1,1]) - Images.imlog(1.0))) < EPS
