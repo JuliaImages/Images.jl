@@ -860,7 +860,7 @@ for N = 1:5
                     # Must initialize the i_dim==1 entries with zero
                     @nexprs $N d->sz_d=d==dim?1:size(out,d)
                     @nloops $N i d->(1:sz_d) begin
-                        (@nref $N out i) = 0
+                        (@nref $N out i) = zero(T)
                     end
                     stride_1 = 1
                     @nexprs $N d->(stride_{d+1} = stride_d*size(out,d))

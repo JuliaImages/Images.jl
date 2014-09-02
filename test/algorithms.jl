@@ -89,7 +89,7 @@ end
 
 # filtering
 EPS = 1e-14
-imgcol = Images.colorim(rand(3,5,5))
+imgcol = Images.colorim(rand(3,5,6))
 for T in (Float64, Int)
     A = zeros(T,3,3); A[2,2] = 1
     kern = rand(3,3)
@@ -181,6 +181,7 @@ B = Images.restrict(A, (1,2,3))
                          [10.1015625 23.71875 13.6171875;
                           14.09375   32.875   18.78125;
                           11.0390625 25.59375 14.5546875])
+Images.restrict(imgcol, (1,2))
 
 # erode/dilate
 A = zeros(4,4,3)
