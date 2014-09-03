@@ -16,6 +16,11 @@ It's helpful to have ImageMagick installed on your system, as Images relies on i
 ImageMagick _should_ be installed for your automatically. In case of trouble,
 more details about manual installation and troubleshooting can be found in the [installation help](doc/install.md).
 
+## Package interactions
+
+A few other packages define overlapping functions or types (`PyPlot` defines `imread`, and `Winston` defines `Image`).
+When using the two packages together, you can always specify which version you want with `Images.imread("myimage.png")`.
+
 ## Image viewing
 
 If you're using the IJulia notebook, images will be displayed [automatically](http://htmlpreview.github.com/?https://github.com/timholy/Images.jl/blob/master/ImagesDemo.html).
