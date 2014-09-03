@@ -9,7 +9,7 @@ abstract AbstractImageIndexed{T,N} <: AbstractImage{T,N}  # indexed images (i.e.
 # Direct image (e.g., grayscale, RGB)
 type Image{T,N,A<:AbstractArray} <: AbstractImageDirect{T,N}
     data::A
-    properties::Dict
+    properties::Dict{ASCIIString,Any}
 end
 Image(data::AbstractArray, props::Dict) = Image{eltype(data),ndims(data),typeof(data)}(data,props)
 Image(data::AbstractArray; kwargs...) = Image(data, kwargs2dict(kwargs))
@@ -18,7 +18,7 @@ Image(data::AbstractArray; kwargs...) = Image(data, kwargs2dict(kwargs))
 type ImageCmap{T<:ColorType,N,A<:AbstractArray} <: AbstractImageIndexed{T,N}
     data::A
     cmap::Vector{T}
-    properties::Dict
+    properties::Dict{ASCIIString,Any}
 end
 ImageCmap(data::AbstractArray, cmap::AbstractVector, props::Dict) = ImageCmap{eltype(cmap),ndims(data),typeof(data)}(data, cmap, props)
 ImageCmap(data::AbstractArray, cmap::AbstractVector; kwargs...) = ImageCmap(data, cmap, kwargs2dict(kwargs))

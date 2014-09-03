@@ -63,7 +63,7 @@ concrete image type, called `Image`:
 ```julia
 type Image{T,N,A<:AbstractArray} <: AbstractImageDirect{T,N}
     data::A
-    properties::Dict
+    properties::Dict{ASCIIString,Any}
 end
 ```
 
@@ -88,7 +88,7 @@ The only other concrete image type is for indexed images:
 type ImageCmap{T,N,A<:AbstractArray,C<:AbstractArray} <: AbstractImageIndexed{T,N}
     data::A
     cmap::C
-    properties::Dict
+    properties::Dict{ASCIIString,Any}
 end
 ```
 The `data` array here just encodes the index used to look up the color in the

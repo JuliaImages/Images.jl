@@ -222,7 +222,7 @@ function imread(filename::String, ::Type{ImageMagick})
         sz = tuple(sz..., n)
     end
     havealpha = LibMagick.getimagealphachannel(wand)
-    prop = (Any=>Any)["spatialorder" => ["x", "y"], "pixelspacing" => [1,1]]
+    prop = (ASCIIString=>Any)["spatialorder" => ["x", "y"], "pixelspacing" => [1,1]]
     cs = LibMagick.getimagecolorspace(wand)
     if imtype == "GrayscaleType" || imtype == "GrayscaleMatteType"
         cs = "Gray"
@@ -437,7 +437,7 @@ function imread{S<:IO}(stream::S, ::Type{PPMBinary})
         error("Image file may be corrupt. Are there really more than 16 bits in this image?")
     end
     T = eltype(dat)
-    Image(dat, (Any=>Any)["spatialorder" => ["x", "y"], "pixelspacing" => [1,1]])
+    Image(dat, (ASCIIString=>Any)["spatialorder" => ["x", "y"], "pixelspacing" => [1,1]])
 end
 
 function imread{S<:IO}(stream::S, ::Type{PGMBinary})
