@@ -176,7 +176,7 @@ end
 import Base.mimewritable
 Base.mimewritable(::MIME"image/png", img::AbstractImage) = sdims(img) == 2 && timedim(img) == 0
 
-function _writemime(stream::IO, ::MIME"image/png", img::AbstractImage; scalei=scaleinfo_uint(img))
+function _writemime(stream::IO, ::MIME"image/png", img::AbstractImage; mapi=mapinfo(ImageMagick, img))
     assert2d(img)
     if isa(img, AbstractImageIndexed)
         # For now, convert to direct
@@ -192,14 +192,13 @@ function _writemime(stream::IO, ::MIME"image/png", img::AbstractImage; scalei=sc
     if eltype(A) != eltype(img)
         A = truncround(eltype(img), A)
     end
-    wand = image2wand(share(img, A), scalei, nothing)
-#     LibMagick.setimagecompression(wand, LibMagick.NoCompression)
+    wand = image2wand(share(img, A), mapi, nothing)
     blob = LibMagick.getblob(wand, "png")
     write(stream, blob)
 end
-writemime(stream::IO, mime::MIME"image/png", img::AbstractImage{RGB}; scalei = scaleinfo_uint(img)) = _writemime(stream, mime, img, scalei=scalei)
-writemime{C<:ColorValue}(stream::IO, mime::MIME"image/png", img::AbstractImage{C}; kwargs...) = writemime(stream, mime, convert(Image{RGB}, img); kwargs...)
-writemime(stream::IO, mime::MIME"image/png", img::AbstractImage; scalei = scaleinfo_uint(img)) = _writemime(stream, mime, img, scalei=scalei)
+writemime{C<:RGB}(stream::IO, mime::MIME"image/png", img::AbstractImage{C}; mapi = mapinfo(C,img)) = _writemime(stream, mime, img, mapi=mapi)
+writemime{C<:ColorType}(stream::IO, mime::MIME"image/png", img::AbstractImage{C}; kwargs...) = writemime(stream, mime, convert(Image{RGB}, img); kwargs...)
+writemime(stream::IO, mime::MIME"image/png", img::AbstractImage; mapi = mapinfo(Ufixed8,img)) = _writemime(stream, mime, img, mapi=mapi)
 
 #### Implementation of specific formats ####
 
@@ -209,7 +208,7 @@ imread(filename::String, ::Type{OSXNative}) = LibOSXNative.imread(filename)
 
 #### ImageMagick library
 
-typedict = [1 => Uint8, 8 => Uint8, 16 => Uint16, 32 => Uint32]
+const ufixedtype = [1=>Bool, 8=>Ufixed8, 10=>Ufixed10, 12=>Ufixed12, 14=>Ufixed14, 16=>Ufixed16]
 
 function imread(filename::String, ::Type{ImageMagick})
     wand = LibMagick.MagickWand()
@@ -223,45 +222,80 @@ function imread(filename::String, ::Type{ImageMagick})
         sz = tuple(sz..., n)
     end
     havealpha = LibMagick.getimagealphachannel(wand)
+    prop = (ASCIIString=>Any)["spatialorder" => ["x", "y"], "pixelspacing" => [1,1]]
     cs = LibMagick.getimagecolorspace(wand)
-    nc, cs = LibMagick.nchannels(imtype, cs, havealpha)
-    depth = LibMagick.getimagedepth(wand)
-    T = typedict[iceil(depth/8)*8]
-    # Allocate the buffer and get the pixel data
-    buf = (nc > 1) ? Array(T, nc, sz...) : Array(T, sz...)
-    LibMagick.exportimagepixels!(buf, wand, cs)
-    # Set up the properties
-#     spatialorder = (n > 1) ? ["x", "y", "z"] : ["x", "y"]
-    prop = ["colorspace" => cs, "spatialorder" => ["x", "y"], "limits" => (zero(T), typemax(T))]
-    if nc > 1
-        prop["colordim"] = 1
+    if imtype == "GrayscaleType" || imtype == "GrayscaleMatteType"
+        cs = "Gray"
     end
+    prop["IMcs"] = cs
+    depth = LibMagick.getimagedepth(wand)
+    T = ufixedtype[depth]
+    channelorder = cs
+    if havealpha
+        if channelorder == "sRGB" || channelorder == "RGB"
+            if is_little_endian
+                T, channelorder = BGRA{T}, "BGRA"
+            else
+                T, channelorder = ARGB{T}, "ARGB"
+            end
+        elseif channelorder == "Gray"
+            T, channelorder = GrayAlpha{T}, "IA"
+        else
+            error("Cannot parse colorspace $channelorder")
+        end
+    else
+        if channelorder == "sRGB" || channelorder == "RGB"
+            T, channelorder = RGB{T}, "RGB"
+        elseif channelorder == "Gray"
+            T, channelorder = Gray{T}, "I"
+        else
+            error("Cannot parse colorspace $channelorder")
+        end
+    end
+    # Allocate the buffer and get the pixel data
+    buf = Array(T, sz...)
+    LibMagick.exportimagepixels!(buf, wand, cs, channelorder)
     if n > 1
         prop["timedim"] = ndims(buf)
     end
     Image(buf, prop)
 end
 
-imread{C<:ColorValue}(filename::String, ::Type{ImageMagick}, ::Type{C}) = convert(Image{C}, imread(filename, ImageMagick))
+imread{C<:ColorType}(filename::String, ::Type{ImageMagick}, ::Type{C}) = convert(Image{C}, imread(filename, ImageMagick))
 
-function imwrite(img, filename::String, ::Type{ImageMagick}; scalei = scaleinfo_uint(img), quality = nothing)
-    wand = image2wand(img, scalei, quality)
+function imwrite(img, filename::String, ::Type{ImageMagick}; mapi = mapinfo(ImageMagick, img), quality = nothing)
+    wand = image2wand(img, mapi, quality)
     LibMagick.writeimage(wand, filename)
 end
 
-function image2wand(img, scalei, quality)
+function image2wand(img, mapi, quality)
     if isa(img, AbstractImageIndexed)
         # For now, convert to direct
         img = convert(Image, img)
     end
-    imgw = scale(scalei, img)
-    imgw = permutedims_canonical(imgw)
+    imgw = map(mapi, img)
+    imgw = permutedims_horizontal(imgw)
     have_color = colordim(imgw)!=0
     if ndims(imgw) > 3+have_color
         error("At most 3 dimensions are supported")
     end
     wand = LibMagick.MagickWand()
-    LibMagick.constituteimage(to_explicit(to_contiguous(data(imgw))), wand, colorspace(img))
+    if haskey(img, "IMcs")
+        cs = img["IMcs"]
+    else
+        cs = colorspace(imgw)
+        if in(cs, ("RGB", "RGBA", "ARGB", "BGRA"))
+            cs = "sRGB"
+        end
+    end
+    channelorder = colorspace(imgw)
+    if channelorder == "Gray"
+        channelorder = "I"
+    elseif channelorder == "GrayAlpha"
+        channelorder = "IA"
+    end
+    tmp = to_explicit(to_contiguous(data(imgw)))
+    LibMagick.constituteimage(tmp, wand, cs, channelorder)
     if quality != nothing
         LibMagick.setimagecompressionquality(wand, quality)
     end
@@ -269,186 +303,85 @@ function image2wand(img, scalei, quality)
     wand
 end
 
+# ImageMagick mapinfo client. Converts to RGB and uses Ufixed.
+mapinfo{T<:Ufixed}(::Type{ImageMagick}, img::AbstractArray{T}) = MapNone{T}()
+mapinfo{T<:FloatingPoint}(::Type{ImageMagick}, img::AbstractArray{T}) = ClampMinMax(Ufixed8, zero(T), one(T))
+for ACV in (ColorValue, AbstractRGB,AbstractGray)
+    for CV in subtypes(ACV)
+        (length(CV.parameters) == 1 && !(CV.abstract)) || continue
+        CVnew = CV<:AbstractGray ? Gray : RGB
+        @eval mapinfo{T<:Ufixed}(::Type{ImageMagick}, img::AbstractArray{$CV{T}}) = MapNone{$CVnew{T}}()
+        @eval mapinfo{T<:FloatingPoint}(::Type{ImageMagick}, img::AbstractArray{$CV{T}}) =
+            Clamp{$CVnew{Ufixed8}}()
+        CVnew = CV<:AbstractGray ? Gray : BGR
+        for AC in subtypes(AbstractAlphaColorValue)
+            (length(AC.parameters) == 2 && !(AC.abstract)) || continue
+            @eval mapinfo{T<:Ufixed}(::Type{ImageMagick}, img::AbstractArray{$AC{$CV{T},T}}) = MapNone{$AC{$CVnew{T},T}}()
+            @eval mapinfo{T<:FloatingPoint}(::Type{ImageMagick}, img::AbstractArray{$AC{$CV{T},T}}) = Clamp{$AC{$CVnew{Ufixed8}, Ufixed8}}()
+        end
+    end
+end
+
+
+
 # Make the data contiguous in memory, this is necessary for imagemagick since it doesn't handle stride.
 to_contiguous(A::AbstractArray) = A
 to_contiguous(A::SubArray) = copy(A)
 
 to_explicit(A::AbstractArray) = A
-to_explicit(A::AbstractArray{RGB8}) = reinterpret(Uint8, A, tuple(3, size(A)...))
+to_explicit{T<:Ufixed}(A::AbstractArray{T}) = reinterpret(FixedPointNumbers.rawtype(T), A)
+to_explicit{T<:Ufixed}(A::AbstractArray{RGB{T}}) = reinterpret(FixedPointNumbers.rawtype(T), A, tuple(3, size(A)...))
+to_explicit{T<:FloatingPoint}(A::AbstractArray{RGB{T}}) = to_explicit(map(ClipMinMax(RGB{Ufixed8}, zero(RGB{T}), one(RGB{T})), A))
+to_explicit{T<:Ufixed}(A::AbstractArray{Gray{T}}) = reinterpret(FixedPointNumbers.rawtype(T), A, size(A))
+to_explicit{T<:FloatingPoint}(A::AbstractArray{Gray{T}}) = to_explicit(map(ClipMinMax(Gray{Ufixed8}, zero(Gray{T}), one(Gray{T})), A))
+to_explicit{T<:Ufixed}(A::AbstractArray{GrayAlpha{T}}) = reinterpret(FixedPointNumbers.rawtype(T), A, tuple(2, size(A)...))
+to_explicit{T<:FloatingPoint}(A::AbstractArray{GrayAlpha{T}}) = to_explicit(map(ClipMinMax(GrayAlpha{Ufixed8}, zero(GrayAlpha{T}), one(GrayAlpha{T})), A))
+to_explicit{T<:Ufixed}(A::AbstractArray{BGRA{T}}) = reinterpret(FixedPointNumbers.rawtype(T), A, tuple(4, size(A)...))
+to_explicit{T<:FloatingPoint}(A::AbstractArray{BGRA{T}}) = to_explicit(map(ClipMinMax(BGRA{Ufixed8}, zero(BGRA{T}), one(BGRA{T})), A))
 
-# Write grayscale values in horizontal-major order
-function writegray(stream, img, scalei::ScaleInfo)
-    assert2d(img)
-    xfirst = isxfirst(img)
-    firstindex, spsz, spstride, csz, cstride = iterate_spatial(img)
-    isz, jsz = spsz
-    istride, jstride = spstride
-    A = parent(img)
-    if xfirst
-        for j = 1:jsz
-            k = firstindex + (j-1)*jstride
-            for i = 0:istride:(isz-1)*istride
-                write(stream, scale(scalei, A[k+i]))
+# Write values in permuted order
+let method_cache = Dict()
+global writepermuted
+function writepermuted(stream, img, mapi::MapInfo, perm; gray2color::Bool = false)
+    cd = colordim(img)
+    key = (perm, cd, gray2color)
+    if !haskey(method_cache, key)
+        mapfunc = cd > 0 ? (:map1) : (:map)
+        loopsyms = [symbol(string("i_",d)) for d = 1:ndims(img)]
+        body = gray2color ? quote
+                g = $mapfunc(mapi, img[$(loopsyms...)])
+                write(stream, g)
+                write(stream, g)
+                write(stream, g)
+            end : quote
+                write(stream, $mapfunc(mapi, img[$(loopsyms...)]))
+            end
+        loopargs = [:($(loopsyms[d]) = 1:size(img, $d)) for d = 1:ndims(img)]
+        loopexpr = Expr(:for, Expr(:block, loopargs[perm[end:-1:1]]...), body)
+        f = @eval begin
+            local _writefunc_
+            function _writefunc_(stream, img, mapi)
+                $loopexpr
             end
         end
     else
-        for i = 1:isz
-            for j = 1:jsz
-                k = firstindex+(i-1)*istride+(j-1)*jstride
-                write(stream, scale(scalei,A[k]))
-            end
-        end
+        f = method_cache[key]
     end
+    f(stream, img, mapi)
+    nothing
+end
 end
 
-# Write RGB or RGBA values in horizontal-major order
-# The A value is written if present, otherwise skipped
-function writecolor(stream, img, scalei::ScaleInfo)
-    assert2d(img)
-    xfirst = isxfirst(img)
-    firstindex, spsz, spstride, csz, cstride = iterate_spatial(img)
-    isz, jsz = spsz
-    istride, jstride = spstride
-    A = parent(img)
-    cs = colorspace(img)
-    if cs == "Gray"
-        if xfirst
-            for j = 1:jsz
-                k = firstindex + (j-1)*jstride
-                for i = 0:istride:(isz-1)*istride
-                    v = scale(scalei, A[k+i])
-                    write(stream, v)
-                    write(stream, v)
-                    write(stream, v)
-                end
-            end
-        else
-            for i = 1:isz
-                for j = 1:jsz
-                    k = firstindex+(i-1)*istride+(j-1)*jstride
-                    v = scale(scalei, A[k])
-                    write(stream, v)
-                    write(stream, v)
-                    write(stream, v)
-                end
-            end
-        end
-    elseif cs == "RGB"
-        if xfirst
-            for j = 1:jsz
-                k = firstindex + (j-1)*jstride
-                for i = 0:istride:(isz-1)*istride
-                    ki = k+i
-                    write(stream, scale(scalei, A[ki]))
-                    write(stream, scale(scalei, A[ki+cstride]))
-                    write(stream, scale(scalei, A[ki+2cstride]))
-                end
-            end
-        else
-            for i = 1:isz
-                for j = 1:jsz
-                    k = firstindex+(i-1)*istride+(j-1)*jstride
-                    write(stream, scale(scalei, A[k]))
-                    write(stream, scale(scalei, A[k+cstride]))
-                    write(stream, scale(scalei, A[k+2cstride]))
-                end
-            end
-        end
-    elseif cs == "ARGB"
-        if xfirst
-            for j = 1:jsz
-                k = firstindex + (j-1)*jstride
-                for i = 0:istride:(isz-1)*istride
-                    ki = k+i
-                    write(stream,scale(scalei, A[ki+cstride]))
-                    write(stream,scale(scalei, A[ki+2cstride]))
-                    write(stream,scale(scalei, A[ki+3cstride]))
-                    write(stream,scale(scalei, A[ki]))
-                end
-            end
-        else
-            for i = 1:isz
-                for j = 1:jsz
-                    k = firstindex+(i-1)*istride+(j-1)*jstride
-                    write(stream,scale(scalei, A[k+cstride]))
-                    write(stream,scale(scalei, A[k+2cstride]))
-                    write(stream,scale(scalei, A[k+3cstride]))
-                    write(stream,scale(scalei, A[k]))
-                end
-            end
-        end
-    elseif cs == "RGBA"
-        if xfirst
-            for j = 1:jsz
-                k = firstindex + (j-1)*jstride
-                for i = 0:istride:(isz-1)*istride
-                    ki = k+i
-                    write(stream,scale(scalei, A[ki]))
-                    write(stream,scale(scalei, A[ki+cstride]))
-                    write(stream,scale(scalei, A[ki+2cstride]))
-                    write(stream,scale(scalei, A[ki+3cstride]))
-                end
-            end
-        else
-            for i = 1:isz
-                for j = 1:jsz
-                    k = firstindex+(i-1)*istride+(j-1)*jstride
-                    write(stream,scale(scalei, A[k]))
-                    write(stream,scale(scalei, A[k+cstride]))
-                    write(stream,scale(scalei, A[k+2cstride]))
-                    write(stream,scale(scalei, A[k+3cstride]))
-                end
-            end
-        end
-    elseif cs == "RGB24"
-        if xfirst
-            for j = 1:jsz
-                k = firstindex + (j-1)*jstride
-                for i = 0:istride:(isz-1)*istride
-                    v = A[k+i]
-                    write(stream, redval(v))
-                    write(stream, greenval(v))
-                    write(stream, blueval(v))
-                end
-            end
-        else
-            for i = 1:isz
-                for j = 1:jsz
-                    k = firstindex+(i-1)*istride+(j-1)*jstride
-                    v = A[k]
-                    write(stream, redval(v))
-                    write(stream, greenval(v))
-                    write(stream, blueval(v))
-                end
-            end
-        end
-    elseif cs == "ARGB32"
-        if xfirst
-            for j = 1:jsz
-                k = firstindex + (j-1)*jstride
-                for i = 0:istride:(isz-1)*istride
-                    v = A[k+i]
-                    write(stream, redval(v))
-                    write(stream, greenval(v))
-                    write(stream, blueval(v))
-                    write(stream, alphaval(v))
-                end
-            end
-        else
-            for i = 1:isz
-                for j = 1:jsz
-                    k = firstindex+(i-1)*istride+(j-1)*jstride
-                    v = A[k]
-                    write(stream, redval(v))
-                    write(stream, greenval(v))
-                    write(stream, blueval(v))
-                    write(stream, alphaval(v))
-                end
-            end
-        end
-    else
-        error("colorspace ", cs, " not yet supported")
-    end
+function write{T<:Ufixed}(io::IO, c::AbstractRGB{T})
+    write(io, reinterpret(c.r))
+    write(io, reinterpret(c.g))
+    write(io, reinterpret(c.b))
+end
+
+function write(io::IO, c::RGB24)
+    write(io, red(c))
+    write(io, green(c))
+    write(io, blue(c))
 end
 
 ## PPM, PGM, and PBM ##
@@ -482,24 +415,29 @@ function imread{S<:IO}(stream::S, ::Type{PPMBinary})
     maxval = parse_netpbm_maxval(stream)
     local dat
     if maxval <= 255
-        dat = read(stream, Uint8, 3, w, h)
+        datraw = read(stream, Ufixed8, 3, w, h)
+        dat = reinterpret(RGB{Ufixed8}, datraw, (w, h))
     elseif maxval <= typemax(Uint16)
-        dat = Array(Uint16, 3, w, h)
+        # read first as Uint16 so the loop is type-stable, then convert to Ufixed
+        datraw = Array(Uint16, 3, w, h)
         # there is no endian standard, but netpbm is big-endian
-        if ENDIAN_BOM == 0x01020304
+        if !is_little_endian
             for indx = 1:3*w*h
-                dat[indx] = read(stream, Uint16)
+                datraw[indx] = read(stream, Uint16)
             end
         else
             for indx = 1:3*w*h
-                dat[indx] = bswap(read(stream, Uint16))
+                datraw[indx] = bswap(read(stream, Uint16))
             end
         end
+        # Determine the appropriate Ufixed type
+        T = ufixedtype[iceil(log2(maxval)/2)<<1]
+        dat = reinterpret(RGB{T}, datraw, (w, h))
     else
         error("Image file may be corrupt. Are there really more than 16 bits in this image?")
     end
     T = eltype(dat)
-    Image(dat, ["colorspace" => "RGB", "colordim" => 1, "spatialorder" => ["x", "y"], "limits" => (zero(T),convert(T,maxval))])
+    Image(dat, (ASCIIString=>Any)["spatialorder" => ["x", "y"], "pixelspacing" => [1,1]])
 end
 
 function imread{S<:IO}(stream::S, ::Type{PGMBinary})
@@ -507,23 +445,26 @@ function imread{S<:IO}(stream::S, ::Type{PGMBinary})
     maxval = parse_netpbm_maxval(stream)
     local dat
     if maxval <= 255
-        dat = read(stream, Uint8, w, h)
+        dat = read(stream, Ufixed8, w, h)
     elseif maxval <= typemax(Uint16)
-        dat = Array(Uint16, w, h)
-        if ENDIAN_BOM == 0x01020304
+        datraw = Array(Uint16, w, h)
+        if !is_little_endian
             for indx = 1:w*h
-                dat[indx] = read(stream, Uint16)
+                datraw[indx] = read(stream, Uint16)
             end
         else
             for indx = 1:w*h
-                dat[indx] = bswap(read(stream, Uint16))
+                datraw[indx] = bswap(read(stream, Uint16))
             end
         end
+        # Determine the appropriate Ufixed type
+        T = ufixedtype[iceil(log2(maxval)/2)<<1]
+        dat = reinterpret(RGB{T}, datraw, (w, h))
     else
         error("Image file may be corrupt. Are there really more than 16 bits in this image?")
     end
     T = eltype(dat)
-    Image(dat, ["colorspace" => "Gray", "spatialorder" => ["x", "y"], "limits" => (zero(T),convert(T,maxval))])
+    Image(dat, ["colorspace" => "Gray", "spatialorder" => ["x", "y"], "pixelspacing" => [1,1]])
 end
 
 function imread{S<:IO}(stream::S, ::Type{PBMBinary})
@@ -537,229 +478,40 @@ function imread{S<:IO}(stream::S, ::Type{PBMBinary})
             dat[offset+k, irow] = (tmp>>>(8-k))&0x01
         end
     end
-    Image(dat, ["spatialorder" => ["x", "y"]])
+    Image(dat, ["spatialorder" => ["x", "y"], "pixelspacing" => [1,1]])
 end
 
 function imwrite(img, filename::String, ::Type{PPMBinary})
     open(filename, "w") do stream
+        write(stream, "P6\n")
+        write(stream, "# ppm file written by Julia\n")
         imwrite(img, stream, PPMBinary)
     end
 end
 
-function imwrite(img, s::IO, ::Type{PPMBinary})
-    write(s, "P6\n")
-    write(s, "# ppm file written by Julia\n")
+pnmmax{T<:FloatingPoint}(::Type{T}) = 255
+pnmmax{T<:Ufixed}(::Type{T}) = reinterpret(FixedPointNumbers.rawtype(T), one(T))
+pnmmax{T<:Unsigned}(::Type{T}) = typemax(T)
+
+function imwrite{T<:ColorValue}(img::AbstractArray{T}, s::IO, ::Type{PPMBinary}, mapi = mapinfo(ImageMagick, img))
     w, h = widthheight(img)
-    bitdepth = 8*sizeof(eltype(img))
-    if eltype(img) <: FloatingPoint
-        bitdepth = 8
-    end
-    cs = colorspace(img)
-    if cs == "RGB24"
-        bitdepth = 8
-    elseif cs == "ARGB32"
-        bitdepth = 8
-    end
-    T = typedict[bitdepth]
-    mx = int(typemax(T))
-    scalei = scaleinfo(T, img)
+    TE = eltype(T)
+    mx = pnmmax(TE)
     write(s, "$w $h\n$mx\n")
-    writecolor(s, img, scalei)
+    p = permutation_horizontal(img)
+    writepermuted(s, img, mapi, p; gray2color = T <: AbstractGray)
 end
 
-# ## PNG ##
-# type PNGFile <: ImageFileType end
-# 
-# add_image_file_format(".png", [0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A], PNGFile)
-# 
-# libpng = dlopen("libpng")
-# libimage_jl = dlopen(strcat(JULIA_HOME, "/../../extras/libjlimage"))
-# png_major   = ccall(dlsym(libimage_jl, :jl_png_libpng_ver_major), Int32, ())
-# png_minor   = ccall(dlsym(libimage_jl, :jl_png_libpng_ver_minor), Int32, ())
-# png_release = ccall(dlsym(libimage_jl, :jl_png_libpng_ver_release), Int32, ())
-# jl_png_read_init           = dlsym(libimage_jl, :jl_png_read_init)
-# jl_png_write_init          = dlsym(libimage_jl, :jl_png_write_init)
-# png_set_sig_bytes          = dlsym(libpng, :png_set_sig_bytes)
-# png_read_info              = dlsym(libpng, :png_read_info)
-# png_write_info             = dlsym(libpng, :png_write_info)
-# png_read_update_info       = dlsym(libpng, :png_read_update_info)
-# png_get_image_width        = dlsym(libpng, :png_get_image_width)
-# png_get_image_height       = dlsym(libpng, :png_get_image_height)
-# png_get_bit_depth          = dlsym(libpng, :png_get_bit_depth)
-# png_get_color_type         = dlsym(libpng, :png_get_color_type)
-# #png_get_filter_type        = dlsym(libpng, :png_get_filter_type)
-# #png_get_compression_type   = dlsym(libpng, :png_get_compression_type)
-# #png_get_interlace_type     = dlsym(libpng, :png_get_interlace_type)
-# #png_set_interlace_handling = dlsym(libpng, :png_set_interlace_handling)
-# png_set_expand_gray_1_2_4_to_8 = convert(Ptr{Void}, 0)
-# try
-#     png_set_expand_gray_1_2_4_to_8 = dlsym(libpng, :png_set_expand_gray_1_2_4_to_8)
-# catch
-#     png_set_expand_gray_1_2_4_to_8 = dlsym(libpng, :png_set_gray_1_2_4_to_8)
-# end
-# png_set_swap               = dlsym(libpng, :png_set_swap)
-# png_set_IHDR               = dlsym(libpng, :png_set_IHDR)
-# png_get_valid              = dlsym(libpng, :png_get_valid)
-# png_get_rowbytes           = dlsym(libpng, :png_get_rowbytes)
-# jl_png_read_image          = dlsym(libimage_jl, :jl_png_read_image)
-# jl_png_write_image          = dlsym(libimage_jl, :jl_png_write_image)
-# jl_png_read_close          = dlsym(libimage_jl, :jl_png_read_close)
-# jl_png_write_close          = dlsym(libimage_jl, :jl_png_write_close)
-# const PNG_COLOR_MASK_PALETTE = 1
-# const PNG_COLOR_MASK_COLOR   = 2
-# const PNG_COLOR_MASK_ALPHA   = 4
-# const PNG_COLOR_TYPE_GRAY = 0
-# const PNG_COLOR_TYPE_PALETTE = PNG_COLOR_MASK_COLOR | PNG_COLOR_MASK_PALETTE
-# const PNG_COLOR_TYPE_RGB = PNG_COLOR_MASK_COLOR
-# const PNG_COLOR_TYPE_RGB_ALPHA = PNG_COLOR_MASK_COLOR | PNG_COLOR_MASK_ALPHA
-# const PNG_COLOR_TYPE_GRAY_ALPHA = PNG_COLOR_MASK_ALPHA
-# const PNG_INFO_tRNS = 0x0010
-# const PNG_INTERLACE_NONE = 0
-# const PNG_INTERLACE_ADAM7 = 1
-# const PNG_COMPRESSION_TYPE_BASE = 0
-# const PNG_FILTER_TYPE_BASE = 0
-# 
-# png_color_type(::Type{CSGray}) = PNG_COLOR_TYPE_GRAY
-# png_color_type(::Type{RGB}) = PNG_COLOR_TYPE_RGB
-# png_color_type(::Type{CSRGBA}) = PNG_COLOR_TYPE_RGB_ALPHA
-# png_color_type(::Type{CSGrayAlpha}) = PNG_COLOR_TYPE_GRAPH_ALPHA
-# 
-# # Used by finalizer to close down resources
-# png_read_cleanup(png_voidp) = ccall(jl_png_read_close, Void, (Ptr{Ptr{Void}},), png_voidp)
-# png_write_cleanup(png_voidp) = ccall(jl_png_write_close, Void, (Ptr{Ptr{Void}},), png_voidp)
-# 
-# function imread{S<:IO}(stream::S, ::Type{PNGFile})
-#     png_voidp = ccall(jl_png_read_init, Ptr{Ptr{Void}}, (Ptr{Void},), fd(stream))
-#     if png_voidp == C_NULL
-#         error("Error opening PNG file ", stream.name, " for reading")
-#     end
-#     finalizer(png_voidp, png_read_cleanup)  # gracefully handle errors
-#     png_p = pointer_to_array(png_voidp, (3,))
-#     # png_p[1] is the png_structp, png_p[2] is the png_infop, and
-#     # png_p[3] is a FILE* created from stream
-#     # Tell the library how many header bytes we've already read
-#     ccall(png_set_sig_bytes, Void, (Ptr{Void}, Int32), png_p[1], position(stream))
-#     # Read the rest of the header
-#     ccall(png_read_info, Void, (Ptr{Void}, Ptr{Void}), png_p[1], png_p[2])
-#     # Determine image parameters
-#     width = ccall(png_get_image_width, Uint32, (Ptr{Void}, Ptr{Void}), png_p[1], png_p[2])
-#     height = ccall(png_get_image_height, Uint32, (Ptr{Void}, Ptr{Void}), png_p[1], png_p[2])
-#     bit_depth = ccall(png_get_bit_depth, Int32, (Ptr{Void}, Ptr{Void}), png_p[1], png_p[2])
-#     if bit_depth <= 8
-#         T = Uint8
-#     elseif bit_depth == 16
-#         T = Uint16
-#     else
-#         error("Unknown pixel type")
-#     end
-#     color_type = ccall(png_get_color_type, Int32, (Ptr{Void}, Ptr{Void}), png_p[1], png_p[2])
-#     if color_type == PNG_COLOR_TYPE_GRAY
-#         n_color_channels = 1
-#         cs = CSGray
-#     elseif color_type == PNG_COLOR_TYPE_RGB
-#         n_color_channels = 3
-#         cs = RGB
-#     elseif color_type == PNG_COLOR_TYPE_GRAY_ALPHA
-#         n_color_channels = 2
-#         cs = CSGrayAlpha
-#     elseif color_type == PNG_COLOR_TYPE_RGB_ALPHA
-#         n_color_channels = 4
-#         cs = CSRGBA
-#     else
-#         error("Color type not recognized")
-#     end
-#     # There are certain data types we just don't want to handle in
-#     # their raw format. Check for these, and if needed ask libpng to
-#     # transform them.
-#     if color_type == PNG_COLOR_TYPE_GRAY && bit_depth < 8
-#         ccall(png_set_expand_gray_1_2_4_to_8, Void, (Ptr{Void},), png_p[1])
-#         bit_depth = 8
-#     end
-#     if ccall(png_get_valid, Uint32, (Ptr{Void}, Ptr{Void}, Uint32), png_p[1], png_p[2], PNG_INFO_tRNS) > 0
-#         call(png_set_tRNS_to_alpha, Void, (Ptr{Void},), png_p[1])
-#     end
-#     # TODO: paletted images
-#     if bit_depth > 8 && ENDIAN_BOM == 0x04030201
-#         call(png_set_swap, Void, (Ptr{Void},), png_p[1])
-#     end
-#     # TODO? set a background
-#     ccall(png_read_update_info, Void, (Ptr{Void}, Ptr{Void}), png_p[1], png_p[2])
-#     # Allocate the buffer
-#     pixbytes = sizeof(T) * n_color_channels
-#     rowbytes = pixbytes*width
-#     if rowbytes != ccall(png_get_rowbytes, Uint32, (Ptr{Void}, Ptr{Void}), png_p[1], png_p[2])
-#         error("Number of bytes per row is wrong")
-#     end
-#     if n_color_channels == 1
-#         data = Array(T, width, height)
-#         order = "xy"
-#     else
-#         data = Array(T, n_color_channels, width, height)
-#         order = "cxy"
-#     end
-#     # Read the image
-#     status = ccall(jl_png_read_image, Int32, (Ptr{Void}, Ptr{Void}, Ptr{Uint8}), png_p[1], png_p[2], data)
-#     if status < 0
-#         error("PNG error: read failed")
-#     end
-#     # No need to clean up, the finalizer will do it
-#     # Build the image
-#     return ImageCS{T,2,cs}(data,order)
-# end
-# 
-# function imwrite{S<:IO}(img, stream::S, ::Type{PNGFile}, opts::Options)
-#     dat = uint(img)
-#     cs = colorspace(img)
-#     # Ensure PNG storage order
-#     if cs != CSGray
-#         dat = permute_c_first(dat, storageorder(img))
-#     end
-#     imwrite(dat, cs, stream, PNGFile, opts)
-# end
-# imwrite{S<:IO}(img, stream::S, ::Type{PNGFile}) = imwrite(img, stream, PNGFile, Options())
-# 
-# function imwrite(img, filename::ByteString, ::Type{PNGFile}, opts::Options)
-#     s = open(filename, "w")
-#     imwrite(img, s, PNGFile, opts)
-#     gc()  # force the finalizer to run
-# end
-# imwrite(img, filename::ByteString, ::Type{PNGFile}) = imwrite(img, filename, PNGFile, Options())
-# 
-# function imwrite{T<:Unsigned, CS<:ColorSpace, S<:IO}(data::Array{T}, ::Type{CS}, stream::S, ::Type{PNGFile}, opts::Options)
-#     @defaults opts interlace=PNG_INTERLACE_NONE compression=PNG_COMPRESSION_TYPE_BASE filter=PNG_FILTER_TYPE_BASE
-#     png_voidp = ccall(jl_png_write_init, Ptr{Ptr{Void}}, (Ptr{Void},), fd(stream))
-#     if png_voidp == C_NULL
-#         error("Error opening PNG file ", stream.name, " for writing")
-#     end
-#     finalizer(png_voidp, png_write_cleanup)
-#     png_p = pointer_to_array(png_voidp, (3,))
-#     # Specify the parameters and write the header
-#     if CS == CSGray
-#         height = size(data, 2)
-#         width = size(data, 1)
-#     else
-#         height = size(data, 3)
-#         width = size(data, 2)
-#     end
-#     bit_depth = 8*sizeof(T)
-#     ccall(png_set_IHDR, Void, (Ptr{Void}, Ptr{Void}, Uint32, Uint32, Int32, Int32, Int32, Int32, Int32), png_p[1], png_p[2], width, height, bit_depth, png_color_type(CS), interlace, compression, filter)
-#     # TODO: support comments via a comments=Array(PNGComments, 0) option
-#     ccall(png_write_info, Void, (Ptr{Void}, Ptr{Void}), png_p[1], png_p[2])
-#     if bit_depth > 8 && ENDIAN_BOM == 0x04030201
-#         call(png_set_swap, Void, (Ptr{Void},), png_p[1])
-#     end
-#     # Write the image
-#     status = ccall(jl_png_write_image, Int32, (Ptr{Void}, Ptr{Void}, Ptr{Uint8}), png_p[1], png_p[2], data)
-#     if status < 0
-#         error("PNG error: read failed")
-#     end
-#     # Clean up now, to prevent problems that otherwise occur when we
-#     # try to immediately use the file from an external program before
-#     # png_voidp gets garbage-collected
-# #    finalizer_del(png_voidp)  # delete the finalizer
-# #    png_write_cleanup(png_voidp)
-# end    
-# imwrite(data, cs, stream, ::Type{PNGFile}) = imwrite(data, cs, stream, PNGFile, Options())
+function imwrite{T}(img::AbstractArray{T}, s::IO, ::Type{PPMBinary}, mapi = mapinfo(ImageMagick, img))
+    w, h = widthheight(img)
+    cs = colorspace(img)
+    in(cs, ("RGB", "Gray")) || error("colorspace $cs not supported")
+    mx = pnmmax(T)
+    write(s, "$w $h\n$mx\n")
+    p = permutation_horizontal(img)
+    writepermuted(s, img, mapi, p; gray2color = cs == "Gray")
+end
+
 
 function parseints(line, n)
     ret = Array(Int, n)
@@ -780,18 +532,22 @@ function parseints(line, n)
 end
 
 # Permute to a color, horizontal, vertical, ... storage order (with time always last)
-function permutedims_canonical(img)
+function permutation_horizontal(img)
     cd = colordim(img)
     td = timedim(img)
     p = spatialpermutation(["x", "y"], img)
     if cd != 0
+        p[p .>= cd] += 1
         insert!(p, 1, cd)
     end
     if td != 0
         push!(p, td)
     end
-    permutedims(img, p)
+    p
 end
+
+permutedims_horizontal(img) = permutedims(img, permutation_horizontal(img))
+
 
 ### Register formats for later loading here
 type Dummy <: ImageFileType; end

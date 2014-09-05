@@ -1,7 +1,7 @@
 module LibOSXNative
 
 #import Base: error, size
-using Images
+using Images, Color, Images.ColorTypes
 
 export imread
 
@@ -32,8 +32,6 @@ function imread(filename)
     hasalpha = CFBooleanGetValue(CFDictionaryGetValue(dict, "HasAlpha"))
 
     pixeldepth = CFNumberGetValue(CFDictionaryGetValue(dict, "Depth"), Int16)
-    typedict = [8 => Uint8, 16 => Uint16, 32 => Uint32]
-    T = typedict[iceil(pixeldepth/8)*8]
     # Colormodel is one of: "RGB", "Gray", "CMYK", "Lab"
     colormodel = CFStringGetCString(CFDictionaryGetValue(dict, "ColorModel"))
     if colormodel == ""
@@ -56,20 +54,26 @@ function imread(filename)
 
     # Allocate the buffer and get the pixel data
     sz = imframes > 1 ? (imwidth, imheight, imframes) : (imwidth, imheight)
+    T = Images.ufixedtype[pixeldepth]
     buf = (storagedepth > 1) ? Array(T, storagedepth, sz...) : Array(T, sz...)
-    if colormodel == "Gray" && alphacode == 0
+    if colormodel == "Gray" && alphacode == 0 && storagedepth == 1
+        buf = Array(T, sz)
         fillgray!(buf, imgsrc)
     elseif colormodel == "Gray" && in(alphacode, [1, 2, 3, 4])
-        colormodel = "GrayAlpha"
-        fillgrayalpha!(buf, imgsrc)
+        buf = Array(GrayAlpha{T}, sz)
+        fillgrayalpha!(reinterpret(T, buf, tuple(2, sz...)), imgsrc)
     elseif colormodel == "RGB" && in(alphacode, [1, 3])
-        colormodel = "RGBA"
-        fillcolor!(buf, imgsrc, storagedepth)
+        buf = Array(RGBA{T}, sz)
+        fillcolor!(reinterpret(T, buf, tuple(4, sz...)), imgsrc, storagedepth)
     elseif colormodel == "RGB" && in(alphacode, [2, 4])
-        colormodel = "ARGB"
-        fillcolor!(buf, imgsrc, storagedepth)
-    elseif colormodel == "RGB" && in(alphacode, [0, 5, 6])
-        fillcolor!(buf, imgsrc, storagedepth)
+        buf = Array(ARGB{T}, sz)
+        fillcolor!(reinterpret(T, buf, tuple(4, sz...)), imgsrc, storagedepth)
+    elseif colormodel == "RGB" && alphacode == 0
+        buf = Array(RGB{T}, sz)
+        fillcolor!(reinterpret(T, buf, tuple(3, sz...)), imgsrc, storagedepth)
+    elseif colormodel == "RGB" && in(alphacode, [5, 6])
+        buf = alphacode == 5 ? Array(RGB4{T}, sz) : Array(RGB1{T}, sz)
+        fillcolor!(reinterpret(T, buf, tuple(4, sz...)), imgsrc, storagedepth)
     else
         warn("Unknown colormodel ($colormodel) and alphacode ($alphacode) found by OSX reader")
         CFRelease(imgsrc)
@@ -77,26 +81,13 @@ function imread(filename)
     end
     CFRelease(imgsrc)
 
-    # Deal with kCGImageAlphaNoneSkipLast and kCGImageAlphaNoneSkipFirst
-    # These have no useful information in the first or last color channel
-    if alphacode == 5
-        buf = slicedim(buf, 1, 1:3)
-    elseif alphacode == 6
-        buf = slicedim(buf, 1, 2:4)
-    end
-    
     # Set the image properties
-    prop = ["colorspace" => colormodel,
-            "spatialorder" => ["x", "y"],
+    prop = ["spatialorder" => ["x", "y"],
             "pixelspacing" => [1, 1],
-            "limits" => (zero(T), typemax(T)),
             "imagedescription" => imagedescription,
             "suppress" => Set({"imagedescription"})]
     if imframes > 1
         prop["timedim"] = ndims(buf)
-    end
-    if colormodel != "Gray"  # Does GrayAlpha count as a colordim??
-        prop["colordim"] = 1
     end
     Image(buf, prop)
 end

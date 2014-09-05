@@ -1,5 +1,7 @@
 module LibMagick
 
+using Color, FixedPointNumbers, ..ColorTypes
+
 import Base: error, size
 
 export MagickWand,
@@ -53,6 +55,9 @@ storagetype(::Type{Uint16}) = SHORTPIXEL
 storagetype(::Type{Uint32}) = INTEGERPIXEL
 storagetype(::Type{Float32}) = FLOATPIXEL
 storagetype(::Type{Float64}) = DOUBLEPIXEL
+storagetype{T<:Ufixed}(::Type{T}) = storagetype(FixedPointNumbers.rawtype(T))
+storagetype{CV<:ColorValue}(::Type{CV}) = storagetype(eltype(CV))
+storagetype{CV<:AbstractAlphaColorValue}(::Type{CV}) = storagetype(eltype(CV))
 
 # Image type
 const IMType = ["BilevelType", "GrayscaleType", "GrayscaleMatteType", "PaletteType", "PaletteMatteType", "TrueColorType", "TrueColorMatteType", "ColorSeparationType", "ColorSeparationMatteType", "OptimizeType", "PaletteBilevelMatteType"]
@@ -63,11 +68,6 @@ const CStoIMTypedict = ["Gray" => "GrayscaleType", "GrayAlpha" => "GrayscaleMatt
 # Colorspace
 const IMColorspace = ["RGB", "Gray", "Transparent", "OHTA", "Lab", "XYZ", "YCbCr", "YCC", "YIQ", "YPbPr", "YUV", "CMYK", "sRGB"]
 const IMColordict = Dict(IMColorspace, 1:length(IMColorspace))
-IMColordict["GrayAlpha"] = IMColordict["Gray"]
-# Everything is mapped to sRGB since that's what it really is.
-IMColordict["RGBA"] = IMColordict["sRGB"]
-IMColordict["ARGB"] = IMColordict["sRGB"]
-IMColordict["RGB"]  = IMColordict["sRGB"]
 
 function nchannels(imtype::String, cs::String, havealpha = false)
     n = 3
@@ -82,7 +82,7 @@ function nchannels(imtype::String, cs::String, havealpha = false)
     n + havealpha, cs
 end
 
-channelorder = ["Gray" => "I", "GrayAlpha" => "IA", "RGB" => "RGB", "ARGB" => "ARGB", "RGBA" => "RGBA", "CMYK" => "CMYK"]
+# channelorder = ["Gray" => "I", "GrayAlpha" => "IA", "RGB" => "RGB", "ARGB" => "ARGB", "RGBA" => "RGBA", "CMYK" => "CMYK"]
 
 # Compression
 const NoCompression = 1
@@ -125,21 +125,28 @@ function error(wand::PixelWand)
     error(msg)
 end
 
-
-function getsize(buffer, colorspace)
-    if colorspace == "Gray"
+function getsize(buffer, channelorder)
+    if channelorder == "I"
         return size(buffer, 1), size(buffer, 2), size(buffer, 3)
     else
         return size(buffer, 2), size(buffer, 3), size(buffer, 4)
     end
 end
+getsize{C<:Union(ColorValue,AbstractAlphaColorValue)}(buffer::AbstractArray{C}, channelorder) = size(buffer, 1), size(buffer, 2), size(buffer, 3)
 
-function exportimagepixels!{T}(buffer::AbstractArray{T}, wand::MagickWand,  colorspace::ASCIIString; x = 0, y = 0)
-    cols, rows, nimages = getsize(buffer, colorspace)
-    ncolors = colorspace == "Gray" ? 1 : size(buffer, 1)
+colorsize(buffer, channelorder) = channelorder == "I" ? 1 : size(buffer, 1)
+colorsize{C<:Union(ColorValue,AbstractAlphaColorValue)}(buffer::AbstractArray{C}, channelorder) = 1
+
+bitdepth{C<:ColorType}(buffer::AbstractArray{C}) = 8*eltype(C)
+bitdepth{T}(buffer::AbstractArray{T}) = 8*sizeof(T)
+
+# colorspace is included for consistency with constituteimage, but it is not used
+function exportimagepixels!{T}(buffer::AbstractArray{T}, wand::MagickWand,  colorspace::ASCIIString, channelorder::ASCIIString; x = 0, y = 0)
+    cols, rows, nimages = getsize(buffer, channelorder)
+    ncolors = colorsize(buffer, channelorder)
     p = pointer(buffer)
     for i = 1:nimages
-        status = ccall((:MagickExportImagePixels, libwand), Cint, (Ptr{Void}, Cssize_t, Cssize_t, Csize_t, Csize_t, Ptr{Uint8}, Cint, Ptr{Void}), wand.ptr, x, y, cols, rows, channelorder[colorspace], storagetype(T), p)
+        status = ccall((:MagickExportImagePixels, libwand), Cint, (Ptr{Void}, Cssize_t, Cssize_t, Csize_t, Csize_t, Ptr{Uint8}, Cint, Ptr{Void}), wand.ptr, x, y, cols, rows, channelorder, storagetype(T), p)
         status == 0 && error(wand)
         nextimage(wand)
         p += sizeof(T)*cols*rows*ncolors
@@ -154,15 +161,16 @@ end
 #     nothing
 # end
 
-function constituteimage{T<:Unsigned}(buffer::AbstractArray{T}, wand::MagickWand, colorspace::ASCIIString; x = 0, y = 0)
-    cols, rows, nimages = getsize(buffer, colorspace)
-    ncolors = colorspace == "Gray" ? 1 : size(buffer, 1)
+function constituteimage{T<:Unsigned}(buffer::AbstractArray{T}, wand::MagickWand, colorspace::ASCIIString, channelorder::ASCIIString; x = 0, y = 0)
+    cols, rows, nimages = getsize(buffer, channelorder)
+    ncolors = colorsize(buffer, channelorder)
     p = pointer(buffer)
+    depth = bitdepth(buffer)
     for i = 1:nimages
-        status = ccall((:MagickConstituteImage, libwand), Cint, (Ptr{Void}, Cssize_t, Cssize_t, Ptr{Uint8}, Cint, Ptr{Void}), wand.ptr, cols, rows, channelorder[colorspace], storagetype(T), p)
+        status = ccall((:MagickConstituteImage, libwand), Cint, (Ptr{Void}, Cssize_t, Cssize_t, Ptr{Uint8}, Cint, Ptr{Void}), wand.ptr, cols, rows, channelorder, storagetype(T), p)
         status == 0 && error(wand)
         setimagecolorspace(wand, colorspace)
-        status = ccall((:MagickSetImageDepth, libwand), Cint, (Ptr{Void}, Csize_t), wand.ptr, 8*sizeof(T))
+        status = ccall((:MagickSetImageDepth, libwand), Cint, (Ptr{Void}, Csize_t), wand.ptr, depth)
         status == 0 && error(wand)
         p += sizeof(T)*cols*rows*ncolors
     end
@@ -239,7 +247,7 @@ function getimagecolorspace(wand::MagickWand)
 end
 
 # set the colorspace
-function setimagecolorspace(wand::MagickWand, cs::ASCIIString) 
+function setimagecolorspace(wand::MagickWand, cs::ASCIIString)
     status = ccall((:MagickSetImageColorspace, libwand), Cint, (Ptr{Void},Cint), wand.ptr, IMColordict[cs])
     status == 0 && error(wand)
     nothing
@@ -272,6 +280,24 @@ getimagedepth(wand::MagickWand) = int(ccall((:MagickGetImageDepth, libwand), Csi
 pixelsetcolor(wand::PixelWand, colorstr::ByteString) = ccall((:PixelSetColor, libwand), Csize_t, (Ptr{Void},Ptr{Uint8}), wand.ptr, colorstr) == 0 && error(wand)
 
 relinquishmemory(p) = ccall((:MagickRelinquishMemory, libwand), Ptr{Uint8}, (Ptr{Uint8},), p)
+
+# get library information
+# If you pass in "*", you get the full list of options
+function queryoptions(pattern::String)
+    nops = Cint[0]
+    pops = ccall((:MagickQueryConfigureOptions, libwand), Ptr{Ptr{Uint8}}, (Ptr{Uint8}, Ptr{Cint}), pattern, nops)
+    ret = Array(ASCIIString, nops[1])
+    for i = 1:nops[1]
+        ret[i] = bytestring(unsafe_load(pops, i))
+    end
+    ret
+end
+
+# queries the value of a particular option
+function queryoption(option::String)
+    p = ccall((:MagickQueryConfigureOption, libwand), Ptr{Uint8}, (Ptr{Uint8},), option)
+    bytestring(p)
+end
 
 # Implementation of fdopen
 # Delete this once 0.3 or greater is common, and use the CFILE mechanism

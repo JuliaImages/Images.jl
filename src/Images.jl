@@ -2,25 +2,15 @@ module Images
 
 import Base.Order: Ordering, ForwardOrdering, ReverseOrdering
 import Base.Graphics: width, height
-importall Base
+import Base: atan2, clamp, convert, copy, copy!, ctranspose, delete!, eltype,
+             float32, float64, get, getindex, haskey, hypot, length, map, map!,
+             maximum, minimum, ndims, one, parent, permutedims, reinterpret,
+             setindex!, show, showcompact, similar, size, slice, sqrt, squeeze,
+             strides, sub, sum, write, writemime, zero
 
-using Color
-
-# We need a couple of extra features not present in Color
-immutable RGB8 <: ColorValue
-    r::Uint8
-    g::Uint8
-    b::Uint8
-
-    function RGB8(r::Real, g::Real, b::Real)
-        new(r, g, b)
-    end
-
-    RGB8() = RGB8(0,0,0)
-end
-
-typemin(::Type{RGB}) = RGB(0,0,0)
-typemax(::Type{RGB}) = RGB(1,1,1)
+using Color, FixedPointNumbers
+import Color: Fractional
+import FixedPointNumbers: ufixed8, ufixed10, ufixed12, ufixed14, ufixed16
 
 if VERSION.minor < 3
     using Cartesian
@@ -33,12 +23,18 @@ end
 #     import ..Grid.restrict
 # end
 
+const is_little_endian = ENDIAN_BOM == 0x04030201
+immutable TypeConst{N} end  # for passing compile-time constants to functions
+
+include("colortypes.jl")
+using .ColorTypes
+
 include("core.jl")
-include("iterator.jl")
+include("map.jl")
+include("overlays.jl")
 const have_imagemagick = include("ioformats/libmagickwand.jl")
 @osx_only include("ioformats/OSXnative.jl")
 include("io.jl")
-include("scaling.jl")
 include("labeledarrays.jl")
 include("algorithms.jl")
 include("connected.jl")
@@ -74,22 +70,32 @@ function precompile()
 end
 
 export # types
+    Gray,
+    GrayAlpha,
+    ARGB,
+    BGRA,
+    RGBA,
+    RGB1,
+    RGB4,
+    YIQ,
+
     AbstractImage,
     AbstractImageDirect,
     AbstractImageIndexed,
     Image,
     ImageCmap,
     BitShift,
-    ClipMin,
-    ClipMax,
-    ClipMinMax,
+    ClampMin,
+    ClampMax,
+    ClampMinMax,
+    Clamp,
     LabeledArray,
+    MapInfo,
+    MapNone,
     Overlay,
     OverlayImage,
     ScaleAutoMinMax,
-    ScaleInfo,
     ScaleMinMax,
-    ScaleNone,
     ScaleSigned,
     SliceData,
 
@@ -123,11 +129,11 @@ export # types
     maxabsfinite,
     maxfinite,
     minfinite,
+    nchannels,
     ncolorelem,
     nimages,
     pixelspacing,
     properties,
-    refim,
     rerange!,
     reslice!,
     restrict,
@@ -168,24 +174,17 @@ export # types
     imadjustintensity,
     indexedcolor,
     lut,
-    ntsc2rgb,
-    rgb2gray,
     rgb2hsi,
-    rgb2ntsc,
     rgb2ycbcr,
+    separate,
     uint32color,
     uint32color!,
     ycbcr2rgb,
     
     # Scaling of intensity
-    climdefault,
-    float32sc,
-    float64sc,
     sc,
     scale,
-    scaleinfo,
-    scaleminmax,
-    scalesigned,
+    mapinfo,
     uint8sc,
     uint16sc,
     uint32sc,
@@ -243,10 +242,45 @@ export # types
     # phantoms
     shepp_logan
 
+export # Deprecated exports
+    ClipMin,
+    ClipMax,
+    ClipMinMax,
+    ScaleInfo,
+    climdefault,
+    float32sc,
+    float64sc,
+    ntsc2rgb,
+    rgb2gray,
+    rgb2ntsc,
+    scaleinfo,
+    scaleminmax,
+    scalesigned
 
-@deprecate cairoRGB     uint32color!
-@deprecate refim        getindexim
-@deprecate scaledefault climdefault
+
+@deprecate scaleminmax  ScaleMinMax
+@deprecate scaleminmax(img::AbstractArray, min::Real, max::Real)  ScaleMinMax(RGB24, img, min, max)
+@deprecate float32sc    float32
+@deprecate float64sc    float64
+@deprecate uint8sc      ufixed8sc
+@deprecate uint16sc(img)  ufixedsc(Ufixed16, img)
+@deprecate ClipMin      ClampMin
+@deprecate ClipMax      ClampMax
+@deprecate ClipMinMax   ClampMinMax
+@deprecate climdefault(img) zero(eltype(img)), one(eltype(img))
+@deprecate ScaleMinMax{T<:Real}(img::AbstractArray{T}, mn, mx) ScaleMinMax(Ufixed8, img, mn, mx)
+@deprecate ScaleMinMax{T<:ColorValue}(img::AbstractArray{T}, mn, mx) ScaleMinMax(RGB{Ufixed8}, img, mn, mx)
+@deprecate ntsc2rgb(A::AbstractArray)  convert(Array{RGB}, A)
+@deprecate ntsc2rgb(A::AbstractImage)  convert(Image{RGB}, A)
+@deprecate rgb2ntsc(A::AbstractArray)  convert(Array{YIQ}, A)
+@deprecate rgb2ntsc(A::AbstractImage)  convert(Image{YIQ}, A)
+@deprecate scaleinfo    mapinfo
+@deprecate scale(mapi::MapInfo, A) map(mapi, A)
+@deprecate scale!(dest, mapi::MapInfo, A) map!(mapi, dest, A)
+@deprecate rgb2gray(img::AbstractArray)  convert(Array{Gray}, img)
+
+
+const ScaleInfo = MapInfo  # can't deprecate types?
 
 if VERSION < v"0.3-"
   __init__()

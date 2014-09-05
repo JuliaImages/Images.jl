@@ -6,6 +6,7 @@ Below, `[]` in an argument list means an optional argument.
 
 ```
 Image(data, [properties])
+Image(data, prop1=val1, prop2=val2, ...)
 ```
 creates a new direct image. In contrast with `convert`, `grayim` and `colorim`,
 this does not permute the data array or attempt to guess any
@@ -96,11 +97,13 @@ copying the properties.
 <br />
 ```
 Overlay(channels, colors, clim)
+Overlay(channels, colors, mapi)
 ```
 Create an `Overlay` array from grayscale channels.
 `channels = (channel1, channel2, ...)`,
 `colors` is a vector or tuple of `ColorValue`s, and `clim` is a
 vector or tuple of min/max values, e.g., `clim = ((min1,max1),(min2,max2),...)`.
+Alternatively, you can supply a list of `MapInfo` objects
 
 <br />
 ```
@@ -410,9 +413,70 @@ widthheight(img)
 ```
 Returns the `(w,h)` tuple. See `width` and `height`.
 
-### Intensity scaling
+### Element transformation and intensity scaling
 
-One can directly rescale the pixel intensities in the image array. One such function is
+Many images require some type of transformation before you
+can use or view them. For example, visualization libraries
+work in terms of 8-bit data, so if you're using a 16-bit
+scientific camera, your image values will need to be scaled
+before display.
+
+One can directly rescale the pixel intensities in the image array.
+In general, element-wise transformations are handled by `map` or
+`map!`, where the latter is used when you want to provide a pre-allocated output.
+You can use an anonymous function of your own design, or,
+if speed is paramount, the "anonymous functions" of the
+[FastAnonymous](https://github.com/timholy/FastAnonymous.jl) package.
+
+Images also supports "lazy transformations." When loading a very large image,
+(e.g., loaded by memory-mapping) you may use or view just a small
+portion it. In such cases, it would be quite wasteful to force transformation
+of the entire image, and indeed on might exhaust available memory or
+need to write a new file on disk.
+`Images` supports lazy-evaluation scaling through the `MapInfo` abstract type.
+The basic syntax is
+
+```
+valout = map(mapi::MapInfo, valin)
+```
+Here `val` can refer to a single pixel's data, or to the entire image array.
+The `mapi` input is a type that determines how the input value is scale and converted to a new type.
+
+Here is how to directly construct the major concrete `MapInfo` types:
+
+- `MapNone(T)`, indicating that the only form of scaling is conversion to type T.
+This is not very safe, as values "wrap around": for example, converting `258` to a
+`Uint8` results in `0x02`, which would look dimmer than `255 = 0xff`.
+
+- `ClampMin(T, minvalue)`, `ClampMax(T, maxvalue)`, and
+`ClampMinMax(T, minvalue, maxvalue)` create `MapInfo` objects that clamp
+pixel values at the specified min, max, and min/max values, respectively, before
+converting. Clamping is equivalent to `clampedval = min(max(val, minvalue), maxvalue)`.
+This is much safer than `MapNone`.
+
+- `BitShift(T, N)` or `BitShift{T,N}()`, for scaling by bit-shift operators.
+`N` specifies the number of bits to right-shift by.
+For example you could convert a 14-bit image to 8-bits using `BitShift(Uint8, 6)`.
+In general this will be faster than using multiplication.
+
+- `ScaleMinMax(T, min, max, [scalefactor])` clamps the image at the specified
+min/max values, subtracts the min value, scales the result by multiplying by
+`scalefactor`, and finally converts the type.
+If `scalefactor` is not specified, it defaults to scaling the range `[min,max]`
+to `[0,1]`.
+
+- `ScaleAutoMinMax(T)` will cause images to be dynamically scaled to their
+specific min/max values, using the same algorithm for `ScaleMinMax`. When
+displaying a movie, the min/max will be recalculated for each frame, so this can
+result in inconsistent contrast scaling.
+
+- `ScaleSigned(T, scalefactor)` multiplies the image by the scalefactor, then clamps
+to the range `[-1,1]`. If `T` is a floating-point type, it stays in this representation.
+If `T` is `RGB24` or `RGB{Ufixed8}`, then it is encoded as a magenta (positive)/green (negative) image.
+
+<br />
+
+There are also convenience functions:
 
 ```
 imstretch(img, m, slope)
@@ -422,59 +486,8 @@ slope > 1 or < 1, respectively) the contrast near saturation (0 and 1). This is
 essentially a symmetric gamma-correction. For a pixel of brightness `p`, the new
 intensity is `1/(1+m/(p+eps)^slope)`.
 
-However, for very large images (e.g., loaded by memory-mapping) this may be inconvenient
-because one may exhaust available memory or need to write a new file on disk.
-`Images` supports lazy-evaluation scaling through the `ScaleInfo` abstract type.
-The basic syntax is
-
-```
-valout = scale(scalei::ScaleInfo, valin)
-```
-Here `val` can refer to a single pixel's data, or to the entire image array. The
-`scale` function converts the input value(s), and is (for example) used in
-`ImageView`s display of many image types. The `scalei` input is a type that
-determines how the input value is scale and converted to a new type.
-
-Here is how to directly construct the main concrete `ScaleInfo` types:
-
-- `ScaleNone{T}()`, indicating that the only form of scaling is conversion of
-types (if `T` is an integer, floating-point types are rounded first). This is
-not very safe, as values "wrap around": for example, converting `258` to a
-`Uint8` results in `0x02`, which would look dimmer than `255 = 0xff`.
-
-- `ClipMin{To,From}(minvalue)`, `ClipMax{To,From}(maxvalue)`, and
-`ClipMinMax{To,From}(minvalue, maxvalue)` create `ScaleInfo` objects that clip
-the image at the specified min, max, and min/max values, respectively, before
-converting. This is much safer than `ScaleNone`.
-
-- `BitShift{T,N}()`, for scaling by bit-shift operators. `N` specifies the
-number of bits to right-shift by. For example you could convert a 14-bit image
-to 8-bits using `BitShift{Uint8, 6}()`.
-
-- `ScaleMinMax{To,From}(min, max, scalefactor)` clips the image at the specified
-min/max values, subtracts the min value, scales the result by multiplying by
-`scalefactor`, and finally converts the type.
-
-- `ScaleAutoMinMax{To}()` will cause images to be dynamically scaled to their
-specific min/max values, using the same algorithm for `ScaleMinMax`. When
-displaying a movie, the min/max will be recalculated for each frame, so this can
-result in inconsistent contrast scaling.
-
-- `ScaleSigned(scalefactor)` multiplies the image by the scalefactor, then clips
-to the range `[-1,1]`, leaving it in `Float64` format. This type interacts
-with `uint32color` (below) to create magenta (positive)/green (negative) images.
-
-There are also convenience functions:
-
-```
-climdefault(img)
-```
-Returns default contrast limits for images, e.g., `(0x00, 0xff)` for a `Uint8`
-image. These are taken from the `"limits"` property if supplied, from
-`typemin/typemax` for integer types, and `(0.0, 1.0)` for floating-point
-types.
-
 <br />
+
 ```
 sc(img)
 sc(img, min, max)
@@ -483,56 +496,14 @@ Applies default or specified ScaleMinMax scaling to the image.
 
 <br />
 ```
-scaleinfo(img)
+mapinfo(client, img)
 ```
-returns the default scaling, if not supplied. For `Uint8` and `Int8` images this
-is `ScaleNone`; for any other integer type, it is `BitShift{Uint8,N}` or
-`BitShift{Int8,N}` where `N` is the number of right-shifts needed to reduce the
-largest value to 8-bit (taken from `limits()`). For floating-point images it is
-`scaleminmax(img, min, max)`, where `min` and `max` come from `climdefault`
-(below).
+returns the default scaling for a specified "client."
+For example, clients `RGB24` and `ARGB32` are used for display,
+and `Images.ImageMagick` is used when saving to disk.
+You could define additional implementations for custom clients.
 
 <br />
-```
-scaleminmax(To, mn, max)
-scaleminmax([To], img, [mn, max])
-scaleminmax([To], img, tindex)
-```
-Creates a `ScaleMinMax` object, converting to the data type specified by `To`
-(default `Uint8`), using the specified min/max values (or calculating from
-`img`) if not supplied. The `tindex` syntax is useful when processing a movie,
-causing the calculation of min/max values to occur just for the specified time
-slice. (Otherwise the min/max calculation might take a long time.)
-
-<br />
-```
-scalesigned(img)
-scalesigned(img, tindex)
-```
-Creates a `ScaleSigned` object, using `1/max(abs(img))` as the scale factor. The
-`tindex` syntax is useful when processing a movie,
-causing the calculation of the `max(abs(img))` value to occur just for the
-specified time slice. (Otherwise the calculation might take a long time.)
-
-
-<br />
-```
-truncround(T, val)
-```
-Performs safe integer conversion, first clipping to the allowed range of integer
-type `T`, and rounding if necessary.
-
-<br />
-```
-float32sc(img)
-float64sc(img)
-uint8sc(img)
-uint16sc(img)
-uint32sc(img)
-```
-Scale and convert an image to the specified element type. The `float` variants
-will scale to the range `(0.0,1.0)`, and the integer variants will scale with
-the default scaling provided by `scaleinfo`.
 
 
 ### Color conversion
@@ -540,21 +511,17 @@ the default scaling provided by `scaleinfo`.
 ```
 convert(Image{ColorValue}, img)
 ```
-as described above.
+as described above. Use `convert(Image{Gray}, img)` to calculate
+a grayscale representation of a color image using the
+[Rec 601 luma](http://en.wikipedia.org/wiki/Luma_%28video%29#Rec._601_luma_versus_Rec._709_luma_coefficients).
+
 
 <br />
 ```
-uint32color(img, [scaleinfo])
-uint32color!(buf, img, [scaleinfo])
+map(mapi, img)
+map!(mapi, dest, img)
 ```
-converts to 24-bit RGB or 32-bit RGBA, primarily for use in display. The second
-version uses a pre-allocated output buffer, an `Array{Uint32}`.
-
-```
-rgb2gray(img)
-```
-calculates a grayscale image corresponding to the luminance of an RGB image, using the
-[Rec 601 luma](http://en.wikipedia.org/wiki/Luma_%28video%29#Rec._601_luma_versus_Rec._709_luma_coefficients).
+can be used to specify both the form of the result and the algorithm used.
 
 
 ### Image I/O
@@ -574,25 +541,27 @@ specifying the file type in `imread`.
 ```
 imread(filename)
 imread(filename, FileType)
-imread(filename, [FileType,] ColorValue)
 imread(stream, FileType)
 ```
 Reads an image, inferring the format from (1) the magic bytes where possible
 (even if this doesn't agree with the extension name), and (2) otherwise by the
 extension name. The format can also be directly controlled by `FileType`.
-Colorspace conversion upon read is supported.
 
 Note that imread will return images in native storage format, e.g., a 2D RGB
-image will (for most file formats) have size 3-by-width-by-height with
-`"colordim"` equal to 1. This means that you access the value of pixel
-`(x,y)` by `img[:,x,y]` or `img["x",x,"y",y]`.
+image will (for most file formats) be returned as a 2D `RGB` array.
+Because file formats are horizontal major, you access the value of pixel
+`(x,y)` by `img[x,y]` or `img["x",x,"y",y]`.
 
 <br />
 ```
 imwrite(img, filename, [FileType,] args...)
 ```
 Write an image, specifying the type by the extension name or (optionally)
-directly. Some writers take additional arguments, which you can pass on.
+directly. Some writers take additional arguments, for example
+```
+imwrite(img, "myimage.jpg", quality=80)
+```
+to control the quality setting in JPEG compression.
 
 <br />
 ```
@@ -672,7 +641,8 @@ Returns a magnitude image the same size as `grad_x` and `grad_y`.
 ```
 phase(grad_x, grad_y)
 ```
-Calculates the rotation angle of the gradient images given by `grad_x` and `grad_y`. Equivalent to ``atan2(-grad_y, grad_x)``.  When a both ``grad_x[i]`` and ``grad_y[i]`` are zero, the corresponding angle is set to zero.
+Calculates the rotation angle of the gradient images given by `grad_x` and `grad_y`. Equivalent to ``atan2(-grad_y, grad_x)``.
+When both ``grad_x[i]`` and ``grad_y[i]`` are zero, the corresponding angle is set to zero.
 
 Returns a phase image the same size as `grad_x` and `grad_y`, with values in [-pi,pi].
 
@@ -680,7 +650,9 @@ Returns a phase image the same size as `grad_x` and `grad_y`, with values in [-p
 ```
 orientation(grad_x, grad_y)
 ```
-Calculates the orientation angle of the strongest edge from gradient images given by `grad_x` and `grad_y`. Equivalent to ``atan2(grad_x, grad_y)``.  When a both `grad_x[i]` and `grad_y[i]` are zero, the corresponding angle is set to zero.
+Calculates the orientation angle of the strongest edge from gradient images given by `grad_x` and `grad_y`.
+Equivalent to ``atan2(grad_x, grad_y)``.
+When both `grad_x[i]` and `grad_y[i]` are zero, the corresponding angle is set to zero.
 
 Returns a phase image the same size as `grad_x` and `grad_y`, with values in [-pi,pi].
 
@@ -688,13 +660,16 @@ Returns a phase image the same size as `grad_x` and `grad_y`, with values in [-p
 ```
 magnitude_phase(grad_x, grad_y)
 ```
-Convenience function for calculating the magnitude and phase of the gradient images given in `grad_x` and `grad_y`.  Returns a tuple containing the magnitude and phase images.  See `magnitude` and `phase` for details.
+Convenience function for calculating the magnitude and phase of the gradient images given in `grad_x` and `grad_y`.
+Returns a tuple containing the magnitude and phase images.
+See `magnitude` and `phase` for details.
 
 <br />
 ```
 imedge(img, [method], [border])
 ```
-Edge-detection filtering. `method` is one of `"sobel"`, `"prewitt"`, `"ando3"`, `"ando4"`, `"ando4_sep"`, `"ando5"`, or `"ando5_sep"`, defaulting to `"ando3"` (see the functions of the same name for more information). `border` is any of the boundary conditions specified in `padarray`.
+Edge-detection filtering. `method` is one of `"sobel"`, `"prewitt"`, `"ando3"`, `"ando4"`, `"ando4_sep"`, `"ando5"`, or `"ando5_sep"`, defaulting to `"ando3"` (see the functions of the same name for more information).
+`border` is any of the boundary conditions specified in `padarray`.
 
 Returns a tuple `(grad_x, grad_y, mag, orient)`, which are the horizontal gradient, vertical gradient, and the magnitude and orientation of the strongest edge, respectively.
 
@@ -705,13 +680,18 @@ thin_edges_subpix(img, gradientangle, [border])
 thin_edges_nonmaxsup(img, gradientangle, [border]; [radius::Float64=1.35], [theta=pi/180])
 thin_edges_nonmaxsup_subpix(img, gradientangle, [border]; [radius::Float64=1.35], [theta=pi/180])
 ```
-Edge thinning for 2D edge images.  Currently the only algorithm available is non-maximal suppression, which takes an edge image and its gradient angle, and checks each edge point for local maximality in the direction of the gradient.  The returned image is non-zero only at maximal edge locations.
+Edge thinning for 2D edge images.
+Currently the only algorithm available is non-maximal suppression, which takes an edge image and its gradient angle, and checks each edge point for local maximality in the direction of the gradient.
+The returned image is non-zero only at maximal edge locations.
 
 `border` is any of the boundary conditions specified in `padarray`.
 
-In addition to the maximal edge image, the `_subpix` versions of these functions also return an estimate of the subpixel location of each local maxima, as a 2D array or image of `Base.Graphics.Point` objects.  Additionally, each local maxima is adjusted to the estimated value at the subpixel location.
+In addition to the maximal edge image, the `_subpix` versions of these functions also return an estimate of the subpixel location of each local maxima, as a 2D array or image of `Base.Graphics.Point` objects.
+Additionally, each local maxima is adjusted to the estimated value at the subpixel location.
 
-Currently, the `_nonmaxsup` functions are identical to the first two function calls, except that they also accept additional keyword arguments.  `radius` indicates the step size to use when searching in the direction of the gradient; values between 1.2 and 1.5 are suggested (default 1.35).  `theta` indicates the step size to use when discretizing angles in the `gradientangle` image, in radians (default: 1 degree in radians = pi/180).
+Currently, the `_nonmaxsup` functions are identical to the first two function calls, except that they also accept additional keyword arguments.
+`radius` indicates the step size to use when searching in the direction of the gradient; values between 1.2 and 1.5 are suggested (default 1.35).
+`theta` indicates the step size to use when discretizing angles in the `gradientangle` image, in radians (default: 1 degree in radians = pi/180).
 
 Example:
 
@@ -736,9 +716,10 @@ backdiffx(img)
 forwarddiffy(img)
 backdiffy(img)
 ```
-Forward- and backward finite differencing along the x- and y- axes. The size of
-the image is preserved, so the first (for `backdiff`) or last (for
-`forwarddiff`) row/column will be zero. These currently operate only on matrices
+Forward- and backward finite differencing along the x- and y- axes.
+The size of the image is preserved, so the first (for `backdiff`) or last (for
+`forwarddiff`) row/column will be zero.
+These currently operate only on matrices
 (2d with scalar color).
 
 <br />
@@ -752,8 +733,9 @@ pixel value), `"replicate"` (to repeat the edge value), `"circular"` (periodic
 boundary conditions), `"reflect"` (reflecting boundary conditions, where the
 reflection is centered on edge), and `"symmetric"` (reflecting boundary
 conditions, where the reflection is centered a half-pixel spacing beyond the
-edge, so the edge value gets repeated). Arrays are automatically padded before 
-
+edge, so the edge value gets repeated). Arrays are automatically padded before
+filtering. Use `"inner"` to avoid padding altogether; the output array will
+be smaller than the input.
 
 ### Filtering kernels
 
@@ -809,7 +791,8 @@ Name          | Description
 `"ando5"`     | Optimal 5x5 filter from Ando 2000
 `"ando5_sep"` | Separable approximation of `"ando5"`
 
-The ando filters were derived in Ando Shigeru, IEEE Trans. Pat. Anal. Mach. Int., vol. 22 no 3, March 2000.  As written in the paper, the 4x4 and 5x5 papers are not separable, so the `"ando4_sep"` and `"ando5_sep"` filters are provided as separable (and therefore faster) approximations of `"ando4"` and `"ando5"`, respectively.
+The ando filters were derived in Ando Shigeru, IEEE Trans. Pat. Anal. Mach. Int., vol. 22 no 3, March 2000.
+As written in the paper, the 4x4 and 5x5 papers are not separable, so the `"ando4_sep"` and `"ando5_sep"` filters are provided as separable (and therefore faster) approximations of `"ando4"` and `"ando5"`, respectively.
 
 ### Nonlinear filtering and transformation
 
