@@ -260,6 +260,7 @@ can be found in the `doc/` directory. Here are some of the topics available:
 - [I/O](doc/extendingIO.md) and custom image file formats
 - [Function reference](doc/function_reference.md)
 - [Overlays](doc/overlays.md), a type for combining multiple grayscale arrays into a single color array
+- [Changes](doc/fixing_breakages.md) describes some recent changes and how to fix likely breakages in old code
 
 # Credits
 
