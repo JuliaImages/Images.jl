@@ -13,17 +13,17 @@ Pkg.add("Images")
 ```
 
 It's helpful to have ImageMagick installed on your system, as Images relies on it for reading and writing many common image types.
-ImageMagick _should_ be installed for your automatically. In case of trouble,
+ImageMagick _should_ be installed for you automatically. In case of trouble,
 more details about manual installation and troubleshooting can be found in the [installation help](doc/install.md).
 
 ## Package interactions
 
-A few other packages define overlapping functions or types (`PyPlot` defines `imread`, and `Winston` defines `Image`).
-When using the two packages together, you can always specify which version you want with `Images.imread("myimage.png")`.
+A few other packages define overlapping functions or types ([PyPlot](https://github.com/stevengj/PyPlot.jl) defines `imread`, and [Winston](https://github.com/nolta/Winston.jl) defines `Image`).
+When using both Images and these packages, you can always specify which version you want with `Images.imread("myimage.png")`.
 
 ## Image viewing
 
-If you're using the IJulia notebook, images will be displayed [automatically](http://htmlpreview.github.com/?https://github.com/timholy/Images.jl/blob/master/ImagesDemo.html).
+If you're using the [IJulia](https://github.com/JuliaLang/IJulia.jl) notebook, images will be displayed [automatically](http://htmlpreview.github.com/?https://github.com/timholy/Images.jl/blob/master/ImagesDemo.html).
 
 Julia code for the display of images can be found in [ImageView](https://github.com/timholy/ImageView.jl).
 Installation of this package is recommended but not required.
@@ -44,7 +44,8 @@ commands with `testimage`.
 
 For these examples you'll need to install both `Images` and `ImageView`.
 Depending on your task, it's also very useful to have two other packages
-loaded, `Color` and `FixedPointNumbers`.
+loaded, [Color](https://github.com/JuliaLang/Color.jl) and
+[FixedPointNumbers](https://github.com/JeffBezanson/FixedPointNumbers.jl).
 Load the code for all of these packages with
 
 ```julia
@@ -71,7 +72,7 @@ RGB Image with:
 ```
 If you're using Images through IJulia, rather than this text output you probably see the image itself.
 This is nice, but often it's quite helpful to see the structure of these Image objects.
-This happens automatically at the REPL, or within IJulia you can call
+This happens automatically at the REPL; within IJulia you can call
 ```
 show(img)
 ```
