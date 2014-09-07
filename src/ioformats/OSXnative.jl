@@ -53,9 +53,8 @@ function imread(filename)
     CFRelease(dict)
 
     # Allocate the buffer and get the pixel data
-    sz = imframes > 1 ? (imwidth, imheight, imframes) : (imwidth, imheight)
+    sz = imframes > 1 ? (int(imwidth), int(imheight), int(imframes)) : (int(imwidth), int(imheight))
     T = Images.ufixedtype[pixeldepth]
-    buf = (storagedepth > 1) ? Array(T, storagedepth, sz...) : Array(T, sz...)
     if colormodel == "Gray" && alphacode == 0 && storagedepth == 1
         buf = Array(T, sz)
         fillgray!(buf, imgsrc)
