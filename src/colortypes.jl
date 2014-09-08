@@ -319,6 +319,10 @@ for CV in subtypes(AbstractGray)
         isinf{T<:FloatingPoint}(c::$CV{T}) = isinf(c.val)
         abs(c::$CV) = abs(c.val) # should this have a different name?
         abs{T<:Ufixed}(c::$CV{T}) = float32(c.val) # should this have a different name?
+
+        (<)(c::$CV, r::Real) = c.val < r
+        (<)(r::Real, c::$CV) = r < c.val
+        (<)(a::$CV, b::AbstractGray) = a.val < b.val
     end
 end
 
