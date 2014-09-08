@@ -12,12 +12,8 @@ using Color, FixedPointNumbers
 import Color: Fractional
 import FixedPointNumbers: ufixed8, ufixed10, ufixed12, ufixed14, ufixed16
 
-if VERSION.minor < 3
-    using Cartesian
-else
-    using Base.Cartesian
-    include("compatibility/forcartesian.jl")
-end
+using Base.Cartesian
+include("compatibility/forcartesian.jl")
 
 # if isdefined(module_parent(Images), :Grid)
 #     import ..Grid.restrict
@@ -281,9 +277,5 @@ export # Deprecated exports
 
 
 const ScaleInfo = MapInfo  # can't deprecate types?
-
-if VERSION < v"0.3-"
-  __init__()
-end
 
 end

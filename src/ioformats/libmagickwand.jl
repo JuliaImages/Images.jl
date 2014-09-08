@@ -199,7 +199,7 @@ function readimage(wand::MagickWand, filename::String)
 end
 
 function readimage(wand::MagickWand, stream::IO)
-    status = ccall((:MagickReadImageFile, libwand), Cint, (Ptr{Void}, Ptr{Void}), wand.ptr, fdopen(stream))
+    status = ccall((:MagickReadImageFile, libwand), Cint, (Ptr{Void}, Ptr{Void}), wand.ptr, CFILE(stream))
     status == 0 && error(wand)
     nothing
 end
@@ -298,18 +298,6 @@ function queryoption(option::String)
     p = ccall((:MagickQueryConfigureOption, libwand), Ptr{Uint8}, (Ptr{Uint8},), option)
     bytestring(p)
 end
-
-# Implementation of fdopen
-# Delete this once 0.3 or greater is common, and use the CFILE mechanism
-function fdopen(s::IO)
-    @unix_only FILEp = ccall(:fdopen, Ptr{Void}, (Cint, Ptr{Uint8}), convert(Cint, fd(s)), "r")
-    @windows_only FILEp = ccall(:_fdopen, Ptr{Void}, (Cint, Ptr{Uint8}), convert(Cint, fd(s)), "r")
-    systemerror("fdopen failed", FILEp == 0)
-    status = ccall(:fseek, Cint, (Ptr{Void}, Clong, Cint), FILEp, convert(Clong, position(s)), int32(0))
-    systemerror("fseek failed", status == 0)
-    FILEp
-end
-
 
 end
 
