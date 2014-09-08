@@ -1,5 +1,6 @@
 import Images, Images.ColorTypes
 using Base.Test, Color, FixedPointNumbers
+import Images.Gray
 
 @test length(RGB) == 3
 @test length(ColorTypes.BGR) == 3
@@ -17,6 +18,44 @@ using Base.Test, Color, FixedPointNumbers
 c = ColorTypes.AlphaColor(RGB{Ufixed8}(0.8,0.2,0.4), Ufixed8(0.5))
 @test length(c) == 4
 
+# Arithmetic with Gray
+cf = Gray{Float32}(0.1)
+ccmp = Gray{Float32}(0.2)
+@test 2*cf == ccmp
+@test cf*2 == ccmp
+@test ccmp/2 == cf
+@test 2.0f0*cf == ccmp
+@test eltype(2.0*cf) == Float64
+cu = Gray{Ufixed8}(0.1)
+@test 2*cu == Gray(2*cu.val)
+@test 2.0f0*cu == Gray(2.0f0*cu.val)
+f = Ufixed8(0.5)
+@test_approx_eq (f*cu).val f*cu.val
+@test 2.*cf == ccmp
+@test cf.*2 == ccmp
+@test cf/2.0f0 == Gray{Float32}(0.05)
+@test cu/2 == Gray(cu.val/2)
+@test cu/0.5f0 == Gray(cu.val/0.5f0)
+@test cf+cf == ccmp
+@test isfinite(cf)
+@test !isinf(cf)
+@test !isnan(cf)
+@test isfinite(Gray(NaN)) == false
+@test isinf(Gray(NaN)) == false
+@test isnan(Gray(NaN)) == true
+@test isfinite(Gray(Inf)) == false
+@test isinf(Gray(Inf)) == true
+@test isnan(Gray(Inf)) == false
+@test_approx_eq abs(Gray(0.1)) 0.1
+
+acu = Gray{Ufixed8}[cu]
+acf = Gray{Float32}[cf]
+@test typeof(acu+acf) == Vector{Gray{Float32}}
+@test typeof(2*acf) == Vector{Gray{Float32}}
+@test typeof(uint8(2)*acu) == Vector{Gray{Float32}}
+@test typeof(acu/2) == Vector{Gray{typeof(Ufixed8(0.5)/2)}}
+
+# Arithemtic with RGB
 cf = RGB{Float32}(0.1,0.2,0.3)
 ccmp = RGB{Float32}(0.2,0.4,0.6)
 @test 2*cf == ccmp

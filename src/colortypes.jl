@@ -274,6 +274,53 @@ for CV in subtypes(AbstractRGB)
         abs{T<:Ufixed}(c::$CV{T}) = float32(c.r)+float32(c.g)+float32(c.b) # should this have a different name?
     end
 end
+# Math on Gray
+for CV in subtypes(AbstractGray)
+    @eval begin
+        (*){R<:Real,T}(f::R, c::$CV{T}) = $CV{multype(R,T)}(f*c.val)
+        (*)(c::$CV, f::Real) = (*)(f, c)
+        (.*)(f::Real, c::$CV) = (*)(f, c)
+        (.*)(c::$CV, f::Real) = (*)(f, c)
+        (/)(c::$CV, f::Real) = (one(f)/f)*c
+        (/)(c::$CV, f::Integer) = (one(eltype(c))/f)*c
+        (./)(c::$CV, f::Real) = (/)(c, f)
+        (+){S,T}(a::$CV{S}, b::$CV{T}) = $CV{sumtype(S,T)}(a.val+b.val)
+        (-){S,T}(a::$CV{S}, b::$CV{T}) = $CV{sumtype(S,T)}(a.val-b.val)
+        (+)(A::AbstractArray{$CV}, b::AbstractGray) = (.+)(A, b)
+        (-)(A::AbstractArray{$CV}, b::AbstractGray) = (.-)(A, b)
+        (+)(b::AbstractGray, A::AbstractArray{$CV}) = (.+)(b, A)
+        (-)(b::AbstractGray, A::AbstractArray{$CV}) = (.-)(b, A)
+        function (.+){T}(A::AbstractArray{$CV{T}}, b::AbstractGray)
+            bT = convert($CV{T}, b)
+            out = similar(A)
+            add!(out, A, bT)
+        end
+        (.+){T}(b::AbstractGray, A::AbstractArray{$CV{T}}) = (.+)(A, b)
+        function (.-){T}(A::AbstractArray{$CV{T}}, b::AbstractGray)
+            bT = convert($CV{T}, b)
+            out = similar(A)
+            sub!(out, A, bT)
+        end
+        function (.-){T}(A::AbstractArray{$CV{T}}, b::AbstractGray)
+            bT = convert($CV{T}, b)
+            out = similar(A)
+            sub!(out, A, bT)
+        end
+        function (.-){T}(b::AbstractGray, A::AbstractArray{$CV{T}})
+            bT = convert($CV{T}, b)
+            out = similar(A)
+            sub!(out, bT, A)
+        end
+        isfinite{T<:Ufixed}(c::$CV{T}) = true
+        isfinite{T<:FloatingPoint}(c::$CV{T}) = isfinite(c.val)
+        isnan{T<:Ufixed}(c::$CV{T}) = false
+        isnan{T<:FloatingPoint}(c::$CV{T}) = isnan(c.val)
+        isinf{T<:Ufixed}(c::$CV{T}) = false
+        isinf{T<:FloatingPoint}(c::$CV{T}) = isinf(c.val)
+        abs(c::$CV) = abs(c.val) # should this have a different name?
+        abs{T<:Ufixed}(c::$CV{T}) = float32(c.val) # should this have a different name?
+    end
+end
 
 @ngenerate N typeof(out) function add!{T,N}(out, A::AbstractArray{T,N}, b::T)
     @inbounds begin
@@ -284,7 +331,7 @@ end
     out
 end
 # need a separate sub! because of unsigned types
-@ngenerate N typeof(out) function sub!{T,N}(out, A::AbstractArray{T,N}, b::AbstractRGB)
+@ngenerate N typeof(out) function sub!{T,N}(out, A::AbstractArray{T,N}, b::Union(AbstractRGB, AbstractGray))
     @inbounds begin
         @nloops N i A begin
             @nref(N, out, i) = @nref(N, A, i) - b
@@ -292,7 +339,7 @@ end
     end
     out
 end
-@ngenerate N typeof(out) function sub!{T,N}(out, b::AbstractRGB, A::AbstractArray{T,N})
+@ngenerate N typeof(out) function sub!{T,N}(out, b::Union(AbstractRGB, AbstractGray), A::AbstractArray{T,N})
     @inbounds begin
         @nloops N i A begin
             @nref(N, out, i) = b - @nref(N, A, i)
@@ -302,7 +349,7 @@ end
 end
 
 # To help type inference
-for ACV in (ColorValue, AbstractRGB)
+for ACV in (ColorValue, AbstractRGB, AbstractGray)
     for CV in subtypes(ACV)
         (length(CV.parameters) == 1 && !(CV.abstract)) || continue
         @eval promote_array_type{T<:Real,S<:Real}(::Type{T}, ::Type{$CV{S}}) = $CV{promote_type(T, S)}
