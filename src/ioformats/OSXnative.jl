@@ -1,7 +1,7 @@
 module LibOSXNative
 
 #import Base: error, size
-using Images, Color, Images.ColorTypes
+using Images, Color, Images.ColorTypes, FixedPointNumbers
 
 export imread
 
@@ -56,8 +56,8 @@ function imread(filename)
     sz = imframes > 1 ? (int(imwidth), int(imheight), int(imframes)) : (int(imwidth), int(imheight))
     T = Images.ufixedtype[pixeldepth]
     if colormodel == "Gray" && alphacode == 0 && storagedepth == 1
-        buf = Array(T, sz)
-        fillgray!(buf, imgsrc)
+        buf = Array(Gray{T}, sz)
+        fillgray!(reinterpret(T, buf, tuple(sz...)), imgsrc)
     elseif colormodel == "Gray" && in(alphacode, [1, 2, 3, 4])
         buf = Array(GrayAlpha{T}, sz)
         fillgrayalpha!(reinterpret(T, buf, tuple(2, sz...)), imgsrc)
@@ -129,7 +129,7 @@ function fillgray!{T}(buffer::AbstractArray{T, 3}, imgsrc)
     end
 end
 
-function fillgrayalpha!{T<:Uint8}(buffer::AbstractArray{T, 3}, imgsrc)
+function fillgrayalpha!{T<:Union(Uint8, Ufixed8)}(buffer::AbstractArray{T, 3}, imgsrc)
     imwidth, imheight = size(buffer, 2), size(buffer, 3)
     CGimg = CGImageSourceCreateImageAtIndex(imgsrc, 0)
     imagepixels = CopyImagePixels(CGimg)
