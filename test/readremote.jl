@@ -36,6 +36,9 @@ imgc = imread(outname)
     map(x->x&0x00ffffff, reinterpret(Uint32, data(map(mapinfo(ARGB32, img), img))))
 @test mapinfo(Uint32, img) == mapinfo(RGB24, img)
 @test data(convert(Image{Gray{Float32}}, img)) == float32(data(img))
+mapi = mapinfo(RGB{Ufixed8}, img)
+imgrgb8 = map(mapi, img)
+@test imgrgb8[1,1].r == img[1].val
 
 # Gray with alpha channel
 file = getfile("wmark_image.png")
@@ -78,6 +81,9 @@ lim = limits(imgc)
 @test reinterpret(Uint32, data(map(mapinfo(RGB24, img), img))) ==
     map(x->x&0x00ffffff, reinterpret(Uint32, data(map(mapinfo(ARGB32, img), img))))
 @test mapinfo(Uint32, img) == mapinfo(RGB24, img)
+mapi = mapinfo(RGB{Ufixed8}, img)
+imgrgb8 = map(mapi, img)
+@test data(imgrgb8) == data(img)
 convert(Array{Gray{Ufixed8}}, img)
 convert(Image{Gray{Ufixed8}}, img)
 convert(Array{Gray}, img)

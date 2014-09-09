@@ -404,6 +404,9 @@ mapinfo{CV<:Union(Fractional,ColorValue)}(::Type{Uint32}, img::AbstractArray{CV}
 mapinfo{CV<:AbstractAlphaColorValue}(::Type{Uint32}, img::AbstractArray{CV}) = mapinfo(ARGB32, img)
 mapinfo(::Type{Uint32}, img::AbstractArray{Uint32}) = MapNone{Uint32}()
 
+# RGB{Ufixed8} fallback
+mapinfo(::Type{RGB{Ufixed8}}, img) = MapNone{RGB{Ufixed8}}()
+
 # ImageMagick client is defined in io.jl
 
 # Backwards-compatibility
