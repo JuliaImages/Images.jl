@@ -134,11 +134,11 @@ immutable ScaleMinMax{To,From,S<:FloatingPoint} <: MapInfo{To}
 end
 
 ScaleMinMax{To,From}(::Type{To}, min::From, max::From, s::FloatingPoint) = ScaleMinMax{To,From,typeof(s)}(min, max, s)
-ScaleMinMax{To<:Union(Fractional,ColorType),From<:Real}(::Type{To}, mn::From, mx::From) = ScaleMinMax(To, mn, mx, 1.0f0/(mx-mn))
+ScaleMinMax{To<:Union(Fractional,ColorType),From<:Real}(::Type{To}, mn::From, mx::From) = ScaleMinMax(To, mn, mx, 1.0f0/(float32(mx)-float32(mn)))
 
 # ScaleMinMax constructors that take AbstractArray input
-ScaleMinMax{To,From}(::Type{To}, img::AbstractArray{From}, mn::Real, mx::Real) = ScaleMinMax(To, convert(From,mn), convert(From,mx), 1.0f0/(mx-mn))
-ScaleMinMax{To,From,R<:Real}(::Type{To}, img::AbstractArray{From}, mn::Gray{R}, mx::Gray{R}) = ScaleMinMax(To, convert(From,mn), convert(From,mx), 1.0f0/(mx.val-mn.val))
+ScaleMinMax{To,From}(::Type{To}, img::AbstractArray{From}, mn::Real, mx::Real) = ScaleMinMax(To, convert(From,mn), convert(From,mx), 1.0f0/(float32(convert(From,mx))-float32(convert(From,mn))))
+ScaleMinMax{To,From,R<:Real}(::Type{To}, img::AbstractArray{From}, mn::Gray{R}, mx::Gray{R}) = ScaleMinMax(To, convert(From,mn), convert(From,mx), 1.0f0/(float32(convert(From,mx.val))-float32(convert(From,mn.val))))
 ScaleMinMax{To}(::Type{To}, img::AbstractArray) = ScaleMinMax(To, img, minfinite(img), maxfinite(img))
 
 function map{To<:Real,From<:Real}(mapi::ScaleMinMax{To,From}, val::From)
