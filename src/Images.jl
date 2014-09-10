@@ -7,6 +7,7 @@ import Base: atan2, clamp, convert, copy, copy!, ctranspose, delete!, eltype,
              maximum, minimum, ndims, one, parent, permutedims, reinterpret,
              setindex!, show, showcompact, similar, size, slice, sqrt, squeeze,
              strides, sub, sum, write, writemime, zero
+# "deprecated imports" are below
 
 using Color, FixedPointNumbers
 import Color: Fractional
@@ -254,6 +255,7 @@ export # Deprecated exports
     scalesigned
 
 
+import Base: scale, scale!  # delete when deprecations are removed
 @deprecate scaleminmax  ScaleMinMax
 @deprecate scaleminmax(img::AbstractArray, min::Real, max::Real)  ScaleMinMax(RGB24, img, min, max)
 @deprecate float32sc    float32
@@ -271,8 +273,8 @@ export # Deprecated exports
 @deprecate rgb2ntsc(A::AbstractArray)  convert(Array{YIQ}, A)
 @deprecate rgb2ntsc(A::AbstractImage)  convert(Image{YIQ}, A)
 @deprecate scaleinfo    mapinfo
-@deprecate scale(mapi::MapInfo, A) map(mapi, A)
-@deprecate scale!(dest, mapi::MapInfo, A) map!(mapi, dest, A)
+@deprecate scale(mapi::MapInfo, A) map(mapi, A)                # delete imports above when eliminated
+@deprecate scale!(dest, mapi::MapInfo, A) map!(mapi, dest, A)  #   "
 @deprecate rgb2gray(img::AbstractArray)  convert(Array{Gray}, img)
 
 
