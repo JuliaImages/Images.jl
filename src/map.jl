@@ -91,6 +91,7 @@ map1{CT<:ColorType,F<:Fractional}(mapi::ClampMax{CT,F}, val::F) = convert(eltype
 map1{CT<:ColorType,F<:Fractional}(mapi::ClampMinMax{CT,F}, val::F) = convert(eltype(CT), min(max(val, mapi.min), mapi.max))
 
 map{To<:Real}(::Clamp{To}, val::Real) = clamp01(To, val)
+map{To<:Real}(::Clamp{Gray{To}}, val::AbstractGray) = Gray(clamp01(To, val.val))
 map1{CT<:AbstractRGB}(::Clamp{CT}, val::Real) = clamp01(eltype(CT), val)
 map1{CT<:AbstractRGB,T}(::Clamp{AlphaColor{CT,T}}, val::Real) = clamp01(T, val)
 map1{CT<:AbstractRGB,T}(::Clamp{AlphaColorValue{CT,T}}, val::Real) = clamp01(T, val)
@@ -141,7 +142,7 @@ ScaleMinMax{To,From}(::Type{To}, img::AbstractArray{From}, mn::Real, mx::Real) =
 ScaleMinMax{To,From,R<:Real}(::Type{To}, img::AbstractArray{From}, mn::Gray{R}, mx::Gray{R}) = ScaleMinMax(To, convert(From,mn), convert(From,mx), 1.0f0/(float32(convert(From,mx.val))-float32(convert(From,mn.val))))
 ScaleMinMax{To}(::Type{To}, img::AbstractArray) = ScaleMinMax(To, img, minfinite(img), maxfinite(img))
 
-function map{To<:Real,From<:Real}(mapi::ScaleMinMax{To,From}, val::From)
+function map{To<:Real,From<:Union(Real,Gray)}(mapi::ScaleMinMax{To,From}, val::From)
     t = ifelse(val < mapi.min, zero(From), ifelse(val > mapi.max, mapi.max-mapi.min, val-mapi.min))
     convert(To, mapi.s*t)
 end

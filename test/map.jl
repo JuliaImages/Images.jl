@@ -15,6 +15,8 @@ mapi = MapNone{RGB24}()
 g = Ufixed8(0.1)
 @chk Images.map1(mapi, 0.1) g
 @chk map(mapi, 0.1) RGB24(g,g,g)
+@chk map(mapi, Gray(0.1)) RGB24(g,g,g)
+@chk map(mapi, g) RGB24(g,g,g)
 mapi = MapNone{RGB{Float32}}()
 g = 0.1f0
 @chk Images.map1(mapi, 0.1) g
@@ -72,6 +74,10 @@ mapi = ClampMinMax(ARGB32, 0.0f0, 1.0f0)
 mapi = Clamp(Float32)
 @chk map(mapi,  1.2) 1.0f0
 @chk map(mapi, -1.2) 0.0f0
+mapi = Clamp(Ufixed12)
+@chk map(mapi, Ufixed12(1.2)) one(Ufixed12)
+mapi = Clamp(Gray{Ufixed12})
+@chk map(mapi, Gray(Ufixed12(1.2))) Gray(one(Ufixed12))
 mapi = ClampMinMax(RGB24, 0.0, 1.0)
 @chk map(mapi, 1.2) RGB24(0x00ffffff)
 @chk map(mapi, 0.5) RGB24(0x00808080)
@@ -122,6 +128,8 @@ A = Gray{Ufixed8}[Ufixed8(0.1), Ufixed8(0.9)]
 @test mapinfo(RGB24, A) == MapNone{RGB24}()
 mapi = ScaleMinMax(RGB24, A, zero(Gray{Ufixed8}), one(Gray{Ufixed8}))
 @test map(mapi, A) == map(mapinfo(RGB24, A), A)
+mapi = ScaleMinMax(Float32, [Gray(one(Ufixed8))], 0, 1) # issue #180
+@chk map(mapi, Gray(Ufixed8(0.6))) 0.6f0
 
 # ScaleSigned
 mapi = ScaleSigned(Float32, 1/5)
