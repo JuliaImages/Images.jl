@@ -67,15 +67,18 @@ immutable ClampMin{T,From} <: AbstractClamp{T}
     min::From
 end
 ClampMin{T,From}(::Type{T}, min::From) = ClampMin{T,From}(min)
+ClampMin{T}(min::T) = ClampMin{T,T}(min)
 immutable ClampMax{T,From} <: AbstractClamp{T}
     max::From
 end
 ClampMax{T,From}(::Type{T}, max::From) = ClampMax{T,From}(max)
+ClampMax{T}(max::T) = ClampMax{T,T}(max)
 immutable ClampMinMax{T,From} <: AbstractClamp{T}
     min::From
     max::From
 end
 ClampMinMax{T,From}(::Type{T}, min::From, max::From) = ClampMinMax{T,From}(min,max)
+ClampMinMax{T}(min::T, max::T) = ClampMinMax{T,T}(min,max)
 immutable Clamp{T} <: AbstractClamp{T} end  # specialized for clamping colorvalues (e.g., 0 to 1 for RGB, also fractional)
 Clamp{T}(::Type{T}) = Clamp{T}()
 
