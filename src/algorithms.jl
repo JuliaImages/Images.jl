@@ -407,11 +407,14 @@ for N = 1:5
                     throw(DimensionMismatch("Output dimensions $(size(B)) and kernel dimensions $(size(kern)) do not agree with size of padded input, $(size(A))"))
                 end
             end
+            (isempty(A) || isempty(kern)) && return B
+            p = A[1]*kern[1]
+            TT = typeof(p+p)
             @nloops $N i B begin
-                tmp = zero(T)
+                tmp = zero(TT)
                 @inbounds begin
-                    @nloops $N j kern begin
-                        tmp += (@nref $N A d->(i_d+j_d-1))*(@nref $N kern j)
+                    @nloops $N j kern d->(k_d = i_d+j_d-1) begin
+                        tmp += (@nref $N A k)*(@nref $N kern j)
                     end
                     (@nref $N B i) = tmp
                 end
