@@ -39,6 +39,7 @@ similar{T}(mapi::MapNone, ::Type{T}, ::Type) = MapNone{T}()
 # Implementation
 map{T<:Real}(mapi::MapNone{T}, val::Real) = convert(T, val)
 map{C<:ColorValue}(mapi::MapNone{C}, c::ColorValue) = convert(C, c)
+map1(mapi::Union(MapNone{RGB24}, MapNone{ARGB32}), b::Bool) = ifelse(b, 0xffuf8, 0x00uf8)
 map1(mapi::Union(MapNone{RGB24},MapNone{ARGB32}), val::Fractional) = convert(Ufixed8, val)
 map1{CT<:ColorType}(mapi::MapNone{CT}, val::Fractional) = convert(eltype(CT), val)
 
@@ -394,6 +395,8 @@ end
 mapinfo{T<:Ufixed,F<:FloatingPoint}(::Type{T}, img::AbstractArray{F}) = ClampMinMax(T, zero(F), one(F))
 mapinfo{T<:FloatingPoint, R<:Real}(::Type{T}, img::AbstractArray{R}) = MapNone(T)
 
+mapinfo(::Type{RGB24}, img::Union(AbstractArray{Bool}, BitArray)) = MapNone{RGB24}()
+mapinfo(::Type{ARGB32}, img::Union(AbstractArray{Bool}, BitArray)) = MapNone{ARGB32}()
 mapinfo{F<:Fractional}(::Type{RGB24}, img::GrayArray{F}) = ClampMinMax(RGB24, zero(F), one(F))
 mapinfo{F<:Fractional}(::Type{ARGB32}, img::AbstractArray{F}) = ClampMinMax(ARGB32, zero(F), one(F))
 
@@ -440,6 +443,7 @@ mapinfo{CT<:ColorType}(::Type{ARGB32}, img::AbstractArray{CT}) = MapNone{ARGB32}
 # and RGB24 when not
 mapinfo{CV<:Union(Fractional,ColorValue)}(::Type{Uint32}, img::AbstractArray{CV}) = mapinfo(RGB24, img)
 mapinfo{CV<:AbstractAlphaColorValue}(::Type{Uint32}, img::AbstractArray{CV}) = mapinfo(ARGB32, img)
+mapinfo(::Type{Uint32}, img::Union(AbstractArray{Bool},BitArray)) = mapinfo(RGB24, img)
 mapinfo(::Type{Uint32}, img::AbstractArray{Uint32}) = MapNone{Uint32}()
 
 

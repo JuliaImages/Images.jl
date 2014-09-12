@@ -17,6 +17,8 @@ g = Ufixed8(0.1)
 @chk map(mapi, 0.1) RGB24(g,g,g)
 @chk map(mapi, Gray(0.1)) RGB24(g,g,g)
 @chk map(mapi, g) RGB24(g,g,g)
+@chk map(mapi, true) RGB24(0xff,0xff,0xff)
+@chk map(mapi, false) RGB24(0x00,0x00,0x00)
 mapi = MapNone{RGB{Float32}}()
 g = 0.1f0
 @chk Images.map1(mapi, 0.1) g
