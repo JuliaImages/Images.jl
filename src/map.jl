@@ -383,19 +383,33 @@ mapinfo{T<:Ufixed}(::Type{T}, img::AbstractArray{T}) = MapNone(img)
 mapinfo{T<:FloatingPoint}(::Type{T}, img::AbstractArray{T}) = MapNone(img)
 
 # Grayscale methods
+mapinfo(::Type{Ufixed8}, img::GrayArray{Ufixed8}) = MapNone{Ufixed8}()
+mapinfo(::Type{Gray{Ufixed8}}, img::GrayArray{Ufixed8}) = MapNone{Gray{Ufixed8}}()
+mapinfo(::Type{GrayAlpha{Ufixed8}}, img::AbstractArray{GrayAlpha{Ufixed8}}) = MapNone{GrayAlpha{Ufixed8}}()
 for (T,n) in bitshiftto8
     @eval mapinfo(::Type{Ufixed8}, img::GrayArray{$T}) = BitShift{Ufixed8,$n}()
     @eval mapinfo(::Type{Gray{Ufixed8}}, img::GrayArray{$T}) = BitShift{Gray{Ufixed8},$n}()
+    @eval mapinfo(::Type{GrayAlpha{Ufixed8}}, img::AbstractArray{GrayAlpha{$T}}) = BitShift{GrayAlpha{Ufixed8},$n}()
 end
 mapinfo{T<:Ufixed,F<:FloatingPoint}(::Type{T}, img::AbstractArray{F}) = ClampMinMax(T, zero(F), one(F))
 mapinfo{T<:FloatingPoint, R<:Real}(::Type{T}, img::AbstractArray{R}) = MapNone(T)
+
 mapinfo{F<:Fractional}(::Type{RGB24}, img::GrayArray{F}) = ClampMinMax(RGB24, zero(F), one(F))
 mapinfo{F<:Fractional}(::Type{ARGB32}, img::AbstractArray{F}) = ClampMinMax(ARGB32, zero(F), one(F))
-mapinfo(::Type{RGB24}, img::AbstractArray{RGB24}) = MapNone{RGB24}()
-mapinfo(::Type{ARGB32}, img::AbstractArray{ARGB32}) = MapNone{ARGB32}()
+
+# Color->Color methods
+mapinfo(::Type{RGB{Ufixed8}}, img) = MapNone{RGB{Ufixed8}}()
+mapinfo(::Type{RGBA{Ufixed8}}, img) = MapNone{RGBA{Ufixed8}}()
+for (T,n) in bitshiftto8
+    @eval mapinfo(::Type{RGB{Ufixed8}}, img::AbstractArray{RGB{$T}}) = BitShift{RGB{Ufixed8},$n}()
+    @eval mapinfo(::Type{RGBA{Ufixed8}}, img::AbstractArray{RGBA{$T}}) = BitShift{RGBA{Ufixed8},$n}()
+end
+
 
 
 # Color->RGB24/ARGB32
+mapinfo(::Type{RGB24}, img::AbstractArray{RGB24}) = MapNone{RGB24}()
+mapinfo(::Type{ARGB32}, img::AbstractArray{ARGB32}) = MapNone{ARGB32}()
 for C in tuple(subtypes(AbstractRGB)..., Gray)
     @eval mapinfo(::Type{RGB24}, img::AbstractArray{$C{Ufixed8}}) = MapNone{RGB24}()
     @eval mapinfo(::Type{ARGB32}, img::AbstractArray{$C{Ufixed8}}) = MapNone{ARGB32}()
@@ -428,8 +442,6 @@ mapinfo{CV<:Union(Fractional,ColorValue)}(::Type{Uint32}, img::AbstractArray{CV}
 mapinfo{CV<:AbstractAlphaColorValue}(::Type{Uint32}, img::AbstractArray{CV}) = mapinfo(ARGB32, img)
 mapinfo(::Type{Uint32}, img::AbstractArray{Uint32}) = MapNone{Uint32}()
 
-# RGB{Ufixed8} fallback
-mapinfo(::Type{RGB{Ufixed8}}, img) = MapNone{RGB{Ufixed8}}()
 
 # ImageMagick client is defined in io.jl
 

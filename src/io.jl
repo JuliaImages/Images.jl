@@ -196,9 +196,15 @@ function _writemime(stream::IO, ::MIME"image/png", img::AbstractImage; mapi=mapi
     blob = LibMagick.getblob(wand, "png")
     write(stream, blob)
 end
-writemime{C<:RGB}(stream::IO, mime::MIME"image/png", img::AbstractImage{C}; mapi = mapinfo(C,img)) = _writemime(stream, mime, img, mapi=mapi)
-writemime{C<:ColorType}(stream::IO, mime::MIME"image/png", img::AbstractImage{C}; kwargs...) = writemime(stream, mime, convert(Image{RGB}, img); kwargs...)
-writemime(stream::IO, mime::MIME"image/png", img::AbstractImage; mapi = mapinfo(Ufixed8,img)) = _writemime(stream, mime, img, mapi=mapi)
+writemime(stream::IO, mime::MIME"image/png", img::AbstractImage; mapi=mapinfo_writemime(img)) =
+    _writemime(stream, mime, img, mapi=mapi)
+
+mapinfo_writemime{T}(img::AbstractImage{Gray{T}}) = mapinfo(Gray{Ufixed8},img)
+mapinfo_writemime{C<:ColorValue}(img::AbstractImage{C}) = mapinfo(RGB{Ufixed8},img)
+mapinfo_writemime{T}(img::AbstractImage{GrayAlpha{T}}) = mapinfo(GrayAlpha{Ufixed8},img)
+mapinfo_writemime{AC<:AbstractAlphaColorValue}(img::AbstractImage{AC}) = mapinfo(RGBA{Ufixed8},img)
+mapinfo_writemime(img::AbstractImage) = mapinfo(Ufixed8,img)
+
 
 #### Implementation of specific formats ####
 
@@ -338,6 +344,8 @@ to_explicit{T<:Ufixed}(A::AbstractArray{GrayAlpha{T}}) = reinterpret(FixedPointN
 to_explicit{T<:FloatingPoint}(A::AbstractArray{GrayAlpha{T}}) = to_explicit(map(ClipMinMax(GrayAlpha{Ufixed8}, zero(GrayAlpha{T}), one(GrayAlpha{T})), A))
 to_explicit{T<:Ufixed}(A::AbstractArray{BGRA{T}}) = reinterpret(FixedPointNumbers.rawtype(T), A, tuple(4, size(A)...))
 to_explicit{T<:FloatingPoint}(A::AbstractArray{BGRA{T}}) = to_explicit(map(ClipMinMax(BGRA{Ufixed8}, zero(BGRA{T}), one(BGRA{T})), A))
+to_explicit{T<:Ufixed}(A::AbstractArray{RGBA{T}}) = reinterpret(FixedPointNumbers.rawtype(T), A, tuple(4, size(A)...))
+to_explicit{T<:FloatingPoint}(A::AbstractArray{RGBA{T}}) = to_explicit(map(ClipMinMax(RGBA{Ufixed8}, zero(RGBA{T}), one(RGBA{T})), A))
 
 # Write values in permuted order
 let method_cache = Dict()

@@ -39,6 +39,9 @@ imgc = imread(outname)
 mapi = mapinfo(RGB{Ufixed8}, img)
 imgrgb8 = map(mapi, img)
 @test imgrgb8[1,1].r == img[1].val
+open(outname, "w") do file
+    writemime(file, "image/png", img)
+end
 
 # Gray with alpha channel
 file = getfile("wmark_image.png")
@@ -52,7 +55,10 @@ img = imread(file)
     imwrite(img, outname)
     sleep(0.2)
     imgc = imread(outname)
-    @test img.data == imgc.data   # libmagick bug: doesn't write GrayAlpha properly?
+    @test img.data == imgc.data
+    open(outname, "w") do file
+        writemime(file, "image/png", img)
+    end
 end
 @test reinterpret(Uint32, data(map(mapinfo(RGB24, img), img))) ==
     map(x->x&0x00ffffff, reinterpret(Uint32, data(map(mapinfo(ARGB32, img), img))))
@@ -108,6 +114,10 @@ uint32color!(buf, imr)
     uint32color!(buf, imhsv)
     @test pixelspacing(restrict(img)) == [2.0,2.0]
 end
+outname = joinpath(writedir, "rose.png")
+open(outname, "w") do file
+    writemime(file, "image/png", img)
+end
 
 # RGBA with 16 bit depth
 file = getfile("autumn_leaves.png")
@@ -130,6 +140,9 @@ outname = joinpath(writedir, "autumn_leaves.png")
         map(x->x&0x00ffffff, reinterpret(Uint32, data(map(mapinfo(ARGB32, img), img))))
     @test mapinfo(Uint32, img) == mapinfo(ARGB32, img)
 end
+open(outname, "w") do file
+    writemime(file, "image/png", img)
+end
 
 # Indexed
 file = getfile("present.gif")
@@ -138,6 +151,10 @@ img = imread(file)
 @test reinterpret(Uint32, data(map(mapinfo(RGB24, img), img))) ==
     map(x->x&0x00ffffff, reinterpret(Uint32, data(map(mapinfo(ARGB32, img), img))))
 @test mapinfo(Uint32, img) == mapinfo(RGB24, img)
+outname = joinpath(writedir, "present.png")
+open(outname, "w") do file
+    writemime(file, "image/png", img)
+end
 
 # Images with a temporal dimension
 fname = "swirl_video.gif"
