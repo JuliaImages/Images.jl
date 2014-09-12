@@ -190,7 +190,7 @@ function _writemime(stream::IO, ::MIME"image/png", img::AbstractImage; mapi=mapi
         npix = length(A)/nc
     end
     if eltype(A) != eltype(img)
-        A = truncround(eltype(img), A)
+        mapi = similar(mapi, eltype(mapi), eltype(A))
     end
     wand = image2wand(share(img, A), mapi, nothing)
     blob = LibMagick.getblob(wand, "png")

@@ -11,17 +11,21 @@
 #   - type definition
 #   - constructors for scalars
 #   - constructors for AbstractArrays
+#   - similar  (syntax: similar(mapi, ToType, FromType))
 #   - implementation of map() for scalars
 #   - implementation of map() for AbstractArrays
 # map(mapi::MapInfo{T}, x) should return an object of type T (for x not an array)
 # map1(mapi::MapInfo{T}, x) is designed to allow T<:ColorValue to work on
 #    scalars x::Fractional
 
-## MapNone
-# At most, this does conversions
 
 # Dispatch-based elementwise manipulations
 abstract MapInfo{T}
+eltype{T}(mapi::MapInfo{T}) = T
+
+
+## MapNone
+# At most, this does conversions
 
 immutable MapNone{T} <: MapInfo{T}; end
 
@@ -29,6 +33,8 @@ immutable MapNone{T} <: MapInfo{T}; end
 MapNone{T}(::Type{T}) = MapNone{T}()
 MapNone{T}(val::T) = MapNone{T}()
 MapNone{T}(A::AbstractArray{T}) = MapNone{T}()
+
+similar{T}(mapi::MapNone, ::Type{T}, ::Type) = MapNone{T}()
 
 # Implementation
 map{T<:Real}(mapi::MapNone{T}, val::Real) = convert(T, val)
@@ -47,6 +53,8 @@ map{T}(mapi::MapNone{T}, img::AbstractArray{T}) = img
 
 immutable BitShift{T,N} <: MapInfo{T} end
 BitShift{T}(::Type{T}, n::Int) = BitShift{T,n}()  # note that this is not type-stable
+
+similar{S,T,N}(mapi::BitShift{S,N}, ::Type{T}, ::Type) = BitShift{T,N}()
 
 # Implementation
 immutable BS{N} end
@@ -81,6 +89,10 @@ ClampMinMax{T,From}(::Type{T}, min::From, max::From) = ClampMinMax{T,From}(min,m
 ClampMinMax{T}(min::T, max::T) = ClampMinMax{T,T}(min,max)
 immutable Clamp{T} <: AbstractClamp{T} end  # specialized for clamping colorvalues (e.g., 0 to 1 for RGB, also fractional)
 Clamp{T}(::Type{T}) = Clamp{T}()
+
+similar{T,F}(mapi::ClampMin, ::Type{T}, ::Type{F}) = ClampMin{T,F}(convert(F, mapi.min))
+similar{T,F}(mapi::ClampMax, ::Type{T}, ::Type{F}) = ClampMax{T,F}(convert(F, mapi.max))
+similar{T,F}(mapi::ClampMinMax, ::Type{T}, ::Type{F}) = ClampMin{T,F}(convert(F, mapi.min), convert(F, mapi.max))
 
 # Implementation
 map{T<:Real,F<:Real}(mapi::ClampMin{T,F}, val::F) = convert(T, max(val, mapi.min))
@@ -145,6 +157,9 @@ ScaleMinMax{To,From}(::Type{To}, img::AbstractArray{From}, mn::Real, mx::Real) =
 ScaleMinMax{To,From,R<:Real}(::Type{To}, img::AbstractArray{From}, mn::Gray{R}, mx::Gray{R}) = ScaleMinMax(To, convert(From,mn), convert(From,mx), 1.0f0/(float32(convert(From,mx.val))-float32(convert(From,mn.val))))
 ScaleMinMax{To}(::Type{To}, img::AbstractArray) = ScaleMinMax(To, img, minfinite(img), maxfinite(img))
 
+similar{T,F,To,From,S}(mapi::ScaleMinMax{To,From,S}, ::Type{T}, ::Type{F}) = ScaleMinMax{T,F,S}(convert(F,mapi.min), convert(F.mapi.max), mapi.s)
+
+# Implementation
 function map{To<:Real,From<:Union(Real,Gray)}(mapi::ScaleMinMax{To,From}, val::From)
     t = ifelse(val < mapi.min, zero(From), ifelse(val > mapi.max, mapi.max-mapi.min, val-mapi.min))
     convert(To, mapi.s*t)
@@ -175,6 +190,8 @@ ScaleSigned{T}(::Type{T}, s::FloatingPoint) = ScaleSigned{T, typeof(s)}(s)
 ScaleSigned{T}(::Type{T}, img::AbstractArray) = ScaleSigned(T, 1.0f0/maxabsfinite(img))
 ScaleSigned(img::AbstractArray) = ScaleSigned(Float32, img)
 
+similar{T,To,S}(mapi::ScaleSigned{To,S}, ::Type{T}, ::Type) = ScaleSigned{T,S}(mapi.s)
+
 map{T}(mapi::ScaleSigned{T}, val::Real) = convert(T, clamppm(mapi.s*val))
 function map{C<:Union(RGB24, RGB{Ufixed8})}(mapi::ScaleSigned{C}, val::Real)
     x = clamppm(mapi.s*val)
@@ -191,7 +208,7 @@ immutable ScaleAutoMinMax{T} <: MapInfo{T} end
 ScaleAutoMinMax{T}(::Type{T}) = ScaleAutoMinMax{T}()
 ScaleAutoMinMax() = ScaleAutoMinMax{Ufixed8}()
 
-
+similar{T}(mapi::ScaleAutoMinMax, ::Type{T}, ::Type) = ScaleAutoMinMax{T}()
 
 
 # Conversions to RGB{T}, RGBA{T}, RGB24, ARGB32,
@@ -361,7 +378,10 @@ const bitshiftto8 = ((Ufixed10, 2), (Ufixed12, 4), (Ufixed14, 6), (Ufixed16, 8))
 typealias GrayArray{T<:Fractional} Union(AbstractArray{T}, AbstractArray{Gray{T}})
 # note, though, that we need to override for AbstractImage in case the "colorspace" property is defined differently
 
-# mapinfo{T}(::Type{T}, img::AbstractArray{T}) = MapNone(img)
+# mapinfo{T<:Union(Real,ColorType)}(::Type{T}, img::AbstractArray{T}) = MapNone(img)
+mapinfo{T<:Ufixed}(::Type{T}, img::AbstractArray{T}) = MapNone(img)
+mapinfo{T<:FloatingPoint}(::Type{T}, img::AbstractArray{T}) = MapNone(img)
+
 # Grayscale methods
 for (T,n) in bitshiftto8
     @eval mapinfo(::Type{Ufixed8}, img::GrayArray{$T}) = BitShift{Ufixed8,$n}()

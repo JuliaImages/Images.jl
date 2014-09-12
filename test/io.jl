@@ -1,5 +1,5 @@
 import Images
-using FixedPointNumbers
+using Color, FixedPointNumbers
 
 const writedir = joinpath(tempdir(), "Images")
 
@@ -16,10 +16,42 @@ b = Images.imread(fn)
 Images.imwrite(aa, fn)
 b = Images.imread(fn)
 @assert convert(Array, b) == aa
+aaimg = Images.grayim(aa)
+open(fn, "w") do file
+    writemime(file, "image/png", aaimg)
+end
+b = Images.imread(fn)
+@assert b == aaimg
 aa = convert(Array{Ufixed16}, a)
 Images.imwrite(aa, fn)
 b = Images.imread(fn)
 @assert convert(Array, b) == aa
+
+# test writemime's use of restrict
+abig = Images.grayim(rand(Uint8, 1024, 1023))
+fn = joinpath(writedir, "big.png")
+open(fn, "w") do file
+    writemime(file, "image/png", abig)
+end
+b = Images.imread(fn)
+@assert Images.data(b) == convert(Array{Ufixed8,2}, Images.data(Images.restrict(abig, (1,2))))
+
+# More writemime tests
+a = Images.colorim(rand(Uint8, 3, 2, 2))
+fn = joinpath(writedir, "2by2.png")
+open(fn, "w") do file
+    writemime(file, "image/png", a)
+end
+b = Images.imread(fn)
+@assert Images.data(b) == Images.data(a)
+
+abig = Images.colorim(rand(Uint8, 3, 1021, 1026))
+fn = joinpath(writedir, "big.png")
+open(fn, "w") do file
+    writemime(file, "image/png", abig)
+end
+b = Images.imread(fn)
+@assert Images.data(b) == convert(Array{RGB{Ufixed8},2}, Images.data(Images.restrict(abig, (1,2))))
 
 using Color
 datafloat = reshape(linspace(0.5, 1.5, 6), 2, 3)
