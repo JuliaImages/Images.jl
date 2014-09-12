@@ -98,6 +98,8 @@ convert(::Type{Uint32}, g::AGray32) = g.color
 
 convert(::Type{RGB}, x::Gray) = RGB(x.val, x.val, x.val)
 convert{T}(::Type{RGB{T}}, x::Gray) = (g = convert(T, x.val); RGB{T}(g, g, g))
+convert(::Type{RGB}, c::AbstractRGB) = RGB(c.r, c.g, c.b)
+convert{T}(::Type{RGB{T}}, c::AbstractRGB) = RGB{T}(c.r, c.g, c.b)
 
 # YIQ (NTSC)
 immutable YIQ{T<:FloatingPoint} <: ColorValue{T}

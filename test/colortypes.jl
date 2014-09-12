@@ -95,6 +95,9 @@ acf = RGB{Float32}[cf]
 c = ColorTypes.Gray{Ufixed16}(0.8)
 @test convert(RGB, c) == RGB{Ufixed16}(0.8,0.8,0.8)
 @test convert(RGB{Float32}, c) == RGB{Float32}(0.8,0.8,0.8)
+r4 = ColorTypes.RGB4(1,0,0)
+@test convert(RGB, r4) == RGB(1,0,0)
+@test convert(RGB{Ufixed8}, r4) == RGB{Ufixed8}(1,0,0)
 
 iob = IOBuffer()
 c = ColorTypes.BGR{Ufixed8}(0.1,0.2,0.3)
