@@ -175,6 +175,9 @@ end
 # only mime writeable to PNG if 2D (used by IJulia for example)
 import Base.mimewritable
 Base.mimewritable(::MIME"image/png", img::AbstractImage) = sdims(img) == 2 && timedim(img) == 0
+# We have to disable Color's display via SVG, because both will get sent with unfortunate results.
+# See IJulia issue #229
+mimewritable{T<:ColorValue}(::MIME"image/svg+xml", ::AbstractMatrix{T}) = false
 
 function _writemime(stream::IO, ::MIME"image/png", img::AbstractImage; mapi=mapinfo(ImageMagick, img))
     assert2d(img)
