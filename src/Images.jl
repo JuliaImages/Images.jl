@@ -204,6 +204,7 @@ export # types
     imdog,
     imedge,
     imfilter,
+    imfilter!,
     imfilter_fft,
     imfilter_gaussian,
     imfilter_gaussian!,

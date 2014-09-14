@@ -592,6 +592,17 @@ relatively small `kernel`s.
 
 <br />
 ```
+imfilter!(dest, img, kernel)
+```
+filters the image with the given (array) kernel, storing the output
+in the pre-allocated output `dest`. The size of `dest` must not be
+greater than the size of the result of `imfilter` with `border = "inner"`,
+and it behaves identically.
+This uses finite-impulse-response (FIR) filtering, and is fast only for
+relatively small `kernel`s.
+
+<br />
+```
 imfilter_fft(img, kernel, [border, value])
 ```
 filters the image with the given (array) kernel, using an FFT algorithm.

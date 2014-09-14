@@ -401,7 +401,7 @@ end
 
 for N = 1:5
     @eval begin
-        function _imfilter!{T,K}(B, A::AbstractArray{T,$N}, kern::AbstractArray{K,$N})
+        function imfilter!{T,K}(B, A::AbstractArray{T,$N}, kern::AbstractArray{K,$N})
             for i = 1:$N
                 if size(B,i)+size(kern,i) > size(A,i)+1
                     throw(DimensionMismatch("Output dimensions $(size(B)) and kernel dimensions $(size(kern)) do not agree with size of padded input, $(size(A))"))
