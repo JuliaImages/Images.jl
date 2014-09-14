@@ -36,6 +36,9 @@ function init()
     global libwand
     if have_imagemagick
         eval(:(ccall((:MagickWandGenesis, $libwand), Void, ())))
+        vstr = queryoption("LIB_VERSION_NUMBER")
+        vstr = join(split(vstr, ',')[1:3], '.')
+        eval(:(const libversion = @v_str $vstr))
     else
         warn("ImageMagick utilities not found. Install for more file format support.")
     end

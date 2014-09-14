@@ -294,7 +294,7 @@ function image2wand(img, mapi, quality)
     else
         cs = colorspace(imgw)
         if in(cs, ("RGB", "RGBA", "ARGB", "BGRA"))
-            cs = "sRGB"
+            cs = LibMagick.libversion > v"6.7.5" ? "sRGB" : "RGB"
         end
     end
     channelorder = colorspace(imgw)
