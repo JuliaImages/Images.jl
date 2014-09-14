@@ -442,17 +442,30 @@ function imfilter_fft_inseparable{T<:ColorType,K,N,M}(img::AbstractArray{T,N}, k
 end
 
 function imfilter_fft_inseparable{T<:Real,K,N}(img::AbstractArray{T,N}, kern::AbstractArray{K,N}, border::String, value)
-    prepad  = [div(size(kern,i)-1, 2) for i = 1:N]
-    postpad = [div(size(kern,i),   2) for i = 1:N]
-    fullpad = [nextprod([2,3], size(img,i) + prepad[i] + postpad[i]) - size(img, i) - prepad[i] for i = 1:N]
-    A = padarray(img, prepad, fullpad, border, convert(T, value))
-    krn = zeros(eltype(one(T)*one(K)), size(A))
-    indexesK = ntuple(N, d->[size(krn,d)-prepad[d]+1:size(krn,d),1:size(kern,d)-prepad[d]])
-    krn[indexesK...] = reflect(kern)
-    AF = ifft(fft(A).*fft(krn))
-    out = Array(T, size(img))
-    indexesA = ntuple(N, d->postpad[d]+1:size(img,d)+postpad[d])
-    copyreal!(out, AF, indexesA)
+    if border != "inner"
+        prepad  = [div(size(kern,i)-1, 2) for i = 1:N]
+        postpad = [div(size(kern,i),   2) for i = 1:N]
+        fullpad = [nextprod([2,3], size(img,i) + prepad[i] + postpad[i]) - size(img, i) - prepad[i] for i = 1:N]
+        A = padarray(img, prepad, fullpad, border, convert(T, value))
+        krn = zeros(eltype(one(T)*one(K)), size(A))
+        indexesK = ntuple(N, d->[size(krn,d)-prepad[d]+1:size(krn,d),1:size(kern,d)-prepad[d]])
+        krn[indexesK...] = reflect(kern)
+        AF = ifft(fft(A).*fft(krn))
+        out = Array(realtype(eltype(AF)), size(img))
+        indexesA = ntuple(N, d->postpad[d]+1:size(img,d)+postpad[d])
+        copyreal!(out, AF, indexesA)
+    else
+        A = data(img)
+        prepad  = [div(size(kern,i)-1, 2) for i = 1:N]
+        postpad = [div(size(kern,i),   2) for i = 1:N]
+        krn = zeros(eltype(one(T)*one(K)), size(A))
+        indexesK = ntuple(N, d->[size(krn,d)-prepad[d]+1:size(krn,d),1:size(kern,d)-prepad[d]])
+        krn[indexesK...] = reflect(kern)
+        AF = ifft(fft(A).*fft(krn))
+        out = Array(realtype(eltype(AF)), ([size(img)...] - prepad - postpad)...)
+        indexesA = ntuple(N, d->prepad[d]+1:size(img,d)-postpad[d])
+        copyreal!(out, AF, indexesA)
+    end
     out
 end
 
@@ -484,6 +497,10 @@ for N = 1:5
         end
     end
 end
+
+realtype{R<:Real}(::Type{R}) = R
+realtype{R<:Real}(::Type{Complex{R}}) = R
+
 
 # IIR filtering with Gaussians
 # See

@@ -144,6 +144,8 @@ A = zeros(5,5); A[3,3] = 1
 kern = rand(3,3)
 Af = Images.imfilter(A, kern, "inner")
 @test Af == rot180(kern)
+Afft = Images.imfilter_fft(A, kern, "inner")
+@test_approx_eq Af Afft
 
 @test approx_equal(Images.imfilter_gaussian(ones(4,4), [5,5]), 1.0)
 A = fill(nan(Float32), 3, 3)
