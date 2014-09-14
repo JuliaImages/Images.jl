@@ -811,7 +811,7 @@ function restrict(img::AbstractImageDirect, region::Union(Dims, Vector{Int})=coo
     props["pixelspacing"] = ps
     Image(A, props)
 end
-function restrict(A::AbstractArray, region::Union(Dims, Vector{Int})=coords_spatial(img))
+function restrict(A::AbstractArray, region::Union(Dims, Vector{Int})=coords_spatial(A))
     for dim in region
         A = _restrict(A, dim)
     end

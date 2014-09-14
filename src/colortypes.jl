@@ -221,6 +221,10 @@ divtype(a::Type,b::Type) = typeof(one(a)/one(b))
 for CV in subtypes(AbstractRGB)
     @eval begin
         (*){R<:Real,T}(f::R, c::$CV{T}) = $CV{multype(R,T)}(f*c.r, f*c.g, f*c.b)
+        (*){R<:Real,T}(f::R, c::AlphaColorValue{$CV{T},T}) =
+            AlphaColorValue{$CV{multype(R,T)},multype(R,T)}(f*c.c.r, f*c.c.g, f*c.c.b, f*c.alpha)
+        (*){R<:Real,T}(f::R, c::AlphaColor{$CV{T},T}) =
+            AlphaColor{$CV{multype(R,T)},multype(R,T)}(f*c.c.r, f*c.c.g, f*c.c.b, f*c.alpha)
         function (*){R<:FloatingPoint,T<:Ufixed}(f::R, c::$CV{T})
             fs = f/reinterpret(one(T))
             $CV{multype(R,T)}(fs*reinterpret(c.r), fs*reinterpret(c.g), fs*reinterpret(c.b))
@@ -229,34 +233,39 @@ for CV in subtypes(AbstractRGB)
             fs = reinterpret(f)/widen(reinterpret(one(T)))^2
             $CV{multype(R,T)}(fs*reinterpret(c.r), fs*reinterpret(c.g), fs*reinterpret(c.b))
         end
-        (*)(c::$CV, f::Real) = (*)(f, c)
-        (.*)(f::Real, c::$CV) = (*)(f, c)
-        (.*)(c::$CV, f::Real) = (*)(f, c)
-        (/)(c::$CV, f::Real) = (one(f)/f)*c
-        (/)(c::$CV, f::Integer) = (one(eltype(c))/f)*c
-        (./)(c::$CV, f::Real) = (/)(c, f)
         function (/){R<:FloatingPoint,T<:Ufixed}(c::$CV{T}, f::R)
             fs = one(R)/(f*reinterpret(one(T)))
             $CV{divtype(R,T)}(fs*reinterpret(c.r), fs*reinterpret(c.g), fs*reinterpret(c.b))
         end
         (+){S,T}(a::$CV{S}, b::$CV{T}) = $CV{sumtype(S,T)}(a.r+b.r, a.g+b.g, a.b+b.b)
         (-){S,T}(a::$CV{S}, b::$CV{T}) = $CV{sumtype(S,T)}(a.r-b.r, a.g-b.g, a.b-b.b)
-        (+)(A::AbstractArray{$CV}, b::AbstractRGB) = (.+)(A, b)
-        (-)(A::AbstractArray{$CV}, b::AbstractRGB) = (.-)(A, b)
-        (+)(b::AbstractRGB, A::AbstractArray{$CV}) = (.+)(b, A)
-        (-)(b::AbstractRGB, A::AbstractArray{$CV}) = (.-)(b, A)
+        (+){S,T}(a::AlphaColorValue{$CV{S},S}, b::AlphaColorValue{$CV{T},T}) =
+            AlphaColorValue{$CV{sumtype(S,T)},sumtype(S,T)}(a.c.r+b.c.r, a.c.g+b.c.g, a.c.b+b.c.b, a.alpha+b.alpha)
+        (+){S,T}(a::AlphaColor{$CV{S},S}, b::AlphaColor{$CV{T},T}) =
+            AlphaColor{$CV{sumtype(S,T)},sumtype(S,T)}(a.c.r+b.c.r, a.c.g+b.c.g, a.c.b+b.c.b, a.alpha+b.alpha)
+        (-){S,T}(a::AlphaColorValue{$CV{S},S}, b::AlphaColorValue{$CV{T},T}) =
+            AlphaColorValue{$CV{sumtype(S,T)},sumtype(S,T)}(a.c.r-b.c.r, a.c.g-b.c.g, a.c.b-b.c.b, a.alpha-b.alpha)
+        (-){S,T}(a::AlphaColor{$CV{S},S}, b::AlphaColor{$CV{T},T}) =
+            AlphaColor{$CV{sumtype(S,T)},sumtype(S,T)}(a.c.r-b.c.r, a.c.g-b.c.g, a.c.b-b.c.b, a.alpha-b.alpha)
         function (.+){T}(A::AbstractArray{$CV{T}}, b::AbstractRGB)
             bT = convert($CV{T}, b)
             out = similar(A)
             add!(out, A, bT)
         end
+        function (.+){T}(A::Union(AbstractArray{AlphaColorValue{$CV{T},T}}, AbstractArray{AlphaColor{$CV{T},T}}), b::AbstractAlphaColorValue)
+            bT = convert($CV{T}, b)
+            out = similar(A)
+            add!(out, A, bT)
+        end
         (.+){T}(b::AbstractRGB, A::AbstractArray{$CV{T}}) = (.+)(A, b)
+        (.+){T}(b::AbstractAlphaColorValue, A::Union(AbstractArray{AlphaColorValue{$CV{T},T}}, AbstractArray{AlphaColor{$CV{T},T}})) =
+            (.+)(A, b)
         function (.-){T}(A::AbstractArray{$CV{T}}, b::AbstractRGB)
             bT = convert($CV{T}, b)
             out = similar(A)
             sub!(out, A, bT)
         end
-        function (.-){T}(A::AbstractArray{$CV{T}}, b::AbstractRGB)
+        function (.-){T}(A::Union(AbstractArray{AlphaColorValue{$CV{T},T}}, AbstractArray{AlphaColor{$CV{T},T}}), b::AbstractAlphaColorValue)
             bT = convert($CV{T}, b)
             out = similar(A)
             sub!(out, A, bT)
@@ -266,16 +275,64 @@ for CV in subtypes(AbstractRGB)
             out = similar(A)
             sub!(out, bT, A)
         end
+        function (.-){T}(b::AbstractAlphaColorValue, A::Union(AbstractArray{AlphaColorValue{$CV{T},T}}, AbstractArray{AlphaColor{$CV{T},T}}))
+            bT = convert($CV{T}, b)
+            out = similar(A)
+            sub!(out, bT, A)
+        end
         isfinite{T<:Ufixed}(c::$CV{T}) = true
+        isfinite{T<:Ufixed}(c::AbstractAlphaColorValue{$CV{T},T}) = true
         isfinite{T<:FloatingPoint}(c::$CV{T}) = isfinite(c.r) && isfinite(c.g) && isfinite(c.b)
+        isfinite{T<:FloatingPoint}(c::AbstractAlphaColorValue{$CV{T},T}) = isfinite(c.c.r) && isfinite(c.c.g) && isfinite(c.c.b) && isfinite(c.alpha)
         isnan{T<:Ufixed}(c::$CV{T}) = false
+        isnan{T<:Ufixed}(c::AbstractAlphaColorValue{$CV{T},T}) = false
         isnan{T<:FloatingPoint}(c::$CV{T}) = isnan(c.r) || isnan(c.g) || isnan(c.b)
+        isnan{T<:FloatingPoint}(c::AbstractAlphaColorValue{$CV{T},T}) = isnan(c.c.r) || isnan(c.c.g) || isnan(c.c.b) || isnan(c.alpha)
         isinf{T<:Ufixed}(c::$CV{T}) = false
+        isinf{T<:Ufixed}(c::AbstractAlphaColorValue{$CV{T},T}) = false
         isinf{T<:FloatingPoint}(c::$CV{T}) = isinf(c.r) || isinf(c.g) || isinf(c.b)
+        isinf{T<:FloatingPoint}(c::AbstractAlphaColorValue{$CV{T},T}) = isinf(c.c.r) || isinf(c.c.g) || isinf(c.c.b) || isinf(c.alpha)
         abs(c::$CV) = abs(c.r)+abs(c.g)+abs(c.b) # should this have a different name?
         abs{T<:Ufixed}(c::$CV{T}) = float32(c.r)+float32(c.g)+float32(c.b) # should this have a different name?
+        one{T}(::Type{$CV{T}}) = $CV{T}(one(T),one(T),one(T))
+        one{T}(::Type{AlphaColorValue{$CV{T},T}}) = AlphaColorValue{$CV{T},T}(one(T),one(T),one(T),one(T))
+        one{T}(::Type{AlphaColor{$CV{T},T}}) = AlphaColorValue{$CV{T},T}(one(T),one(T),one(T),one(T))
+        zero{T}(::Type{$CV{T}}) = $CV{T}(zero(T),zero(T),zero(T))
+        zero{T}(::Type{AlphaColorValue{$CV{T},T}}) = AlphaColorValue{$CV{T},T}(zero(T),zero(T),zero(T),zero(T))
+        zero{T}(::Type{AlphaColor{$CV{T},T}}) = AlphaColorValue{$CV{T},T}(zero(T),zero(T),zero(T),zero(T))
     end
 end
+(*)(c::AbstractRGB, f::Real) = (*)(f, c)
+(*){CV<:AbstractRGB}(c::AlphaColorValue{CV}, f::Real) = (*)(f, c)
+(*){CV<:AbstractRGB}(c::AlphaColor{CV}, f::Real) = (*)(f, c)
+(.*)(f::Real, c::AbstractRGB) = (*)(f, c)
+(.*){CV<:AbstractRGB}(f::Real, c::AlphaColorValue{CV}) = (*)(f, c)
+(.*){CV<:AbstractRGB}(f::Real, c::AlphaColor{CV}) = (*)(f, c)
+(.*)(c::AbstractRGB, f::Real) = (*)(f, c)
+(.*){CV<:AbstractRGB}(c::AlphaColorValue{CV}, f::Real) = (*)(f, c)
+(.*){CV<:AbstractRGB}(c::AlphaColor{CV}, f::Real) = (*)(f, c)
+(/)(c::AbstractRGB, f::Real) = (one(f)/f)*c
+(/){CV<:AbstractRGB}(c::AlphaColorValue{CV}, f::Real) = (one(f)/f)*c
+(/){CV<:AbstractRGB}(c::AlphaColor{CV}, f::Real) = (one(f)/f)*c
+(/)(c::AbstractRGB, f::Integer) = (one(eltype(c))/f)*c
+(/){CV<:AbstractRGB}(c::AlphaColorValue{CV}, f::Integer) = (one(eltype(c))/f)*c
+(/){CV<:AbstractRGB}(c::AlphaColor{CV}, f::Integer) = (one(eltype(c))/f)*c
+(./)(c::AbstractRGB, f::Real) = (/)(c, f)
+(./){CV<:AbstractRGB}(c::AlphaColorValue{CV}, f::Real) = (/)(c, f)
+(./){CV<:AbstractRGB}(c::AlphaColor{CV}, f::Real) = (/)(c, f)
+(+){CV<:AbstractRGB}(A::AbstractArray{CV}, b::AbstractRGB) = (.+)(A, b)
+(+){CV<:AbstractRGB,T,CV2<:AbstractRGB}(A::AbstractArray{AlphaColorValue{CV,T}}, b::AbstractAlphaColorValue{CV2}) = (.+)(A, b)
+(+){CV<:AbstractRGB,T,CV2<:AbstractRGB}(A::AbstractArray{AlphaColor{CV,T}}, b::AbstractAlphaColorValue{CV2}) = (.+)(A, b)
+(-){CV<:AbstractRGB}(A::AbstractArray{CV}, b::AbstractRGB) = (.-)(A, b)
+(-){CV<:AbstractRGB,T,CV2<:AbstractRGB}(A::AbstractArray{AlphaColorValue{CV,T}}, b::AbstractAlphaColorValue{CV2}) = (.-)(A, b)
+(-){CV<:AbstractRGB,T,CV2<:AbstractRGB}(A::AbstractArray{AlphaColor{CV,T}}, b::AbstractAlphaColorValue{CV2}) = (.-)(A, b)
+(+){CV<:AbstractRGB}(b::AbstractRGB, A::AbstractArray{CV}) = (.+)(b, A)
+(+){CV<:AbstractRGB,T,CV2<:AbstractRGB}(b::AbstractAlphaColorValue{CV2}, A::AbstractArray{AlphaColorValue{CV,T}}) = (.+)(A, b)
+(+){CV<:AbstractRGB,T,CV2<:AbstractRGB}(b::AbstractAlphaColorValue{CV2}, A::AbstractArray{AlphaColor{CV,T}}) = (.+)(A, b)
+(-){CV<:AbstractRGB}(b::AbstractRGB, A::AbstractArray{CV}) = (.-)(b, A)
+(-){CV<:AbstractRGB,T,CV2<:AbstractRGB}(b::AbstractAlphaColorValue{CV2}, A::AbstractArray{AlphaColorValue{CV,T}}) = (.-)(A, b)
+(-){CV<:AbstractRGB,T,CV2<:AbstractRGB}(b::AbstractAlphaColorValue{CV2}, A::AbstractArray{AlphaColor{CV,T}}) = (.-)(A, b)
+
 # Math on Gray
 for CV in subtypes(AbstractGray)
     @eval begin
@@ -337,7 +394,7 @@ end
     out
 end
 # need a separate sub! because of unsigned types
-@ngenerate N typeof(out) function sub!{T,N}(out, A::AbstractArray{T,N}, b::Union(AbstractRGB, AbstractGray))
+@ngenerate N typeof(out) function sub!{T,N}(out, A::AbstractArray{T,N}, b::ColorType)  # TODO: change to b::T when julia #8045 fixed
     @inbounds begin
         @nloops N i A begin
             @nref(N, out, i) = @nref(N, A, i) - b
@@ -345,7 +402,7 @@ end
     end
     out
 end
-@ngenerate N typeof(out) function sub!{T,N}(out, b::Union(AbstractRGB, AbstractGray), A::AbstractArray{T,N})
+@ngenerate N typeof(out) function sub!{T,N}(out, b::ColorType, A::AbstractArray{T,N})
     @inbounds begin
         @nloops N i A begin
             @nref(N, out, i) = b - @nref(N, A, i)

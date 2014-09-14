@@ -627,8 +627,6 @@ colordim(img::AbstractImageIndexed) = 0
 
 timedim(img) = get(img, "timedim", 0)
 
-one{T}(::Type{RGB{T}}) = RGB{T}(one(T),one(T),one(T))
-zero{T}(::Type{RGB{T}}) = RGB{T}(zero(T),zero(T),zero(T))
 limits(img::AbstractArray{Bool}) = 0,1
 # limits{T<:Integer}(img::AbstractArray{T}) = typemin(T), typemax(T)  # best not to use Integers...
 limits{T<:FloatingPoint}(img::AbstractArray{T}) = zero(T), one(T)

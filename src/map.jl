@@ -94,6 +94,7 @@ Clamp{T}(::Type{T}) = Clamp{T}()
 similar{T,F}(mapi::ClampMin, ::Type{T}, ::Type{F}) = ClampMin{T,F}(convert(F, mapi.min))
 similar{T,F}(mapi::ClampMax, ::Type{T}, ::Type{F}) = ClampMax{T,F}(convert(F, mapi.max))
 similar{T,F}(mapi::ClampMinMax, ::Type{T}, ::Type{F}) = ClampMin{T,F}(convert(F, mapi.min), convert(F, mapi.max))
+similar{T,F}(mapi::Clamp, ::Type{T}, ::Type{F}) = Clamp{T}()
 
 # Implementation
 map{T<:Real,F<:Real}(mapi::ClampMin{T,F}, val::F) = convert(T, max(val, mapi.min))
@@ -407,6 +408,8 @@ for (T,n) in bitshiftto8
     @eval mapinfo(::Type{RGB{Ufixed8}}, img::AbstractArray{RGB{$T}}) = BitShift{RGB{Ufixed8},$n}()
     @eval mapinfo(::Type{RGBA{Ufixed8}}, img::AbstractArray{RGBA{$T}}) = BitShift{RGBA{Ufixed8},$n}()
 end
+mapinfo{F<:Fractional}(::Type{RGB{Ufixed8}}, img::AbstractArray{RGB{F}}) = Clamp(RGB{Ufixed8})
+mapinfo{F<:Fractional}(::Type{RGBA{Ufixed8}}, img::AbstractArray{RGBA{F}}) = Clamp(RGBA{Ufixed8})
 
 
 

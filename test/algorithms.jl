@@ -168,15 +168,23 @@ A = zeros(Int, 9, 9); A[5, 5] = 1
 # restriction
 A = reshape(uint16(1:60), 4, 5, 3)
 B = Images.restrict(A, (1,2))
-@test_approx_eq B cat(3, [ 0.96875  4.625   5.96875;
-                           2.875   10.5    12.875;
-                           1.90625  5.875   6.90625],
-                         [ 8.46875  14.625 13.46875;
-                          17.875    30.5   27.875;
-                           9.40625  15.875 14.40625],
-                         [15.96875  24.625 20.96875;
-                          32.875    50.5   42.875;
-                          16.90625  25.875 21.90625])
+Btarget = cat(3, [ 0.96875  4.625   5.96875;
+                   2.875   10.5    12.875;
+                   1.90625  5.875   6.90625],
+                 [ 8.46875  14.625 13.46875;
+                  17.875    30.5   27.875;
+                   9.40625  15.875 14.40625],
+                 [15.96875  24.625 20.96875;
+                  32.875    50.5   42.875;
+                  16.90625  25.875 21.90625])
+@test_approx_eq B Btarget
+Argb = reinterpret(RGB, reinterpret(Ufixed16, permutedims(A, (3,1,2))))
+B = Images.restrict(Argb)
+Bf = permutedims(reinterpret(Float64, B), (2,3,1))
+@test_approx_eq_eps Bf Btarget/reinterpret(one(Ufixed16)) 1e-12
+Argba = reinterpret(RGBA{Ufixed16}, reinterpret(Ufixed16, A))
+B = Images.restrict(Argba)
+@test_approx_eq_eps reinterpret(Float64, B) restrict(A, (2,3))/reinterpret(one(Ufixed16)) 1e-12
 A = reshape(1:60, 5, 4, 3)
 B = Images.restrict(A, (1,2,3))
 @test_approx_eq B cat(3, [ 2.6015625  8.71875 6.1171875;
