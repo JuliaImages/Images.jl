@@ -364,12 +364,12 @@ imfilter_inseparable{T,K,N,M}(img::AbstractArray{T,N}, kern::AbstractArray{K,M},
 function imfilter_inseparable{T,K,N}(img::AbstractArray{T,N}, kern::AbstractArray{K,N}, border::String, value)
     if border == "inner"
         result = Array(typeof(one(T)*one(K)), ntuple(N, d->max(0, size(img,d)-size(kern,d)+1)))
-        _imfilter!(result, img, kern)
+        imfilter!(result, img, kern)
     else
         prepad  = [div(size(kern,i)-1, 2) for i = 1:N]
         postpad = [div(size(kern,i),   2) for i = 1:N]
         A = padarray(img, prepad, postpad, border, convert(T, value))
-        result = _imfilter!(Array(typeof(one(T)*one(K)), size(img)), A, data(kern))
+        result = imfilter!(Array(typeof(one(T)*one(K)), size(img)), A, data(kern))
     end
     copy(img, result)
 end
