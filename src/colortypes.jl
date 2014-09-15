@@ -58,6 +58,20 @@ end
 RGB4(r::Integer, g::Integer, b::Integer) = RGB4{Float64}(r, g, b)
 RGB4(r::Fractional, g::Fractional, b::Fractional) = (T = promote_type(typeof(r), typeof(g), typeof(b)); RGB4{T}(r, g, b))
 
+for CV in subtypes(AbstractRGB)
+    CV == RGB && continue
+    @eval begin
+        convert{T}(::Type{$CV{T}}, c::$CV{T}) = c
+        convert(::Type{$CV}, c::$CV) = c
+        convert{T}(::Type{$CV{T}}, c::$CV) = $CV{T}(convert(T, c.r), convert(T, c.g), convert(T, c.b))
+        convert{T<:Fractional}(::Type{$CV}, c::ColorValue{T}) = convert($CV{T}, c)
+        convert(::Type{$CV}, c::AbstractRGB) = $CV(c.r, c.g, c.b)
+        convert{T}(::Type{$CV{T}}, c::AbstractRGB) = $CV{T}(c.r, c.g, c.b)
+    end
+end
+convert(::Type{RGB}, c::AbstractRGB) = RGB(c.r, c.g, c.b)
+convert{T}(::Type{RGB{T}}, c::AbstractRGB) = RGB{T}(c.r, c.g, c.b)
+
 
 # Sometimes you want to be explicit about grayscale. Also needed for GrayAlpha.
 abstract AbstractGray{T} <: ColorValue{T}
@@ -98,8 +112,6 @@ convert(::Type{Uint32}, g::AGray32) = g.color
 
 convert(::Type{RGB}, x::Gray) = RGB(x.val, x.val, x.val)
 convert{T}(::Type{RGB{T}}, x::Gray) = (g = convert(T, x.val); RGB{T}(g, g, g))
-convert(::Type{RGB}, c::AbstractRGB) = RGB(c.r, c.g, c.b)
-convert{T}(::Type{RGB{T}}, c::AbstractRGB) = RGB{T}(c.r, c.g, c.b)
 
 # YIQ (NTSC)
 immutable YIQ{T<:FloatingPoint} <: ColorValue{T}

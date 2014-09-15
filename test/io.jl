@@ -32,8 +32,8 @@ open(fn, "w") do file
     writemime(file, "image/png", Images.grayim(aa))
 end
 b = Images.imread(fn)
-@test data(b) == Gray{Ufixed8}[0.6 0.2;
-                               1.0 0.8]
+@test Images.data(b) == Ufixed8[0.6 0.2;
+                                1.0 0.8]
 
 # test writemime's use of restrict
 abig = Images.grayim(rand(Uint8, 1024, 1023))
