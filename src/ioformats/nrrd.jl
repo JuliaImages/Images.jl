@@ -321,6 +321,10 @@ function imwrite(img, sheader::IO, ::Type{Images.NRRDFile}; props::Dict = Dict{A
     println(sheader, "encoding: ", get(props, "encoding", "raw"))
     println(sheader, "endian: ", get(props, "endian", ENDIAN_BOM == 0x04030201 ? "little" : "big"))
     ps = get(props, "pixelspacing", pixelspacing(img))
+    ps = convert(Vector{Any}, ps)
+    index = sort([cd, td])
+    index[1] > 0 && insert!(ps, index[1], "nan")
+    index[2] > 0 && insert!(ps, index[2], "nan")
     print(sheader, "spacings:")
     printunits = false
     for x in ps
