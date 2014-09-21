@@ -217,7 +217,7 @@ imread(filename::String, ::Type{OSXNative}) = LibOSXNative.imread(filename)
 
 #### ImageMagick library
 
-const ufixedtype = [1=>Bool, 8=>Ufixed8, 10=>Ufixed10, 12=>Ufixed12, 14=>Ufixed14, 16=>Ufixed16]
+const ufixedtype = [1=>Ufixed8, 8=>Ufixed8, 10=>Ufixed10, 12=>Ufixed12, 14=>Ufixed14, 16=>Ufixed16]
 
 function imread(filename::String, ::Type{ImageMagick})
     wand = LibMagick.MagickWand()
