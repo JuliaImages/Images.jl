@@ -2,7 +2,8 @@
 
 An image processing library for [Julia](http://julialang.org/).
 
-[![Status](http://iainnz.github.io/packages.julialang.org/badges/Images_0.3.svg)](http://iainnz.github.io/packages.julialang.org/badges/Images_0.3.svg) [![Coverage Status](https://coveralls.io/repos/timholy/Images.jl/badge.png?branch=master)](https://coveralls.io/r/timholy/Images.jl?branch=master)
+[![Images](http://pkg.julialang.org/badges/Images_release.svg)](http://pkg.julialang.org/?pkg=Images&ver=release)
+[![Coverage Status](https://coveralls.io/repos/timholy/Images.jl/badge.png?branch=master)](https://coveralls.io/r/timholy/Images.jl?branch=master)
 
 ## Installation
 
