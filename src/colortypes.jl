@@ -306,9 +306,11 @@ for CV in subtypes(AbstractRGB)
         isinf{T<:FloatingPoint}(c::AbstractAlphaColorValue{$CV{T},T}) = isinf(c.c.r) || isinf(c.c.g) || isinf(c.c.b) || isinf(c.alpha)
         abs(c::$CV) = abs(c.r)+abs(c.g)+abs(c.b) # should this have a different name?
         abs{T<:Ufixed}(c::$CV{T}) = float32(c.r)+float32(c.g)+float32(c.b) # should this have a different name?
+        one{T<:ColorType}(::T) = one(T)
         one{T}(::Type{$CV{T}}) = $CV{T}(one(T),one(T),one(T))
         one{T}(::Type{AlphaColorValue{$CV{T},T}}) = AlphaColorValue{$CV{T},T}(one(T),one(T),one(T),one(T))
         one{T}(::Type{AlphaColor{$CV{T},T}}) = AlphaColorValue{$CV{T},T}(one(T),one(T),one(T),one(T))
+        zero{T<:ColorType}(::T) = zero(T)
         zero{T}(::Type{$CV{T}}) = $CV{T}(zero(T),zero(T),zero(T))
         zero{T}(::Type{AlphaColorValue{$CV{T},T}}) = AlphaColorValue{$CV{T},T}(zero(T),zero(T),zero(T),zero(T))
         zero{T}(::Type{AlphaColor{$CV{T},T}}) = AlphaColorValue{$CV{T},T}(zero(T),zero(T),zero(T),zero(T))

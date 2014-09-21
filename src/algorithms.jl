@@ -908,8 +908,9 @@ for N = 1:5
                 oneeighth = convert(eltype(T), 0.125)
                 indx = 0
                 if dim == 1
+                    z = zero(A[1])
                     @nloops $N i d->(d==1 ? (1:1) : (1:size(A,d))) d->(j_d = i_d) begin
-                        c = d = zero(T)
+                        c = d = z
                         for k = 1:size(out,1)-1
                             a = c
                             b = d
