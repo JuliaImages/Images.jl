@@ -862,7 +862,7 @@ for N = 1:5
                 quarter = convert(eltype(T), 0.25)
                 indx = 0
                 if dim == 1
-                    @nloops $N i d->(d==1 ? (1:1) : (1:size(A,d))) d->(j_d = d==1 ? i_d+1 : i_d) begin
+                    @inbounds @nloops $N i d->(d==1 ? (1:1) : (1:size(A,d))) d->(j_d = d==1 ? i_d+1 : i_d) begin
                         nxt = @nref $N A j
                         out[indx+=1] = half*(@nref $N A i) + quarter*nxt
                         for k = 3:2:size(A,1)-2
@@ -886,7 +886,7 @@ for N = 1:5
                     @nexprs $N d->(stride_{d+1} = stride_d*size(out,d))
                     @nexprs $N d->offset_d = 0
                     ispeak = true
-                    @nloops $N i d->(d==1?(1:1):(1:size(A,d))) d->(if d==dim; ispeak=isodd(i_d); offset_{d-1} = offset_d+(div(i_d+1,2)-1)*stride_d; else; offset_{d-1} = offset_d+(i_d-1)*stride_d; end) begin
+                    @inbounds @nloops $N i d->(d==1?(1:1):(1:size(A,d))) d->(if d==dim; ispeak=isodd(i_d); offset_{d-1} = offset_d+(div(i_d+1,2)-1)*stride_d; else; offset_{d-1} = offset_d+(i_d-1)*stride_d; end) begin
                         indx = offset_0
                         if ispeak
                             for k = 1:size(A,1)
@@ -909,7 +909,7 @@ for N = 1:5
                 indx = 0
                 if dim == 1
                     z = zero(A[1])
-                    @nloops $N i d->(d==1 ? (1:1) : (1:size(A,d))) d->(j_d = i_d) begin
+                    @inbounds @nloops $N i d->(d==1 ? (1:1) : (1:size(A,d))) d->(j_d = i_d) begin
                         c = d = z
                         for k = 1:size(out,1)-1
                             a = c
@@ -929,7 +929,7 @@ for N = 1:5
                     @nexprs $N d->(stride_{d+1} = stride_d*size(out,d))
                     @nexprs $N d->offset_d = 0
                     peakfirst = true
-                    @nloops $N i d->(d==1?(1:1):(1:size(A,d))) d->(if d==dim; peakfirst=isodd(i_d); offset_{d-1} = offset_d+(div(i_d+1,2)-1)*stride_d; else; offset_{d-1} = offset_d+(i_d-1)*stride_d; end) begin
+                    @inbounds @nloops $N i d->(d==1?(1:1):(1:size(A,d))) d->(if d==dim; peakfirst=isodd(i_d); offset_{d-1} = offset_d+(div(i_d+1,2)-1)*stride_d; else; offset_{d-1} = offset_d+(i_d-1)*stride_d; end) begin
                         indx = offset_0
                         if peakfirst
                             for k = 1:size(A,1)
