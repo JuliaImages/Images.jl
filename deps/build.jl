@@ -74,6 +74,7 @@ end
 # See https://github.com/timholy/Images.jl/issues/184#issuecomment-55643225
 module CheckVersion
 include("deps.jl")
+@osx __init__()
 p = ccall((:MagickQueryConfigureOption, libwand), Ptr{Uint8}, (Ptr{Uint8},), "LIB_VERSION_NUMBER")
 vstr = string("v\"", join(split(bytestring(p), ',')[1:3], '.'), "\"")
 open("deps.jl", "a") do file
