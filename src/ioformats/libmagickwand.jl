@@ -59,6 +59,32 @@ storagetype{T<:Ufixed}(::Type{T}) = storagetype(FixedPointNumbers.rawtype(T))
 storagetype{CV<:ColorValue}(::Type{CV}) = storagetype(eltype(CV))
 storagetype{CV<:AbstractAlphaColorValue}(::Type{CV}) = storagetype(eltype(CV))
 
+# Channel types
+type ChannelType
+    value::Uint32
+end
+const UndefinedChannel = ChannelType(0x00000000)
+const RedChannel = ChannelType(0x00000001)
+const GrayChannel = ChannelType(0x00000001)
+const CyanChannel = ChannelType(0x00000001)
+const GreenChannel = ChannelType(0x00000002)
+const MagentaChannel = ChannelType(0x00000002)
+const BlueChannel = ChannelType(0x00000004)
+const YellowChannel = ChannelType(0x00000004)
+const AlphaChannel = ChannelType(0x00000008)
+const MatteChannel = ChannelType(0x00000008)
+const OpacityChannel = ChannelType(0x00000008)
+const BlackChannel = ChannelType(0x00000020)
+const IndexChannel = ChannelType(0x00000020)
+const CompositeChannels = ChannelType(0x0000002F)
+const TrueAlphaChannel = ChannelType(0x00000040)
+const RGBChannels = ChannelType(0x00000080)
+const GrayChannels = ChannelType(0x00000080)
+const SyncChannels = ChannelType(0x00000100)
+const AllChannels = ChannelType(0x7fffffff)
+const DefaultChannels = ChannelType( (AllChannels.value | SyncChannels.value) &~ OpacityChannel.value )
+
+
 # Image type
 const IMType = ["BilevelType", "GrayscaleType", "GrayscaleMatteType", "PaletteType", "PaletteMatteType", "TrueColorType", "TrueColorMatteType", "ColorSeparationType", "ColorSeparationMatteType", "OptimizeType", "PaletteBilevelMatteType"]
 const IMTypedict = Dict(IMType, 1:length(IMType))
@@ -276,6 +302,9 @@ end
 
 # get the pixel depth
 getimagedepth(wand::MagickWand) = int(ccall((:MagickGetImageDepth, libwand), Csize_t, (Ptr{Void},), wand.ptr))
+
+# pixel depth for given channel type
+getimagechanneldepth(wand::MagickWand, channelType::ChannelType) = int(ccall((:MagickGetImageChannelDepth, libwand), Csize_t, (Ptr{Void},Uint32), wand.ptr, channelType.value ))
 
 pixelsetcolor(wand::PixelWand, colorstr::ByteString) = ccall((:PixelSetColor, libwand), Csize_t, (Ptr{Void},Ptr{Uint8}), wand.ptr, colorstr) == 0 && error(wand)
 
