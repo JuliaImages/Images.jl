@@ -217,7 +217,8 @@ imread(filename::String, ::Type{OSXNative}) = LibOSXNative.imread(filename)
 
 #### ImageMagick library
 
-const ufixedtype = [1=>Ufixed8, 8=>Ufixed8, 10=>Ufixed10, 12=>Ufixed12, 14=>Ufixed14, 16=>Ufixed16]
+# fixed type for depths > 8
+const ufixedtype = [10=>Ufixed10, 12=>Ufixed12, 14=>Ufixed14, 16=>Ufixed16]
 
 function imread(filename::String, ::Type{ImageMagick})
     wand = LibMagick.MagickWand()
@@ -237,8 +238,14 @@ function imread(filename::String, ::Type{ImageMagick})
         cs = "Gray"
     end
     prop["IMcs"] = cs
-    depth = LibMagick.getimagedepth(wand)
-    T = ufixedtype[depth]
+    
+    depth = LibMagick.getimagechanneldepth(wand, LibMagick.DefaultChannels)
+    if depth <= 8
+        T = Ufixed8     # always use 8-bit for 8-bit and less
+    else
+        T = ufixedtype[depth]
+    end
+
     channelorder = cs
     if havealpha
         if channelorder == "sRGB" || channelorder == "RGB"
