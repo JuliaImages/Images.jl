@@ -127,12 +127,14 @@ reinterpret{T<:Fractional,CV<:ColorType}(::Type{T}, img::Vector{CV}) = _reinterp
 reinterpret{T<:Fractional,CV<:ColorType}(::Type{T}, img::Array{CV})  = _reinterpret(T, eltype(CV), img)
 reinterpret{T<:Fractional,CV<:ColorType}(::Type{T}, img::AbstractArray{CV}) = _reinterpret(T, eltype(CV), img)
 _reinterpret{T<:Fractional,CV<:ColorType}(::Type{T}, ::Type{T}, img::AbstractArray{CV}) =
-    reinterpret(T, img, tuple(length(CV), size(img)...))
+    reinterpret(T, img, length(CV) > 1 ? tuple(length(CV), size(img)...) : size(img))
 function _reinterpret{T<:Fractional,CV<:ColorType}(::Type{T}, ::Type{T}, img::AbstractImageDirect{CV})
     A = _reinterpret(T, T, data(img))
     props = copy(properties(img))
     props["colorspace"] = colorspace(img)
-    props["colordim"] = 1
+    if ndims(A) > ndims(img)
+        props["colordim"] = 1
+    end
     Image(A, props)
 end
 _reinterpret{T,S,CV<:ColorType}(::Type{T}, ::Type{S}, img::AbstractArray{CV}) =
