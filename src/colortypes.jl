@@ -2,7 +2,11 @@ module ColorTypes
 
 using Color, FixedPointNumbers, Base.Cartesian
 import Color: Fractional, _convert
-import Base: ==, abs, clamp, convert, isfinite, isinf, isnan, length, one, promote_array_type, promote_rule, zero
+
+import Base: ==, abs, abs2, clamp, convert, div, isfinite, isinf,
+    isnan, isless, length, one, promote_array_type, promote_rule, zero,
+    trunc, floor, round, ceil, itrunc, ifloor, iceil, iround, bswap,
+    mod, rem
 
 export ARGB, BGR, RGB1, RGB4, BGRA, AbstractGray, Gray, GrayAlpha, Gray24, AGray32, YIQ, AlphaColor, ColorType, noeltype
 
@@ -223,6 +227,16 @@ for ACV in (ColorValue, AbstractRGB, AbstractGray, AbstractAlphaColorValue)
     end
 end
 
+for f in (:trunc, :floor, :round, :ceil, :itrunc, :ifloor, :iceil, :iround, :abs, :abs2, :isfinite, :isnan, :isinf, :bswap)
+    @eval $f{T}(g::Gray{T}) = Gray{T}($f(g.val))
+    @eval @vectorize_1arg Gray $f
+end
+
+for f in (:mod, :rem, :mod1)
+    @eval $f(x::Gray, m::Gray) = Gray($f(x.val, m.val))
+    @eval @vectorize_2arg Gray $f
+end
+
 # Return types for arithmetic operations
 multype(a::Type,b::Type) = typeof(one(a)*one(b))
 sumtype(a::Type,b::Type) = typeof(one(a)+one(b))
@@ -359,6 +373,7 @@ for CV in subtypes(AbstractGray)
         (./)(c::$CV, f::Real) = (/)(c, f)
         (+){S,T}(a::$CV{S}, b::$CV{T}) = $CV{sumtype(S,T)}(a.val+b.val)
         (-){S,T}(a::$CV{S}, b::$CV{T}) = $CV{sumtype(S,T)}(a.val-b.val)
+        (*){S,T}(a::$CV{S}, b::$CV{T}) = $CV{multype(S,T)}(a.val*b.val)
         (+)(A::AbstractArray{$CV}, b::AbstractGray) = (.+)(A, b)
         (-)(A::AbstractArray{$CV}, b::AbstractGray) = (.-)(A, b)
         (+)(b::AbstractGray, A::AbstractArray{$CV}) = (.+)(b, A)
@@ -395,9 +410,21 @@ for CV in subtypes(AbstractGray)
 
         (<)(c::$CV, r::Real) = c.val < r
         (<)(r::Real, c::$CV) = r < c.val
+        isless(c::$CV, r::Real) = c.val < r
+        isless(r::Real, c::$CV) = r < c.val
         (<)(a::$CV, b::AbstractGray) = a.val < b.val
     end
 end
+(/)(a::AbstractGray, b::AbstractGray) = a.val/b.val
+div(a::AbstractGray, b::AbstractGray) = div(a.val, b.val)
+(+)(a::AbstractGray, b::Number) = a.val+b
+(-)(a::AbstractGray, b::Number) = a.val-b
+(+)(a::Number, b::AbstractGray) = a+b.val
+(-)(a::Number, b::AbstractGray) = a-b.val
+(.+)(a::AbstractGray, b::Number) = a.val+b
+(.-)(a::AbstractGray, b::Number) = a.val-b
+(.+)(a::Number, b::AbstractGray) = a+b.val
+(.-)(a::Number, b::AbstractGray) = a-b.val
 
 @ngenerate N typeof(out) function add!{T,N}(out, A::AbstractArray{T,N}, b::T)
     @inbounds begin

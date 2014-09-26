@@ -160,6 +160,9 @@ for (funcname, fieldname) in ((:red, :r), (:green, :g), (:blue, :b))
     end
 end
 
+for f in (:minfinite, :maxfinite, :maxabsfinite)
+    @eval $f{T}(A::AbstractArray{Gray{T}}) = $f(reinterpret(T, data(A)))
+end
 
 minfinite(A::AbstractArray) = minimum(A)
 function minfinite{T<:FloatingPoint}(A::AbstractArray{T})
