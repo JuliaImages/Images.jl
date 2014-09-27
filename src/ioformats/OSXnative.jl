@@ -54,7 +54,7 @@ function imread(filename)
 
     # Allocate the buffer and get the pixel data
     sz = imframes > 1 ? (int(imwidth), int(imheight), int(imframes)) : (int(imwidth), int(imheight))
-    T = Images.ufixedtype[pixeldepth]
+    T = pixeldepth <= 8 ? Ufixed8 : Images.ufixedtype[pixeldepth]
     if colormodel == "Gray" && alphacode == 0 && storagedepth == 1
         buf = Array(Gray{T}, sz)
         fillgray!(reinterpret(T, buf, tuple(sz...)), imgsrc)
