@@ -224,6 +224,14 @@ for SI in (MapInfo, AbstractClamp)
             # Grayscale and GrayAlpha inputs
             map(mapi::$ST{RGB24}, g::Gray) = map(mapi, g.val)
             map(mapi::$ST{RGB24}, g::Real) = (x = map1(mapi, g); convert(RGB24, RGB{Ufixed8}(x,x,x)))
+            function map(mapi::$ST{RGB24}, g::FloatingPoint)
+                if isfinite(g)
+                    x = map1(mapi, g)
+                    convert(RGB24, RGB{Ufixed8}(x,x,x))
+                else
+                    RGB24(0)
+                end
+            end
             map{T}(mapi::$ST{RGB24}, g::GrayAlpha{T}) = map(mapi, g.c.val)
             map(mapi::$ST{ARGB32}, g::Gray) = map(mapi, g.val)
             function map(mapi::$ST{ARGB32}, g::Real)
