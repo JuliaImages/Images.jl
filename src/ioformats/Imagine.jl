@@ -92,6 +92,7 @@ const bitname_table = {
   ("uint32",    Uint32)
   ("int64",     Int64)
   ("uint64",    Uint64)
+  ("float16",   Float16)
   ("float32",   Float32)
   ("single",    Float32)
   ("float64",   Float64)
