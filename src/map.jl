@@ -168,7 +168,6 @@ function map{To<:Real,From<:Union(Real,Gray)}(mapi::ScaleMinMax{To,From}, val::F
 end
 function map1{To<:Union(RGB24,ARGB32),From<:Real}(mapi::ScaleMinMax{To,From}, val::From)
     t = ifelse(val < mapi.min, zero(From), ifelse(val > mapi.max, mapi.max-mapi.min, val-mapi.min))
-     if !isfinite(val) t = zero(From) end
     convert(Ufixed8, mapi.s*t)
 end
 function map1{To<:Union(RGB24,ARGB32),From<:Fractional}(mapi::ScaleMinMax{To,Gray{From}}, val::From)
