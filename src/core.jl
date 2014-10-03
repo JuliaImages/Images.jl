@@ -388,6 +388,13 @@ subim(img::AbstractImage, I...) = subim(img, ntuple(length(I), i-> isa(I[i], Col
 sliceim(img::AbstractImage, I...) = sliceim(img, ntuple(length(I), i-> isa(I[i], Colon) ? (1:size(img,i)) : I[i])...)
 
 
+# Iteration
+# Defer to the array object in case it has special iteration defined
+start(img::AbstractImage) = start(data(img))
+next(img::AbstractImage, s) = next(data(img), s)
+done(img::AbstractImage, s) = done(data(img), s)
+
+
 # We'll frequently want to pull out different 2d slices from the same image, so here's a type and set of functions making that easier.
 # We deliberately do not require the user to specify the full list of new slicing/ranging parameters, as often we'll want to change some aspects (e.g., z-slice) but not others (e.g., color coordinates)
 type SliceData
