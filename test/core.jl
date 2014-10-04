@@ -315,9 +315,12 @@ anew = reinterpret(RGB, vec(af))
 anew = reinterpret(RGB{Float64}, af)
 @test anew == a
 @test_throws ErrorException reinterpret(RGB{Float32}, af)
-A8 = ufixed8(rand(0x00:0xff, 3, 5, 4))
+Au8 = rand(0x00:0xff, 3, 5, 4)
+A8 = reinterpret(Ufixed8, Au8)
 rawrgb8 = reinterpret(RGB, A8)
 @test eltype(rawrgb8) == RGB{Ufixed8}
+@test reinterpret(Ufixed8, rawrgb8) == A8
+@test reinterpret(Uint8, rawrgb8) == Au8
 rawrgb32 = float32(rawrgb8)
 @test eltype(rawrgb32) == RGB{Float32}
 @test ufixed8(rawrgb32) == rawrgb8
@@ -328,6 +331,7 @@ imrgb8 = convert(Image, rawrgb8)
 @test convert(Image{RGB{Ufixed8}}, imrgb8) === imrgb8
 im8 = reinterpret(Ufixed8, imrgb8)
 @test data(im8) == A8
+@test reinterpret(Uint8, imrgb8) == Au8
 @test reinterpret(RGB, im8) == imrgb8
 ims8 = separate(imrgb8)
 @test colordim(ims8) == 3
