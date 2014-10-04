@@ -51,7 +51,14 @@ end
         end),
         libwand,
         os = :Windows,
-        unpacked_dir = magick_libdir)
+        unpacked_dir = magick_libdir,
+        onload =
+            """
+            function __init__()
+                ENV["MAGICK_CONFIGURE_PATH"] = \"$(escape_string(magick_libdir))\"
+                ENV["MAGICK_CODER_MODULE_PATH"] = \"$(escape_string(magick_libdir))\"
+            end
+            """ )
 end
 
 @osx_only begin
