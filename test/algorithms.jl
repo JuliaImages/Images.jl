@@ -57,6 +57,14 @@ let
     @test maximum(map(abs, dc)) < 1e-6
 end
 
+# fft and ifft
+A = rand(Float32, 3, 5, 6)
+img = Images.colorim(A)
+imgfft = fft(img)
+@test_approx_eq data(imgfft) fft(A, 2:3)
+@test colordim(imgfft) == 1
+img2 = ifft(imgfft)
+@test_approx_eq img2 reinterpret(Float32, img)
 
 # Array padding
 let A = [1 2; 3 4]

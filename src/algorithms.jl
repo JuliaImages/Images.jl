@@ -200,6 +200,37 @@ function maxabsfinite{T<:FloatingPoint}(A::AbstractArray{T})
 end
 
 
+# fft & ifft
+fft(img::AbstractImageDirect) = share(img, fft(data(img)))
+function fft(img::AbstractImageDirect, region, args...)
+    F = fft(data(img), region, args...)
+    props = copy(properties(img))
+    props["region"] = region
+    Image(F, props)
+end
+fft{CV<:ColorType}(img::AbstractImageDirect{CV}) = fft(img, 1:ndims(img))
+function fft{CV<:ColorType}(img::AbstractImageDirect{CV}, region, args...)
+    imgr = reinterpret(eltype(CV), img)
+    if ndims(imgr) > ndims(img)
+        newregion = ntuple(length(region), i->region[i]+1)
+    else
+        newregion = ntuple(length(region), i->region[i])
+    end
+    F = fft(data(imgr), newregion, args...)
+    props = copy(properties(imgr))
+    props["region"] = newregion
+    Image(F, props)
+end
+
+function ifft(img::AbstractImageDirect)
+    region = get(img, "region", 1:ndims(img))
+    A = ifft(data(img), region)
+    props = copy(properties(img))
+    haskey(props, "region") && delete!(props, "region")
+    Image(A, props)
+end
+ifft(img::AbstractImageDirect, region, args...) = ifft(data(img), region, args...)
+
 # average filter
 function imaverage(filter_size=[3,3])
     if length(filter_size) != 2
@@ -426,6 +457,7 @@ for N = 1:5
         end
     end
 end
+
 
 ###
 ### imfilter_fft
