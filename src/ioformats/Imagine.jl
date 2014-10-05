@@ -51,7 +51,9 @@ function imread{S<:IO}(s::S, ::Type{Images.ImagineFile})
     um_per_pixel = h["um per pixel"]*µm
     pstart = h["piezo"]["stop position"]
     pstop = h["piezo"]["start position"]
-    dz = abs(pstart - pstop)/sz[3]
+    if length(sz)>2
+        dz = abs(pstart - pstop)/sz[3]
+    else dz = 0.0 end
 
     props = ["spatialorder" => havez ? ["x", "l", "z"] : ["x", "l"],
              "colorspace" => "Gray",
@@ -90,6 +92,7 @@ const bitname_table = {
   ("uint32",    Uint32)
   ("int64",     Int64)
   ("uint64",    Uint64)
+  ("float16",   Float16)
   ("float32",   Float32)
   ("single",    Float32)
   ("float64",   Float64)
