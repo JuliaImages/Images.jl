@@ -43,6 +43,7 @@ typedict = [
     "unsigned long long int" => Uint64,
     "uint64" => Uint64,
     "uint64_t" => Uint64,
+    "float16" => Float16,
     "float" => Float32,
     "double" => Float64]
 
@@ -285,7 +286,10 @@ function imwrite(img, sheader::IO, ::Type{Images.NRRDFile}; props::Dict = Dict{A
     # Write the datatype
     T = get(props, "type", eltype(data(img)))
     if T<:FloatingPoint
-        println(sheader, "type: ", (T == Float32) ? "float" : "double")
+        println(sheader, "type: ", (T == Float32) ? "float" :
+                                   (T == Float64) ? "double" :
+                                   (T == Float16) ? "float16" :
+                                   error("Can't write type $T"))
     else
         println(sheader, "type: ", lowercase(string(T)))
     end
