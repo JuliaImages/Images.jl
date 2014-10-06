@@ -356,6 +356,11 @@ function imwrite(img, sheader::IO, ::Type{Images.NRRDFile}; props::Dict = Dict{A
         write(sheader, data(img))
     else
         println(sheader, "data file: ", datafilename)
+        if !get(props, "headeronly", false)
+            open(datafilename, "w") do file
+                write(file, data(img))
+            end
+        end
     end
     sheader
 end
