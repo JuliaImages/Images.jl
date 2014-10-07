@@ -430,7 +430,7 @@ if speed is paramount, the "anonymous functions" of the
 
 Images also supports "lazy transformations." When loading a very large image,
 (e.g., loaded by memory-mapping) you may use or view just a small
-portion it. In such cases, it would be quite wasteful to force transformation
+portion of it. In such cases, it would be quite wasteful to force transformation
 of the entire image, and indeed on might exhaust available memory or
 need to write a new file on disk.
 `Images` supports lazy-evaluation scaling through the `MapInfo` abstract type.
