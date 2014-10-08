@@ -556,16 +556,16 @@ end
 #     meaning (horizontal and vertical, respectively, irrespective of storage order).
 #     If supplied, you must have one entry per spatial dimension.
 
-properties(A::AbstractArray) = [
+properties(A::AbstractArray) = @Dict(
     "colorspace" => colorspace(A),
     "colordim" => colordim(A),
     "timedim" => timedim(A),
     "pixelspacing" => pixelspacing(A),
-    "spatialorder" => spatialorder(A)]
-properties{C<:ColorType}(A::AbstractArray{C}) = [
+    "spatialorder" => spatialorder(A))
+properties{C<:ColorType}(A::AbstractArray{C}) = @Dict(
     "timedim" => timedim(A),
     "pixelspacing" => pixelspacing(A),
-    "spatialorder" => spatialorder(A)]
+    "spatialorder" => spatialorder(A))
 properties(img::AbstractImage) = img.properties
 
 haskey(a::AbstractArray, k::String) = false
@@ -623,7 +623,7 @@ csinfer{C<:ColorValue}(::Type{C}) = string(C)
 csinfer(C) = "Unknown"
 colorspace(img::AbstractImage) = get(img.properties, "colorspace", "Unknown")
 
-colorspacedict = (ASCIIString=>Any)[]
+colorspacedict = Dict{ASCIIString,Any}()
 for ACV in (ColorValue, AbstractRGB, AbstractGray)
     for CV in subtypes(ACV)
         (length(CV.parameters) == 1 && !(CV.abstract)) || continue
@@ -1005,7 +1005,7 @@ to_vector(v::Tuple) = [v...]
 
 # converts keyword argument to a dictionary
 function kwargs2dict(kwargs)
-    d = (ASCIIString=>Any)[]
+    d = Dict{ASCIIString,Any}()
     for (k, v) in kwargs
         d[string(k)] = v
     end

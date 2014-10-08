@@ -4,7 +4,7 @@ using Images, SIUnits, SIUnits.ShortUnits
 import Images: imread, imwrite
 import Zlib
 
-typedict = [
+typedict = Images.@Dict(
     "signed char" => Int8,
     "int8" => Int8,
     "int8_t" => Int8,
@@ -45,9 +45,9 @@ typedict = [
     "uint64_t" => Uint64,
     "float16" => Float16,
     "float" => Float32,
-    "double" => Float64]
+    "double" => Float64)
 
-spacedimdict = [
+spacedimdict = Images.@Dict(
     "right-anterior-superior" => 3,
     "ras" => 3,
     "left-anterior-superior" => 3,
@@ -65,7 +65,7 @@ spacedimdict = [
     "3d-right-handed" => 3,
     "3d-left-handed" => 3,
     "3d-right-handed-time" => 4,
-    "3d-left-handed-time" => 4]
+    "3d-left-handed-time" => 4)
 
 function myendian()
     if ENDIAN_BOM == 0x04030201
@@ -402,7 +402,7 @@ function stream2name(s::IO)
     name[7:end-1]
 end
 
-_unit_string_dict = ["um" => Micro*Meter, "mm" => Milli*Meter, "s" => Second]
+_unit_string_dict = Images.@Dict("um" => Micro*Meter, "mm" => Milli*Meter, "s" => Second)
 function parse_quantity(s::String, strict::Bool = true)
     # Find the last character of the numeric component
     m = match(r"[0-9\.\+-](?![0-9\.\+-])", s)

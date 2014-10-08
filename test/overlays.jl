@@ -32,7 +32,7 @@ ovr = Images.Overlay((gray, 0*gray), [RGB(1,0,1), RGB(0,1,0)], ([0,1],[0,1]))
 @test_throws ErrorException Images.Overlay((gray, 0*gray), (RGB(1,0,1), RGB(0,1,0)), ((0,),(0,1)))
 @test_throws ErrorException ovr[1] = RGB(0.2,0.4,0.6)
 
-img1 = Images.Image(gray, ["colorspace" => "Gray", "spatialorder" => ["x"]])
+img1 = Images.Image(gray, Dict{ASCIIString,Any}([("colorspace","Gray"), ("spatialorder",["x"])]))
 ovr = Images.OverlayImage((2gray,img1), (RGB{Ufixed8}(1,0,1), RGB{Ufixed8}(0,1,0)), ((0,1),(0,1)))
 @test isa(ovr, Images.Image)
 @test !haskey(ovr, "colorspace")

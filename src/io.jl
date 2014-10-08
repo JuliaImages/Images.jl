@@ -218,7 +218,7 @@ imread(filename::String, ::Type{OSXNative}) = LibOSXNative.imread(filename)
 #### ImageMagick library
 
 # fixed type for depths > 8
-const ufixedtype = [10=>Ufixed10, 12=>Ufixed12, 14=>Ufixed14, 16=>Ufixed16]
+const ufixedtype = @Dict(10=>Ufixed10, 12=>Ufixed12, 14=>Ufixed14, 16=>Ufixed16)
 
 function imread(filename::String, ::Type{ImageMagick})
     wand = LibMagick.MagickWand()
@@ -232,7 +232,7 @@ function imread(filename::String, ::Type{ImageMagick})
         sz = tuple(sz..., n)
     end
     havealpha = LibMagick.getimagealphachannel(wand)
-    prop = (ASCIIString=>Any)["spatialorder" => ["x", "y"], "pixelspacing" => [1,1]]
+    prop = @Dict("spatialorder" => ["x", "y"], "pixelspacing" => [1,1])
     cs = LibMagick.getimagecolorspace(wand)
     if imtype == "GrayscaleType" || imtype == "GrayscaleMatteType"
         cs = "Gray"
@@ -455,7 +455,7 @@ function imread{S<:IO}(stream::S, ::Type{PPMBinary})
         error("Image file may be corrupt. Are there really more than 16 bits in this image?")
     end
     T = eltype(dat)
-    Image(dat, (ASCIIString=>Any)["spatialorder" => ["x", "y"], "pixelspacing" => [1,1]])
+    Image(dat, @Dict("spatialorder" => ["x", "y"], "pixelspacing" => [1,1]))
 end
 
 function imread{S<:IO}(stream::S, ::Type{PGMBinary})
@@ -482,7 +482,7 @@ function imread{S<:IO}(stream::S, ::Type{PGMBinary})
         error("Image file may be corrupt. Are there really more than 16 bits in this image?")
     end
     T = eltype(dat)
-    Image(dat, ["colorspace" => "Gray", "spatialorder" => ["x", "y"], "pixelspacing" => [1,1]])
+    Image(dat, @Dict("colorspace" => "Gray", "spatialorder" => ["x", "y"], "pixelspacing" => [1,1]))
 end
 
 function imread{S<:IO}(stream::S, ::Type{PBMBinary})
@@ -496,7 +496,7 @@ function imread{S<:IO}(stream::S, ::Type{PBMBinary})
             dat[offset+k, irow] = (tmp>>>(8-k))&0x01
         end
     end
-    Image(dat, ["spatialorder" => ["x", "y"], "pixelspacing" => [1,1]])
+    Image(dat, @Dict("spatialorder" => ["x", "y"], "pixelspacing" => [1,1]))
 end
 
 function imwrite(img, filename::String, ::Type{PPMBinary})

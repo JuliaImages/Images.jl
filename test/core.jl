@@ -58,12 +58,12 @@ C = colorim(rand(1:20, 3, 5, 5))
 
 # indexed color
 cmap = linspace(RGB(0x0cuf8,0x00uf8,0x00uf8), RGB(0xffuf8,0x00uf8,0x00uf8),20)
-img = ImageCmap(copy(B), cmap, (Any=>Any)["spatialorder" => Images.yx])
+img = ImageCmap(copy(B), cmap, Dict{ASCIIString,Any}([("spatialorder",Images.yx)]))
 @test colorspace(img) == "RGB"
 img = ImageCmap(copy(B), cmap, spatialorder=Images.yx)
 @test colorspace(img) == "RGB"
 cmap = reinterpret(RGB, repmat(reinterpret(Ufixed8, uint8(linspace(12,255,20)))',3,1))
-img = ImageCmap(copy(B), cmap, ["pixelspacing" => [2.0, 3.0], "spatialorder" => Images.yx])
+img = ImageCmap(copy(B), cmap, Dict{ASCIIString,Any}([("pixelspacing",[2.0, 3.0]), ("spatialorder",Images.yx)]))
 imgd = convert(Image, img)
 @test eltype(img) == RGB{Ufixed8}
 @test eltype(imgd) == RGB{Ufixed8}
@@ -138,9 +138,9 @@ img[1,2] = prev
 @test coords_spatial(img) == coords_spatial(imgd)
 @test size_spatial(img) == size_spatial(imgd)
 
-tmp = Image(A, (Any=>Any)[])
+tmp = Image(A, Dict{ASCIIString,Any}())
 copy!(tmp, imgd, "spatialorder")
-@test properties(tmp) == (Any=>Any)["spatialorder" => Images.yx]
+@test properties(tmp) == Dict{ASCIIString,Any}([("spatialorder",Images.yx)])
 copy!(tmp, imgd, "spatialorder", "pixelspacing")
 @test tmp["pixelspacing"] == [2.0mm, 3.0mm]
 
