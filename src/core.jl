@@ -905,7 +905,7 @@ spatialproperties(img::AbstractVector) = ASCIIString[]  # these are not mutable
 function permutation(to, from)
     n = length(to)
     nf = length(from)
-    d = Dict(tuple(from...), tuple([1:length(from)]...))
+    d = Dict([(from[i], i) for i = 1:length(from)])
     ind = Array(Int, max(n, nf))
     for i = 1:n
         ind[i] = get(d, to[i], 0)

@@ -91,13 +91,13 @@ const DefaultChannels = ChannelType( (AllChannels.value | SyncChannels.value) &~
 
 # Image type
 const IMType = ["BilevelType", "GrayscaleType", "GrayscaleMatteType", "PaletteType", "PaletteMatteType", "TrueColorType", "TrueColorMatteType", "ColorSeparationType", "ColorSeparationMatteType", "OptimizeType", "PaletteBilevelMatteType"]
-const IMTypedict = Dict(IMType, 1:length(IMType))
+const IMTypedict = Dict([(IMType[i], i) for i = 1:length(IMType)])
 
 const CStoIMTypedict = ["Gray" => "GrayscaleType", "GrayAlpha" => "GrayscaleMatteType", "RGB" => "TrueColorType", "ARGB" => "TrueColorMatteType", "CMYK" => "ColorSeparationType"]
 
 # Colorspace
 const IMColorspace = ["RGB", "Gray", "Transparent", "OHTA", "Lab", "XYZ", "YCbCr", "YCC", "YIQ", "YPbPr", "YUV", "CMYK", "sRGB"]
-const IMColordict = Dict(IMColorspace, 1:length(IMColorspace))
+const IMColordict = Dict([(IMColorspace[i], i) for i = 1:length(IMColorspace)])
 
 function nchannels(imtype::String, cs::String, havealpha = false)
     n = 3
