@@ -146,7 +146,7 @@ end
 # to always make the parent be the smallest label
 immutable DisjointMinSets
     parents::Vector{Int}
-    
+
     DisjointMinSets(n::Integer) = new([1:n])
 end
 DisjointMinSets() = DisjointMinSets(0)

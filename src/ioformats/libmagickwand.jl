@@ -285,7 +285,7 @@ function setimagecolorspace(wand::MagickWand, cs::ASCIIString)
 end
 
 # set the compression
-function setimagecompression(wand::MagickWand, compression::Integer) 
+function setimagecompression(wand::MagickWand, compression::Integer)
     status = ccall((:MagickSetImageCompression, libwand), Cint, (Ptr{Void},Cint), wand.ptr, int32(compression))
     status == 0 && error(wand)
     nothing

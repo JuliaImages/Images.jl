@@ -65,7 +65,7 @@ function imread{S<:IO}(s::S, ::Type{Images.ImagineFile})
         props["timedim"] = havez ? 4 : 3
     end
     Image(data, props)
-end    
+end
 
 abstract Endian
 type LittleEndian <: Endian; end

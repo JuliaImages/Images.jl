@@ -163,10 +163,10 @@ thin_edges_subpix{T}(img::AbstractArray{T,2}, gradientangles::AbstractArray, bor
 #
 # Input:
 #   img - image to be non-maxima suppressed.
-# 
+#
 #   gradientangles - image containing gradient angles around each pixel in radians
 #                    (-pi,pi)
-# 
+#
 #   radius  - Distance in pixel units to be looked at on each side of each
 #             pixel when determining whether it is a local maxima or not.
 #             This value cannot be less than 1.
@@ -175,7 +175,7 @@ thin_edges_subpix{T}(img::AbstractArray{T,2}, gradientangles::AbstractArray, bor
 # Returns:
 #   im        - Non maximally suppressed image.
 #   location  - `Graphics.Point` image holding subpixel locations of edge
-#               points. 
+#               points.
 #
 # Notes:
 #
@@ -186,11 +186,11 @@ thin_edges_subpix{T}(img::AbstractArray{T,2}, gradientangles::AbstractArray, bor
 # Copyright (c) 1996-2013 Peter Kovesi
 # Centre for Exploration Targeting
 # The University of Western Australia
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in all
 # copies or substantial portions of the Software.
 #
@@ -225,7 +225,7 @@ CoordOffset(x::Float64) = ((frac,i) = modf(x); CoordOffset(sign(frac), int(i), a
 (+)(x::Number, off::CoordOffset) = x + off.i + off.s*off.f
 (+)(off::CoordOffset, x::Number) = x + off.i + off.s*off.f
 
-# Precalculate x and y offsets relative to centre pixel for each orientation angle 
+# Precalculate x and y offsets relative to centre pixel for each orientation angle
 function _calc_discrete_offsets(θ, radius, transposed)
 
     θ_count = iround(2π/θ)
@@ -247,7 +247,7 @@ function _calc_discrete_offsets(θ, radius, transposed)
     return θ, xoffs, yoffs
 end
 
-_discretize_angle(angle::FloatingPoint, invθ) = 
+_discretize_angle(angle::FloatingPoint, invθ) =
     angle < 0 ? iround((angle + 2π)*invθ)+1 : iround(angle*invθ)+1
 
 # Interpolate the value of an offset from a particular pixel
@@ -278,7 +278,7 @@ function _interp_offset(img::AbstractArray, x::Integer, y::Integer, xoff::CoordO
 end
 
 # Core edge thinning algorithm using nonmaximal suppression
-function thin_edges_nonmaxsup_core!{T}(out::AbstractArray{T,2}, location::AbstractArray{Point,2}, 
+function thin_edges_nonmaxsup_core!{T}(out::AbstractArray{T,2}, location::AbstractArray{Point,2},
                                        img::AbstractArray{T,2}, gradientangles, radius, border, theta)
     calc_subpixel = !isempty(location)
 
@@ -287,7 +287,7 @@ function thin_edges_nonmaxsup_core!{T}(out::AbstractArray{T,2}, location::Abstra
     calc_subpixel && size(location) != size(img) && error("subpixel location has a different size than the input image")
     radius < 1.0 && error("radius must be >= 1")
 
-    # Precalculate x and y offsets relative to centre pixel for each orientation angle 
+    # Precalculate x and y offsets relative to centre pixel for each orientation angle
     transposed = spatialorder(img)[1] == "x"
     θ, xoffs, yoffs = _calc_discrete_offsets(theta, radius, transposed)
     iθ = 1/θ
@@ -296,7 +296,7 @@ function thin_edges_nonmaxsup_core!{T}(out::AbstractArray{T,2}, location::Abstra
     pad = iceil(radius)
     Ix = Images.padindexes(img, 2, pad, pad, border)
     Iy = Images.padindexes(img, 1, pad, pad, border)
-    
+
     # Now run through the image interpolating grey values on each side
     # of the centre pixel to be used for the non-maximal suppression.
 

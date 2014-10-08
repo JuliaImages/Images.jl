@@ -21,7 +21,7 @@ function imread{S<:IO}(stream::S, ::Type{Images.AndorSIF})
     ixon = {"data_type" => int(fields[2])}
     ixon["active"] = int(fields[3])
     ixon["structure_vers"] = int(fields[4]) # (== 1)
-    # date is recored as seconds counted from 1970.1.1 00:00:00    
+    # date is recored as seconds counted from 1970.1.1 00:00:00
     ixon["date"] = int(fields[5]) # need to convert to actual date
     ixon["temperature"] = max(int(fields[6]), int(fields[48]))
     ixon["temperature_stable"] = int(fields[6]) != -999

@@ -203,7 +203,7 @@ selector(sel::String) = ccall(:sel_getUid, Ptr{Void}, (Ptr{Uint8}, ), sel)
 
 NSString(init::String) = ccall(:objc_msgSend, Ptr{Void},
                                (Ptr{Void}, Ptr{Void}, Ptr{Uint8}, Uint64),
-                               oms(ogc("NSString"), "alloc"), 
+                               oms(ogc("NSString"), "alloc"),
                                selector("initWithCString:encoding:"), init, 1)
 
 NSLog(str::String, obj) = ccall((:NSLog, foundation), Ptr{Void},
@@ -216,10 +216,10 @@ NSLog(obj::Ptr) = ccall((:NSLog, foundation), Ptr{Void}, (Ptr{Void}, ), obj)
 
 # Core Foundation
 # General
-CFRetain(CFTypeRef::Ptr{Void}) = CFTypeRef != C_NULL && 
+CFRetain(CFTypeRef::Ptr{Void}) = CFTypeRef != C_NULL &&
     ccall(:CFRetain, Void, (Ptr{Void}, ), CFTypeRef)
 
-CFRelease(CFTypeRef::Ptr{Void}) = CFTypeRef != C_NULL && 
+CFRelease(CFTypeRef::Ptr{Void}) = CFTypeRef != C_NULL &&
     ccall(:CFRelease, Void, (Ptr{Void}, ), CFTypeRef)
 
 function CFGetRetainCount(CFTypeRef::Ptr{Void})
@@ -227,7 +227,7 @@ function CFGetRetainCount(CFTypeRef::Ptr{Void})
     ccall(:CFGetRetainCount, Clonglong, (Ptr{Void}, ), CFTypeRef)
 end
 
-CFShow(CFTypeRef::Ptr{Void}) = CFTypeRef != C_NULL && 
+CFShow(CFTypeRef::Ptr{Void}) = CFTypeRef != C_NULL &&
     ccall(:CFShow, Void, (Ptr{Void}, ), CFTypeRef)
 
 function CFCopyDescription(CFTypeRef::Ptr{Void})
@@ -235,7 +235,7 @@ function CFCopyDescription(CFTypeRef::Ptr{Void})
     ccall(:CFCopyDescription, Ptr{Void}, (Ptr{Void}, ), CFTypeRef)
 end
 
-#CFCopyTypeIDDescription(CFTypeID::Cint) = CFTypeRef != C_NULL && 
+#CFCopyTypeIDDescription(CFTypeID::Cint) = CFTypeRef != C_NULL &&
 #    ccall(:CFCopyTypeIDDescription, Ptr{Void}, (Cint, ), CFTypeID)
 
 function CFGetTypeID(CFTypeRef::Ptr{Void})
@@ -243,7 +243,7 @@ function CFGetTypeID(CFTypeRef::Ptr{Void})
     ccall(:CFGetTypeID, Culonglong, (Ptr{Void}, ), CFTypeRef)
 end
 
-CFURLCreateWithString(filename) = 
+CFURLCreateWithString(filename) =
     ccall(:CFURLCreateWithString, Ptr{Void},
           (Ptr{Void}, Ptr{Void}, Ptr{Void}), C_NULL, NSString(filename), C_NULL)
 
@@ -253,7 +253,7 @@ CFURLCreateWithFileSystemPath(filename::String) =
 
 # CFDictionary
 CFDictionaryGetKeysAndValues(CFDictionaryRef::Ptr{Void}, keys, values) =
-    CFDictionaryRef != C_NULL && 
+    CFDictionaryRef != C_NULL &&
     ccall(:CFDictionaryGetKeysAndValues, Void,
           (Ptr{Void}, Ptr{Ptr{Void}}, Ptr{Ptr{Void}}), CFDictionaryRef, keys, values)
 
@@ -263,7 +263,7 @@ function CFDictionaryGetValue(CFDictionaryRef::Ptr{Void}, key)
           (Ptr{Void}, Ptr{Void}), CFDictionaryRef, key)
 end
 
-CFDictionaryGetValue(CFDictionaryRef::Ptr{Void}, key::String) = 
+CFDictionaryGetValue(CFDictionaryRef::Ptr{Void}, key::String) =
     CFDictionaryGetValue(CFDictionaryRef::Ptr{Void}, NSString(key))
 
 # CFNumber
@@ -304,7 +304,7 @@ CFBooleanGetValue(CFBoolean::Ptr{Void}) =
 function CFStringGetCString(CFStringRef::Ptr{Void})
     CFStringRef == C_NULL && return ""
     buffer = Array(Uint8, 1024)  # does this need to be bigger for Open Microscopy TIFFs?
-    res = ccall(:CFStringGetCString, Bool, (Ptr{Void}, Ptr{Uint8}, Uint, Uint16), 
+    res = ccall(:CFStringGetCString, Bool, (Ptr{Void}, Ptr{Uint8}, Uint, Uint16),
                 CFStringRef, buffer, length(buffer), 0x0600)
     res == C_NULL && return ""
     return bytestring(convert(Ptr{Uint8}, buffer))
@@ -312,7 +312,7 @@ end
 
 # These were unsafe, can return null pointers at random times.
 # See Apple Developer Docs
-#CFStringGetCStringPtr(CFStringRef::Ptr{Void}) = 
+#CFStringGetCStringPtr(CFStringRef::Ptr{Void}) =
 #    ccall(:CFStringGetCStringPtr, Ptr{Uint8}, (Ptr{Void}, Uint16), CFStringRef, 0x0600)
 #
 #getCFString(CFStr::Ptr{Void}) = CFStringGetCStringPtr(CFStr) != C_NULL ?
@@ -320,7 +320,7 @@ end
 
 # Core Graphics
 # CGImageSource
-CGImageSourceCreateWithURL(myURL::Ptr{Void}) = 
+CGImageSourceCreateWithURL(myURL::Ptr{Void}) =
     ccall((:CGImageSourceCreateWithURL, imageio), Ptr{Void}, (Ptr{Void}, Ptr{Void}), myURL, C_NULL)
 
 CGImageSourceGetType(CGImageSourceRef::Ptr{Void}) =
@@ -329,15 +329,15 @@ CGImageSourceGetType(CGImageSourceRef::Ptr{Void}) =
 CGImageSourceGetStatus(CGImageSourceRef::Ptr{Void}) =
     ccall(:CGImageSourceGetStatus, Uint32, (Ptr{Void}, ), CGImageSourceRef)
 
-CGImageSourceGetStatusAtIndex(CGImageSourceRef::Ptr{Void}, n) = 
+CGImageSourceGetStatusAtIndex(CGImageSourceRef::Ptr{Void}, n) =
     ccall(:CGImageSourceGetStatusAtIndex, Int32,
           (Ptr{Void}, Csize_t), CGImageSourceRef, n) #Int32?
 
-CGImageSourceCopyProperties(CGImageSourceRef::Ptr{Void}) = 
+CGImageSourceCopyProperties(CGImageSourceRef::Ptr{Void}) =
     ccall(:CGImageSourceCopyProperties, Ptr{Void},
           (Ptr{Void}, Ptr{Void}), CGImageSourceRef, C_NULL)
 
-CGImageSourceCopyPropertiesAtIndex(CGImageSourceRef::Ptr{Void}, n) = 
+CGImageSourceCopyPropertiesAtIndex(CGImageSourceRef::Ptr{Void}, n) =
     ccall(:CGImageSourceCopyPropertiesAtIndex, Ptr{Void},
           (Ptr{Void}, Csize_t, Ptr{Void}), CGImageSourceRef, n, C_NULL)
 

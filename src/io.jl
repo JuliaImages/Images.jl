@@ -107,7 +107,7 @@ function imread(filename::String)
             return img
         end
     end
-    
+
     # There are no registered readers for this type. Try using ImageMagick if available.
     if have_imagemagick
         return imread(filename, ImageMagick)
@@ -238,7 +238,7 @@ function imread(filename::String, ::Type{ImageMagick})
         cs = "Gray"
     end
     prop["IMcs"] = cs
-    
+
     depth = LibMagick.getimagechanneldepth(wand, LibMagick.DefaultChannels)
     if depth <= 8
         T = Ufixed8     # always use 8-bit for 8-bit and less
@@ -546,7 +546,7 @@ function parseints(line, n)
         end
     end
     tuple(ret...)
-    
+
 end
 
 # Permute to a color, horizontal, vertical, ... storage order (with time always last)
@@ -576,7 +576,7 @@ type NRRDFile <: ImageFileType end
 add_image_file_format(".nrrd", b"NRRD", NRRDFile, "nrrd.jl")
 add_image_file_format(".nhdr", b"NRRD", NRRDFile, "nrrd.jl")
 
-# Andor Technologies SIF file format  
+# Andor Technologies SIF file format
 type AndorSIF <: Images.ImageFileType end
 add_image_file_format(".sif", b"Andor Technology Multi-Channel File", AndorSIF, "SIF.jl")
 

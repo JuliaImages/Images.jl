@@ -265,7 +265,7 @@ end
 # 2D gaussian filter kernel
 function gaussian2d(sigma::Number=0.5, filter_size=[])
     if length(filter_size) == 0
-        # choose 'good' size 
+        # choose 'good' size
         m = 4*ceil(sigma)+1
         n = m
     elseif length(filter_size) != 2
@@ -290,7 +290,7 @@ end
 function imlog(sigma::Number=0.5)
     m = ceil(8.5sigma)
     m = m % 2 == 0 ? m + 1 : m
-    return [(1/(2pi*sigma^4))*(2 - (x^2 + y^2)/sigma^2)*exp(-(x^2 + y^2)/(2sigma^2)) 
+    return [(1/(2pi*sigma^4))*(2 - (x^2 + y^2)/sigma^2)*exp(-(x^2 + y^2)/(2sigma^2))
             for x=-floor(m/2):floor(m/2), y=-floor(m/2):floor(m/2)]
 end
 
@@ -775,7 +775,7 @@ function imfilter_LoG{T}(img::AbstractArray{T,2}, σ::Vector, border="replicate"
     w = 8.5σy
     kh1y = Float64[h1(i, σy) for i = -floor(w/2):floor(w/2)]
     kh2y = Float64[h2(i, σy) for i = -floor(w/2):floor(w/2)]
-    
+
     # Set up padding index lists
     kernlenx = length(kh1x)
     prepad  = div(kernlenx - 1, 2)
@@ -820,7 +820,7 @@ function imfilter_LoG{T}(img::AbstractArray{T,2}, σ::Vector, border="replicate"
     img12 + img21
 end
 
-imfilter_LoG{T}(img::AbstractArray{T,2}, σ::Real, border="replicate") = 
+imfilter_LoG{T}(img::AbstractArray{T,2}, σ::Real, border="replicate") =
 imfilter_LoG(img::AbstractArray{T,2}, [σ, σ], border)
 
 function padindexes{T,n}(img::AbstractArray{T,n}, dim, prepad, postpad, border::String)
@@ -983,7 +983,7 @@ for N = 1:5
                             end
                         end
                     end
-                end        
+                end
             end
         end
     end
@@ -1017,8 +1017,8 @@ end
 
 # image gradients
 
-# forward and backward differences 
-# can be very helpful for discretized continuous models 
+# forward and backward differences
+# can be very helpful for discretized continuous models
 forwarddiffy{T}(u::Array{T,2}) = [u[2:end,:]; u[end,:]] - u
 forwarddiffx{T}(u::Array{T,2}) = [u[:,2:end] u[:,end]] - u
 backdiffy{T}(u::Array{T,2}) = u - [u[1,:]; u[1:end-1,:]]
@@ -1117,23 +1117,23 @@ extr(order::Ordering, x::ColorValue, y::ColorValue, z::ColorValue) = extr(order,
 # phantom images
 
 function shepp_logan(M,N; highContrast=true)
-  # Initially proposed in Shepp, Larry; B. F. Logan (1974). 
+  # Initially proposed in Shepp, Larry; B. F. Logan (1974).
   # "The Fourier Reconstruction of a Head Section". IEEE Transactions on Nuclear Science. NS-21.
-  
+
   P = zeros(M,N)
- 
+
   x = linspace(-1,1,M)'
   y = linspace(1,-1,N)
- 
+
   centerX = [0, 0, 0.22, -0.22, 0, 0, 0, -0.08, 0, 0.06]
   centerY = [0, -0.0184, 0, 0, 0.35, 0.1, -0.1, -0.605, -0.605, -0.605]
   majorAxis = [0.69, 0.6624, 0.11, 0.16, 0.21, 0.046, 0.046, 0.046, 0.023, 0.023]
   minorAxis = [0.92, 0.874, 0.31, 0.41, 0.25, 0.046, 0.046, 0.023, 0.023, 0.046]
   theta = [0, 0, -18.0, 18.0, 0, 0, 0, 0, 0, 0]
-  
+
   # original (CT) version of the phantom
   grayLevel = [2, -0.98, -0.02, -0.02, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01]
-  
+
   if(highContrast)
     # high contrast (MRI) version of the phantom
     grayLevel = [1, -0.8, -0.2, -0.2, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
@@ -1149,5 +1149,5 @@ function shepp_logan(M,N; highContrast=true)
 
   return P
 end
- 
+
 shepp_logan(N;highContrast=true) = shepp_logan(N,N;highContrast=highContrast)
