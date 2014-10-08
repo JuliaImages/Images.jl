@@ -399,6 +399,20 @@ for CV in subtypes(AbstractGray)
             out = similar(A)
             sub!(out, bT, A)
         end
+        (*)(A::AbstractArray, b::AbstractGray) = A .* b
+        (*)(b::AbstractGray, A::AbstractArray) = b .* A
+        (/)(A::AbstractArray, b::AbstractGray) = A ./ b
+        function (.*){T,S}(A::AbstractArray{$CV{T}}, b::AbstractGray{S})
+            Tout = multype(T,S)
+            out = similar(A, $CV{Tout})
+            mul!(out, A, b)
+        end
+        (.*){T,S}(b::AbstractGray{S}, A::AbstractArray{$CV{T}}) = A .* b
+        function (./){T,S}(A::AbstractArray{$CV{T}}, b::AbstractGray{S})
+            Tout = divtype(T,S)
+            out = similar(A, $CV{Tout})
+            div!(out, A, b)
+        end
         isfinite{T<:Ufixed}(c::$CV{T}) = true
         isfinite{T<:FloatingPoint}(c::$CV{T}) = isfinite(c.val)
         isnan{T<:Ufixed}(c::$CV{T}) = false
@@ -426,7 +440,7 @@ div(a::AbstractGray, b::AbstractGray) = div(a.val, b.val)
 (.+)(a::Number, b::AbstractGray) = a+b.val
 (.-)(a::Number, b::AbstractGray) = a-b.val
 
-@ngenerate N typeof(out) function add!{T,N}(out, A::AbstractArray{T,N}, b::T)
+@ngenerate N typeof(out) function add!{T,N}(out, A::AbstractArray{T,N}, b)
     @inbounds begin
         @nloops N i A begin
             @nref(N, out, i) = @nref(N, A, i) + b
@@ -451,6 +465,23 @@ end
     end
     out
 end
+@ngenerate N typeof(out) function mul!{T,N}(out, A::AbstractArray{T,N}, b)
+    @inbounds begin
+        @nloops N i A begin
+            @nref(N, out, i) = @nref(N, A, i) * b
+        end
+    end
+    out
+end
+@ngenerate N typeof(out) function div!{T,N}(out, A::AbstractArray{T,N}, b)
+    @inbounds begin
+        @nloops N i A begin
+            @nref(N, out, i) = @nref(N, A, i) / b
+        end
+    end
+    out
+end
+
 
 # To help type inference
 for ACV in (ColorValue, AbstractRGB, AbstractGray)

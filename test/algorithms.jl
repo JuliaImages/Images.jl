@@ -32,6 +32,11 @@ img3 = 2img2
 A = fill(2, 4, 5)
 @test all(A.*img2 .== fill(RGB{Float32}(1,1,1), 4, 5))
 img2 = img2 .- RGB{Float32}(1,1,1)/2
+A = rand(Uint8,3,4)
+img = reinterpret(Images.Gray{Ufixed8}, Images.grayim(A))
+imgm = mean(img)
+imgn = img/imgm
+@test_approx_eq reinterpret(Float32, Images.data(imgn)) float32(A/mean(A))
 
 # Reductions
 let
@@ -61,8 +66,8 @@ end
 A = rand(Float32, 3, 5, 6)
 img = Images.colorim(A)
 imgfft = fft(img)
-@test_approx_eq data(imgfft) fft(A, 2:3)
-@test colordim(imgfft) == 1
+@test_approx_eq Images.data(imgfft) fft(A, 2:3)
+@test Images.colordim(imgfft) == 1
 img2 = ifft(imgfft)
 @test_approx_eq img2 reinterpret(Float32, img)
 
@@ -98,7 +103,7 @@ end
 # filtering
 EPS = 1e-14
 imgcol = Images.colorim(rand(3,5,6))
-imgcolf = convert(Image{RGB{Ufixed8}}, imgcol)
+imgcolf = convert(Images.Image{RGB{Ufixed8}}, imgcol)
 for T in (Float64, Int)
     A = zeros(T,3,3); A[2,2] = 1
     kern = rand(3,3)
@@ -194,7 +199,7 @@ Bf = permutedims(reinterpret(Float64, B), (2,3,1))
 @test_approx_eq_eps Bf Btarget/reinterpret(one(Ufixed16)) 1e-12
 Argba = reinterpret(RGBA{Ufixed16}, reinterpret(Ufixed16, A))
 B = Images.restrict(Argba)
-@test_approx_eq_eps reinterpret(Float64, B) restrict(A, (2,3))/reinterpret(one(Ufixed16)) 1e-12
+@test_approx_eq_eps reinterpret(Float64, B) Images.restrict(A, (2,3))/reinterpret(one(Ufixed16)) 1e-12
 A = reshape(1:60, 5, 4, 3)
 B = Images.restrict(A, (1,2,3))
 @test_approx_eq B cat(3, [ 2.6015625  8.71875 6.1171875;
