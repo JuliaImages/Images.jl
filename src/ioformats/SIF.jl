@@ -18,7 +18,8 @@ function imread{S<:IO}(stream::S, ::Type{Images.AndorSIF})
     fields[1] == "65547" || fields[1] == "65558" ||
         error("Unknown TInstaImage version number at line 3: " * fields[1])
 
-    ixon = {"data_type" => int(fields[2])}
+    ixon = Dict{Any,Any}()
+    ixon["data_type"] = int(fields[2])
     ixon["active"] = int(fields[3])
     ixon["structure_vers"] = int(fields[4]) # (== 1)
     # date is recored as seconds counted from 1970.1.1 00:00:00
@@ -176,11 +177,13 @@ function imread{S<:IO}(stream::S, ::Type{Images.AndorSIF})
     offset = position(stream) # start of the actual pixel data, 32-bit float, little-endian
 
     pixels = read(stream, Float32, width, height, frames)
-    prop = {"colorspace" => "Gray",
-            "spatialorder" => ["y", "x"],
-            "ixon" => ixon,
-            "suppress" => Set({"ixon"}),
-            "pixelspacing" => [1, 1]}
+    prop = Images.@Dict(
+        "colorspace" => "Gray",
+        "spatialorder" => ["y", "x"],
+        "ixon" => ixon,
+        "suppress" => Set({"ixon"}),
+        "pixelspacing" => [1, 1]
+    )
     if frames > 1
         prop["timedim"] = 3
     end

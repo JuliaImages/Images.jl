@@ -84,10 +84,12 @@ function imread(filename)
     CFRelease(imgsrc)
 
     # Set the image properties
-    prop = ["spatialorder" => ["x", "y"],
-            "pixelspacing" => [1, 1],
-            "imagedescription" => imagedescription,
-            "suppress" => Set({"imagedescription"})]
+    prop = Images.@Dict(
+        "spatialorder" => ["x", "y"],
+        "pixelspacing" => [1, 1],
+        "imagedescription" => imagedescription,
+        "suppress" => Set({"imagedescription"})
+    )
     if imframes > 1
         prop["timedim"] = ndims(buf)
     end
