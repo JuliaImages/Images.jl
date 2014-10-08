@@ -551,7 +551,8 @@ realtype{R<:Real}(::Type{Complex{R}}) = R
 # Note: astype is ignored for FloatingPoint input
 function imfilter_gaussian{CT<:ColorType}(img::AbstractArray{CT}, sigma; emit_warning = true, astype::Type=Float64)
     A = reinterpret(eltype(CT), data(img))
-    ret = imfilter_gaussian(A, [0,sigma]; emit_warning=emit_warning, astype=astype)
+    newsigma = ndims(A) > ndims(img) ? [0,sigma] : sigma
+    ret = imfilter_gaussian(A, newsigma; emit_warning=emit_warning, astype=astype)
     share(img, reinterpret(noeltype(CT), ret))
 end
 

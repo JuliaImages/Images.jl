@@ -172,6 +172,14 @@ B[isfinite(B)] = 2
 @test_approx_eq Images.imfilter_gaussian(A, [10^3,0]) B
 @test maximum(map(abs, Images.imfilter_gaussian(imgcol, [10^3,10^3]) - mean(imgcol))) < 1e-4
 @test maximum(map(abs, Images.imfilter_gaussian(imgcolf, [10^3,10^3]) - mean(imgcolf))) < 1e-4
+A = rand(4,5)
+img = reinterpret(Gray{Float64}, Images.grayim(A))
+imgf = Images.imfilter_gaussian(img, [2,2])
+@test_approx_eq reinterpret(Float64, data(imgf)) Images.imfilter_gaussian(A, [2,2])
+A = rand(3,4,5)
+img = Images.colorim(A)
+imgf = Images.imfilter_gaussian(img, [2,2])
+@test_approx_eq reinterpret(Float64, data(imgf)) Images.imfilter_gaussian(A, [0,2,2])
 
 A = zeros(Int, 9, 9); A[5, 5] = 1
 @test maximum(abs(Images.imfilter_LoG(A, [1,1]) - Images.imlog(1.0))) < EPS
