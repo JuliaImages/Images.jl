@@ -187,6 +187,13 @@ function reinterpret{T,CV<:ColorType}(::Type{CV}, img::AbstractImageDirect{T})
     Image(A, props)
 end
 
+# T->S
+function reinterpret{T,S}(::Type{T}, img::AbstractImageDirect{S})
+    if sizeof(S) != sizeof(T)
+        error("result shape not specified")
+    end
+    share(img, reinterpret(T, data(img)))
+end
 
 ## convert
 convert{T<:Real}(::Type{Image{T}}, img::Image{T}) = img

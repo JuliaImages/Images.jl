@@ -331,6 +331,7 @@ imrgb8 = convert(Image, rawrgb8)
 @test convert(Image{RGB{Ufixed8}}, imrgb8) === imrgb8
 im8 = reinterpret(Ufixed8, imrgb8)
 @test data(im8) == A8
+@test permutedims(reinterpret(Ufixed8, separate(imrgb8)), (3, 1, 2)) == im8
 @test reinterpret(Uint8, imrgb8) == Au8
 @test reinterpret(RGB, im8) == imrgb8
 ims8 = separate(imrgb8)
