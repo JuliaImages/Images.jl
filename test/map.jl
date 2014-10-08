@@ -28,6 +28,11 @@ c = RGB(0.1,0.2,0.3)
 mapi = MapNone{HSV{Float64}}()
 @chk map(mapi, c) convert(HSV, c)
 
+# issue #200
+c = RGBA{Ufixed8}(1,0.5,0.25,0.8)
+mapi = MapNone{Images.ColorTypes.BGRA{Ufixed8}}()
+@chk map(mapi, c) convert(Images.ColorTypes.BGRA{Ufixed8}, c)
+
 # BitShift
 mapi = BitShift{Uint8,7}()
 @chk map(mapi, 0xff) 0x01

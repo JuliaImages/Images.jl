@@ -39,6 +39,7 @@ similar{T}(mapi::MapNone, ::Type{T}, ::Type) = MapNone{T}()
 # Implementation
 map{T<:Real}(mapi::MapNone{T}, val::Real) = convert(T, val)
 map{C<:ColorValue}(mapi::MapNone{C}, c::ColorValue) = convert(C, c)
+map{C<:ColorValue,T}(mapi::MapNone{AlphaColorValue{C,T}}, c::AlphaColorValue) = convert(AlphaColorValue{C,T}, c)
 map1(mapi::Union(MapNone{RGB24}, MapNone{ARGB32}), b::Bool) = ifelse(b, 0xffuf8, 0x00uf8)
 map1(mapi::Union(MapNone{RGB24},MapNone{ARGB32}), val::Fractional) = convert(Ufixed8, val)
 map1{CT<:ColorType}(mapi::MapNone{CT}, val::Fractional) = convert(eltype(CT), val)
@@ -220,6 +221,12 @@ for SI in (MapInfo, AbstractClamp)
     for ST in subtypes(SI)
         ST.abstract && continue
         ST == ScaleSigned && continue  # ScaleSigned gives an RGB from a scalar, so don't "vectorize" it
+        exAlphaGray = ST == MapNone ? : nothing : quote
+            function map{T,S}(mapi::$ST{RGBA{T}}, g::GrayAlpha{S})
+                x = map1(mapi, g.c.val)
+                RGBA{T}(x,x,x,map1(mapi, g.alpha))
+            end  # avoids an ambiguity warning with MapNone definitions
+        end
         @eval begin
             # Grayscale and GrayAlpha inputs
             map(mapi::$ST{RGB24}, g::Gray) = map(mapi, g.val)
@@ -261,10 +268,7 @@ for SI in (MapInfo, AbstractClamp)
                 x = map1(mapi, g)
                 RGBA{T}(x,x,x)
             end
-            function map{T,S}(mapi::$ST{RGBA{T}}, g::GrayAlpha{S})
-                x = map1(mapi, g.c.val)
-                RGBA{T}(x,x,x,map1(mapi, g.alpha))
-            end
+            $exAlphaGray
             # AbstractRGB and abstract ARGB inputs
             map(mapi::$ST{RGB24}, rgb::AbstractRGB) =
                 convert(RGB24, RGB{Ufixed8}(map1(mapi, rgb.r), map1(mapi, rgb.g), map1(mapi, rgb.b)))
