@@ -159,6 +159,8 @@ Af = Images.imfilter(A, kern, "inner")
 @test Af == rot180(kern)
 Afft = Images.imfilter_fft(A, kern, "inner")
 @test_approx_eq Af Afft
+h = [0.24,0.87]
+@test_approx_eq imfilter(eye(3), h, "inner") imfilter_fft(eye(3), h, "inner")  # issue #204
 
 @test approx_equal(Images.imfilter_gaussian(ones(4,4), [5,5]), 1.0)
 A = fill(nan(Float32), 3, 3)

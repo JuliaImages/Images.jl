@@ -498,7 +498,7 @@ function imfilter_fft_inseparable{T<:Real,K,N}(img::AbstractArray{T,N}, kern::Ab
         krn[indexesK...] = reflect(kern)
         AF = ifft(fft(A).*fft(krn))
         out = Array(realtype(eltype(AF)), ([size(img)...] - prepad - postpad)...)
-        indexesA = ntuple(N, d->prepad[d]+1:size(img,d)-postpad[d])
+        indexesA = ntuple(N, d->postpad[d]+1:size(img,d)-prepad[d])
         copyreal!(out, AF, indexesA)
     end
     out
