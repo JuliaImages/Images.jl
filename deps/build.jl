@@ -75,7 +75,7 @@ end
     """ )
 end
 
-@BinDeps.install [:libwand => :libwand]
+@BinDeps.install Dict([(:libwand, :libwand)])
 
 # Save the library version; by checking this now, we avoid a runtime dependency on libwand
 # See https://github.com/timholy/Images.jl/issues/184#issuecomment-55643225

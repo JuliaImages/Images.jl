@@ -55,17 +55,19 @@ function imread{S<:IO}(s::S, ::Type{Images.ImagineFile})
         dz = abs(pstart - pstop)/sz[3]
     else dz = 0.0 end
 
-    props = ["spatialorder" => havez ? ["x", "l", "z"] : ["x", "l"],
-             "colorspace" => "Gray",
-             "pixelspacing" => havez ? [um_per_pixel, um_per_pixel, dz] : [um_per_pixel, um_per_pixel],
-             "limits" => (uint16(0), uint16(2^h["original image depth"]-1)),
-             "imagineheader" => h,
-             "suppress" => Set({"imagineheader"})]
+    props = Images.@Dict(
+        "spatialorder" => havez ? ["x", "l", "z"] : ["x", "l"],
+        "colorspace" => "Gray",
+        "pixelspacing" => havez ? [um_per_pixel, um_per_pixel, dz] : [um_per_pixel, um_per_pixel],
+        "limits" => (uint16(0), uint16(2^h["original image depth"]-1)),
+        "imagineheader" => h,
+        "suppress" => Set({"imagineheader"})
+    )
     if havet
         props["timedim"] = havez ? 4 : 3
     end
     Image(data, props)
-end    
+end
 
 abstract Endian
 type LittleEndian <: Endian; end
@@ -120,7 +122,7 @@ function parse_quantity_or_empty(s::ASCIIString)
     end
 end
 
-_unit_string_dict = ["um" => Micro*Meter, "s" => Second, "us" => Micro*Second, "MHz" => Mega*Hertz]
+_unit_string_dict = Images.@Dict("um" => Micro*Meter, "s" => Second, "us" => Micro*Second, "MHz" => Mega*Hertz)
 function parse_quantity(s::String, strict::Bool = true)
     # Find the last character of the numeric component
     m = match(r"[0-9\.\+-](?![0-9\.\+-])", s)
@@ -191,7 +193,7 @@ const field_parser_list = {
     "vend"                         int;
     "angle from horizontal (deg)"  float64_or_empty;
 }
-const field_key_dict = (String=>Function)[field_parser_list[i,1] => field_parser_list[i,2] for i = 1:size(field_parser_list,1)]
+const field_key_dict = Dict{String,Function}([(field_parser_list[i,1], field_parser_list[i,2]) for i = 1:size(field_parser_list,1)])
 
 function parse_header(s::IOStream, ::Type{Images.ImagineFile})
     headerdict = Dict{ASCIIString, Any}()

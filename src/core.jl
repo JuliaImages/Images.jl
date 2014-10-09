@@ -950,7 +950,7 @@ end
 function coords(img::AbstractImage, dimname::ASCIIString, ind, nameind...)
     c = Any[1:d for d in size(img)]
     so = spatialorder(img)
-    c[require_dimindex(img, dimname, so)] = ind 
+    c[require_dimindex(img, dimname, so)] = ind
     for i = 1:2:length(nameind)
         c[require_dimindex(img, nameind[i], so)] = nameind[i+1]
     end

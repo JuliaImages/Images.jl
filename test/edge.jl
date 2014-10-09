@@ -54,7 +54,7 @@ for method in ["sobel", "prewitt", "ando3", "ando4", "ando5", "ando4_sep", "ando
     # Test that orientation is perpendicular to gradient
     aorient = orientation(agx, agy)
     @assert all((cos(agphase).*cos(aorient) .+ sin(agphase).*sin(aorient) .< EPS) |
-                ((agphase .== 0.0) & (aorient .== 0.0)))  # this part is where both are 
+                ((agphase .== 0.0) & (aorient .== 0.0)))  # this part is where both are
                                                           # zero because there is no gradient
 
     ## Checkerboard Image with row major order
@@ -77,7 +77,7 @@ for method in ["sobel", "prewitt", "ando3", "ando4", "ando5", "ando4_sep", "ando
     # Test that orientation is perpendicular to gradient
     orient = orientation(gx, gy)
     @assert all((cos(gphase).*cos(orient) .+ sin(gphase).*sin(orient) .< EPS) |
-                ((gphase .== 0.0) & (orient .== 0.0)))  # this part is where both are 
+                ((gphase .== 0.0) & (orient .== 0.0)))  # this part is where both are
                                                         # zero because there is no gradient
 
     ## Checkerboard Image with column-major order
@@ -101,7 +101,7 @@ for method in ["sobel", "prewitt", "ando3", "ando4", "ando5", "ando4_sep", "ando
     # Test that orientation is perpendicular to gradient
     orient = orientation(gx, gy)
     @assert all((cos(gphase).*cos(orient) .+ sin(gphase).*sin(orient) .< EPS) |
-                ((gphase .== 0.0) & (orient .== 0.0)))  # this part is where both are 
+                ((gphase .== 0.0) & (orient .== 0.0)))  # this part is where both are
                                                         # zero because there is no gradient
 
 end
@@ -134,7 +134,7 @@ for method in ["sobel", "prewitt", "ando3", "ando4", "ando5", "ando4_sep", "ando
     # Test that orientation is perpendicular to gradient
     aorient = orientation(agx, agy)
     @assert all((cos(agphase).*cos(aorient) .+ sin(agphase).*sin(aorient) .< EPS) |
-                ((agphase .== 0.0) & (aorient .== 0.0)))  # this part is where both are 
+                ((agphase .== 0.0) & (aorient .== 0.0)))  # this part is where both are
                                                           # zero because there is no gradient
 
     ## Diagonal Image, row-major order
@@ -156,7 +156,7 @@ for method in ["sobel", "prewitt", "ando3", "ando4", "ando5", "ando4_sep", "ando
     # Test that orientation is perpendicular to gradient
     orient = orientation(gx, gy)
     @assert all((cos(gphase).*cos(orient) .+ sin(gphase).*sin(orient) .< EPS) |
-                ((gphase .== 0.0) & (orient .== 0.0)))  # this part is where both are 
+                ((gphase .== 0.0) & (orient .== 0.0)))  # this part is where both are
                                                         # zero because there is no gradient
 
     ## Diagonal Image, column-major order
@@ -178,7 +178,7 @@ for method in ["sobel", "prewitt", "ando3", "ando4", "ando5", "ando4_sep", "ando
     # Test that orientation is perpendicular to gradient
     orient = orientation(gx, gy)
     @assert all((cos(gphase).*cos(orient) .+ sin(gphase).*sin(orient) .< EPS) |
-                ((gphase .== 0.0) & (orient .== 0.0)))  # this part is where both are 
+                ((gphase .== 0.0) & (orient .== 0.0)))  # this part is where both are
                                                         # zero because there is no gradient
 end
 

@@ -21,7 +21,7 @@ for N = 1:4
         # These first two are additional ones needed to avoid ambiguity warnings.
         _uint32color_gray!{T}(buf::Array{Uint32}, A::LabeledArray{T,$N}, mapi::ScaleSigned) = error("Cannot use ScaleSigned with a labeled array")
         _uint32color_gray!{T,L<:LabeledArray}(buf::Array{Uint32}, A::SubArray{T,$N,L}, mapi::ScaleSigned) = error("Cannot use ScaleSigned with a labeled array")
-        
+
         function _uint32color_gray!{T}(buf::Array{Uint32}, A::LabeledArray{T,$N}, mapi::MapInfo = mapinfo(Uint8, A))
             if size(buf) != size(A)
                 error("Size mismatch")
@@ -55,7 +55,7 @@ for N = 1:4
             col = S.parent.colors
             _uint32color_labeled(buf, dat, label, col, mapi) # type of label can't be inferred, use function boundary
         end
-        
+
         function _uint32color_labeled{T}(buf, dat::AbstractArray{T,$N}, label, col, mapi)
             k = 0
             @inbounds @nloops $N i buf begin

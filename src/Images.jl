@@ -157,18 +157,18 @@ export # types
     timedim,
     width,
     widthheight,
-    
+
     # io functions
     add_image_file_format,
     imread,
     imwrite,
     loadformat,
-    
+
     # iterator functions
     first_index,
     iterate_spatial,
     parent,
-    
+
     # color-related functions
     alphaval,
     blueval,
@@ -187,7 +187,7 @@ export # types
     uint32color,
     uint32color!,
     ycbcr2rgb,
-    
+
     # Scaling of intensity
     sc,
     scale,
