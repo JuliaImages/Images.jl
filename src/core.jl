@@ -527,14 +527,44 @@ maximum(img::AbstractImageDirect) = maximum(img.data)
 function squeeze(img::AbstractImage, dims)
     imgret = copy(img, squeeze(data(img), dims))
     td = timedim(img)
-    if td > 0 && in(td, dims)
-        imgret["timedim"] = 0
+    if td > 0
+        imgret["timedim"] = squeezedims(td, dims)
     end
     cd = colordim(img)
-    if cd > 0 && in(cd, dims)
-        imgret["colordim"] = 0
+    if cd > 0
+        imgret["colordim"] = squeezedims(cd, dims)
+    end
+    c = coords_spatial(img)
+    keep = setdiff(c, dims)
+    if length(keep) < length(c)
+        sp = spatialproperties(img)
+        if !isempty(sp)
+            for pname in sp
+                p = img.properties[pname]
+                if isa(p, Vector)
+                    imgret.properties[pname] = p[keep]
+                elseif isa(p, Matrix)
+                    imgret.properties[pname] = p[keep, keep]
+                else
+                    error("Do not know how to handle property ", pname)
+                end
+            end
+        end
     end
     imgret
+end
+
+function squeezedims(val, dims)
+    if in(val, dims)
+        val = 0
+    else
+        dec = 0
+        for d in dims
+            dec += val > d
+        end
+        val -= dec
+    end
+    val
 end
 
 #### Properties ####

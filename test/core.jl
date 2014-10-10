@@ -216,6 +216,12 @@ ss = getindexim(s, 2, :, :)
 sss = squeeze(ss, 1)
 @test colorspace(ss) == "Unknown"
 @test colordim(sss) == 0
+ss = getindexim(imgds, 2, :, :)
+@test colordim(ss) == 3
+@test spatialorder(ss) == ["y", "x"]
+sss = squeeze(ss, 1)
+@test colordim(sss) == 2
+@test spatialorder(sss) == ["x"]
 
 # reslicing
 D = randn(3,5,4)
