@@ -1,5 +1,8 @@
 *.DS_Store
 deps/deps.jl
+deps/versioninfo.jl
+deps/downloads/*
+deps/usr/*
 *~
 *#
 /*.tar.gz
