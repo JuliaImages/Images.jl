@@ -52,13 +52,11 @@ end
         libwand,
         os = :Windows,
         unpacked_dir = magick_libdir,
-        onload =
+        preload =
             """
-            function __init__()
-                ENV["MAGICK_CONFIGURE_PATH"] = \"$(escape_string(magick_libdir))\"
-                ENV["MAGICK_CODER_MODULE_PATH"] = \"$(escape_string(magick_libdir))\"
-            end
-            """ )
+            ENV["MAGICK_CONFIGURE_PATH"] = \"$(escape_string(magick_libdir))\"
+            ENV["MAGICK_CODER_MODULE_PATH"] = \"$(escape_string(magick_libdir))\"
+            """)
 end
 
 @osx_only begin
