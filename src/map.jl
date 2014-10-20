@@ -478,8 +478,8 @@ uint32color!{T,N,N1}(buf::Array{Uint32,N}, img::AbstractImageDirect{T,N1}, mi::M
     map!(mi, buf, img, TypeConst{colordim(img)})
 
 
-sc(img::AbstractArray) = map(ScaleMinMax(img), img)
-sc(img::AbstractArray, mn::Real, mx::Real) = map(ScaleMinMax(img, mn, mx), img)
+sc(img::AbstractArray) = map(ScaleMinMax(Ufixed8, img), img)
+sc(img::AbstractArray, mn::Real, mx::Real) = map(ScaleMinMax(Ufixed8, img, mn, mx), img)
 
 convert{T}(::Type{AbstractImageDirect{T,2}},M::Tridiagonal) = error("Not defined") # prevent ambiguity warning
 
