@@ -68,7 +68,7 @@ add_image_file_format{ImageType<:ImageFileType}(ext::ByteString, ::Type{ImageTyp
 type ImageMagick <: ImageFileType end
 type OSXNative <: ImageFileType end
 
-function imread(filename::String;extraproparg="date:create")
+function imread(filename::String;extraproparg="")
 
     _, ext = splitext(filename)
     ext = lowercase(ext)
@@ -221,7 +221,7 @@ imread(filename::String, ::Type{OSXNative}) = LibOSXNative.imread(filename)
 # fixed type for depths > 8
 const ufixedtype = @Dict(10=>Ufixed10, 12=>Ufixed12, 14=>Ufixed14, 16=>Ufixed16)
 
-function imread(filename::String, ::Type{ImageMagick};extraprop="date:create")
+function imread(filename::String, ::Type{ImageMagick};extraprop="")
     wand = LibMagick.MagickWand()
     LibMagick.readimage(wand, filename)
     LibMagick.resetiterator(wand)
@@ -240,10 +240,12 @@ function imread(filename::String, ::Type{ImageMagick};extraprop="date:create")
     end
     prop["IMcs"] = cs
 
-    for extra in [extraprop]
-        prop[extra] = LibMagick.getimageproperty(wand,extra)
+    if extraprop != ""
+        for extra in [extraprop]
+            prop[extra] = LibMagick.getimageproperty(wand,extra)
+        end
     end
-    
+        
     depth = LibMagick.getimagechanneldepth(wand, LibMagick.DefaultChannels)
     if depth <= 8
         T = Ufixed8     # always use 8-bit for 8-bit and less
