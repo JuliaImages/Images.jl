@@ -278,7 +278,8 @@ function getimageproperty(wand::MagickWand,prop::String)
     p = ccall((:MagickGetImageProperty, libwand),Ptr{Uint8},(Ptr{Void},Ptr{Uint8}),wand.ptr,prop)
     if p == C_NULL
         possib = getimageproperties(wand,"*")
-        "Undefined Property, possible property values are \"$(join(possib,"\",\""))\""
+        warn("Undefined property, possible names are \"$(join(possib,"\",\""))\"")
+        nothing
     else
         bytestring(p)
     end

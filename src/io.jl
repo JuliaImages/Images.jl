@@ -68,7 +68,7 @@ add_image_file_format{ImageType<:ImageFileType}(ext::ByteString, ::Type{ImageTyp
 type ImageMagick <: ImageFileType end
 type OSXNative <: ImageFileType end
 
-function imread(filename::String;extraproparg="")
+function imread(filename::String;extraprop="",extrapropertynames=false)
 
     _, ext = splitext(filename)
     ext = lowercase(ext)
@@ -111,7 +111,7 @@ function imread(filename::String;extraproparg="")
 
     # There are no registered readers for this type. Try using ImageMagick if available.
     if have_imagemagick
-        return imread(filename, ImageMagick,extraprop=extraproparg)
+        return imread(filename, ImageMagick,extraprop=extraprop,extrapropertynames=extrapropertynames)
     else
         error("Do not know how to read file ", filename, ". Is ImageMagick installed properly? See README.")
     end
@@ -221,10 +221,15 @@ imread(filename::String, ::Type{OSXNative}) = LibOSXNative.imread(filename)
 # fixed type for depths > 8
 const ufixedtype = @Dict(10=>Ufixed10, 12=>Ufixed12, 14=>Ufixed14, 16=>Ufixed16)
 
-function imread(filename::String, ::Type{ImageMagick};extraprop="")
+function imread(filename::String, ::Type{ImageMagick};extraprop="",extrapropertynames=false)
     wand = LibMagick.MagickWand()
     LibMagick.readimage(wand, filename)
     LibMagick.resetiterator(wand)
+
+    if extrapropertynames
+        return(LibMagick.getimageproperties(wand,"*"))
+    end
+    
     imtype = LibMagick.getimagetype(wand)
     # Determine what we need to know about the image format
     sz = size(wand)
