@@ -112,11 +112,30 @@ Such differences are due to [changes](http://www.imagemagick.org/script/color-ma
 in how ImageMagick handles colorspaces, and the fact that both older
 and newer versions of the library are still widespread.
 
-Given an Image `img`, you can access the underlying array with `A = data(img)`.
-Images is designed to work with either plain arrays or with Image types---in general, though,
+You can retrieve the properties using `props = properties(img)`.
+This returns the dictionary used by `img`; any modifications you make
+to `props` will update the properties of `img`.
+
+Likewise, given an Image `img`, you can access the underlying array with
+```julia
+A = data(img)
+```
+This is handy for those times when you want to call an algorithm that is implemented only
+for `Array`s. At the end, however, you may want to restore the contextual information
+available in an Image. While you can use the `Image` constructor directly,
+two alternatives can be convenient:
+```julia
+imgc = copy(img, A)
+imgs = share(img, A)
+```
+`imgc` has its own properties dictionary, initialized to be a copy of the one used by `img`.
+In contrast, `imgs` shares a properties dictionary with `img`; any modification to the
+properties of `img` will also modify them for `imgs`. Use either as appropriate to your
+circumstance.
+
+The Images package is designed to work with either plain arrays or with Image types---in general, though,
 you're probably best off leaving things as an Image, particularly if you work
 with movies, 3d images, or other more complex objects.
-Likewise, you can retrieve the properties using `props = properties(img)`.
 
 ### Storage order and changing the representation of images
 
@@ -213,6 +232,15 @@ view(imh)
 (Hue without saturation or value generates gray or black, so we used a constant different from zero for these parameters.)
 
 ![raw](doc/figures/rose_hsv.png)
+
+Of course, you can combine these commands, for example
+```julia
+A = reinterpret(Uint8, data(img))
+```
+will, for a `RGB{Ufixed8}` image, return a raw 3d array.
+This can be useful if you want to interact with external code (a C-library, for example).
+Assuming you don't want to lose orientation information, you can wrap a returned array `B`
+as `share(img, B)`.
 
 ### Other properties, and usage of Units
 
