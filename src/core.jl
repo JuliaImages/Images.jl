@@ -238,11 +238,12 @@ convert{Cdest<:ColorType,Csrc<:ColorType,N}(::Type{Array{Cdest}}, img::AbstractI
 function separate{CV<:ColorType}(img::AbstractImage{CV})
     p = permutation_canonical(img)
     so = spatialorder(img)[p]
-    if length(CV) > 1
-        p = [p+1, 1]
-    end
     T = eltype(CV)
-    A = permutedims(reinterpret(T, data(img), tuple(length(CV), size(img)...)), p)
+    if length(CV) > 1
+        A = permutedims(reinterpret(T, data(img), tuple(length(CV), size(img)...)), [p+1,1])
+    else
+        A = permutedims(reinterpret(T, data(img), size(img)), p)
+    end
     props = copy(properties(img))
     props["colorspace"] = colorspace(img)
     props["colordim"] = ndims(A)
