@@ -539,8 +539,8 @@ specifying the file type in `imread`.
 
 <br />
 ```
-imread(filename)
-imread(filename, FileType)
+imread(filename;[extraprop="",extrapropertynames=false])
+imread(filename, FileType;[extraprop="",extrapropertynames=false])
 imread(stream, FileType)
 ```
 Reads an image, inferring the format from (1) the magic bytes where possible
@@ -551,6 +551,8 @@ Note that imread will return images in native storage format, e.g., a 2D RGB
 image will (for most file formats) be returned as a 2D `RGB` array.
 Because file formats are horizontal major, you access the value of pixel
 `(x,y)` by `img[x,y]` or `img["x",x,"y",y]`.
+
+When reading with ImageMagick, arbitrary properties of the image can be transfered to the properties dictionary. If `extrapropertynames` is `true`, `imread` just returns a vector of the property names stored in the image. The `extraprop` argument takes a string or a vector of strings and adds the named properties to the dictionary.
 
 <br />
 ```

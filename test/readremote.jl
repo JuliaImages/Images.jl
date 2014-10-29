@@ -179,3 +179,26 @@ s = sliceim(img, :, :, 5)
 imgt = sliceim(img,"t",1)
 @test reinterpret(Uint32, data(map(mapinfo(RGB24, imgt), imgt))) ==
     map(x->x&0x00ffffff, reinterpret(Uint32, data(map(mapinfo(ARGB32, imgt), imgt))))
+
+# Extra properties
+@osx? nothing : begin
+    file = getfile("autumn_leaves.png")
+    # List properties
+    extraProps = imread(file,extrapropertynames=true)
+
+    img = imread(file,extraprop=extraProps)
+    props = properties(img)
+    for key in extraProps
+        @test haskey(props,key)
+        @test props[key] != nothing
+    end
+    img = imread(file,extraprop=extraProps[1])
+    props = properties(img)
+    @test haskey(props,extraProps[1])
+    @test props[extraProps[1]] != nothing
+    
+    img = imread(file,extraprop="Non existing property")
+    props = properties(img)
+    @test haskey(props,"Non existing property")
+    @test props["Non existing property"] == nothing
+end

@@ -258,6 +258,33 @@ newimage(wand::MagickWand, cols::Integer, rows::Integer, pw::PixelWand) = ccall(
 # test whether image has an alpha channel
 getimagealphachannel(wand::MagickWand) = ccall((:MagickGetImageAlphaChannel, libwand), Cint, (Ptr{Void},), wand.ptr) == 1
 
+
+function getimageproperties(wand::MagickWand,patt::String)
+    numbProp = Csize_t[0]
+    p = ccall((:MagickGetImageProperties, libwand),Ptr{Ptr{Uint8}},(Ptr{Void},Ptr{Uint8},Ptr{Csize_t}),wand.ptr,patt,numbProp)
+    if p == C_NULL
+        error("Pattern not in property names")
+    else
+        ret = Array(ASCIIString, int(numbProp)[1])
+        for i = 1:int(numbProp)[1]
+            ret[i] = bytestring(unsafe_load(p,i))
+        end
+        ret
+     
+    end
+end
+
+function getimageproperty(wand::MagickWand,prop::String)
+    p = ccall((:MagickGetImageProperty, libwand),Ptr{Uint8},(Ptr{Void},Ptr{Uint8}),wand.ptr,prop)
+    if p == C_NULL
+        possib = getimageproperties(wand,"*")
+        warn("Undefined property, possible names are \"$(join(possib,"\",\""))\"")
+        nothing
+    else
+        bytestring(p)
+    end
+end
+
 # # get number of colors in the image
 # magickgetimagecolors(wand::MagickWand) = ccall((:MagickGetImageColors, libwand), Csize_t, (Ptr{Void},), wand.ptr)
 
