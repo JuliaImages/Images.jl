@@ -88,7 +88,7 @@ function imread(filename)
         "spatialorder" => ["x", "y"],
         "pixelspacing" => [1, 1],
         "imagedescription" => imagedescription,
-        "suppress" => Set({"imagedescription"})
+        "suppress" => Set(Any["imagedescription"])
     )
     if imframes > 1
         prop["timedim"] = ndims(buf)
