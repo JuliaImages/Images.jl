@@ -185,6 +185,8 @@ imgf = Images.imfilter_gaussian(img, [2,2])
 
 A = zeros(Int, 9, 9); A[5, 5] = 1
 @test maximum(abs(Images.imfilter_LoG(A, [1,1]) - Images.imlog(1.0))) < EPS
+@test maximum(imfilter_LoG([0 0 0 0 1 0 0 0 0], [1,1]) - sum(Images.imlog(1.0),1)) < EPS
+@test maximum(imfilter_LoG([0 0 0 0 1 0 0 0 0]', [1,1]) - sum(Images.imlog(1.0),2)) < EPS
 
 @test Images.imaverage() == fill(1/9, 3, 3)
 @test Images.imaverage([3,3]) == fill(1/9, 3, 3)
