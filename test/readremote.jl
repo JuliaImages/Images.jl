@@ -197,6 +197,7 @@ imgt = sliceim(img,"t",1)
     @test haskey(props,extraProps[1])
     @test props[extraProps[1]] != nothing
     
+    println("The following \"Undefined property\" warning indicates normal operation")
     img = imread(file,extraprop="Non existing property")
     props = properties(img)
     @test haskey(props,"Non existing property")
