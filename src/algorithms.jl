@@ -780,12 +780,12 @@ function imfilter_LoG{T}(img::AbstractArray{T,2}, σ::Vector, border="replicate"
     kernlenx = length(kh1x)
     prepad  = div(kernlenx - 1, 2)
     postpad = div(kernlenx, 2)
-    Ix = padindexes(img, 2, prepad, postpad, border)
+    Ix = padindexes(img, 1, prepad, postpad, border)
 
     kernleny = length(kh1y)
     prepad  = div(kernleny - 1, 2)
     postpad = div(kernleny, 2)
-    Iy = padindexes(img, 1, prepad, postpad, border)
+    Iy = padindexes(img, 2, prepad, postpad, border)
 
     sz = size(img)
     # Store intermediate result in a transposed array
@@ -817,11 +817,11 @@ function imfilter_LoG{T}(img::AbstractArray{T,2}, σ::Vector, border="replicate"
             @inbounds img21[j, i] = tmp21
         end
     end
-    img12 + img21
+    copy(img, img12 + img21)
 end
 
 imfilter_LoG{T}(img::AbstractArray{T,2}, σ::Real, border="replicate") =
-imfilter_LoG(img::AbstractArray{T,2}, [σ, σ], border)
+    imfilter_LoG(img::AbstractArray{T,2}, [σ, σ], border)
 
 function padindexes{T,n}(img::AbstractArray{T,n}, dim, prepad, postpad, border::String)
     M = size(img, dim)
