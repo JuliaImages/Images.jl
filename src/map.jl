@@ -336,6 +336,7 @@ end
     mi = take(mapi, img)
     dimg = data(img)
     dout = data(out)
+    size(dout) == size(dimg) || throw(DimensionMismatch())
     @nloops N i dout begin
         @inbounds @nref(N, dout, i) = map(mi, @nref(N, dimg, i))
     end
