@@ -575,6 +575,15 @@ this command to force the format to load, for example to gain access to specific
 functions in the corresponding module. See the end of `io.jl` for a list of
 `FileType`s.
 
+<br />
+```
+writemime(io, MIME("image/png"), img; mapi=Images.mapinfo_writemime(img), minpixels=10^4, maxpixels=10^6)
+```
+Write to stream `io` as a PNG. This is used for display front-ends such as IJulia.
+The keyword arguments allow you to specify the `mapinfo` transformation to be used,
+the minimum number of pixels used to display the image, and the maximum number of pixels
+used, respectively. Shrinking is performed by `restrict`; enlarging is done by duplication
+of adjacent pixels.
 
 ### Image algorithms
 
