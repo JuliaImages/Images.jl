@@ -174,13 +174,12 @@ function imwrite{T<:ImageFileType}(img, filename::String, ::Type{T}; kwargs...)
 end
 
 # only mime writeable to PNG if 2D (used by IJulia for example)
-import Base.mimewritable
-Base.mimewritable(::MIME"image/png", img::AbstractImage) = sdims(img) == 2 && timedim(img) == 0
+mimewritable(::MIME"image/png", img::AbstractImage) = sdims(img) == 2 && timedim(img) == 0
 # We have to disable Color's display via SVG, because both will get sent with unfortunate results.
 # See IJulia issue #229
 mimewritable{T<:ColorValue}(::MIME"image/svg+xml", ::AbstractMatrix{T}) = false
 
-function _writemime(stream::IO, ::MIME"image/png", img::AbstractImage; mapi=mapinfo(ImageMagick, img))
+function writemime(stream::IO, ::MIME"image/png", img::AbstractImage; mapi=mapinfo_writemime(img), minpixels=10^4, maxpixels=10^6)
     assert2d(img)
     if isa(img, AbstractImageIndexed)
         # For now, convert to direct
@@ -189,9 +188,15 @@ function _writemime(stream::IO, ::MIME"image/png", img::AbstractImage; mapi=mapi
     A = data(img)
     nc = ncolorelem(img)
     npix = length(A)/nc
-    while npix > 1e6
+    while npix > maxpixels
         A = restrict(A, coords_spatial(img))
         npix = length(A)/nc
+    end
+    if npix < minpixels
+        fac = iceil(sqrt(minpixels/npix))
+        r = ones(Int, ndims(img))
+        r[coords_spatial(img)] = fac
+        A = repeat(A, inner=r)
     end
     if eltype(A) != eltype(img)
         mapi = similar(mapi, eltype(mapi), eltype(A))
@@ -200,12 +205,10 @@ function _writemime(stream::IO, ::MIME"image/png", img::AbstractImage; mapi=mapi
     blob = LibMagick.getblob(wand, "png")
     write(stream, blob)
 end
-writemime(stream::IO, mime::MIME"image/png", img::AbstractImage; mapi=mapinfo_writemime(img)) =
-    _writemime(stream, mime, img, mapi=mapi)
 
 mapinfo_writemime{T}(img::AbstractImage{Gray{T}}) = mapinfo(Gray{Ufixed8},img)
 mapinfo_writemime{C<:ColorValue}(img::AbstractImage{C}) = mapinfo(RGB{Ufixed8},img)
-mapinfo_writemime{T}(img::AbstractImage{GrayAlpha{T}}) = mapinfo(GrayAlpha{Ufixed8},img)
+mapinfo_writemime{AC<:GrayAlpha}(img::AbstractImage{AC}) = mapinfo(GrayAlpha{Ufixed8},img)
 mapinfo_writemime{AC<:AbstractAlphaColorValue}(img::AbstractImage{AC}) = mapinfo(RGBA{Ufixed8},img)
 mapinfo_writemime(img::AbstractImage) = mapinfo(Ufixed8,img)
 

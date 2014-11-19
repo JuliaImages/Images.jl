@@ -18,7 +18,7 @@ b = Images.imread(fn)
 @test convert(Array, b) == aa
 aaimg = Images.grayim(aa)
 open(fn, "w") do file
-    writemime(file, "image/png", aaimg)
+    writemime(file, MIME("image/png"), aaimg, minpixels=0)
 end
 b = Images.imread(fn)
 @test b == aaimg
@@ -29,7 +29,7 @@ b = Images.imread(fn)
 aa = Ufixed12[0.6 0.2;
               1.4 0.8]
 open(fn, "w") do file
-    writemime(file, "image/png", Images.grayim(aa))
+    writemime(file, MIME("image/png"), Images.grayim(aa), minpixels=0)
 end
 b = Images.imread(fn)
 @test Images.data(b) == Ufixed8[0.6 0.2;
@@ -39,7 +39,7 @@ b = Images.imread(fn)
 abig = Images.grayim(rand(Uint8, 1024, 1023))
 fn = joinpath(writedir, "big.png")
 open(fn, "w") do file
-    writemime(file, "image/png", abig)
+    writemime(file, MIME("image/png"), abig, maxpixels=10^6)
 end
 b = Images.imread(fn)
 @test Images.data(b) == convert(Array{Ufixed8,2}, Images.data(Images.restrict(abig, (1,2))))
@@ -48,7 +48,7 @@ b = Images.imread(fn)
 a = Images.colorim(rand(Uint8, 3, 2, 2))
 fn = joinpath(writedir, "2by2.png")
 open(fn, "w") do file
-    writemime(file, "image/png", a)
+    writemime(file, MIME("image/png"), a, minpixels=0)
 end
 b = Images.imread(fn)
 @test Images.data(b) == Images.data(a)
@@ -56,7 +56,7 @@ b = Images.imread(fn)
 abig = Images.colorim(rand(Uint8, 3, 1021, 1026))
 fn = joinpath(writedir, "big.png")
 open(fn, "w") do file
-    writemime(file, "image/png", abig)
+    writemime(file, MIME("image/png"), abig, maxpixels=10^6)
 end
 b = Images.imread(fn)
 @test Images.data(b) == convert(Array{RGB{Ufixed8},2}, Images.data(Images.restrict(abig, (1,2))))

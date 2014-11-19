@@ -4,7 +4,7 @@ import Base.Order: Ordering, ForwardOrdering, ReverseOrdering
 import Base.Graphics: width, height
 import Base: atan2, clamp, convert, copy, copy!, ctranspose, delete!, done, eltype,
              fft, float32, float64, get, getindex, haskey, hypot, ifft, length, map, map!,
-             maximum, minimum, next, ndims, one, parent, permutedims, reinterpret,
+             maximum, mimewritable, minimum, next, ndims, one, parent, permutedims, reinterpret,
              setindex!, show, showcompact, similar, size, slice, sqrt, squeeze,
              start, strides, sub, sum, write, writemime, zero
 # "deprecated imports" are below
