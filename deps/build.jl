@@ -29,7 +29,7 @@ end
 
     # Will need to be updated for releases
     # TODO: checksums: we have gpg
-    magick_exe = "ImageMagick-6.8.9-10-Q16-$(OS_ARCH)-dll.exe"
+    magick_exe = "ImageMagick-6.9.0-0-Q16-$(OS_ARCH)-dll.exe"
 
     magick_tmpdir = BinDeps.downloadsdir(libwand)
     magick_url = "http://www.imagemagick.org/download/binaries/$(magick_exe)"
