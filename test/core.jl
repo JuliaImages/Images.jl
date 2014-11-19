@@ -1,4 +1,5 @@
 using Images, FixedPointNumbers, Color, SIUnits.ShortUnits, Base.Test
+import SIUnits
 
 ## Constructors of Image types
 B = rand(1:20,3,5)    # support integer-valued types, but these are NOT recommended (use Ufixed)
