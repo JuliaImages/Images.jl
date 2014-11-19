@@ -1,5 +1,7 @@
 ### Edge and Gradient related tests ###
 
+using Images, Base.Test
+
 EPS = 1e-14
 
 ## Checkerboard array, used to test image gradients

@@ -160,7 +160,7 @@ Af = Images.imfilter(A, kern, "inner")
 Afft = Images.imfilter_fft(A, kern, "inner")
 @test_approx_eq Af Afft
 h = [0.24,0.87]
-@test_approx_eq imfilter(eye(3), h, "inner") imfilter_fft(eye(3), h, "inner")  # issue #204
+@test_approx_eq Images.imfilter(eye(3), h, "inner") Images.imfilter_fft(eye(3), h, "inner")  # issue #204
 
 @test approx_equal(Images.imfilter_gaussian(ones(4,4), [5,5]), 1.0)
 A = fill(nan(Float32), 3, 3)
@@ -175,18 +175,18 @@ B[isfinite(B)] = 2
 @test maximum(map(abs, Images.imfilter_gaussian(imgcol, [10^3,10^3]) - mean(imgcol))) < 1e-4
 @test maximum(map(abs, Images.imfilter_gaussian(imgcolf, [10^3,10^3]) - mean(imgcolf))) < 1e-4
 A = rand(4,5)
-img = reinterpret(Gray{Float64}, Images.grayim(A))
+img = reinterpret(Images.Gray{Float64}, Images.grayim(A))
 imgf = Images.imfilter_gaussian(img, [2,2])
-@test_approx_eq reinterpret(Float64, data(imgf)) Images.imfilter_gaussian(A, [2,2])
+@test_approx_eq reinterpret(Float64, Images.data(imgf)) Images.imfilter_gaussian(A, [2,2])
 A = rand(3,4,5)
 img = Images.colorim(A)
 imgf = Images.imfilter_gaussian(img, [2,2])
-@test_approx_eq reinterpret(Float64, data(imgf)) Images.imfilter_gaussian(A, [0,2,2])
+@test_approx_eq reinterpret(Float64, Images.data(imgf)) Images.imfilter_gaussian(A, [0,2,2])
 
 A = zeros(Int, 9, 9); A[5, 5] = 1
 @test maximum(abs(Images.imfilter_LoG(A, [1,1]) - Images.imlog(1.0))) < EPS
-@test maximum(imfilter_LoG([0 0 0 0 1 0 0 0 0], [1,1]) - sum(Images.imlog(1.0),1)) < EPS
-@test maximum(imfilter_LoG([0 0 0 0 1 0 0 0 0]', [1,1]) - sum(Images.imlog(1.0),2)) < EPS
+@test maximum(Images.imfilter_LoG([0 0 0 0 1 0 0 0 0], [1,1]) - sum(Images.imlog(1.0),1)) < EPS
+@test maximum(Images.imfilter_LoG([0 0 0 0 1 0 0 0 0]', [1,1]) - sum(Images.imlog(1.0),2)) < EPS
 
 @test Images.imaverage() == fill(1/9, 3, 3)
 @test Images.imaverage([3,3]) == fill(1/9, 3, 3)
@@ -305,4 +305,3 @@ P = [ 0.0  0.0  0.0   0.0   0.0   0.0   0.0  0.0;
 
 Q = Images.shepp_logan(8,highContrast=false)
 @test norm((P-Q)[:]) < 1e-10
-
