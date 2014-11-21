@@ -470,8 +470,9 @@ function first_index(A::SubArray, sd::SliceData)
     for i = 1:length(sd.slicedims)
         newfirst += (A.indexes[sd.slicedims[i]]-1)*sd.slicestrides[i]
     end
+    strds = strides(A)
     for i = 1:length(sd.rangedims)
-        newfirst += (A.indexes[sd.rangedims[i]][1]-1)*A.strides[i]
+        newfirst += (A.indexes[sd.rangedims[i]][1]-1)*strds[i]
     end
     newfirst
 end

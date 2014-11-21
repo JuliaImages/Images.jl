@@ -166,7 +166,7 @@ end
 
 minfinite(A::AbstractArray) = minimum(A)
 function minfinite{T<:FloatingPoint}(A::AbstractArray{T})
-    ret = nan(T)
+    ret = convert(T, NaN)
     for a in A
         ret = isfinite(a) ? (ret < a ? ret : a) : ret
     end
@@ -175,7 +175,7 @@ end
 
 maxfinite(A::AbstractArray) = maximum(A)
 function maxfinite{T<:FloatingPoint}(A::AbstractArray{T})
-    ret = nan(T)
+    ret = convert(T, NaN)
     for a in A
         ret = isfinite(a) ? (ret > a ? ret : a) : ret
     end
@@ -191,7 +191,7 @@ function maxabsfinite(A::AbstractArray)
     ret
 end
 function maxabsfinite{T<:FloatingPoint}(A::AbstractArray{T})
-    ret = nan(T)
+    ret = convert(T, NaN)
     for sa in A
         a = abs(sa)
         ret = isfinite(a) ? (ret > a ? ret : a) : ret
@@ -567,7 +567,7 @@ function imfilter_gaussian{T<:FloatingPoint}(img::AbstractArray{T}, sigma::Vecto
         A[nanflag] = zero(T)
         validpixels = convert(Array{T}, !nanflag)
         imfilter_gaussian!(A, validpixels, sigma; emit_warning=emit_warning)
-        A[nanflag] = nan(T)
+        A[nanflag] = convert(T, NaN)
     else
         imfilter_gaussian_no_nans!(A, sigma; emit_warning=emit_warning)
     end
