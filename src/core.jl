@@ -356,7 +356,8 @@ subim(img::AbstractImage, I::RangeIndex...) = share(img, sub(img.data, I...))
 
 subim(img::AbstractImage, dimname::ASCIIString, ind::RangeIndex, nameind...) = subim(img, coords(img, dimname, ind, nameind...)...)
 
-function sliceim(img::AbstractImage, I::RangeIndex...)
+sliceim(img::AbstractImage, I::RangeIndex...) = _sliceim(img, I)
+function _sliceim{IT}(img::AbstractImage, I::IT)
     dimmap = Array(Int, ndims(img))
     n = 0
     for j = 1:ndims(img)
