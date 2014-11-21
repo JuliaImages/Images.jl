@@ -196,7 +196,6 @@ function reinterpret{T,S}(::Type{T}, img::AbstractImageDirect{S})
 end
 
 ## convert
-convert{T<:Real}(::Type{Image{T}}, img::Image{T}) = img
 convert{T}(::Type{Image{T}}, img::Image{T}) = img
 convert(::Type{Image}, img::Image) = img
 convert(::Type{Image}, A::AbstractArray) = Image(A, properties(A))
@@ -415,6 +414,10 @@ sliceim(img::AbstractImage, I...) = sliceim(img, ntuple(length(I), i-> isa(I[i],
 
 # Iteration
 # Defer to the array object in case it has special iteration defined
+if VERSION >= v"0.4.0-dev+1623"
+    next{T,N}(img::AbstractImage{T,N}, s::(Bool,Base.IteratorsMD.CartesianIndex{N})) = next(data(img), s)
+    done{T,N}(img::AbstractImage{T,N}, s::(Bool,Base.IteratorsMD.CartesianIndex{N})) = done(data(img), s)
+end
 start(img::AbstractImage) = start(data(img))
 next(img::AbstractImage, s) = next(data(img), s)
 done(img::AbstractImage, s) = done(data(img), s)
