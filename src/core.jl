@@ -79,21 +79,21 @@ strides(img::AbstractImage) = strides(img.data)
 copy(img::Image) = Image(copy(img.data), copy(img.properties))
 copy(img::ImageCmap) = ImageCmap(copy(img.data), copy(img.cmap), copy(img.properties))
 
-# copy, replacing the data
-copy(img::AbstractArray, data::AbstractArray) = data
+# Create a new "Image" (could be just an Array) copying the properties but replacing the data
+copyproperties(img::AbstractArray, data::AbstractArray) = data
 
-copy(img::AbstractImageDirect, data::AbstractArray) = Image(data, copy(img.properties))
+copyproperties(img::AbstractImageDirect, data::AbstractArray) = Image(data, copy(img.properties))
 
-copy(img::AbstractImageIndexed, data::AbstractArray) = ImageCmap(data, copy(img.cmap), copy(img.properties))
+copyproperties(img::AbstractImageIndexed, data::AbstractArray) = ImageCmap(data, copy(img.cmap), copy(img.properties))
 
-copy(img::AbstractImageDirect, _data::AbstractImageDirect) = copy(img, data(_data))
+copyproperties(img::AbstractImageDirect, _data::AbstractImageDirect) = copyproperties(img, data(_data))
 
 # Provide new data but reuse the properties & cmap
-share(img::AbstractArray, data::AbstractArray) = data
+shareproperties(img::AbstractArray, data::AbstractArray) = data
 
-share(img::AbstractImageDirect, data::AbstractArray) = Image(data, img.properties)
+shareproperties(img::AbstractImageDirect, data::AbstractArray) = Image(data, img.properties)
 
-share(img::AbstractImageIndexed, data::AbstractArray) = ImageCmap(data, img.cmap, img.properties)
+shareproperties(img::AbstractImageIndexed, data::AbstractArray) = ImageCmap(data, img.cmap, img.properties)
 
 # similar
 similar(img::AbstractImageDirect) = Image(similar(img.data), copy(img.properties))
@@ -141,7 +141,7 @@ end
 
 # Images
 reinterpret{CV1<:ColorType,CV2<:ColorType}(::Type{CV1}, img::AbstractImageDirect{CV2}) =
-    share(img, reinterpret(CV1, data(img)))
+    shareproperties(img, reinterpret(CV1, data(img)))
 function reinterpret{CV2<:ColorType}(::Type{Uint32}, img::AbstractImageDirect{CV2})
     CV <: Union(RGB24, ARGB32) || (CV <: AbstractRGB && sizeof(CV) == 4) || error("Can't convert $CV to Uint32")
     A = reinterpret(Uint32, data(img))
@@ -193,7 +193,7 @@ function reinterpret{T,S}(::Type{T}, img::AbstractImageDirect{S})
     if sizeof(S) != sizeof(T)
         error("result shape not specified")
     end
-    share(img, reinterpret(T, data(img)))
+    shareproperties(img, reinterpret(T, data(img)))
 end
 
 ## convert
@@ -224,7 +224,7 @@ convert(::Type{Array}, img::AbstractImage) = convert(Array{eltype(img)}, img)
 
 convert{C<:ColorType}(::Type{Image{C}}, img::Image{C}) = img
 convert{Cdest<:ColorType,Csrc<:ColorType}(::Type{Image{Cdest}}, img::AbstractImageDirect{Csrc}) =
-    copy(img, _convert(Array{Cdest}, data(img)))  # FIXME when Julia issue ?? is fixed
+    copyproperties(img, _convert(Array{Cdest}, data(img)))  # FIXME when Julia issue ?? is fixed
 _convert{Cdest<:ColorType,Csrc<:ColorType,N}(::Type{Array{Cdest}}, img::AbstractArray{Csrc,N}) =
     _convert(Array{Cdest}, eltype(Cdest), img)     # FIXME when Julia issue ?? is fixed
 _convert{Cdest<:ColorType,Csrc<:ColorType}(::Type{Array{Cdest}}, ::Type{Any}, img::AbstractArray{Csrc}) =
@@ -327,7 +327,7 @@ slice(img::AbstractImage, dimname::ASCIIString, ind::RangeIndex, nameind::RangeI
 
 # getindexim, subim, and sliceim return an Image. The first two share properties, the last requires a copy.
 function getindexim(img::AbstractImage, I::RealIndex...)
-    ret = copy(img, data(img)[I...])
+    ret = copyproperties(img, data(img)[I...])
     cd = colordim(img)
     nd = ndims(ret)
     if cd > nd || (cd > 0 && length(I[cd]) < size(img, cd))
@@ -352,7 +352,7 @@ end
 
 getindexim(img::AbstractImage, dimname::ASCIIString, ind::Union(Real,AbstractArray), nameind...) = getindexim(img, coords(img, dimname, ind, nameind...)...)
 
-subim(img::AbstractImage, I::RangeIndex...) = share(img, sub(img.data, I...))
+subim(img::AbstractImage, I::RangeIndex...) = shareproperties(img, sub(img.data, I...))
 
 subim(img::AbstractImage, dimname::ASCIIString, ind::RangeIndex, nameind...) = subim(img, coords(img, dimname, ind, nameind...)...)
 
@@ -364,7 +364,8 @@ function _sliceim{IT}(img::AbstractImage, I::IT)
         if !isa(I[j], Int); n += 1; end;
         dimmap[j] = n
     end
-    ret = copy(img, slice(img.data, I...))
+    S = slice(img.data, I...)
+    ret = copyproperties(img, S)
     cd = colordim(img)
     if cd > 0
         if isa(I[cd], Int)
@@ -532,7 +533,7 @@ maximum(img::AbstractImageDirect) = maximum(img.data)
 # min/max deliberately not defined for AbstractImageIndexed
 
 function squeeze(img::AbstractImage, dims)
-    imgret = copy(img, squeeze(data(img), dims))
+    imgret = copyproperties(img, squeeze(data(img), dims))
     td = timedim(img)
     if td > 0
         imgret["timedim"] = squeezedims(td, dims)
@@ -871,7 +872,7 @@ function permutedims(img::AbstractImage, p::Union(Vector{Int}, (Int...)), spatia
     ip = invperm(to_vector(p))
     cd = colordim(img)
     sd = timedim(img)
-    ret = copy(img, permutedims(img.data, p))
+    ret = copyproperties(img, permutedims(img.data, p))
     if cd > 0
         ret.properties["colordim"] = ip[cd]
         p = setdiff(p, cd)

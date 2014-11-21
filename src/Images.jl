@@ -122,6 +122,7 @@ export # types
     colorspace,
     coords,
     coords_spatial,
+    copyproperties,
     data,
     dimindex,
     dimindexes,
@@ -146,7 +147,7 @@ export # types
     restrict,
     sdims,
     size_spatial,
-    share,
+    shareproperties,
     sliceim,
     spacedirections,
     spatialorder,
@@ -287,6 +288,8 @@ import Base: scale, scale!  # delete when deprecations are removed
 @deprecate scale(mapi::MapInfo, A) map(mapi, A)                # delete imports above when eliminated
 @deprecate scale!(dest, mapi::MapInfo, A) map!(mapi, dest, A)  #   "
 @deprecate rgb2gray(img::AbstractArray)  convert(Array{Gray}, img)
+@deprecate copy(A::AbstractArray, B::AbstractArray) copyproperties(A, B)
+@deprecate share(A::AbstractArray, B::AbstractArray) shareproperties(A, B)
 
 
 const ScaleInfo = MapInfo  # can't deprecate types?

@@ -490,7 +490,7 @@ for (fn,T) in ((:float32, Float32), (:float64, Float64), (:ufixed8, Ufixed8),
             newC = eval(C.name.name){$T}
             convert(Array{newC}, A)
         end
-        $fn{C<:ColorType}(img::AbstractImage{C}) = share(img, $fn(data(img)))
+        $fn{C<:ColorType}(img::AbstractImage{C}) = shareproperties(img, $fn(data(img)))
     end
 end
 

@@ -7,54 +7,54 @@
 (+)(img::AbstractImageDirect, n::AbstractRGB) = img .+ n
 (+)(n::Number, img::AbstractImageDirect) = n .+ img
 (+)(n::AbstractRGB, img::AbstractImageDirect) = n .+ img
-(.+)(img::AbstractImageDirect, n::Number) = share(img, data(img).+n)
-(.+)(n::Number, img::AbstractImageDirect) = share(img, data(img).+n)
+(.+)(img::AbstractImageDirect, n::Number) = shareproperties(img, data(img).+n)
+(.+)(n::Number, img::AbstractImageDirect) = shareproperties(img, data(img).+n)
 if isdefined(:UniformScaling)
-    (+){Timg,TA<:Number}(img::AbstractImageDirect{Timg,2}, A::UniformScaling{TA}) = share(img, data(img)+A)
-    (-){Timg,TA<:Number}(img::AbstractImageDirect{Timg,2}, A::UniformScaling{TA}) = share(img, data(img)-A)
+    (+){Timg,TA<:Number}(img::AbstractImageDirect{Timg,2}, A::UniformScaling{TA}) = shareproperties(img, data(img)+A)
+    (-){Timg,TA<:Number}(img::AbstractImageDirect{Timg,2}, A::UniformScaling{TA}) = shareproperties(img, data(img)-A)
 end
-(+)(img::AbstractImageDirect, A::BitArray) = share(img, data(img)+A)
-(+)(img::AbstractImageDirect, A::AbstractArray) = share(img, data(img)+data(A))
-(.+)(img::AbstractImageDirect, A::BitArray) = share(img, data(img).+A)
-(.+)(img::AbstractImageDirect, A::AbstractArray) = share(img, data(img).+data(A))
+(+)(img::AbstractImageDirect, A::BitArray) = shareproperties(img, data(img)+A)
+(+)(img::AbstractImageDirect, A::AbstractArray) = shareproperties(img, data(img)+data(A))
+(.+)(img::AbstractImageDirect, A::BitArray) = shareproperties(img, data(img).+A)
+(.+)(img::AbstractImageDirect, A::AbstractArray) = shareproperties(img, data(img).+data(A))
 (-)(img::AbstractImageDirect{Bool}, n::Bool) = img .- n
 (-)(img::AbstractImageDirect, n::Number) = img .- n
 (-)(img::AbstractImageDirect, n::AbstractRGB) = img .- n
-(.-)(img::AbstractImageDirect, n::Number) = share(img, data(img).-n)
+(.-)(img::AbstractImageDirect, n::Number) = shareproperties(img, data(img).-n)
 (-)(n::Bool, img::AbstractImageDirect{Bool}) = n .- img
 (-)(n::Number, img::AbstractImageDirect) = n .- img
 (-)(n::AbstractRGB, img::AbstractImageDirect) = n .- img
-(.-)(n::Number, img::AbstractImageDirect) = share(img, n.-data(img))
-(-)(img::AbstractImageDirect, A::BitArray) = share(img, data(img)-A)
-(-){T}(img::AbstractImageDirect{T,2}, A::Diagonal) = share(img, data(img)-A) # fixes an ambiguity warning
-(-)(img::AbstractImageDirect, A::AbstractArray) = share(img, data(img)-data(A))
-(-)(img::AbstractImageDirect) = share(img, -data(img))
-(.-)(img::AbstractImageDirect, A::BitArray) = share(img, data(img).-A)
-(.-)(img::AbstractImageDirect, A::AbstractArray) = share(img, data(img).-data(A))
+(.-)(n::Number, img::AbstractImageDirect) = shareproperties(img, n.-data(img))
+(-)(img::AbstractImageDirect, A::BitArray) = shareproperties(img, data(img)-A)
+(-){T}(img::AbstractImageDirect{T,2}, A::Diagonal) = shareproperties(img, data(img)-A) # fixes an ambiguity warning
+(-)(img::AbstractImageDirect, A::AbstractArray) = shareproperties(img, data(img)-data(A))
+(-)(img::AbstractImageDirect) = shareproperties(img, -data(img))
+(.-)(img::AbstractImageDirect, A::BitArray) = shareproperties(img, data(img).-A)
+(.-)(img::AbstractImageDirect, A::AbstractArray) = shareproperties(img, data(img).-data(A))
 (*)(img::AbstractImageDirect, n::Number) = (.*)(img, n)
 (*)(n::Number, img::AbstractImageDirect) = (.*)(n, img)
-(.*)(img::AbstractImageDirect, n::Number) = share(img, data(img).*n)
-(.*)(n::Number, img::AbstractImageDirect) = share(img, data(img).*n)
-(/)(img::AbstractImageDirect, n::Number) = share(img, data(img)/n)
-(.*)(img1::AbstractImageDirect, img2::AbstractImageDirect) = share(img1, data(img1).*data(img2))
-(.*)(img::AbstractImageDirect, A::BitArray) = share(img, data(img).*A)
-(.*)(A::BitArray, img::AbstractImageDirect) = share(img, data(img).*A)
-(.*)(img::AbstractImageDirect{Bool}, A::BitArray) = share(img, data(img).*A)
-(.*)(A::BitArray, img::AbstractImageDirect{Bool}) = share(img, data(img).*A)
-(.*)(img::AbstractImageDirect, A::AbstractArray) = share(img, data(img).*A)
-(.*)(A::AbstractArray, img::AbstractImageDirect) = share(img, data(img).*A)
-(./)(img::AbstractImageDirect, A::BitArray) = share(img, data(img)./A)  # needed to avoid ambiguity warning
-(./)(img1::AbstractImageDirect, img2::AbstractImageDirect) = share(img1, data(img1)./data(img2))
-(./)(img::AbstractImageDirect, A::AbstractArray) = share(img, data(img)./A)
-(.^)(img::AbstractImageDirect, p::Number) = share(img, data(img).^p)
-sqrt(img::AbstractImageDirect) = share(img, sqrt(data(img)))
-atan2(img::AbstractImageDirect) = share(img, atan2(data(img)))
-hypot(img::AbstractImageDirect) = share(img, hypot(data(img)))
+(.*)(img::AbstractImageDirect, n::Number) = shareproperties(img, data(img).*n)
+(.*)(n::Number, img::AbstractImageDirect) = shareproperties(img, data(img).*n)
+(/)(img::AbstractImageDirect, n::Number) = shareproperties(img, data(img)/n)
+(.*)(img1::AbstractImageDirect, img2::AbstractImageDirect) = shareproperties(img1, data(img1).*data(img2))
+(.*)(img::AbstractImageDirect, A::BitArray) = shareproperties(img, data(img).*A)
+(.*)(A::BitArray, img::AbstractImageDirect) = shareproperties(img, data(img).*A)
+(.*)(img::AbstractImageDirect{Bool}, A::BitArray) = shareproperties(img, data(img).*A)
+(.*)(A::BitArray, img::AbstractImageDirect{Bool}) = shareproperties(img, data(img).*A)
+(.*)(img::AbstractImageDirect, A::AbstractArray) = shareproperties(img, data(img).*A)
+(.*)(A::AbstractArray, img::AbstractImageDirect) = shareproperties(img, data(img).*A)
+(./)(img::AbstractImageDirect, A::BitArray) = shareproperties(img, data(img)./A)  # needed to avoid ambiguity warning
+(./)(img1::AbstractImageDirect, img2::AbstractImageDirect) = shareproperties(img1, data(img1)./data(img2))
+(./)(img::AbstractImageDirect, A::AbstractArray) = shareproperties(img, data(img)./A)
+(.^)(img::AbstractImageDirect, p::Number) = shareproperties(img, data(img).^p)
+sqrt(img::AbstractImageDirect) = shareproperties(img, sqrt(data(img)))
+atan2(img::AbstractImageDirect) = shareproperties(img, atan2(data(img)))
+hypot(img::AbstractImageDirect) = shareproperties(img, hypot(data(img)))
 
 
 function sum(img::AbstractImageDirect, region::Union(AbstractVector,Tuple,Integer))
     f = prod(size(img)[[region...]])
-    out = copy(img, sum(data(img), region))
+    out = copyproperties(img, sum(data(img), region))
     if in(colordim(img), region)
         out["colorspace"] = "Unknown"
     end
@@ -74,7 +74,7 @@ _meanfinite(A::AbstractArray, ::Type, region) = mean(A, region)  # non floating-
 
 function meanfinite{T<:FloatingPoint}(img::AbstractImageDirect{T}, region)
     r = meanfinite(data(img), region)
-    out = copy(img, r)
+    out = copyproperties(img, r)
     if in(colordim(img), region)
         out["colorspace"] = "Unknown"
     end
@@ -201,7 +201,7 @@ end
 
 
 # fft & ifft
-fft(img::AbstractImageDirect) = share(img, fft(data(img)))
+fft(img::AbstractImageDirect) = shareproperties(img, fft(data(img)))
 function fft(img::AbstractImageDirect, region, args...)
     F = fft(data(img), region, args...)
     props = copy(properties(img))
@@ -405,7 +405,7 @@ function imfilter_inseparable{T,K,N}(img::AbstractArray{T,N}, kern::AbstractArra
         A = padarray(img, prepad, postpad, border, convert(T, value))
         result = imfilter!(Array(typeof(one(T)*one(K)), size(img)), A, data(kern))
     end
-    copy(img, result)
+    copyproperties(img, result)
 end
 
 # Special case for 2d kernels: check for separability
@@ -430,7 +430,7 @@ function imfilter{T}(img::AbstractArray{T}, kern::AbstractMatrix, border::String
     sz1 = ones(Int, ndims(img)); sz1[sc[1]] = size(kern, 1)
     sz2 = ones(Int, ndims(img)); sz2[sc[2]] = size(kern, 2)
     tmp = imfilter_inseparable(data(img), reshape(u*ss, sz1...), border, value)
-    copy(img, imfilter_inseparable(tmp, reshape(v*ss, sz2...), border, value))
+    copyproperties(img, imfilter_inseparable(tmp, reshape(v*ss, sz2...), border, value))
 end
 
 for N = 1:5
@@ -462,7 +462,7 @@ end
 ###
 ### imfilter_fft
 ###
-imfilter_fft(img, kern, border, value) = copy(img, imfilter_fft_inseparable(img, kern, border, value))
+imfilter_fft(img, kern, border, value) = copyproperties(img, imfilter_fft_inseparable(img, kern, border, value))
 imfilter_fft(img, filter) = imfilter_fft(img, filter, "replicate", 0)
 imfilter_fft(img, filter, border) = imfilter_fft(img, filter, border, 0)
 
@@ -553,7 +553,7 @@ function imfilter_gaussian{CT<:ColorType}(img::AbstractArray{CT}, sigma; emit_wa
     A = reinterpret(eltype(CT), data(img))
     newsigma = ndims(A) > ndims(img) ? [0,sigma] : sigma
     ret = imfilter_gaussian(A, newsigma; emit_warning=emit_warning, astype=astype)
-    share(img, reinterpret(noeltype(CT), ret))
+    shareproperties(img, reinterpret(noeltype(CT), ret))
 end
 
 function imfilter_gaussian{T<:FloatingPoint}(img::AbstractArray{T}, sigma::Vector; emit_warning = true, astype::Type=Float64)
@@ -571,17 +571,17 @@ function imfilter_gaussian{T<:FloatingPoint}(img::AbstractArray{T}, sigma::Vecto
     else
         imfilter_gaussian_no_nans!(A, sigma; emit_warning=emit_warning)
     end
-    share(img, A)
+    shareproperties(img, A)
 end
 
 # For these types, you can't have NaNs
 function imfilter_gaussian{T<:Union(Integer,Ufixed),TF<:FloatingPoint}(img::AbstractArray{T}, sigma::Vector; emit_warning = true, astype::Type{TF}=Float64)
     A = convert(Array{TF}, data(img))
     if all(sigma .== 0)
-        return share(img, A)
+        return shareproperties(img, A)
     end
     imfilter_gaussian_no_nans!(A, sigma; emit_warning=emit_warning)
-    share(img, A)
+    shareproperties(img, A)
 end
 
 # This version is in-place, and destructive
@@ -817,7 +817,7 @@ function imfilter_LoG{T}(img::AbstractArray{T,2}, σ::Vector, border="replicate"
             @inbounds img21[j, i] = tmp21
         end
     end
-    copy(img, img12 + img21)
+    copyproperties(img, img12 + img21)
 end
 
 imfilter_LoG{T}(img::AbstractArray{T,2}, σ::Real, border="replicate") =
@@ -1012,7 +1012,7 @@ function imcomplement{T}(img::AbstractArray{T})
 end
 
 function imstretch{T}(img::AbstractArray{T}, m::Number, slope::Number)
-    share(img, 1./(1 + (m./(data(img) + eps(T))).^slope))
+    shareproperties(img, 1./(1 + (m./(data(img) + eps(T))).^slope))
 end
 
 # image gradients
@@ -1057,7 +1057,7 @@ function imROF(img::AbstractArray, lambda::Number, iterations::Integer)
             copy!(outsl, imROF(imsl, lambda, iterations))
         end
     else
-        out = share(img, imROF(data(img), lambda, iterations))
+        out = shareproperties(img, imROF(data(img), lambda, iterations))
     end
     out
 end

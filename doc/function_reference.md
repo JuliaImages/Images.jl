@@ -74,14 +74,14 @@ constructor directly.
 
 <br />
 ```
-copy(img, data)
+copyproperties(img, data)
 ```
 Creates a new image from the data array `data`, copying the properties from
 image `img`.
 
 <br />
 ```
-share(img, data)
+shareproperties(img, data)
 ```
 Creates a new image from the data array `data`, _sharing_ the properties of
 image `img`. Any modifications made to the properties of one will affect the

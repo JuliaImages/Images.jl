@@ -199,7 +199,7 @@ The first step might be to simply provide a version for `AbstractImage` types:
 ```
 function imfilter{T,N}(img::AbstractImage{T,N}, kernel::Array{T,N}, options...)
     out = imfilter(data(img), kernel, options...)
-    share(img, out)
+    shareproperties(img, out)
 end
 ```
 

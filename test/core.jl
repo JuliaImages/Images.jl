@@ -98,7 +98,7 @@ show(iob, imgd)
 A = randn(3,5,3)
 imgc = copy(img)
 @test imgc.data == img.data
-imgc = copy(imgd, A)
+imgc = copyproperties(imgd, A)
 @test imgc.data == A
 img2 = similar(img)
 @test isa(img2, ImageCmap)
@@ -111,9 +111,9 @@ img2 = similar(img, (4,4))
 img2 = similar(imgd, (3,4,4))
 @test isa(img2, Image)
 @test size(img2) == (3,4,4)
-@test copy(B, A) == A
-@test share(A, B) == B
-@test share(img, B) == B
+@test copyproperties(B, A) == A
+@test shareproperties(A, B) == B
+@test shareproperties(img, B) == B
 
 # getindex/setindex!
 prev = img[4]
