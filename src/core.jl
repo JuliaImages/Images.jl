@@ -76,7 +76,8 @@ ndims(img::AbstractImage) = ndims(img.data)
 
 strides(img::AbstractImage) = strides(img.data)
 
-copy(img::AbstractImage) = deepcopy(img)
+copy(img::Image) = Image(copy(img.data), copy(img.properties))
+copy(img::ImageCmap) = ImageCmap(copy(img.data), copy(img.cmap), copy(img.properties))
 
 # copy, replacing the data
 copy(img::AbstractArray, data::AbstractArray) = data
