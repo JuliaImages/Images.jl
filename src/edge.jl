@@ -103,7 +103,7 @@ function phase{T}(grad_x::AbstractArray{T}, grad_y::AbstractArray{T})
 end
 
 function phase(grad_x::AbstractImageDirect, grad_y::AbstractImageDirect)
-    img = copy(grad_x, phase(data(grad_x), data(grad_y)))
+    img = copyproperties(grad_x, phase(data(grad_x), data(grad_y)))
     img["limits"] = (-float(pi),float(pi))
     img
 end
@@ -121,7 +121,7 @@ function orientation{T}(grad_x::AbstractArray{T}, grad_y::AbstractArray{T})
 end
 
 function orientation(grad_x::AbstractImageDirect, grad_y::AbstractImageDirect)
-    img = copy(grad_x, orientation(data(grad_x), data(grad_y)))
+    img = copyproperties(grad_x, orientation(data(grad_x), data(grad_y)))
     img["limits"] = (-float(pi),float(pi))
     img
 end
@@ -357,7 +357,7 @@ function thin_edges_nonmaxsup{T}(img::AbstractArray{T,2}, gradientangles::Abstra
     (height,width) = size(img)
     out = zeros(T, height, width)
     thin_edges_nonmaxsup_core!(out, Array(Point,(0,0)), img, gradientangles, radius, border, theta)
-    copy(img, out)
+    copyproperties(img, out)
 end
 
 # Main function call when subpixel location of edges is desired
@@ -377,5 +377,5 @@ function thin_edges_nonmaxsup_subpix{T}(img::AbstractArray{T}, gradientangles::A
     location = zeros(Point, height, width)
     thin_edges_nonmaxsup_core!(out, location, img, gradientangles, radius, border, theta)
 
-    copy(img, out), copy(img, location)
+    copyproperties(img, out), copyproperties(img, location)
 end

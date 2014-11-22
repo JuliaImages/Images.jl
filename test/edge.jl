@@ -313,7 +313,7 @@ function nms_test_diagonal(img)
     @assert all(diag(data(t))[2:4] .== peakval)  # Edge pixels aren't interpolated here
     @assert all(t - diagm(diag(data(t))) .== 0)
 
-    diag_s = copy(s, diagm(diag(data(s))))
+    diag_s = copyproperties(s, diagm(diag(data(s))))
     @assert s == diag_s
 
     @assert all([pt.x for pt in diag(data(s))[2:4]] - ([2:4] + x_peak_offset) .< EPS)

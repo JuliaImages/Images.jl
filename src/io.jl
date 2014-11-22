@@ -201,7 +201,7 @@ function writemime(stream::IO, ::MIME"image/png", img::AbstractImage; mapi=mapin
     if eltype(A) != eltype(img)
         mapi = similar(mapi, eltype(mapi), eltype(A))
     end
-    wand = image2wand(share(img, A), mapi, nothing)
+    wand = image2wand(shareproperties(img, A), mapi, nothing)
     blob = LibMagick.getblob(wand, "png")
     write(stream, blob)
 end
