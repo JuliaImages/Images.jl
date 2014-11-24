@@ -42,6 +42,7 @@ map{C<:ColorValue}(mapi::MapNone{C}, c::ColorValue) = convert(C, c)
 map{C<:ColorValue,T}(mapi::MapNone{AlphaColorValue{C,T}}, c::AlphaColorValue) = convert(AlphaColorValue{C,T}, c)
 map1(mapi::Union(MapNone{RGB24}, MapNone{ARGB32}), b::Bool) = ifelse(b, 0xffuf8, 0x00uf8)
 map1(mapi::Union(MapNone{RGB24},MapNone{ARGB32}), val::Fractional) = convert(Ufixed8, val)
+map1(::MapNone{RGB24}, val::Uint8) = reinterpret(Ufixed8, val)
 map1{CT<:ColorType}(mapi::MapNone{CT}, val::Fractional) = convert(eltype(CT), val)
 
 map{T<:ColorType}(mapi::MapNone{T}, img::AbstractImageIndexed{T}) = convert(Image{T}, img)
@@ -411,6 +412,10 @@ mapinfo{T<:FloatingPoint, R<:Real}(::Type{T}, img::AbstractArray{R}) = MapNone(T
 
 mapinfo(::Type{RGB24}, img::Union(AbstractArray{Bool}, BitArray)) = MapNone{RGB24}()
 mapinfo(::Type{ARGB32}, img::Union(AbstractArray{Bool}, BitArray)) = MapNone{ARGB32}()
+mapinfo(::Type{RGB24}, img::GrayArray{Ufixed8}) = MapNone{RGB24}()
+mapinfo(::Type{ARGB32}, img::GrayArray{Ufixed8}) = MapNone{ARGB32}()
+mapinfo(::Type{RGB24}, img::AbstractArray{Uint8}) = MapNone{RGB24}()
+mapinfo(::Type{ARGB32}, img::AbstractArray{Uint8}) = MapNone{ARGB32}()
 mapinfo{F<:Fractional}(::Type{RGB24}, img::GrayArray{F}) = ClampMinMax(RGB24, zero(F), one(F))
 mapinfo{F<:Fractional}(::Type{ARGB32}, img::AbstractArray{F}) = ClampMinMax(ARGB32, zero(F), one(F))
 
@@ -461,7 +466,13 @@ mapinfo{CV<:Union(Fractional,ColorValue)}(::Type{Uint32}, img::AbstractArray{CV}
 mapinfo{CV<:AbstractAlphaColorValue}(::Type{Uint32}, img::AbstractArray{CV}) = mapinfo(ARGB32, img)
 mapinfo(::Type{Uint32}, img::Union(AbstractArray{Bool},BitArray)) = mapinfo(RGB24, img)
 mapinfo(::Type{Uint32}, img::AbstractArray{Uint32}) = MapNone{Uint32}()
-
+function mapinfo{T<:Real}(::Type{Uint32}, img::Image{T})
+    cs = colorspace(img)
+    if cs == "ARGB" || cs == "RGBA"
+        return mapinfo(ARGB32, img)
+    end
+    mapinfo(RGB24, img)
+end
 
 # ImageMagick client is defined in io.jl
 
