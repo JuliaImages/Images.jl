@@ -1,12 +1,12 @@
 import Base.push!  # for DisjointMinSets
 
-label_components(A, connectivity = 1:ndims(A), bkg = 0) = label_components!(Array(Int, size(A)), A, connectivity, bkg)
+label_components(A, connectivity = 1:ndims(A), bkg = 0) = label_components!(zeros(Int, size(A)), A, connectivity, bkg)
 
 #### 4-connectivity in 2d, 6-connectivity in 3d, etc.
 # But in fact you can choose which dimensions are connected
 let _label_components_cache = Dict{(Int, Vector{Int}), Function}()
 global label_components!
-function label_components!(Albl::Array{Int}, A::Array, region::Union(Dims, AbstractVector{Int}), bkg = 0)
+function label_components!(Albl::AbstractArray{Int}, A::Array, region::Union(Dims, AbstractVector{Int}), bkg = 0)
     uregion = unique(region)
     if isempty(uregion)
         # Each pixel is its own component
@@ -15,8 +15,6 @@ function label_components!(Albl::Array{Int}, A::Array, region::Union(Dims, Abstr
             if A[i] != bkg
                 k += 1
                 Albl[i] = k
-            else
-                Albl[i] = 0
             end
         end
         return Albl
@@ -30,7 +28,7 @@ function label_components!(Albl::Array{Int}, A::Array, region::Union(Dims, Abstr
         iregion = [symbol(string("i_",d)) for d in uregion]
         f! = eval(quote
             local lc!
-            function lc!(Albl::Array{Int}, sets, A::Array, bkg)
+            function lc!(Albl::AbstractArray{Int}, sets, A::Array, bkg)
                 offsets = strides(A)[$uregion]
                 @nexprs $N d->(offsets_d = offsets[d])
                 k = 0
@@ -54,8 +52,8 @@ function label_components!(Albl::Array{Int}, A::Array, region::Union(Dims, Abstr
                         if label == typemax(Int)
                             label = push!(sets)   # there were no neighbors, create a new label
                         end
+                        Albl[k] = label
                     end
-                    Albl[k] = label
                 end
                 Albl
             end
@@ -69,17 +67,19 @@ function label_components!(Albl::Array{Int}, A::Array, region::Union(Dims, Abstr
     # Now parse sets to find the labels
     newlabel = minlabel(sets)
     for i = 1:length(A)
-        Albl[i] = (A[i] == bkg) ? 0 : newlabel[find_root!(sets, Albl[i])]
+        if A[i] != bkg
+            Albl[i] = newlabel[find_root!(sets, Albl[i])]
+        end
     end
     Albl
 end
 end # let
-label_components!(Albl::Array{Int}, A::BitArray, region::Union(Dims, AbstractVector{Int}), bkg = 0) = label_components!(Albl, convert(Array{Bool}, A), region, bkg)
+label_components!(Albl::AbstractArray{Int}, A::BitArray, region::Union(Dims, AbstractVector{Int}), bkg = 0) = label_components!(Albl, convert(Array{Bool}, A), region, bkg)
 
 #### Arbitrary connectivity
 for N = 1:4
     @eval begin
-        function label_components!(Albl::Array{Int,$N}, A::AbstractArray, connectivity::Array{Bool,$N}, bkg = 0)
+        function label_components!(Albl::AbstractArray{Int,$N}, A::AbstractArray, connectivity::Array{Bool,$N}, bkg = 0)
             if isempty(connectivity) || !any(connectivity)
                 # Each pixel is its own component
                 k = 0
@@ -87,8 +87,6 @@ for N = 1:4
                     if A[i] != bkg
                         k += 1
                         Albl[i] = k
-                    else
-                        Albl[i] = 0
                     end
                 end
                 return Albl
@@ -127,17 +125,19 @@ for N = 1:4
                     if label == typemax(Int)
                         label = push!(sets)
                     end
+                    @nref($N, Albl, i) = label
                 end
-                @nref($N, Albl, i) = label
             end
             # Now parse sets to find the labels
             newlabel = minlabel(sets)
             for i = 1:length(A)
-                Albl[i] = (A[i] == bkg) ? 0 : newlabel[find_root!(sets, Albl[i])]
+                if A[i]!=bkg
+                    Albl[i] = newlabel[find_root!(sets, Albl[i])]
+                end
             end
             Albl
         end
-        label_components!(Albl::Array{Int,$N}, A::AbstractArray, connectivity::BitArray{$N}, bkg = 0) =
+        label_components!(Albl::AbstractArray{Int,$N}, A::AbstractArray, connectivity::BitArray{$N}, bkg = 0) =
             label_components!(Albl, A, convert(Array{Bool}, connectivity), bkg)
     end
 end
