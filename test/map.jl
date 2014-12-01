@@ -191,7 +191,7 @@ img = reinterpret(RGB{Ufixed8}, A, (2,4))
 
 # color conversion
 gray = linspace(0.0,1.0,5) # a 1-dimensional image
-gray8 = iround(Uint8, 255*gray)
+gray8 = round(Uint8, 255*gray)
 gray32 = Uint32[uint32(g)<<16 | uint32(g)<<8 | uint32(g) for g in gray8]
 imgray = Images.Image(gray, Dict{ASCIIString,Any}([("colordim",0), ("colorspace","Gray")]))
 buf = map(Images.mapinfo(Uint32, imgray), imgray) # Images.uint32color(imgray)

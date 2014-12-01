@@ -998,11 +998,11 @@ function imresize!(resized, original)
     scale2 = (size(original,2)-1)/(size(resized,2)-0.999f0)
     for jr = 0:size(resized,2)-1
         jo = scale2*jr
-        ijo = itrunc(jo)
+        ijo = trunc(Int, jo)
         fjo = jo - oftype(jo, ijo)
         @inbounds for ir = 0:size(resized,1)-1
             io = scale1*ir
-            iio = itrunc(io)
+            iio = trunc(Int, io)
             fio = io - oftype(io, iio)
             tmp = (1-fio)*((1-fjo)*original[iio+1,ijo+1] +
                            fjo*original[iio+1,ijo+2]) +
@@ -1018,7 +1018,7 @@ imresize(original, new_size) = imresize_julia!(similar(original, new_size), orig
 
 convertsafely{T<:FloatingPoint}(::Type{T}, val) = convert(T, val)
 convertsafely{T<:Integer}(::Type{T}, val::Integer) = convert(T, val)
-convertsafely{T<:Integer}(::Type{T}, val::FloatingPoint) = itrunc(T, val+oftype(val, 0.5))
+convertsafely{T<:Integer}(::Type{T}, val::FloatingPoint) = trunc(T, val+oftype(val, 0.5))
 convertsafely{T}(::Type{T}, val) = convert(T, val)
 
 

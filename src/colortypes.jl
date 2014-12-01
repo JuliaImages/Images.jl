@@ -5,7 +5,7 @@ import Color: Fractional, _convert
 
 import Base: ==, abs, abs2, clamp, convert, div, isfinite, isinf,
     isnan, isless, length, one, promote_array_type, promote_rule, zero,
-    trunc, floor, round, ceil, itrunc, ifloor, iceil, iround, bswap,
+    trunc, floor, round, ceil, bswap,
     mod, rem
 
 export ARGB, BGR, RGB1, RGB4, BGRA, AbstractGray, Gray, GrayAlpha, Gray24, AGray32, YIQ, AlphaColor, ColorType, noeltype
@@ -227,9 +227,13 @@ for ACV in (ColorValue, AbstractRGB, AbstractGray, AbstractAlphaColorValue)
     end
 end
 
-for f in (:trunc, :floor, :round, :ceil, :itrunc, :ifloor, :iceil, :iround, :abs, :abs2, :isfinite, :isnan, :isinf, :bswap)
+for f in (:trunc, :floor, :round, :ceil, :abs, :abs2, :isfinite, :isnan, :isinf, :bswap)
     @eval $f{T}(g::Gray{T}) = Gray{T}($f(g.val))
     @eval @vectorize_1arg Gray $f
+end
+for f in (:trunc, :floor, :round, :ceil)
+    @eval $f{T<:Integer}(::Type{T}, g::Gray) = Gray{T}($f(T, g.val))
+    @eval $f{T<:Integer,G<:Gray}(::Type{T}, A::AbstractArray{G}) = reshape([($f)(A[i]) for i = 1:length(A)], size(A))
 end
 
 for f in (:mod, :rem, :mod1)

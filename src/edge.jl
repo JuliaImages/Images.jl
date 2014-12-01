@@ -228,7 +228,7 @@ CoordOffset(x::Float64) = ((frac,i) = modf(x); CoordOffset(sign(frac), int(i), a
 # Precalculate x and y offsets relative to centre pixel for each orientation angle
 function _calc_discrete_offsets(θ, radius, transposed)
 
-    θ_count = iround(2π/θ)
+    θ_count = round(Int, 2π/θ)
     θ = 2π/θ_count
     angles = (0:θ_count)*θ
 
@@ -248,7 +248,7 @@ function _calc_discrete_offsets(θ, radius, transposed)
 end
 
 _discretize_angle(angle::FloatingPoint, invθ) =
-    angle < 0 ? iround((angle + 2π)*invθ)+1 : iround(angle*invθ)+1
+    angle < 0 ? round(Int, (angle + 2π)*invθ)+1 : round(Int, angle*invθ)+1
 
 # Interpolate the value of an offset from a particular pixel
 #
@@ -293,7 +293,7 @@ function thin_edges_nonmaxsup_core!{T}(out::AbstractArray{T,2}, location::Abstra
     iθ = 1/θ
 
     # Indexes to use for border handling
-    pad = iceil(radius)
+    pad = ceil(Int, radius)
     Ix = Images.padindexes(img, 2, pad, pad, border)
     Iy = Images.padindexes(img, 1, pad, pad, border)
 

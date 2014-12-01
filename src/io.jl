@@ -193,7 +193,7 @@ function writemime(stream::IO, ::MIME"image/png", img::AbstractImage; mapi=mapin
         npix = length(A)/nc
     end
     if npix < minpixels
-        fac = iceil(sqrt(minpixels/npix))
+        fac = ceil(Int, sqrt(minpixels/npix))
         r = ones(Int, ndims(img))
         r[coords_spatial(img)] = fac
         A = repeat(A, inner=r)
@@ -464,7 +464,7 @@ function imread{S<:IO}(stream::S, ::Type{PPMBinary})
             end
         end
         # Determine the appropriate Ufixed type
-        T = ufixedtype[iceil(log2(maxval)/2)<<1]
+        T = ufixedtype[ceil(Int, log2(maxval)/2)<<1]
         dat = reinterpret(RGB{T}, datraw, (w, h))
     else
         error("Image file may be corrupt. Are there really more than 16 bits in this image?")
@@ -491,7 +491,7 @@ function imread{S<:IO}(stream::S, ::Type{PGMBinary})
             end
         end
         # Determine the appropriate Ufixed type
-        T = ufixedtype[iceil(log2(maxval)/2)<<1]
+        T = ufixedtype[ceil(Int, log2(maxval)/2)<<1]
         dat = reinterpret(RGB{T}, datraw, (w, h))
     else
         error("Image file may be corrupt. Are there really more than 16 bits in this image?")
@@ -503,7 +503,7 @@ end
 function imread{S<:IO}(stream::S, ::Type{PBMBinary})
     w, h = parse_netpbm_size(stream)
     dat = BitArray(w, h)
-    nbytes_per_row = iceil(w/8)
+    nbytes_per_row = ceil(Int, w/8)
     for irow = 1:h, j = 1:nbytes_per_row
         tmp = read(stream, Uint8)
         offset = (j-1)*8

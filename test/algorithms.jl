@@ -163,7 +163,7 @@ h = [0.24,0.87]
 @test_approx_eq Images.imfilter(eye(3), h, "inner") Images.imfilter_fft(eye(3), h, "inner")  # issue #204
 
 @test approx_equal(Images.imfilter_gaussian(ones(4,4), [5,5]), 1.0)
-A = fill(nan(Float32), 3, 3)
+A = fill(convert(Float32, NaN), 3, 3)
 A[1,1] = 1
 A[2,1] = 2
 A[3,1] = 3

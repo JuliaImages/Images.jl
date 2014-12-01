@@ -63,7 +63,7 @@ b = Images.imread(fn)
 
 using Color
 datafloat = reshape(linspace(0.5, 1.5, 6), 2, 3)
-dataint = iround(Uint8, 254*(datafloat .- 0.5) .+ 1)  # ranges from 1 to 255
+dataint = round(Uint8, 254*(datafloat .- 0.5) .+ 1)  # ranges from 1 to 255
 # build our colormap
 b = RGB(0,0,1)
 w = RGB(1,1,1)
