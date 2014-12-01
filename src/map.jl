@@ -479,8 +479,8 @@ uint32color!{T,N,N1}(buf::Array{Uint32,N}, img::AbstractImageDirect{T,N1}, mi::M
     map!(mi, buf, img, TypeConst{colordim(img)})
 
 
-sc(img::AbstractArray) = map(ScaleMinMax(img), img)
-sc(img::AbstractArray, mn::Real, mx::Real) = map(ScaleMinMax(img, mn, mx), img)
+sc(img::AbstractArray) = map(ScaleMinMax(Ufixed8, img), img)
+sc(img::AbstractArray, mn::Real, mx::Real) = map(ScaleMinMax(Ufixed8, img, mn, mx), img)
 
 for (fn,T) in ((:float32, Float32), (:float64, Float64), (:ufixed8, Ufixed8),
                (:ufixed10, Ufixed10), (:ufixed12, Ufixed12), (:ufixed14, Ufixed14),
