@@ -1,4 +1,5 @@
 julia 0.3-
+Compat 0.2.2
 Color
 BinDeps
 @osx Homebrew
