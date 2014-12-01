@@ -642,11 +642,11 @@ isdirect(img::AbstractArray) = true
 isdirect(img::AbstractImageDirect) = true
 isdirect(img::AbstractImageIndexed) = false
 
-colorspace{C<:ColorValue}(img::AbstractMatrix{C}) = string(C.name)
-colorspace{C<:ColorValue}(img::AbstractArray{C,3}) = string(C.name)
-colorspace{C<:ColorValue}(img::AbstractImage{C}) = string(C.name)
-colorspace{C<:ColorValue,T}(img::AbstractArray{AlphaColorValue{C,T},2}) = (S = string(C.name); S == "Gray" ? "GrayAlpha" : string(S, "A"))
-colorspace{C<:ColorValue,T}(img::AbstractImage{AlphaColorValue{C,T}}) = (S = string(C.name); S == "Gray" ? "GrayAlpha" : string(S, "A"))
+colorspace{C<:ColorValue}(img::AbstractMatrix{C}) = string(C.name.name)
+colorspace{C<:ColorValue}(img::AbstractArray{C,3}) = string(C.name.name)
+colorspace{C<:ColorValue}(img::AbstractImage{C}) = string(C.name.name)
+colorspace{C<:ColorValue,T}(img::AbstractArray{AlphaColorValue{C,T},2}) = (S = string(C.name.name); S == "Gray" ? "GrayAlpha" : string(S, "A"))
+colorspace{C<:ColorValue,T}(img::AbstractImage{AlphaColorValue{C,T}}) = (S = string(C.name.name); S == "Gray" ? "GrayAlpha" : string(S, "A"))
 colorspace(img::AbstractMatrix{Bool}) = "Binary"
 colorspace(img::AbstractArray{Bool}) = "Binary"
 colorspace(img::AbstractArray{Bool,3}) = "Binary"
@@ -654,7 +654,7 @@ colorspace{T<:Union(Int32,Uint32)}(img::AbstractMatrix{T}) = "RGB24"
 colorspace(img::AbstractMatrix) = "Gray"
 colorspace{T}(img::AbstractArray{T,3}) = (size(img, defaultarraycolordim) == 3) ? "RGB" : error("Cannot infer colorspace of Array, use an AbstractImage type")
 colorspace(img::AbstractImage{Bool}) = "Binary"
-colorspace{T,N,A<:AbstractArray}(img::ImageCmap{T,N,A}) = string(T.name)
+colorspace{T,N,A<:AbstractArray}(img::ImageCmap{T,N,A}) = string(T.name.name)
 colorspace(img::AbstractImageIndexed) = @get img "colorspace" csinfer(eltype(img.cmap))
 colorspace{T}(img::AbstractImageIndexed{T,2}) = @get img "colorspace" csinfer(eltype(img.cmap))
 csinfer{C<:ColorValue}(::Type{C}) = string(C)
@@ -665,7 +665,7 @@ colorspacedict = Dict{ASCIIString,Any}()
 for ACV in (ColorValue, AbstractRGB, AbstractGray)
     for CV in subtypes(ACV)
         (length(CV.parameters) == 1 && !(CV.abstract)) || continue
-        str = string(CV.name)
+        str = string(CV.name.name)
         colorspacedict[str] = CV
     end
 end
