@@ -60,6 +60,23 @@ let
     img = Images.colorim(A, "RGB")
     dc = Images.data(Images.meanfinite(img, 1))-reinterpret(RGB{Float32}, mean(A, 2), (1,5))
     @test maximum(map(abs, dc)) < 1e-6
+
+    a = convert(Array{Uint8}, [1, 1, 1])
+    b = convert(Array{Uint8}, [134, 252, 4])
+    @test sad(a, b) == 387
+    @test ssd(a, b) == 80699
+    af = reinterpret(Ufixed8, a)
+    bf = reinterpret(Ufixed8, b)
+    @test_approx_eq sad(af, bf) 387f0/255
+    @test_approx_eq ssd(af, bf) 80699f0/255^2
+    ac = reinterpret(RGB{Ufixed8}, a)
+    bc = reinterpret(RGB{Ufixed8}, b)
+    @test_approx_eq sad(ac, bc) 387f0/255
+    @test_approx_eq ssd(ac, bc) 80699f0/255^2
+    ag = reinterpret(RGB{Ufixed8}, a)
+    bg = reinterpret(RGB{Ufixed8}, b)
+    @test_approx_eq sad(ag, bg) 387f0/255
+    @test_approx_eq ssd(ag, bg) 80699f0/255^2
 end
 
 # fft and ifft

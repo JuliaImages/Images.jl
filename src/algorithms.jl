@@ -294,14 +294,36 @@ function imlog(sigma::Number=0.5)
             for x=-floor(m/2):floor(m/2), y=-floor(m/2):floor(m/2)]
 end
 
-# Sum of squared differences
-ssd{T}(A::AbstractArray{T}, B::AbstractArray{T}) = sum((data(A)-data(B)).^2)
+# Sum of squared differences and sum of absolute differences
+for (f, op) in ((:ssd, :(sumsq(x))), (:sad, :(abs(x))))
+    @eval begin
+        function ($f)(A::AbstractArray, B::AbstractArray)
+            size(A) == size(B) || throw(DimensionMismatch("A and B must have the same size"))
+            T = promote_type(difftype(eltype(A)), difftype(eltype(B)))
+            s = zero(accum(eltype(T)))
+            for i = 1:length(A)
+                x = convert(T, A[i]) - convert(T, B[i])
+                s += $op
+            end
+            s
+        end
+    end
+end
+
+difftype{T<:Integer}(::Type{T}) = Int
+difftype{T<:Real}(::Type{T}) = Float32
+difftype(::Type{Float64}) = Float64
+difftype{CV<:ColorType}(::Type{CV}) = difftype(CV, eltype(CV))
+difftype{CV<:AbstractGray,T<:Real}(::Type{CV}, ::Type{T}) = Gray{Float32}
+difftype{CV<:AbstractGray}(::Type{CV}, ::Type{Float64}) = Gray{Float64}
+difftype{CV<:AbstractRGB,T<:Real}(::Type{CV}, ::Type{T}) = RGB{Float32}
+difftype{CV<:AbstractRGB}(::Type{CV}, ::Type{Float64}) = RGB{Float64}
+
+accum{T<:Integer}(::Type{T}) = Int
+accum{T<:Real}(::Type{T}) = Float64
 
 # normalized by Array size
 ssdn{T}(A::AbstractArray{T}, B::AbstractArray{T}) = ssd(A, B)/length(A)
-
-# sum of absolute differences
-sad{T}(A::AbstractArray{T}, B::AbstractArray{T}) = sum(abs(data(A)-data(B)))
 
 # normalized by Array size
 sadn{T}(A::AbstractArray{T}, B::AbstractArray{T}) = sad(A, B)/length(A)

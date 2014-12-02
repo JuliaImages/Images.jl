@@ -8,7 +8,8 @@ import Base: ==, abs, abs2, clamp, convert, div, isfinite, isinf,
     trunc, floor, round, ceil, bswap,
     mod, rem
 
-export ARGB, BGR, RGB1, RGB4, BGRA, AbstractGray, Gray, GrayAlpha, Gray24, AGray32, YIQ, AlphaColor, ColorType, noeltype
+export ARGB, BGR, RGB1, RGB4, BGRA, AbstractGray, Gray, GrayAlpha, Gray24, AGray32, YIQ, AlphaColor, ColorType
+export noeltype, sumsq
 
 typealias ColorType Union(ColorValue, AbstractAlphaColorValue)
 
@@ -324,6 +325,8 @@ for CV in subtypes(AbstractRGB)
         isinf{T<:FloatingPoint}(c::AbstractAlphaColorValue{$CV{T},T}) = isinf(c.c.r) || isinf(c.c.g) || isinf(c.c.b) || isinf(c.alpha)
         abs(c::$CV) = abs(c.r)+abs(c.g)+abs(c.b) # should this have a different name?
         abs{T<:Ufixed}(c::$CV{T}) = float32(c.r)+float32(c.g)+float32(c.b) # should this have a different name?
+        sumsq(c::$CV) = c.r^2+c.g^2+c.b^2
+        sumsq{T<:Ufixed}(c::$CV{T}) = float32(c.r)^2+float32(c.g)^2+float32(c.b)^2
         one{T<:ColorType}(::T) = one(T)
         one{T}(::Type{$CV{T}}) = $CV{T}(one(T),one(T),one(T))
         one{T}(::Type{AlphaColorValue{$CV{T},T}}) = AlphaColorValue{$CV{T},T}(one(T),one(T),one(T),one(T))
@@ -425,6 +428,8 @@ for CV in subtypes(AbstractGray)
         isinf{T<:FloatingPoint}(c::$CV{T}) = isinf(c.val)
         abs(c::$CV) = abs(c.val) # should this have a different name?
         abs{T<:Ufixed}(c::$CV{T}) = float32(c.val) # should this have a different name?
+        sumsq(c::$CV) = c.val^2
+        sumsq{T<:Ufixed}(c::$CV{T}) = float32(c.val)^2
 
         (<)(c::$CV, r::Real) = c.val < r
         (<)(r::Real, c::$CV) = r < c.val
@@ -486,6 +491,7 @@ end
     out
 end
 
+sumsq(x::Real) = x^2
 
 # To help type inference
 for ACV in (ColorValue, AbstractRGB, AbstractGray)
