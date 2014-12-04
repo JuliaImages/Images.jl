@@ -44,18 +44,19 @@ function dftRegfft(reffft,imgfft,usfac)
         CCmax = sum(reffft.*conj(imgfft))
         rfzero = sumabs2(reffft)
         rgzero = sumabs2(imgfft)
-        error = 1 - CCmax*conj(CCmax)/(rgzero*rfzero)
+        error = sqrt(abs(1 - CCmax*conj(CCmax)/(rgzero*rfzero)))
         diffphase = atan2(imag(CCmax),real(CCmax))
         output = ["error" => error, "diffphase" => diffphase]
     elseif usfac==1
         ## Whole-pixel shift - Compute crosscorrelation by an IFFT and locate the peak
         L = length(reffft)
-        CC = ifft(reffft.*conj(imgfft))
+        CC = fftshift(reffft).*conj(fftshift(imgfft))
+        CC = ifft(ifftshift(CC))
         loc = indmax(abs(CC))
         CCmax=CC[loc]
         rfzero = sumabs2(reffft)/L
         rgzero = sumabs2(imgfft)/L
-        error = abs(1 - CCmax*conj(CCmax)/(rgzero*rfzero))
+        error = sqrt(abs(1 - CCmax*conj(CCmax)/(rgzero*rfzero)))
         diffphase = atan2(imag(CCmax),real(CCmax))
 
         (m,n) = size(reffft)
@@ -71,7 +72,7 @@ function dftRegfft(reffft,imgfft,usfac)
             colShift = locI[2]-n-1
             else colShift = locI[2]-1
         end
-        output = ["error"=>error,"diffphase"=>diffphase,"rowShift"=>rowShift,"colShift"=>colShift]
+        output = [error,diffphase,rowShift,colShift]
     else
         ## Partial pixel shift
         
@@ -118,16 +119,16 @@ function dftRegfft(reffft,imgfft,usfac)
             loc = indmax(abs(CC))
             locI = ind2sub(size(CC),loc)
             CCmax = CC[loc]
-            rg00 = dftups(reffft.*conj(reffft),1,1,usfac)[1]/(md2*nd2*usfac^2)
-            rf00 = dftups(imgfft.*conj(imgfft),1,1,usfac)[1]/(md2*nd2*usfac^2)
+            rgzero = dftups(reffft.*conj(reffft),1,1,usfac)[1]/(md2*nd2*usfac^2)
+            rfzero = dftups(imgfft.*conj(imgfft),1,1,usfac)[1]/(md2*nd2*usfac^2)
             locI = map((x) -> x - dftShift - 1,locI)
             rowShift = rowShift + locI[1]/usfac
             colShift = colShift + locI[2]/usfac
         else  
-            rg00 = sum(reffft.*conj(reffft))/m/n
-            rf00 = sum(imgfft.*conj(imgfft))/m/n  
+            rgzero = sum(reffft.*conj(reffft))/m/n
+            rfzero = sum(imgfft.*conj(imgfft))/m/n  
         end
-        error = abs(1 - CCmax*conj(CCmax)/(rg00*rf00))
+        error = sqrt(abs(1 - CCmax*conj(CCmax)/(rgzero*rfzero)))
         diffphase = atan2(imag(CCmax),real(CCmax))
         ## If its only one row or column the shift along that dimension has no effect. We set to zero.
         if md2 == 1
@@ -156,7 +157,7 @@ function subpixelshift(img::AbstractArray,rowShift,colShift,diffphase)
     Nr = ifftshift((-div(nr,2)):(ceil(Int64,nr/2)-1))
     Nc = ifftshift((-div(nc,2)):(ceil(Int64,nc/2)-1))
     Greg = data(img).* exp(2im*pi*((-rowShift*Nr/nr).-(colShift*Nc/nc).'))
-    Greg = Greg .* exp(1im*diffphase)
+    Greg = Greg * exp(1im*diffphase)
     copyproperties(img,real(ifft(Greg)))
 end         
 
@@ -165,7 +166,7 @@ function subpixelshift(img::AbstractArray{Complex{Float64},2},rowShift,colShift,
     Nr = ifftshift((-div(nr,2)):(ceil(Int64,nr/2)-1))
     Nc = ifftshift((-div(nc,2)):(ceil(Int64,nc/2)-1))
     Greg = data(img) .* exp(2im*pi*((-rowShift*Nr/nr).-(colShift*Nc/nc).'))
-    Greg = Greg .* exp(1im*diffphase)
+    Greg = Greg * exp(1im*diffphase)
     copyproperties(img,real(ifft(Greg)))
 end
            
