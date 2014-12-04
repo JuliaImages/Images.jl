@@ -30,7 +30,7 @@ function alignFromDft(img2reg::AbstractArray,dftRegRes)
     if ndims(img2reg)==2
         return(subpixelshift(img2regF,dftRegRes[3],dftRegRes[4],dftRegRes[2]))
     end
-    for i=1:length(dftRegRes)
+    for i=1:size(dftRegRes)[1]
         imRes[:,:,i] = subpixelshift(img2regF[:,:,i],dftRegRes[i,3],dftRegRes[i,4],dftRegRes[i,2])
     end
     imRes
