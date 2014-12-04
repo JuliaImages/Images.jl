@@ -45,8 +45,7 @@ function dftRegfft(reffft,imgfft,usfac)
         rfzero = sumabs2(reffft)
         rgzero = sumabs2(imgfft)
         error = sqrt(abs(1 - CCmax*conj(CCmax)/(rgzero*rfzero)))
-        diffphase = atan2(imag(CCmax),real(CCmax))
-        output = ["error" => error, "diffphase" => diffphase]
+        output = error
     elseif usfac==1
         ## Whole-pixel shift - Compute crosscorrelation by an IFFT and locate the peak
         L = length(reffft)
