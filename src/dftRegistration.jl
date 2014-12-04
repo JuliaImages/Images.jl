@@ -28,10 +28,10 @@ function alignFromDft(img2reg::AbstractArray,dftRegRes)
     imRes = similar(img2reg,Float64)
     img2regF = fft(img2reg,(1,2))
     if ndims(img2reg)==2
-        return(subpixelshift(img2regF,dftRegRes[3],dftRegRes[4],dftRegRes[2]))
+        return(subpixelshift(img2regF,dftRegRes[2],dftRegRes[3]))
     end
     for i=1:size(dftRegRes)[1]
-        imRes[:,:,i] = subpixelshift(img2regF[:,:,i],dftRegRes[i,3],dftRegRes[i,4],dftRegRes[i,2])
+        imRes[:,:,i] = subpixelshift(img2regF[:,:,i],dftRegRes[i,2],dftRegRes[i,3])
     end
     imRes
 end
@@ -57,7 +57,6 @@ function dftRegfft(reffft,imgfft,usfac)
         rfzero = sumabs2(reffft)/L
         rgzero = sumabs2(imgfft)/L
         error = sqrt(abs(1 - CCmax*conj(CCmax)/(rgzero*rfzero)))
-        diffphase = atan2(imag(CCmax),real(CCmax))
 
         (m,n) = size(reffft)
         md2 = div(m,2)
@@ -72,7 +71,7 @@ function dftRegfft(reffft,imgfft,usfac)
             colShift = locI[2]-n-1
             else colShift = locI[2]-1
         end
-        output = [error,diffphase,rowShift,colShift]
+        output = [error,rowShift,colShift]
     else
         ## Partial pixel shift
         
@@ -129,7 +128,6 @@ function dftRegfft(reffft,imgfft,usfac)
             rfzero = sum(imgfft.*conj(imgfft))/m/n  
         end
         error = sqrt(abs(1 - CCmax*conj(CCmax)/(rgzero*rfzero)))
-        diffphase = atan2(imag(CCmax),real(CCmax))
         ## If its only one row or column the shift along that dimension has no effect. We set to zero.
         if md2 == 1
             rowShift = 0
@@ -137,7 +135,7 @@ function dftRegfft(reffft,imgfft,usfac)
         if  nd2==1
             colShift = 0
         end
-        output = [error,diffphase,rowShift,colShift]
+        output = [error,rowShift,colShift]
     end
     output
 end
@@ -151,22 +149,20 @@ function dftups(inp,nor,noc,usfac=1,roff=0,coff=0)
 end
 
 ### Translate a 2D image/array at subpixel resolution. Outputs the original images translated. If the input is of complex type, it is assumed to be the Fourier transform of the image to shift.
-function subpixelshift(img::AbstractArray,rowShift,colShift,diffphase)
+function subpixelshift(img::AbstractArray,rowShift,colShift)
     img = fft(img)
     (nr,nc) = size(img)
     Nr = ifftshift((-div(nr,2)):(ceil(Int64,nr/2)-1))
     Nc = ifftshift((-div(nc,2)):(ceil(Int64,nc/2)-1))
     Greg = data(img).* exp(2im*pi*((-rowShift*Nr/nr).-(colShift*Nc/nc).'))
-    Greg = Greg * exp(1im*diffphase)
     copyproperties(img,real(ifft(Greg)))
 end         
 
-function subpixelshift(img::AbstractArray{Complex{Float64},2},rowShift,colShift,diffphase)
+function subpixelshift(img::AbstractArray{Complex{Float64},2},rowShift,colShift)
     (nr,nc) = size(img)
     Nr = ifftshift((-div(nr,2)):(ceil(Int64,nr/2)-1))
     Nc = ifftshift((-div(nc,2)):(ceil(Int64,nc/2)-1))
     Greg = data(img) .* exp(2im*pi*((-rowShift*Nr/nr).-(colShift*Nc/nc).'))
-    Greg = Greg * exp(1im*diffphase)
     copyproperties(img,real(ifft(Greg)))
 end
            
