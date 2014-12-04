@@ -46,6 +46,7 @@ include("labeledarrays.jl")
 include("algorithms.jl")
 include("connected.jl")
 include("edge.jl")
+include("dftRegistration.jl")
 
 __init__() = LibMagick.init()
 
@@ -249,7 +250,13 @@ export # types
     thin_edges_nonmaxsup_subpix,
 
     # phantoms
-    shepp_logan
+    shepp_logan,
+
+    # DFT registration
+    dftReg,
+    alignFromDft,
+    subpixelshift
+
 
 export # Deprecated exports
     ClipMin,
