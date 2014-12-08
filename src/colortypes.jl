@@ -13,6 +13,12 @@ export noeltype, sumsq
 
 typealias ColorType Union(ColorValue, AbstractAlphaColorValue)
 
+if VERSION < v"0.4.0-dev+1827"
+    const unsafe_trunc = itrunc
+else
+    const unsafe_trunc = Base.unsafe_trunc
+end
+
 # An alpha-channel-first memory layout
 immutable AlphaColor{C<:ColorValue, T<:Fractional} <: AbstractAlphaColorValue{C,T}
     alpha::T
@@ -88,7 +94,9 @@ convert{T,S}(::Type{Gray{T}}, x::Gray{S}) = Gray{T}(x.val)
 convert{T<:Real}(::Type{T}, x::Gray) = convert(T, x.val)
 convert{T}(::Type{Gray{T}}, x::Real) = Gray{T}(x)
 
-convert{T}(::Type{Gray{T}}, x::AbstractRGB) = convert(Gray{T}, 0.299*x.r + 0.587*x.g + 0.114*x.b)  # Rec 601 luma conversion
+# Rec 601 luma conversion
+convert{T<:Ufixed}(::Type{Gray{T}}, x::AbstractRGB{T}) = Gray{T}(T(unsafe_trunc(FixedPointNumbers.rawtype(T), 0.299f0*reinterpret(x.r) + 0.587f0*reinterpret(x.g) + 0.114f0*reinterpret(x.b)), 0))
+convert{T}(::Type{Gray{T}}, x::AbstractRGB) = convert(Gray{T}, 0.299f0*x.r + 0.587f0*x.g + 0.114f0*x.b)
 
 zero{T}(::Type{Gray{T}}) = Gray{T}(zero(T))
  one{T}(::Type{Gray{T}}) = Gray{T}(one(T))
