@@ -532,7 +532,7 @@ minimum(img::AbstractImageDirect) = minimum(img.data)
 maximum(img::AbstractImageDirect) = maximum(img.data)
 # min/max deliberately not defined for AbstractImageIndexed
 
-function squeeze(img::AbstractImage, dims)
+function _squeeze(img::AbstractImage, dims)
     imgret = copyproperties(img, squeeze(data(img), dims))
     td = timedim(img)
     if td > 0
@@ -561,6 +561,9 @@ function squeeze(img::AbstractImage, dims)
     end
     imgret
 end
+squeeze(img::AbstractImage, dims::Integer) = _squeeze(img, dims)
+squeeze(img::AbstractImage, dims::Dims) = _squeeze(img, dims)
+squeeze(img::AbstractImage, dims) = _squeeze(img, dims)
 
 function squeezedims(val, dims)
     if in(val, dims)
