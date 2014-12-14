@@ -177,7 +177,7 @@ function imread{S<:IO}(stream::S, ::Type{Images.AndorSIF})
     offset = position(stream) # start of the actual pixel data, 32-bit float, little-endian
 
     pixels = read(stream, Float32, width, height, frames)
-    prop = Images.@Dict(
+    prop = Compat.@compat Dict(
         "colorspace" => "Gray",
         "spatialorder" => ["y", "x"],
         "ixon" => ixon,

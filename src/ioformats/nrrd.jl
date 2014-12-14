@@ -1,10 +1,10 @@
 module NRRD
 
-using Images, SIUnits, SIUnits.ShortUnits
+using Images, SIUnits, SIUnits.ShortUnits, Compat
 import Images: imread, imwrite
 import Zlib
 
-typedict = Images.@Dict(
+typedict = @compat Dict(
     "signed char" => Int8,
     "int8" => Int8,
     "int8_t" => Int8,
@@ -47,7 +47,7 @@ typedict = Images.@Dict(
     "float" => Float32,
     "double" => Float64)
 
-spacedimdict = Images.@Dict(
+spacedimdict = @compat Dict(
     "right-anterior-superior" => 3,
     "ras" => 3,
     "left-anterior-superior" => 3,
@@ -402,7 +402,7 @@ function stream2name(s::IO)
     name[7:end-1]
 end
 
-_unit_string_dict = Images.@Dict("um" => Micro*Meter, "mm" => Milli*Meter, "s" => Second)
+_unit_string_dict = @compat Dict("um" => Micro*Meter, "mm" => Milli*Meter, "s" => Second)
 function parse_quantity(s::String, strict::Bool = true)
     # Find the last character of the numeric component
     m = match(r"[0-9\.\+-](?![0-9\.\+-])", s)

@@ -1,7 +1,7 @@
 module LibOSXNative
 
 #import Base: error, size
-using Images, Color, Images.ColorTypes, FixedPointNumbers
+using Images, Color, Images.ColorTypes, FixedPointNumbers, Compat
 
 export imread
 
@@ -84,7 +84,7 @@ function imread(filename)
     CFRelease(imgsrc)
 
     # Set the image properties
-    prop = Images.@Dict(
+    prop = @compat Dict(
         "spatialorder" => ["x", "y"],
         "pixelspacing" => [1, 1],
         "imagedescription" => imagedescription,

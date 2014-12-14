@@ -1,7 +1,7 @@
 module Imagine
 
 using Images
-using SIUnits, SIUnits.ShortUnits
+using SIUnits, SIUnits.ShortUnits, Compat
 
 import Images.imread
 import Base.convert
@@ -55,7 +55,7 @@ function imread{S<:IO}(s::S, ::Type{Images.ImagineFile})
         dz = abs(pstart - pstop)/sz[3]
     else dz = 0.0 end
 
-    props = Images.@Dict(
+    props = @compat Dict(
         "spatialorder" => havez ? ["x", "l", "z"] : ["x", "l"],
         "colorspace" => "Gray",
         "pixelspacing" => havez ? [um_per_pixel, um_per_pixel, dz] : [um_per_pixel, um_per_pixel],
@@ -122,7 +122,7 @@ function parse_quantity_or_empty(s::ASCIIString)
     end
 end
 
-_unit_string_dict = Images.@Dict("um" => Micro*Meter, "s" => Second, "us" => Micro*Second, "MHz" => Mega*Hertz)
+_unit_string_dict = @compat Dict("um" => Micro*Meter, "s" => Second, "us" => Micro*Second, "MHz" => Mega*Hertz)
 function parse_quantity(s::String, strict::Bool = true)
     # Find the last character of the numeric component
     m = match(r"[0-9\.\+-](?![0-9\.\+-])", s)

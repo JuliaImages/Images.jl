@@ -9,22 +9,12 @@ import Base: atan2, clamp, convert, copy, copy!, ctranspose, delete!, done, elty
              start, strides, sub, sum, write, writemime, zero
 # "deprecated imports" are below
 
-using Color, FixedPointNumbers
+using Color, FixedPointNumbers, Compat
 import Color: Fractional
 import FixedPointNumbers: ufixed8, ufixed10, ufixed12, ufixed14, ufixed16
 
 using Base.Cartesian
 include("compatibility/forcartesian.jl")
-
-if VERSION < v"0.4.0-dev+980"
-    macro Dict(pairs...)
-        esc(Expr(:dict, pairs...))
-    end
-else
-    macro Dict(pairs...)
-        esc(Expr(:call, :Dict, pairs...))
-    end
-end
 
 # if isdefined(module_parent(Images), :Grid)
 #     import ..Grid.restrict

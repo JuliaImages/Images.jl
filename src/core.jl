@@ -598,13 +598,13 @@ end
 #     meaning (horizontal and vertical, respectively, irrespective of storage order).
 #     If supplied, you must have one entry per spatial dimension.
 
-properties(A::AbstractArray) = @Dict(
+properties(A::AbstractArray) = @compat Dict(
     "colorspace" => colorspace(A),
     "colordim" => colordim(A),
     "timedim" => timedim(A),
     "pixelspacing" => pixelspacing(A),
     "spatialorder" => spatialorder(A))
-properties{C<:ColorType}(A::AbstractArray{C}) = @Dict(
+properties{C<:ColorType}(A::AbstractArray{C}) = @compat Dict(
     "timedim" => timedim(A),
     "pixelspacing" => pixelspacing(A),
     "spatialorder" => spatialorder(A))
