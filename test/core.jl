@@ -224,31 +224,31 @@ sss = squeeze(ss, 1)
 @test colordim(sss) == 2
 @test spatialorder(sss) == ["x"]
 
-# reslicing
-D = randn(3,5,4)
-sd = SliceData(D, 2)
-C = slice(D, sd, 2)
-@test C == reshape(D[1:end, 2, 1:end], size(C))
-reslice!(C, sd, 3)
-@test C == reshape(D[1:end, 3, 1:end], size(C))
-sd = SliceData(D, 3)
-C = slice(D, sd, 2)
-@test C == reshape(D[1:end, 1:end, 2], size(C))
-
-sd = SliceData(imgds, 2)
-s = sliceim(imgds, sd, 2)
-@test colordim(s) == 2
-@test colorspace(s) == "RGB"
-@test spatialorder(s) == ["y"]
-@test s.data == reshape(imgds[:,2,:], size(s))
-sd = SliceData(imgds, 3)
-s = sliceim(imgds, sd, 2)
-@test colordim(s) == 0
-@test colorspace(s) == "Unknown"
-@test spatialorder(s) == Images.yx
-@test s.data == imgds[:,:,2]
-reslice!(s, sd, 3)
-@test s.data == imgds[:,:,3]
+# # reslicing
+# D = randn(3,5,4)
+# sd = SliceData(D, 2)
+# C = slice(D, sd, 2)
+# @test C == reshape(D[1:end, 2, 1:end], size(C))
+# reslice!(C, sd, 3)
+# @test C == reshape(D[1:end, 3, 1:end], size(C))
+# sd = SliceData(D, 3)
+# C = slice(D, sd, 2)
+# @test C == reshape(D[1:end, 1:end, 2], size(C))
+#
+# sd = SliceData(imgds, 2)
+# s = sliceim(imgds, sd, 2)
+# @test colordim(s) == 2
+# @test colorspace(s) == "RGB"
+# @test spatialorder(s) == ["y"]
+# @test s.data == reshape(imgds[:,2,:], size(s))
+# sd = SliceData(imgds, 3)
+# s = sliceim(imgds, sd, 2)
+# @test colordim(s) == 0
+# @test colorspace(s) == "Unknown"
+# @test spatialorder(s) == Images.yx
+# @test s.data == imgds[:,:,2]
+# reslice!(s, sd, 3)
+# @test s.data == imgds[:,:,3]
 
 # named indexing
 @test dimindex(imgds, "color") == 3
