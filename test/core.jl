@@ -357,3 +357,8 @@ imgray = convert(Image{Gray{Ufixed8}}, A)
 
 @test eltype(convert(Image{HSV{Float32}}, imrgb8)) == HSV{Float32}
 @test eltype(convert(Image{HSV}, float32(imrgb8))) == HSV{Float32}
+
+# Issue 232
+img = Image(reinterpret(Gray{Ufixed16}, rand(Uint16, 5, 5)))
+imgs = subim(img, :, :)
+@test isa(minfinite(imgs), Ufixed16)

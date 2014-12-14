@@ -130,6 +130,7 @@ reinterpret{CV1<:ColorType,CV2<:ColorType}(::Type{CV1}, A::Array{CV2,1}) = _rein
 reinterpret{CV1<:ColorType,CV2<:ColorType}(::Type{CV1}, A::Array{CV2})   = _reinterpret_cvarray(CV1, A)
 reinterpret{T,CV<:ColorType}(::Type{T}, A::Array{CV,1}) = _reinterpret_cvarray(T, A)
 reinterpret{T,CV<:ColorType}(::Type{T}, A::Array{CV})   = _reinterpret_cvarray(T, A)
+reinterpret{T,CV<:ColorType}(::Type{T}, A::StridedArray{CV})   = slice(_reinterpret_cvarray(T, A.parent), A.indexes...)
 function _reinterpret_cvarray{T,CV<:ColorType}(::Type{T}, A::Array{CV})
     if sizeof(T) == sizeof(CV)
         return reinterpret(T, A, size(A))
