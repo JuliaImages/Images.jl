@@ -17,6 +17,8 @@ import Images.Gray
 @test length(ColorTypes.YIQ) == 3
 c = ColorTypes.AlphaColor(RGB{Ufixed8}(0.8,0.2,0.4), Ufixed8(0.5))
 @test length(c) == 4
+@test length(zero(GrayAlpha{Float32})) == 2
+@test length(one(RGB{Float32})) == 3
 
 # Arithmetic with Gray
 cf = Gray{Float32}(0.1)

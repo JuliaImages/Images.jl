@@ -113,6 +113,10 @@ convert(::Type{Uint32}, g::Gray24) = g.color
 
 typealias GrayAlpha{T} AlphaColorValue{Gray{T}, T}
 
+zero{T}(::Type{GrayAlpha{T}}) = AlphaColorValue{Gray{T},T}(zero(Gray{T}),zero(T))
+ one{T}(::Type{GrayAlpha{T}}) = AlphaColorValue{Gray{T},T}(one(Gray{T}),one(T))
+
+
 immutable AGray32 <: AbstractAlphaColorValue{Gray24, Uint8}
     color::Uint32
 end
