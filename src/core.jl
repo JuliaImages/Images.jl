@@ -353,7 +353,8 @@ end
 
 getindexim(img::AbstractImage, dimname::ASCIIString, ind::Union(Real,AbstractArray), nameind...) = getindexim(img, coords(img, dimname, ind, nameind...)...)
 
-subim(img::AbstractImage, I::RangeIndex...) = shareproperties(img, sub(img.data, I...))
+subim(img::AbstractImage, I::RangeIndex...) = _subim(img, I)
+_subim{TT}(img, I::TT) = shareproperties(img, sub(img.data, I...))  # work around #8504
 
 subim(img::AbstractImage, dimname::ASCIIString, ind::RangeIndex, nameind...) = subim(img, coords(img, dimname, ind, nameind...)...)
 

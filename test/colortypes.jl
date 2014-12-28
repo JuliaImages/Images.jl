@@ -103,7 +103,7 @@ r4 = ColorTypes.RGB4(1,0,0)
 @test convert(ColorTypes.BGR{Float32}, r4) == ColorTypes.BGR{Float32}(1,0,0)
 
 iob = IOBuffer()
-c = ColorTypes.BGR{Ufixed8}(0.1,0.2,0.3)
+c = ColorTypes.BGR{Ufixed8}(0.1,0.2,0.301)
 show(iob, c)
 @test takebuf_string(iob) == "BGR{Ufixed8}(0.102,0.2,0.302)"
 c = ColorTypes.Gray{Ufixed16}(0.8)
