@@ -139,6 +139,7 @@ function _reinterpret_cvarray{T,CV<:ColorType}(::Type{T}, A::Array{CV})
     end
     error("result shape not specified")
 end
+reinterpret{CV<:ColorType}(A::StridedArray{CV}) = reinterpret(eltype(CV), A)
 
 # Images
 reinterpret{CV1<:ColorType,CV2<:ColorType}(::Type{CV1}, img::AbstractImageDirect{CV2}) =
