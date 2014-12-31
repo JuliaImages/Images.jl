@@ -511,6 +511,7 @@ for ACV in (ColorValue, AbstractRGB, AbstractGray)
         (length(CV.parameters) == 1 && !(CV.abstract)) || continue
         @eval promote_array_type{T<:Real,S<:Real}(::Type{T}, ::Type{$CV{S}}) = $CV{promote_type(T, S)}
         @eval promote_rule{T<:Fractional,S<:Fractional}(::Type{$CV{T}}, ::Type{$CV{S}}) = $CV{promote_type(T, S)}
+        @eval promote_rule{T<:Fractional,S<:Fractional}(::Type{T}, ::Type{$CV{S}}) = promote_type(T, S)
         for AC in subtypes(AbstractAlphaColorValue)
             (length(AC.parameters) == 2 && !(AC.abstract)) || continue
             @eval promote_array_type{T<:Real,S<:Real}(::Type{T}, ::Type{$AC{$CV{S},S}}) = (TS = promote_type(T, S); $AC{$CV{TS}, TS})
