@@ -1,6 +1,6 @@
 import Images, Images.ColorTypes
 using Base.Test, Color, FixedPointNumbers
-import Images.Gray
+import Images.Gray, Images.GrayAlpha
 
 @test length(RGB) == 3
 @test length(ColorTypes.BGR) == 3

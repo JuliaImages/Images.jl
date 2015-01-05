@@ -61,7 +61,7 @@ function imread{S<:IO}(s::S, ::Type{Images.ImagineFile})
         "pixelspacing" => havez ? [um_per_pixel, um_per_pixel, dz] : [um_per_pixel, um_per_pixel],
         "limits" => (uint16(0), uint16(2^h["original image depth"]-1)),
         "imagineheader" => h,
-        "suppress" => Set({"imagineheader"})
+        "suppress" => Set(Any["imagineheader"])
     )
     if havet
         props["timedim"] = havez ? 4 : 3
@@ -72,8 +72,8 @@ end
 abstract Endian
 type LittleEndian <: Endian; end
 type BigEndian <: Endian; end
-const endian_dict = Dict(("l", "b"), (LittleEndian, BigEndian))
-const nrrd_endian_dict = Dict((LittleEndian, BigEndian), ("little","big"))
+const endian_dict = @compat Dict("l"=>LittleEndian, "b"=>BigEndian)
+const nrrd_endian_dict = @compat Dict(LittleEndian=>"little",BigEndian=>"big")
 parse_endian(s::ASCIIString) = endian_dict[lowercase(s)]
 
 function parse_vector_int(s::String)
@@ -85,25 +85,21 @@ function parse_vector_int(s::String)
     return v
 end
 
-const bitname_table = {
-  ("int8",      Int8)
-  ("uint8",     Uint8)
-  ("int16",     Int16)
-  ("uint16",    Uint16)
-  ("int32",     Int32)
-  ("uint32",    Uint32)
-  ("int64",     Int64)
-  ("uint64",    Uint64)
-  ("float16",   Float16)
-  ("float32",   Float32)
-  ("single",    Float32)
-  ("float64",   Float64)
-  ("double",    Float64)
-}
-bitname_dict = Dict{ASCIIString, Any}()
-for l in bitname_table
-    bitname_dict[l[1]] = l[2]
-end
+const bitname_dict = @compat Dict(
+  "int8"      => Int8,
+  "uint8"     => Uint8,
+  "int16"     => Int16,
+  "uint16"    => Uint16,
+  "int32"     => Int32,
+  "uint32"    => Uint32,
+  "int64"     => Int64,
+  "uint64"    => Uint64,
+  "float16"   => Float16,
+  "float32"   => Float32,
+  "single"    => Float32,
+  "float64"   => Float64,
+  "double"    => Float64)
+
 parse_bittypename(s::ASCIIString) = bitname_dict[lowercase(s)]
 
 function float64_or_empty(s::ASCIIString)
@@ -142,58 +138,56 @@ function parse_quantity(s::String, strict::Bool = true)
 end
 
 # Read and parse a *.imagine file (an Imagine header file)
-const compound_fields = {"piezo", "binning"}
-const field_parser_list = {
-    "header version"               float64;
-    "app version"                  identity;
-    "date and time"                identity;
-    "rig"                          identity;
-    "byte order"                   parse_endian;
-    "stimulus file content"        identity;  # stimulus info parsed separately
-    "comment"                      identity;
-    "ai data file"                 identity;
-    "image data file"              identity;
-    "start position"               parse_quantity;
-    "stop position"                parse_quantity;
-    "bidirection"                  x->bool(int(x));
-    "output scan rate"             x->parse_quantity(x, false);
-    "nscans"                       int;
-    "channel list"                 parse_vector_int;
-    "label list"                   identity;
-    "scan rate"                    x->parse_quantity(x, false);
-    "min sample"                   int;
-    "max sample"                   int;
-    "min input"                    float64;
-    "max input"                    float64;
-    "original image depth"         int;
-    "saved image depth"            int;
-    "image width"                  int;
-    "image height"                 int;
-    "number of frames requested"   int;
-    "nStacks"                      int;
-    "idle time between stacks"     parse_quantity;
-    "pre amp gain"                 float64_or_empty;
-    "EM gain"                      float64_or_empty;
-    "gain"                         float64_or_empty;
-    "exposure time"                parse_quantity;
-    "vertical shift speed"         parse_quantity_or_empty;
-    "vertical clock vol amp"       float64;
-    "readout rate"                 parse_quantity_or_empty;
-    "pixel order"                  identity;
-    "frame index offset"           int;
-    "frames per stack"             int;
-    "pixel data type"              parse_bittypename;
-    "camera"                       identity;
-    "um per pixel"                 float64;
-    "hbin"                         int;
-    "vbin"                         int;
-    "hstart"                       int;
-    "hend"                         int;
-    "vstart"                       int;
-    "vend"                         int;
-    "angle from horizontal (deg)"  float64_or_empty;
-}
-const field_key_dict = Dict{String,Function}([(field_parser_list[i,1], field_parser_list[i,2]) for i = 1:size(field_parser_list,1)])
+const compound_fields = Any["piezo", "binning"]
+const field_key_dict = @compat Dict{String,Function}(
+    "header version"               => float64,
+    "app version"                  => identity,
+    "date and time"                => identity,
+    "rig"                          => identity,
+    "byte order"                   => parse_endian,
+    "stimulus file content"        => identity,  # stimulus info parsed separately
+    "comment"                      => identity,
+    "ai data file"                 => identity,
+    "image data file"              => identity,
+    "start position"               => parse_quantity,
+    "stop position"                => parse_quantity,
+    "bidirection"                  => x->bool(int(x)),
+    "output scan rate"             => x->parse_quantity(x, false),
+    "nscans"                       => int,
+    "channel list"                 => parse_vector_int,
+    "label list"                   => identity,
+    "scan rate"                    => x->parse_quantity(x, false),
+    "min sample"                   => int,
+    "max sample"                   => int,
+    "min input"                    => float64,
+    "max input"                    => float64,
+    "original image depth"         => int,
+    "saved image depth"            => int,
+    "image width"                  => int,
+    "image height"                 => int,
+    "number of frames requested"   => int,
+    "nStacks"                      => int,
+    "idle time between stacks"     => parse_quantity,
+    "pre amp gain"                 => float64_or_empty,
+    "EM gain"                      => float64_or_empty,
+    "gain"                         => float64_or_empty,
+    "exposure time"                => parse_quantity,
+    "vertical shift speed"         => parse_quantity_or_empty,
+    "vertical clock vol amp"       => float64,
+    "readout rate"                 => parse_quantity_or_empty,
+    "pixel order"                  => identity,
+    "frame index offset"           => int,
+    "frames per stack"             => int,
+    "pixel data type"              => parse_bittypename,
+    "camera"                       => identity,
+    "um per pixel"                 => float64,
+    "hbin"                         => int,
+    "vbin"                         => int,
+    "hstart"                       => int,
+    "hend"                         => int,
+    "vstart"                       => int,
+    "vend"                         => int,
+    "angle from horizontal (deg)"  => float64_or_empty)
 
 function parse_header(s::IOStream, ::Type{Images.ImagineFile})
     headerdict = Dict{ASCIIString, Any}()
