@@ -29,7 +29,7 @@ end
 
     # Will need to be updated for releases
     # TODO: checksums: we have gpg
-    magick_exe = "ImageMagick-6.9.0-0-Q16-$(OS_ARCH)-dll.exe"
+    magick_exe = "ImageMagick-6.9.0-3-Q16-$(OS_ARCH)-dll.exe"
 
     magick_tmpdir = BinDeps.downloadsdir(libwand)
     magick_url = "http://www.imagemagick.org/download/binaries/$(magick_exe)"
@@ -84,7 +84,7 @@ if isdefined(:__init__)
 end
 p = ccall((:MagickQueryConfigureOption, libwand), Ptr{Uint8}, (Ptr{Uint8},), "LIB_VERSION_NUMBER")
 vstr = string("v\"", join(split(bytestring(p), ',')[1:3], '.'), "\"")
-open("versioninfo.jl", "w") do file
+open(joinpath(dirname(@__FILE__),"versioninfo.jl"), "w") do file
     write(file, "const libversion = $vstr\n")
 end
 end
