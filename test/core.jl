@@ -1,8 +1,11 @@
-using Images, FixedPointNumbers, Color, SIUnits.ShortUnits, Base.Test
-import SIUnits
+using Images, FixedPointNumbers, Color, Base.Test
+if testing_units
+    using SIUnits.ShortUnits
+    import SIUnits
+end
 
 ## Constructors of Image types
-B = rand(1:20,3,5)    # support integer-valued types, but these are NOT recommended (use Ufixed)
+B = rand(uint16(1:20),3,5)    # support integer-valued types, but these are NOT recommended (use Ufixed)
 @test colorspace(B) == "Gray"
 @test colordim(B) == 0
 img = Image(B, colorspace="RGB", colordim=1)  # keyword constructor
@@ -69,7 +72,9 @@ imgd = convert(Image, img)
 @test eltype(img) == RGB{Ufixed8}
 @test eltype(imgd) == RGB{Ufixed8}
 
-imgd["pixelspacing"] = [2.0mm, 3.0mm]
+if testing_units
+    imgd["pixelspacing"] = [2.0mm, 3.0mm]
+end
 imgds = separate(imgd)
 
 # img, imgd, and imgds will be used in many more tests
@@ -131,9 +136,11 @@ img[1,2] = prev
 @test colordim(imgds) == 3
 @test timedim(img) == 0
 @test pixelspacing(img) == [2.0, 3.0]
-@test pixelspacing(imgd) == [2.0mm, 3.0mm]
 @test spacedirections(img) == Vector{Float64}[[2.0, 0], [0, 3.0]]
-@test spacedirections(imgd) == Vector{SIUnits.SIQuantity{Float64,1,0,0,0,0,0,0}}[[2.0mm, 0.0mm], [0.0mm, 3.0mm]]
+if testing_units
+    @test pixelspacing(imgd) == [2.0mm, 3.0mm]
+    @test spacedirections(imgd) == Vector{SIUnits.SIQuantity{Float64,1,0,0,0,0,0,0}}[[2.0mm, 0.0mm], [0.0mm, 3.0mm]]
+end
 
 @test sdims(img) == sdims(imgd)
 @test coords_spatial(img) == coords_spatial(imgd)
@@ -143,7 +150,9 @@ tmp = Image(A, Dict{ASCIIString,Any}())
 copy!(tmp, imgd, "spatialorder")
 @test properties(tmp) == Dict{ASCIIString,Any}([("spatialorder",Images.yx)])
 copy!(tmp, imgd, "spatialorder", "pixelspacing")
-@test tmp["pixelspacing"] == [2.0mm, 3.0mm]
+if testing_units
+    @test tmp["pixelspacing"] == [2.0mm, 3.0mm]
+end
 
 @test storageorder(img) == Images.yx
 @test storageorder(imgds) == [Images.yx, "color"]
@@ -300,13 +309,17 @@ imgp = permutedims(imgds, ["x", "y", "color"])
 @test imgp.data == permutedims(imgds.data, [2,1,3])
 imgp = permutedims(imgds, ("color", "x", "y"))
 @test imgp.data == permutedims(imgds.data, [3,2,1])
-@test pixelspacing(imgp) == [3.0mm, 2.0mm]
+if testing_units
+    @test pixelspacing(imgp) == [3.0mm, 2.0mm]
+end
 imgc = copy(imgds)
 imgc["spacedirections"] = spacedirections(imgc)
 delete!(imgc, "pixelspacing")
 imgp = permutedims(imgc, ["x", "y", "color"])
-@test spacedirections(imgp) == Vector{SIUnits.SIQuantity{Float64,1,0,0,0,0,0,0}}[[0.0mm, 3.0mm],[2.0mm, 0.0mm]]
-@test pixelspacing(imgp) == [3.0mm, 2.0mm]
+if testing_units
+    @test spacedirections(imgp) == Vector{SIUnits.SIQuantity{Float64,1,0,0,0,0,0,0}}[[0.0mm, 3.0mm],[2.0mm, 0.0mm]]
+    @test pixelspacing(imgp) == [3.0mm, 2.0mm]
+end
 
 # reinterpret, separate, more convert
 a = RGB{Float64}[RGB(1,1,0)]

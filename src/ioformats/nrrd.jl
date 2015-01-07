@@ -396,7 +396,7 @@ end
 
 function stream2name(s::IO)
     name = s.name
-    if !beginswith(name, "<file ")
+    if !startswith(name, "<file ")
         error("stream name ", name, " doesn't fit expected pattern")
     end
     name[7:end-1]

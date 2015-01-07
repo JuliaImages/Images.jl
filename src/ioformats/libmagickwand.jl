@@ -101,7 +101,7 @@ const IMColordict = Dict([(IMColorspace[i], i) for i = 1:length(IMColorspace)])
 
 function nchannels(imtype::String, cs::String, havealpha = false)
     n = 3
-    if beginswith(imtype, "Grayscale") || beginswith(imtype, "Bilevel")
+    if startswith(imtype, "Grayscale") || startswith(imtype, "Bilevel")
         n = 1
         cs = havealpha ? "GrayAlpha" : "Gray"
     elseif cs == "CMYK"

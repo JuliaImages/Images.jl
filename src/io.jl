@@ -258,7 +258,7 @@ function imread(filename::String, ::Type{ImageMagick};extraprop="",extraproperty
     if depth <= 8
         T = Ufixed8     # always use 8-bit for 8-bit and less
     else
-        T = ufixedtype[depth]
+        T = ufixedtype[2*((depth+1)>>1)]  # always use an even # of bits (see issue 242#issuecomment-68845157)
     end
 
     channelorder = cs
