@@ -656,7 +656,7 @@ colorspace{C<:ColorValue,T}(img::AbstractImage{AlphaColorValue{C,T}}) = (S = str
 colorspace(img::AbstractMatrix{Bool}) = "Binary"
 colorspace(img::AbstractArray{Bool}) = "Binary"
 colorspace(img::AbstractArray{Bool,3}) = "Binary"
-colorspace{T<:Union(Int32,Uint32)}(img::AbstractMatrix{T}) = "RGB24"
+colorspace(img::AbstractMatrix{Uint32}) = "RGB24"
 colorspace(img::AbstractMatrix) = "Gray"
 colorspace{T}(img::AbstractArray{T,3}) = (size(img, defaultarraycolordim) == 3) ? "RGB" : error("Cannot infer colorspace of Array, use an AbstractImage type")
 colorspace(img::AbstractImage{Bool}) = "Binary"

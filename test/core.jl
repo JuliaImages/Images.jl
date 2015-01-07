@@ -5,7 +5,7 @@ if testing_units
 end
 
 ## Constructors of Image types
-B = rand(1:20,3,5)    # support integer-valued types, but these are NOT recommended (use Ufixed)
+B = rand(uint16(1:20),3,5)    # support integer-valued types, but these are NOT recommended (use Ufixed)
 @test colorspace(B) == "Gray"
 @test colordim(B) == 0
 img = Image(B, colorspace="RGB", colordim=1)  # keyword constructor
