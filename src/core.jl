@@ -683,7 +683,7 @@ function getcolortype{T}(str::ASCIIString, ::Type{T})
         if endswith(str, "A")
             CV = colorspacedict[str[1:end-1]]
             return AlphaColorValue{CV{T}, T}
-        elseif beginswith(str, "A")
+        elseif startswith(str, "A")
             CV = colorspacedict[str[2:end]]
             return AlphaColor{CV{T}, T}
         else
