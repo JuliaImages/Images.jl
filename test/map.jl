@@ -137,6 +137,7 @@ mapi = ScaleMinMax(RGB24, A, zero(Gray{Ufixed8}), one(Gray{Ufixed8}))
 @test map(mapi, A) == map(mapinfo(RGB24, A), A)
 mapi = ScaleMinMax(Float32, [Gray(one(Ufixed8))], 0, 1) # issue #180
 @chk map(mapi, Gray(Ufixed8(0.6))) 0.6f0
+@test_throws ErrorException ScaleMinMax(Float32, 0, 0, 1.0) # issue #245
 
 # ScaleSigned
 mapi = ScaleSigned(Float32, 1/5)

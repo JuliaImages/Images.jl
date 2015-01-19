@@ -150,6 +150,11 @@ immutable ScaleMinMax{To,From,S<:FloatingPoint} <: MapInfo{To}
     min::From
     max::From
     s::S
+
+    function ScaleMinMax(min, max, s)
+        min >= max && error("min must be smaller than max")
+        new(min, max, s)
+    end
 end
 
 ScaleMinMax{To,From}(::Type{To}, min::From, max::From, s::FloatingPoint) = ScaleMinMax{To,From,typeof(s)}(min, max, s)
