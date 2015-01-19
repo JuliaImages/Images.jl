@@ -1,21 +1,15 @@
-language: cpp
-compiler:
-    - gcc
+language: julia
+os:
+    - linux
+    - osx
+julia:
+    - release
+    - nightly
 notifications:
     email: false
-env:
-    matrix:
-        - JULIAVERSION="juliareleases"
-        - JULIAVERSION="julianightlies"
-before_install:
-    - sudo add-apt-repository ppa:staticfloat/julia-deps -y
-    - sudo add-apt-repository ppa:staticfloat/${JULIAVERSION} -y
-    - sudo apt-get update -qq -y
-    - sudo apt-get install git julia imagemagick -y
-    - git config --global user.name "Travis User"
-    - git config --global user.email "travis@example.net"
-    - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
 script:
-    - julia -e 'Pkg.init(); Pkg.clone(pwd()); Pkg.build("Images")'
-    - if [ $JULIAVERSION = "julianightlies" ]; then julia -e 'Pkg.test("Images", coverage=true); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'; fi
-    - if [ $JULIAVERSION = "juliareleases" ]; then julia -e 'Pkg.test("Images")'; fi
+    - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
+    - julia -e 'Pkg.clone(pwd()); Pkg.build("Images")'
+    - julia -e 'Pkg.test("Images", coverage=true)'
+after_success:
+    - if [ $TRAVIS_JULIA_VERSION = "nightly" ]; then julia -e 'cd(Pkg.dir("Images")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'; fi

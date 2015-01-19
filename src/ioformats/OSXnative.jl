@@ -134,7 +134,7 @@ function fillgray!{T}(buffer::AbstractArray{T, 3}, imgsrc)
     end
 end
 
-function fillgrayalpha!{T<:Union(Uint8, Ufixed8)}(buffer::AbstractArray{T, 3}, imgsrc)
+function fillgrayalpha!(buffer::AbstractArray{Uint8, 3}, imgsrc)
     imwidth, imheight = size(buffer, 2), size(buffer, 3)
     CGimg = CGImageSourceCreateImageAtIndex(imgsrc, 0)
     imagepixels = CopyImagePixels(CGimg)
@@ -145,6 +145,7 @@ function fillgrayalpha!{T<:Union(Uint8, Ufixed8)}(buffer::AbstractArray{T, 3}, i
     CFRelease(imagepixels)
     CGImageRelease(CGimg)
 end
+fillgrayalpha!(buffer::AbstractArray{Ufixed8, 3}, imgsrc) = fillgrayalpha!(reinterpret(Uint8, buffer), imgsrc)
 
 function fillcolor!{T}(buffer::AbstractArray{T, 3}, imgsrc, nc)
     imwidth, imheight = size(buffer, 2), size(buffer, 3)
@@ -402,7 +403,7 @@ CGDataProviderCopyData(CGDataProviderRef::Ptr{Void}) =
 CopyImagePixels(inImage::Ptr{Void}) =
     CGDataProviderCopyData(CGImageGetDataProvider(inImage))
 
-CFDataGetBytePtr(CFDataRef::Ptr{Void}, T) =
+CFDataGetBytePtr{T}(CFDataRef::Ptr{Void}, ::Type{T}) =
     ccall(:CFDataGetBytePtr, Ptr{T}, (Ptr{Void}, ), CFDataRef)
 
 CFDataGetLength(CFDataRef::Ptr{Void}) =
