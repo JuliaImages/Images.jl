@@ -402,7 +402,7 @@ CGDataProviderCopyData(CGDataProviderRef::Ptr{Void}) =
 CopyImagePixels(inImage::Ptr{Void}) =
     CGDataProviderCopyData(CGImageGetDataProvider(inImage))
 
-CFDataGetBytePtr(CFDataRef::Ptr{Void}, T) =
+CFDataGetBytePtr{T}(CFDataRef::Ptr{Void}, ::Type{T}) =
     ccall(:CFDataGetBytePtr, Ptr{T}, (Ptr{Void}, ), CFDataRef)
 
 CFDataGetLength(CFDataRef::Ptr{Void}) =
