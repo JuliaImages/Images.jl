@@ -27,12 +27,17 @@ end
 @windows_only begin
     const OS_ARCH = (WORD_SIZE == 64) ? "x64" : "x86"
 
-    # Will need to be updated for releases
     # TODO: checksums: we have gpg
-    magick_exe = "ImageMagick-6.9.0-3-Q16-$(OS_ARCH)-dll.exe"
+    # Extract the appropriate filename to download
+    magick_base = "http://www.imagemagick.org/download/binaries"
+    binariesfn = download(magick_base)
+    str = readall(binariesfn)
+    pattern = ">ImageMagick-6.9.*-Q16-$(OS_ARCH)-dll.exe"
+    m = match(Regex(pattern), str)
+    magick_exe = convert(ASCIIString, m.match)[2:end]
 
     magick_tmpdir = BinDeps.downloadsdir(libwand)
-    magick_url = "http://www.imagemagick.org/download/binaries/$(magick_exe)"
+    magick_url = "$(magick_base)/$(magick_exe)"
     magick_libdir = joinpath(BinDeps.libdir(libwand), OS_ARCH)
 
     innounp_url = "https://julialang.s3.amazonaws.com/bin/winnt/extras/innounp.exe"
