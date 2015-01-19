@@ -9,6 +9,9 @@ notifications:
     on_build_failure: false
     on_build_status_changed: false
 
+cache:
+  - jq.exe
+
 install:
 # Download most recent Julia Windows binary
   - ps: (new-object net.webclient).DownloadFile($("http://s3.amazonaws.com/"+$env:JULIAVERSION), "C:\projects\julia-binary.exe")
@@ -18,6 +21,8 @@ install:
 build_script:
 # Need to convert from shallow to complete for Pkg.clone to work
   - IF EXIST .git\shallow (git fetch --unshallow)
+# if there's a newer build queued, cancel this one
+  - sh --login /c/projects/images-jl/deps/windows/cancel_if_newer.sh
   - C:\projects\julia\bin\julia -F -e "versioninfo(); Pkg.clone(pwd(), \"Images\"); Pkg.build(\"Images\")"
 
 test_script:
