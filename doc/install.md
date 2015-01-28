@@ -7,6 +7,17 @@ In the later case you may add it to your `.juliarc.jl` file as (for example) `pu
 
 **When manual intervention is necessary, you need to restart Julia for the necessary changes to take effect.**
 
+### Fixing broken installations on Macs
+
+Before asking for help, please try the following sequence:
+```julia
+using Homebrew
+Homebrew.rm("imagemagick")
+Homebrew.update()
+Homebrew.add("imagemagick")
+Pkg.build("Images")
+```
+
 ## Reading images on Macs
 
 On Macs, there is now support for reading images using the built-in OS X frameworks.
