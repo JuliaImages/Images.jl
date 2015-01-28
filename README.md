@@ -126,8 +126,8 @@ for `Array`s. At the end, however, you may want to restore the contextual inform
 available in an Image. While you can use the `Image` constructor directly,
 two alternatives can be convenient:
 ```julia
-imgc = copy(img, A)
-imgs = share(img, A)
+imgc = copyproperties(img, A)
+imgs = shareproperties(img, A)
 ```
 `imgc` has its own properties dictionary, initialized to be a copy of the one used by `img`.
 In contrast, `imgs` shares a properties dictionary with `img`; any modification to the
@@ -222,12 +222,12 @@ like the original RGB image. Since the colorspace is known, it converts
 to RGB before rendering it. If, for example, you wanted to see what a
 "pure-V" image looks like, you can do this:
 ```julia
-imv = share(imhsv, [HSV(0, 0, imhsv[i,j].v) for i = 1:size(imhsv,1),j = 1:size(imhsv,2)])
+imv = shareproperties(imhsv, [HSV(0, 0, imhsv[i,j].v) for i = 1:size(imhsv,1),j = 1:size(imhsv,2)])
 view(imv)
 ```
 and a pure-H image like this:
 ```julia
-imh = share(imhsv, [HSV(imhsv[i,j].h, 0.5, 0.5) for i = 1:size(imhsv,1),j = 1:size(imhsv,2)])
+imh = shareproperties(imhsv, [HSV(imhsv[i,j].h, 0.5, 0.5) for i = 1:size(imhsv,1),j = 1:size(imhsv,2)])
 view(imh)
 ```
 (Hue without saturation or value generates gray or black, so we used a constant different from zero for these parameters.)
@@ -241,7 +241,7 @@ A = reinterpret(Uint8, data(img))
 will, for a `RGB{Ufixed8}` image, return a raw 3d array.
 This can be useful if you want to interact with external code (a C-library, for example).
 Assuming you don't want to lose orientation information, you can wrap a returned array `B`
-as `share(img, B)`.
+as `shareproperties(img, B)`.
 
 ### Other properties, and usage of Units
 
