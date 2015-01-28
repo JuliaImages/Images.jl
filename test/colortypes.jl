@@ -2,6 +2,27 @@ import Images, Images.ColorTypes
 using Base.Test, Color, FixedPointNumbers
 import Images.Gray, Images.GrayAlpha
 
+macro test_colortype_approx_eq(a, b)
+    :(test_colortype_approx_eq($(esc(a)), $(esc(b)), $(string(a)), $(string(b))))
+end
+
+function test_colortype_approx_eq(a::ColorValue, b::ColorValue, astr, bstr)
+    typeof(a) == typeof(b) || error("types of $astr and $bstr do not match")
+    n = length(names(typeof(a)))
+    for i = 1:n
+        Base.Test.test_approx_eq(getfield(a, i), getfield(b,i), astr, bstr)
+    end
+end
+
+function test_colortype_approx_eq(a::AbstractAlphaColorValue, b::AbstractAlphaColorValue, astr, bstr)
+    typeof(a) == typeof(b) || error("types of $astr and $bstr do not match")
+    n = length(names(typeof(a.c)))
+    for i = 1:n
+        Base.Test.test_approx_eq(getfield(a.c, i), getfield(b.c,i), astr, bstr)
+    end
+    Base.Test.test_approx_eq(a.alpha, b.alpha, astr, bstr)
+end
+
 @test length(RGB) == 3
 @test length(ColorTypes.BGR) == 3
 @test length(AlphaColorValue{ColorTypes.BGR{Float32},Float32}) == 4  # TypeConstructor mess, would be length(BGRA) otherwise
@@ -56,6 +77,17 @@ acf = Gray{Float32}[cf]
 @test typeof(2*acf) == Vector{Gray{Float32}}
 @test typeof(uint8(2)*acu) == Vector{Gray{Float32}}
 @test typeof(acu/2) == Vector{Gray{typeof(Ufixed8(0.5)/2)}}
+
+# Arithmetic with GrayAlpha
+p1 = GrayAlpha{Float32}(Gray(0.8), 0.2)
+p2 = GrayAlpha{Float32}(Gray(0.6), 0.3)
+@test_colortype_approx_eq p1+p2 GrayAlpha{Float32}(Gray(1.4),0.5)
+@test_colortype_approx_eq (p1+p2)/2 GrayAlpha{Float32}(Gray(0.7),0.25)
+@test_colortype_approx_eq 0.4f0*p1+0.6f0*p2 GrayAlpha{Float32}(Gray(0.68),0.26)
+@test_colortype_approx_eq ([p1]+[p2])[1] GrayAlpha{Float32}(Gray(1.4),0.5)
+@test_colortype_approx_eq ([p1].+[p2])[1] GrayAlpha{Float32}(Gray(1.4),0.5)
+@test_colortype_approx_eq ([p1]/2)[1] GrayAlpha{Float32}(Gray(0.4),0.1)
+@test_colortype_approx_eq (0.4f0*[p1]+0.6f0*[p2])[1] GrayAlpha{Float32}(Gray(0.68),0.26)
 
 # Arithemtic with RGB
 cf = RGB{Float32}(0.1,0.2,0.3)

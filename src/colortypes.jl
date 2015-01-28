@@ -384,13 +384,27 @@ end
 for CV in subtypes(AbstractGray)
     @eval begin
         (*){R<:Real,T}(f::R, c::$CV{T}) = $CV{multype(R,T)}(f*c.val)
+        (*){R<:Real,T}(f::R, c::AlphaColorValue{$CV{T},T}) = AlphaColorValue($CV{multype(R,T)}(f*c.c.val), f*c.alpha)
+        (*){R<:Real,T}(f::R, c::AlphaColor{$CV{T},T}) = AlphaColor($CV{multype(R,T)}(f*c.c.val), f*c.alpha)
         (*)(c::$CV, f::Real) = (*)(f, c)
         (.*)(f::Real, c::$CV) = (*)(f, c)
         (.*)(c::$CV, f::Real) = (*)(f, c)
+        (.*){T}(f::Real, c::AlphaColorValue{$CV{T},T}) = (*)(f, c)
+        (.*){T}(f::Real, c::AlphaColor{$CV{T},T}) = (*)(f, c)
+        (.*){T}(c::AlphaColorValue{$CV{T},T}, f::Real) = (*)(f, c)
+        (.*){T}(c::AlphaColor{$CV{T},T}, f::Real) = (*)(f, c)
         (/)(c::$CV, f::Real) = (one(f)/f)*c
+        (/){R<:Real,T}(c::AlphaColorValue{$CV{T},T}, f::R) = AlphaColorValue($CV{divtype(R,T)}(c.c.val/f), c.alpha/f)
+        (/){R<:Real,T}(c::AlphaColor{$CV{T},T}, f::R) = AlphaColor($CV{divtype(R,T)}(c.c.val/f), c.alpha/f)
         (/)(c::$CV, f::Integer) = (one(eltype(c))/f)*c
         (./)(c::$CV, f::Real) = (/)(c, f)
+        (./){T}(c::AlphaColorValue{$CV{T},T}, f::Real) = (/)(c, f)
+        (./){T}(c::AlphaColor{$CV{T},T}, f::Real) = (/)(c, f)
         (+){S,T}(a::$CV{S}, b::$CV{T}) = $CV{sumtype(S,T)}(a.val+b.val)
+        (+){S,T}(a::AlphaColorValue{$CV{S},S}, b::AlphaColorValue{$CV{T},T}) =
+            AlphaColorValue($CV{sumtype(S,T)}(a.c.val+b.c.val), a.alpha+b.alpha)
+        (+){S,T}(a::AlphaColor{$CV{S},S}, b::AlphaColor{$CV{T},T}) =
+            AlphaColor($CV{sumtype(S,T)}(a.c.val+b.c.val), a.alpha+b.alpha)
         (-){S,T}(a::$CV{S}, b::$CV{T}) = $CV{sumtype(S,T)}(a.val-b.val)
         (*){S,T}(a::$CV{S}, b::$CV{T}) = $CV{multype(S,T)}(a.val*b.val)
         (+)(A::AbstractArray{$CV}, b::AbstractGray) = (.+)(A, b)
