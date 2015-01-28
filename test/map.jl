@@ -107,6 +107,9 @@ mapi = Clamp(RGBA{Ufixed8})
 @chk map(mapi, 0.2) RGBA{Ufixed8}(0.2,0.2,0.2,1.0)
 @chk map(mapi, GrayAlpha{Float32}(Gray(0.2),1.2)) RGBA{Ufixed8}(0.2,0.2,0.2,1.0)
 @chk map(mapi, GrayAlpha{Float32}(Gray(-.4),0.8)) RGBA{Ufixed8}(0.0,0.0,0.0,0.8)
+# Issue #253
+mapi = Clamp(BGRA{Ufixed8})
+@chk map(mapi, RGBA{Float32}(1.2,0.5,-.3,0.2)) BGRA{Ufixed8}(1.0,0.5,0.0,0.2)
 
 @chk clamp(RGB{Float32}(-0.2,0.5,1.8)) RGB{Float32}(0.0,0.5,1.0)
 @chk clamp(ARGB{Float64}(1.2,0.5,-.3,0.2)) ARGB{Float64}(1.0,0.5,0.0,0.2)

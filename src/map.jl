@@ -221,17 +221,11 @@ similar{T}(mapi::ScaleAutoMinMax, ::Type{T}, ::Type) = ScaleAutoMinMax{T}()
 
 # Conversions to RGB{T}, RGBA{T}, RGB24, ARGB32,
 # for grayscale, AbstractRGB, and abstract ARGB inputs.
-# This essentially "vectorizes" map using map1
+# This essentially "vectorizes" map over a single pixel's color channels using map1
 for SI in (MapInfo, AbstractClamp)
     for ST in subtypes(SI)
         ST.abstract && continue
         ST == ScaleSigned && continue  # ScaleSigned gives an RGB from a scalar, so don't "vectorize" it
-        exAlphaGray = ST == MapNone ? : nothing : quote
-            function map{T,S}(mapi::$ST{RGBA{T}}, g::GrayAlpha{S})
-                x = map1(mapi, g.c.val)
-                RGBA{T}(x,x,x,map1(mapi, g.alpha))
-            end  # avoids an ambiguity warning with MapNone definitions
-        end
         @eval begin
             # Grayscale and GrayAlpha inputs
             map(mapi::$ST{RGB24}, g::Gray) = map(mapi, g.val)
@@ -254,26 +248,33 @@ for SI in (MapInfo, AbstractClamp)
                 x = map1(mapi, g.c.val)
                 convert(ARGB32, ARGB{Ufixed8}(x,x,x,map1(mapi, g.alpha)))
             end
-            map{T}(mapi::$ST{RGB{T}}, g::Gray) = map(mapi, g.val)
-            function map{T}(mapi::$ST{RGB{T}}, g::Real)
-                x = map1(mapi, g)
-                RGB{T}(x,x,x)
+        end
+        for O in (:RGB, :BGR)
+            @eval begin
+                map{T}(mapi::$ST{$O{T}}, g::Gray) = map(mapi, g.val)
+                function map{T}(mapi::$ST{$O{T}}, g::Real)
+                    x = map1(mapi, g)
+                    $O{T}(x,x,x)
+                end
             end
-            map{T}(mapi::$ST{ARGB{T}}, g::Gray) = map(mapi, g.val)
-            function map{T}(mapi::$ST{ARGB{T}}, g::Real)
-                x = map1(mapi, g)
-                ARGB{T}(x,x,x)
+        end
+        for OA in (:RGBA, :ARGB, :BGRA)
+            exAlphaGray = ST == MapNone ? : nothing : quote
+                function map{T,S}(mapi::$ST{$OA{T}}, g::GrayAlpha{S})
+                    x = map1(mapi, g.c.val)
+                    $OA{T}(x,x,x,map1(mapi, g.alpha))
+                end  # avoids an ambiguity warning with MapNone definitions
             end
-            function map{T,S}(mapi::$ST{ARGB{T}}, g::GrayAlpha{S})
-                x = map1(mapi, g.c.val)
-                ARGB{T}(x,x,x,map1(mapi, g.alpha))
+            @eval begin
+                map{T}(mapi::$ST{$OA{T}}, g::Gray) = map(mapi, g.val)
+                function map{T}(mapi::$ST{$OA{T}}, g::Real)
+                    x = map1(mapi, g)
+                    $OA{T}(x,x,x)
+                end
+                $exAlphaGray
             end
-            map{T}(mapi::$ST{RGBA{T}}, g::Gray) = map(mapi, g.val)
-            function map{T}(mapi::$ST{RGBA{T}}, g::Real)
-                x = map1(mapi, g)
-                RGBA{T}(x,x,x)
-            end
-            $exAlphaGray
+        end
+        @eval begin
             # AbstractRGB and abstract ARGB inputs
             map(mapi::$ST{RGB24}, rgb::AbstractRGB) =
                 convert(RGB24, RGB{Ufixed8}(map1(mapi, rgb.r), map1(mapi, rgb.g), map1(mapi, rgb.b)))
@@ -285,20 +286,23 @@ for SI in (MapInfo, AbstractClamp)
                                               map1(mapi, argb.c.b), map1(mapi, argb.alpha)))
             map(mapi::$ST{ARGB32}, rgb::AbstractRGB) =
                 convert(ARGB32, ARGB{Ufixed8}(map1(mapi, rgb.r), map1(mapi, rgb.g), map1(mapi, rgb.b)))
-            map{T}(mapi::$ST{RGB{T}}, rgb::AbstractRGB) =
-                RGB{T}(map1(mapi, rgb.r), map1(mapi, rgb.g), map1(mapi, rgb.b))
-            map{T,C<:AbstractRGB, TC}(mapi::$ST{RGB{T}}, argb::AbstractAlphaColorValue{C,TC}) =
-                RGB{T}(map1(mapi, argb.c.r), map1(mapi, argb.c.g), map1(mapi, argb.c.b))
-            map{T, C<:AbstractRGB, TC}(mapi::$ST{ARGB{T}}, argb::AbstractAlphaColorValue{C,TC}) =
-                ARGB{T}(map1(mapi, argb.c.r), map1(mapi, argb.c.g),
-                        map1(mapi, argb.c.b), map1(mapi, argb.alpha))
-            map{T, C<:AbstractRGB, TC}(mapi::$ST{RGBA{T}}, argb::AbstractAlphaColorValue{C,TC}) =
-                RGBA{T}(map1(mapi, argb.c.r), map1(mapi, argb.c.g),
-                        map1(mapi, argb.c.b), map1(mapi, argb.alpha))
-            map{T}(mapi::$ST{ARGB{T}}, rgb::AbstractRGB) =
-                ARGB{T}(map1(mapi, rgb.r), map1(mapi, rgb.g), map1(mapi, rgb.b))
-            map{T}(mapi::$ST{RGBA{T}}, rgb::AbstractRGB) =
-                RGBA{T}(map1(mapi, rgb.r), map1(mapi, rgb.g), map1(mapi, rgb.b))
+        end
+        for O in (:RGB, :BGR)
+            @eval begin
+                map{T}(mapi::$ST{$O{T}}, rgb::AbstractRGB) =
+                    $O{T}(map1(mapi, rgb.r), map1(mapi, rgb.g), map1(mapi, rgb.b))
+                map{T,C<:AbstractRGB, TC}(mapi::$ST{$O{T}}, argb::AbstractAlphaColorValue{C,TC}) =
+                    $O{T}(map1(mapi, argb.c.r), map1(mapi, argb.c.g), map1(mapi, argb.c.b))
+            end
+        end
+        for OA in (:RGBA, :ARGB, :BGRA)
+            @eval begin
+                map{T, C<:AbstractRGB, TC}(mapi::$ST{$OA{T}}, argb::AbstractAlphaColorValue{C,TC}) =
+                    $OA{T}(map1(mapi, argb.c.r), map1(mapi, argb.c.g),
+                            map1(mapi, argb.c.b), map1(mapi, argb.alpha))
+                map{T}(mapi::$ST{$OA{T}}, rgb::AbstractRGB) =
+                    $OA{T}(map1(mapi, rgb.r), map1(mapi, rgb.g), map1(mapi, rgb.b))
+            end
         end
     end
 end
