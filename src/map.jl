@@ -341,7 +341,9 @@ function map{T<:ColorType}(mapi::MapInfo{T}, img::AbstractImageIndexed)
     map!(mapi, out, img)
 end
 
-@ngenerate N typeof(out) function map!{T,T1,T2,N}(mapi::MapInfo{T1}, out::AbstractArray{T,N}, img::AbstractArray{T2,N})
+map!{T,T1,T2,N}(mapi::MapInfo{T1}, out::AbstractArray{T,N}, img::AbstractArray{T2,N}) =
+    _map1!(mapi, out, img)
+@ngenerate N typeof(out) function _map1!{T,T1,T2,N}(mapi::MapInfo{T1}, out::AbstractArray{T,N}, img::AbstractArray{T2,N})
     mi = take(mapi, img)
     dimg = data(img)
     dout = data(out)
@@ -357,7 +359,9 @@ take{T}(mapi::ScaleAutoMinMax{T}, img::AbstractArray) = ScaleMinMax(T, img)
 take{To,From}(mapi::ScaleMinMax{To}, img::AbstractArray{From}) = ScaleMinMax(To, convert(From, mapi.min), convert(From, mapi.max), mapi.s)
 
 # Indexed images (colormaps)
-@ngenerate N typeof(out) function map!{T,T1,N}(mapi::MapInfo{T}, out::AbstractArray{T,N}, img::AbstractImageIndexed{T1,N})
+map!{T,T1,N}(mapi::MapInfo{T}, out::AbstractArray{T,N}, img::AbstractImageIndexed{T1,N}) =
+    _mapindx!(mapi, out, img)
+@ngenerate N typeof(out) function _mapindx!{T,T1,N}(mapi::MapInfo{T}, out::AbstractArray{T,N}, img::AbstractImageIndexed{T1,N})
     dimg = data(img)
     dout = data(out)
     cmap = map(mapi, img.cmap)
