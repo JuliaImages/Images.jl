@@ -323,6 +323,14 @@ for CV in subtypes(AbstractRGB)
             out = similar(A)
             sub!(out, bT, A)
         end
+        function (.*){T<:Number}(A::AbstractArray{T}, b::AbstractRGB)
+            bT = typeof(b*one(T))
+            out = similar(A, bT)
+            mul!(out, A, b)
+        end
+        (.*){T<:Number}(b::AbstractRGB, A::AbstractArray{T}) = A.*b
+        (*){T<:Number}(A::AbstractArray{T}, b::AbstractRGB) = A.*b
+        (*){T<:Number}(b::AbstractRGB, A::AbstractArray{T}) = A.*b
         isfinite{T<:Ufixed}(c::$CV{T}) = true
         isfinite{T<:Ufixed}(c::AbstractAlphaColorValue{$CV{T},T}) = true
         isfinite{T<:FloatingPoint}(c::$CV{T}) = isfinite(c.r) && isfinite(c.g) && isfinite(c.b)
