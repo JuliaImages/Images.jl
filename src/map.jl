@@ -172,6 +172,7 @@ function map{To<:Real,From<:Union(Real,Gray)}(mapi::ScaleMinMax{To,From}, val::F
     t = ifelse(val < mapi.min, zero(From), ifelse(val > mapi.max, mapi.max-mapi.min, val-mapi.min))
     convert(To, mapi.s*t)
 end
+map{To,From}(mapi::ScaleMinMax{To,From}, val::Union(Real,ColorValue)) = map(mapi, convert(From, val))
 function map1{To<:Union(RGB24,ARGB32),From<:Real}(mapi::ScaleMinMax{To,From}, val::From)
     t = ifelse(val < mapi.min, zero(From), ifelse(val > mapi.max, mapi.max-mapi.min, val-mapi.min))
     convert(Ufixed8, mapi.s*t)
@@ -184,6 +185,7 @@ function map1{To<:ColorType,From<:Real}(mapi::ScaleMinMax{To,From}, val::From)
     t = ifelse(val < mapi.min, zero(From), ifelse(val > mapi.max, mapi.max-mapi.min, val-mapi.min))
     convert(eltype(To), mapi.s*t)
 end
+map1{To,From}(mapi::ScaleMinMax{To,From}, val::Union(Real,ColorValue)) = map1(mapi, convert(From, val))
 
 
 ## ScaleSigned
