@@ -1,6 +1,6 @@
 module ColorTypes
 
-using Color, FixedPointNumbers, Base.Cartesian
+using Color, FixedPointNumbers, Compat, Base.Cartesian
 import Color: Fractional, _convert
 
 import Base: ==, abs, abs2, clamp, convert, div, isfinite, isinf,
