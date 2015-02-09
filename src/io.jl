@@ -352,6 +352,7 @@ for ACV in (ColorValue, AbstractRGB,AbstractGray)
         end
     end
 end
+mapinfo(::Type{ImageMagick}, img::AbstractArray{RGB24}) = MapNone{RGB{Ufixed8}}()
 
 
 

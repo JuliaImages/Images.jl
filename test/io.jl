@@ -35,6 +35,13 @@ b = Images.imread(fn)
 @test Images.data(b) == Ufixed8[0.6 0.2;
                                 1.0 0.8]
 
+img = Images.colorim(rand(3,2,2))
+img24 = convert(Images.Image{RGB24}, img)
+Images.imwrite(img24, fn)
+b = Images.imread(fn)
+imgrgb8 = convert(Images.Image{RGB{Ufixed8}}, img)
+@test Images.data(imgrgb8) == Images.data(b)
+
 # test writemime's use of restrict
 abig = Images.grayim(rand(Uint8, 1024, 1023))
 fn = joinpath(writedir, "big.png")
