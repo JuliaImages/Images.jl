@@ -266,7 +266,7 @@ end
 function gaussian2d(sigma::Number=0.5, filter_size=[])
     if length(filter_size) == 0
         # choose 'good' size
-        m = 4*ceil(sigma)+1
+        m = 4*ceil(Int, sigma)+1
         n = m
     elseif length(filter_size) != 2
         error("wrong filter size")
@@ -276,7 +276,7 @@ function gaussian2d(sigma::Number=0.5, filter_size=[])
     if mod(m, 2) != 1 || mod(n, 2) != 1
         error("filter dimensions must be odd")
     end
-    g = [exp(-(X.^2+Y.^2)/(2*sigma.^2)) for X=-floor(m/2):floor(m/2), Y=-floor(n/2):floor(n/2)]
+    g = Float64[exp(-(X.^2+Y.^2)/(2*sigma.^2)) for X=-floor(Int,m/2):floor(Int,m/2), Y=-floor(Int,n/2):floor(Int,n/2)]
     return g/sum(g)
 end
 
