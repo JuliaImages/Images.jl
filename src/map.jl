@@ -161,32 +161,36 @@ ScaleMinMax{To,From}(::Type{To}, min::From, max::From, s::FloatingPoint) = Scale
 ScaleMinMax{To<:Union(Fractional,ColorType),From}(::Type{To}, mn::From, mx::From) = ScaleMinMax(To, mn, mx, 1.0f0/(float32(mx)-float32(mn)))
 
 # ScaleMinMax constructors that take AbstractArray input
-ScaleMinMax{To,From}(::Type{To}, img::AbstractArray{From}, mn::Real, mx::Real) = ScaleMinMax(To, convert(From,mn), convert(From,mx), 1.0f0/(float32(convert(From,mx))-float32(convert(From,mn))))
-ScaleMinMax{To,From,R<:Real}(::Type{To}, img::AbstractArray{From}, mn::Gray{R}, mx::Gray{R}) = ScaleMinMax(To, convert(From,mn), convert(From,mx), 1.0f0/(float32(convert(From,mx.val))-float32(convert(From,mn.val))))
+ScaleMinMax{To,From<:Real}(::Type{To}, img::AbstractArray{From}, mn::Real, mx::Real) = ScaleMinMax(To, convert(From,mn), convert(From,mx), 1.0f0/(float32(convert(From,mx))-float32(convert(From,mn))))
+ScaleMinMax{To,From<:Real}(::Type{To}, img::AbstractArray{Gray{From}}, mn::Real, mx::Real) = ScaleMinMax(To, convert(From,mn), convert(From,mx), 1.0f0/(float32(convert(From,mx))-float32(convert(From,mn))))
+ScaleMinMax{To,From<:Real,R<:Real}(::Type{To}, img::AbstractArray{From}, mn::Gray{R}, mx::Gray{R}) = ScaleMinMax(To, convert(From,mn.val), convert(From,mx.val), 1.0f0/(float32(convert(From,mx.val))-float32(convert(From,mn.val))))
+ScaleMinMax{To,From<:Real,R<:Real}(::Type{To}, img::AbstractArray{Gray{From}}, mn::Gray{R}, mx::Gray{R}) = ScaleMinMax(To, convert(From,mn.val), convert(From,mx.val), 1.0f0/(float32(convert(From,mx.val))-float32(convert(From,mn.val))))
 ScaleMinMax{To}(::Type{To}, img::AbstractArray) = ScaleMinMax(To, img, minfinite(img), maxfinite(img))
 
 similar{T,F,To,From,S}(mapi::ScaleMinMax{To,From,S}, ::Type{T}, ::Type{F}) = ScaleMinMax{T,F,S}(convert(F,mapi.min), convert(F.mapi.max), mapi.s)
 
 # Implementation
 function map{To<:Real,From<:Union(Real,Gray)}(mapi::ScaleMinMax{To,From}, val::From)
-    t = ifelse(val < mapi.min, zero(From), ifelse(val > mapi.max, mapi.max-mapi.min, val-mapi.min))
+    t = ifelse(val  < mapi.min, zero(From), ifelse(val  > mapi.max, mapi.max-mapi.min, val -mapi.min))
     convert(To, mapi.s*t)
 end
-map{To,From}(mapi::ScaleMinMax{To,From}, val::Union(Real,ColorValue)) = map(mapi, convert(From, val))
-function map1{To<:Union(RGB24,ARGB32),From<:Real}(mapi::ScaleMinMax{To,From}, val::From)
-    t = ifelse(val < mapi.min, zero(From), ifelse(val > mapi.max, mapi.max-mapi.min, val-mapi.min))
-    convert(Ufixed8, mapi.s*t)
+function map{To<:Real,From<:Union(Real,Gray)}(mapi::ScaleMinMax{To,From}, val::Union(Real,ColorType))
+    map(mapi, convert(From, val))
 end
-function map1{To<:Union(RGB24,ARGB32),From<:Fractional}(mapi::ScaleMinMax{To,Gray{From}}, val::From)
-    t = ifelse(val < mapi.min.val, zero(From), ifelse(val > mapi.max.val, mapi.max.val-mapi.min.val, val-mapi.min.val))
+function map1{To<:Union(RGB24,ARGB32),From<:Real}(mapi::ScaleMinMax{To,From}, val::From)
+    t = ifelse(val  < mapi.min, zero(From), ifelse(val  > mapi.max, mapi.max-mapi.min, val -mapi.min))
     convert(Ufixed8, mapi.s*t)
 end
 function map1{To<:ColorType,From<:Real}(mapi::ScaleMinMax{To,From}, val::From)
-    t = ifelse(val < mapi.min, zero(From), ifelse(val > mapi.max, mapi.max-mapi.min, val-mapi.min))
+    t = ifelse(val  < mapi.min, zero(From), ifelse(val  > mapi.max, mapi.max-mapi.min, val -mapi.min))
     convert(eltype(To), mapi.s*t)
 end
-map1{To,From}(mapi::ScaleMinMax{To,From}, val::Union(Real,ColorValue)) = map1(mapi, convert(From, val))
-
+function map1{To<:Union(RGB24,ARGB32),From<:Real}(mapi::ScaleMinMax{To,From}, val::Union(Real,ColorType))
+    map1(mapi, convert(From, val))
+end
+function map1{To<:ColorType,From<:Real}(mapi::ScaleMinMax{To,From}, val::Union(Real,ColorType))
+    map1(mapi, convert(From, val))
+end
 
 ## ScaleSigned
 # Multiplies by a scaling factor and then clamps to the range [-1,1].
@@ -344,8 +348,8 @@ function map{T<:ColorType}(mapi::MapInfo{T}, img::AbstractImageIndexed)
 end
 
 map!{T,T1,T2,N}(mapi::MapInfo{T1}, out::AbstractArray{T,N}, img::AbstractArray{T2,N}) =
-    _map1!(mapi, out, img)
-@ngenerate N typeof(out) function _map1!{T,T1,T2,N}(mapi::MapInfo{T1}, out::AbstractArray{T,N}, img::AbstractArray{T2,N})
+    _map_a!(mapi, out, img)
+@ngenerate N typeof(out) function _map_a!{T,T1,T2,N}(mapi::MapInfo{T1}, out::AbstractArray{T,N}, img::AbstractArray{T2,N})
     mi = take(mapi, img)
     dimg = data(img)
     dout = data(out)
@@ -358,7 +362,6 @@ end
 
 take(mapi::MapInfo, img::AbstractArray) = mapi
 take{T}(mapi::ScaleAutoMinMax{T}, img::AbstractArray) = ScaleMinMax(T, img)
-take{To,From}(mapi::ScaleMinMax{To}, img::AbstractArray{From}) = ScaleMinMax(To, convert(From, mapi.min), convert(From, mapi.max), mapi.s)
 
 # Indexed images (colormaps)
 map!{T,T1,N}(mapi::MapInfo{T}, out::AbstractArray{T,N}, img::AbstractImageIndexed{T1,N}) =
