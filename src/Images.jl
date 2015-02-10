@@ -1,7 +1,6 @@
 module Images
 
 import Base.Order: Ordering, ForwardOrdering, ReverseOrdering
-import Base.Graphics: width, height
 import Base: atan2, clamp, convert, copy, copy!, ctranspose, delete!, done, eltype,
              fft, float32, float64, get, getindex, haskey, hypot, ifft, length, map, map!,
              maximum, mimewritable, minimum, next, ndims, one, parent, permutedims, reinterpret,
@@ -11,6 +10,7 @@ import Base: atan2, clamp, convert, copy, copy!, ctranspose, delete!, done, elty
 
 using Color, FixedPointNumbers, Compat
 import Color: Fractional
+import Graphics: width, height
 import FixedPointNumbers: ufixed8, ufixed10, ufixed12, ufixed14, ufixed16
 
 using Base.Cartesian

@@ -708,7 +708,7 @@ The returned image is non-zero only at maximal edge locations.
 
 `border` is any of the boundary conditions specified in `padarray`.
 
-In addition to the maximal edge image, the `_subpix` versions of these functions also return an estimate of the subpixel location of each local maxima, as a 2D array or image of `Base.Graphics.Point` objects.
+In addition to the maximal edge image, the `_subpix` versions of these functions also return an estimate of the subpixel location of each local maxima, as a 2D array or image of `Graphics.Point` objects.
 Additionally, each local maxima is adjusted to the estimated value at the subpixel location.
 
 Currently, the `_nonmaxsup` functions are identical to the first two function calls, except that they also accept additional keyword arguments.
