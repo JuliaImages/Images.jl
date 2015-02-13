@@ -353,7 +353,7 @@ for ACV in (ColorValue, AbstractRGB,AbstractGray)
     end
 end
 mapinfo(::Type{ImageMagick}, img::AbstractArray{RGB24}) = MapNone{RGB{Ufixed8}}()
-
+mapinfo(::Type{ImageMagick}, img::AbstractArray{ARGB32}) = MapNone{BGRA{Ufixed8}}()
 
 
 # Make the data contiguous in memory, this is necessary for imagemagick since it doesn't handle stride.

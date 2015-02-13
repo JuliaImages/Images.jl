@@ -306,8 +306,10 @@ for SI in (MapInfo, AbstractClamp)
                 map{T, C<:AbstractRGB, TC}(mapi::$ST{$OA{T}}, argb::AbstractAlphaColorValue{C,TC}) =
                     $OA{T}(map1(mapi, argb.c.r), map1(mapi, argb.c.g),
                             map1(mapi, argb.c.b), map1(mapi, argb.alpha))
+                map{T}(mapi::$ST{$OA{T}}, argb::ARGB32) = map(mapi, convert(RGBA{Ufixed8}, argb))
                 map{T}(mapi::$ST{$OA{T}}, rgb::AbstractRGB) =
                     $OA{T}(map1(mapi, rgb.r), map1(mapi, rgb.g), map1(mapi, rgb.b))
+                map{T}(mapi::$ST{$OA{T}}, rgb::RGB24) = map(mapi, convert(RGB{Ufixed8}, argb))
             end
         end
     end

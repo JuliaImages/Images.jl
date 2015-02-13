@@ -81,3 +81,12 @@ cmaprgb[1:128] = [(1-x)*b + x*w for x in f]
 cmaprgb[129:end] = [(1-x)*w + x*r for x in f[2:end]]
 img = Images.ImageCmap(dataint, cmaprgb)
 Images.imwrite(img,joinpath(writedir,"cmap.jpg"))
+
+c = reinterpret(Images.BGRA{Ufixed8}, [0xf0884422]'')
+fn = joinpath(writedir, "alpha.png")
+Images.imwrite(c, fn)
+C = Images.imread(fn)
+@test C[1] == c[1]
+Images.imwrite(reinterpret(ARGB32, [0xf0884422]''), fn)
+D = Images.imread(fn)
+@test D[1] == c[1]
