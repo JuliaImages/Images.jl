@@ -233,19 +233,19 @@ function nms_test_horiz_vert(img, which)
 
     if transposed
         if which == :horizontal
-            @assert     [pt.x for pt in s[:,3]]  == [1:5]
+            @assert     [pt.x for pt in s[:,3]]  == [1:5;]
             @assert all([pt.y for pt in s[:,3]] .== peakloc)
         else
             @assert all([pt.x for pt in s[3,:]] .== peakloc)
-            @assert     [pt.y for pt in s[3,:]]  == [1:5]
+            @assert     [pt.y for pt in s[3,:]]  == [1:5;]
         end
     else
         if which == :horizontal
-            @assert     [pt.x for pt in s[3,:]]  == [1:5]
+            @assert     [pt.x for pt in s[3,:]]  == [1:5;]
             @assert all([pt.y for pt in s[3,:]] .== peakloc)
         else
             @assert all([pt.x for pt in s[:,3]] .== peakloc)
-            @assert     [pt.y for pt in s[:,3]]  == [1:5]
+            @assert     [pt.y for pt in s[:,3]]  == [1:5;]
         end
     end
 end
@@ -316,8 +316,8 @@ function nms_test_diagonal(img)
     diag_s = copyproperties(s, diagm(diag(data(s))))
     @assert s == diag_s
 
-    @assert all([pt.x for pt in diag(data(s))[2:4]] - ([2:4] + x_peak_offset) .< EPS)
-    @assert all([pt.y for pt in diag(data(s))[2:4]] - ([2:4] + y_peak_offset) .< EPS)
+    @assert all([pt.x for pt in diag(data(s))[2:4]] - ((2:4) + x_peak_offset) .< EPS)
+    @assert all([pt.y for pt in diag(data(s))[2:4]] - ((2:4) + y_peak_offset) .< EPS)
 
 end
 

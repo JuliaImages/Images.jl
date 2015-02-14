@@ -155,7 +155,7 @@ if testing_units
 end
 
 @test storageorder(img) == Images.yx
-@test storageorder(imgds) == [Images.yx, "color"]
+@test storageorder(imgds) == [Images.yx; "color"]
 
 A = rand(4,4,3)
 @test colordim(A) == 3

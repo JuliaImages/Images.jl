@@ -242,7 +242,7 @@ function separate{CV<:ColorType}(img::AbstractImage{CV})
     so = spatialorder(img)[p]
     T = eltype(CV)
     if length(CV) > 1
-        A = permutedims(reinterpret(T, data(img), tuple(length(CV), size(img)...)), [p+1,1])
+        A = permutedims(reinterpret(T, data(img), tuple(length(CV), size(img)...)), [p+1;1])
     else
         A = permutedims(reinterpret(T, data(img), size(img)), p)
     end
@@ -254,7 +254,7 @@ function separate{CV<:ColorType}(img::AbstractImage{CV})
 end
 function separate{CV<:ColorType}(A::AbstractArray{CV})
     T = eltype(CV)
-    permutedims(reinterpret(T, A, tuple(length(CV), size(A)...)), [2:ndims(A)+1,1])
+    permutedims(reinterpret(T, A, tuple(length(CV), size(A)...)), [2:ndims(A)+1;1])
 end
 separate(A::AbstractArray) = A
 
@@ -268,7 +268,7 @@ _convert{C<:ColorType,T<:Fractional}(::Type{Image{C}}, ::DataType, img::Union(Ab
 function _convert{C<:ColorType,T<:Fractional}(::Type{Image{C}}, img::Union(AbstractArray{T},AbstractImageDirect{T}))
     cd = colordim(img)
     if cd > 0
-        p = [cd, setdiff(1:ndims(img), cd)]
+        p = [cd; setdiff(1:ndims(img), cd)]
         A = permutedims(data(img), p)
     else
         A = data(img)
@@ -775,7 +775,7 @@ function coords_spatial(img)
     if cd > nd || td > nd
         error("Properties are inconsistent with the array dimensionality")
     end
-    ind = [1:nd]
+    ind = [1:nd;]
     if cd > td
         splice!(ind, cd)
         if td > 0

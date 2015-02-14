@@ -249,7 +249,7 @@ function imread(filename::String, ::Type{ImageMagick};extraprop="",extraproperty
     prop["IMcs"] = cs
 
     if extraprop != ""
-        for extra in [extraprop]
+        for extra in [extraprop;]
             prop[extra] = LibMagick.getimageproperty(wand,extra)
         end
     end

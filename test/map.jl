@@ -192,7 +192,7 @@ B = map(Images.ClampMin(Float32, 3), A)
 B = map(Images.ClampMax(Uint8, 7), A)
 @assert eltype(B) == Uint8 && B == [1 4 7; 2 5 7; 3 6 7]
 
-A = reinterpret(Ufixed8, [uint8(1:24)], (3, 2, 4))
+A = reinterpret(Ufixed8, [uint8(1:24);], (3, 2, 4))
 img = reinterpret(RGB{Ufixed8}, A, (2,4))
 @test separate(img) == permutedims(A, (2,3,1))
 

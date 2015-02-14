@@ -147,7 +147,7 @@ end
 immutable DisjointMinSets
     parents::Vector{Int}
 
-    DisjointMinSets(n::Integer) = new([1:n])
+    DisjointMinSets(n::Integer) = new([1:n;])
 end
 DisjointMinSets() = DisjointMinSets(0)
 

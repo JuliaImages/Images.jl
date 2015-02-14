@@ -340,15 +340,15 @@ function padarray{T,n}(img::AbstractArray{T,n}, prepad::Union(Vector{Int},Dims),
     I = Array(Vector{Int}, n)
     for d = 1:n
         M = size(img, d)
-        I[d] = [(1 - prepad[d]):(M + postpad[d])]
+        I[d] = (1 - prepad[d]):(M + postpad[d])
         if border == "replicate"
             I[d] = min(max(I[d], 1), M)
         elseif border == "circular"
             I[d] = 1 .+ mod(I[d] .- 1, M)
         elseif border == "symmetric"
-            I[d] = [1:M, M:-1:1][1 .+ mod(I[d] .- 1, 2 * M)]
+            I[d] = [1:M; M:-1:1][1 .+ mod(I[d] .- 1, 2 * M)]
         elseif border == "reflect"
-            I[d] = [1:M, M-1:-1:2][1 .+ mod(I[d] .- 1, 2 * M - 2)]
+            I[d] = [1:M; M-1:-1:2][1 .+ mod(I[d] .- 1, 2 * M - 2)]
         else
             error("unknown border condition")
         end
@@ -505,7 +505,7 @@ function imfilter_fft_inseparable{T<:Real,K,N}(img::AbstractArray{T,N}, kern::Ab
         fullpad = [nextprod([2,3], size(img,i) + prepad[i] + postpad[i]) - size(img, i) - prepad[i] for i = 1:N]
         A = padarray(img, prepad, fullpad, border, convert(T, value))
         krn = zeros(eltype(one(T)*one(K)), size(A))
-        indexesK = ntuple(N, d->[size(krn,d)-prepad[d]+1:size(krn,d),1:size(kern,d)-prepad[d]])
+        indexesK = ntuple(N, d->[size(krn,d)-prepad[d]+1:size(krn,d);1:size(kern,d)-prepad[d]])
         krn[indexesK...] = reflect(kern)
         AF = ifft(fft(A).*fft(krn))
         out = Array(realtype(eltype(AF)), size(img))
@@ -516,7 +516,7 @@ function imfilter_fft_inseparable{T<:Real,K,N}(img::AbstractArray{T,N}, kern::Ab
         prepad  = [div(size(kern,i)-1, 2) for i = 1:N]
         postpad = [div(size(kern,i),   2) for i = 1:N]
         krn = zeros(eltype(one(T)*one(K)), size(A))
-        indexesK = ntuple(N, d->[size(krn,d)-prepad[d]+1:size(krn,d),1:size(kern,d)-prepad[d]])
+        indexesK = ntuple(N, d->[size(krn,d)-prepad[d]+1:size(krn,d);1:size(kern,d)-prepad[d]])
         krn[indexesK...] = reflect(kern)
         AF = ifft(fft(A).*fft(krn))
         out = Array(realtype(eltype(AF)), ([size(img)...] - prepad - postpad)...)
@@ -573,7 +573,7 @@ realtype{R<:Real}(::Type{Complex{R}}) = R
 # Note: astype is ignored for FloatingPoint input
 function imfilter_gaussian{CT<:ColorType}(img::AbstractArray{CT}, sigma; emit_warning = true, astype::Type=Float64)
     A = reinterpret(eltype(CT), data(img))
-    newsigma = ndims(A) > ndims(img) ? [0,sigma] : sigma
+    newsigma = ndims(A) > ndims(img) ? [0;sigma] : sigma
     ret = imfilter_gaussian(A, newsigma; emit_warning=emit_warning, astype=astype)
     shareproperties(img, reinterpret(noeltype(CT), ret))
 end
@@ -692,7 +692,7 @@ function _imfilter_gaussian!{T<:FloatingPoint}(A::Array{T}, sigma::Vector; emit_
         a2 = a[2]
         a3 = a[3]
         n1 = size(A,1)
-        keepdims = [false,trues(nd-1)]
+        keepdims = [false;trues(nd-1)]
         if d == 1
             x = zeros(T, 3)
             vstart = zeros(T, 3)
@@ -848,15 +848,15 @@ imfilter_LoG{T}(img::AbstractArray{T,2}, σ::Real, border="replicate") =
 function padindexes{T,n}(img::AbstractArray{T,n}, dim, prepad, postpad, border::String)
     M = size(img, dim)
     I = Array(Int, M + prepad + postpad)
-    I = [(1 - prepad):(M + postpad)]
+    I = [(1 - prepad):(M + postpad);]
     if border == "replicate"
         I = min(max(I, 1), M)
     elseif border == "circular"
         I = 1 .+ mod(I .- 1, M)
     elseif border == "symmetric"
-        I = [1:M, M:-1:1][1 .+ mod(I .- 1, 2 * M)]
+        I = [1:M; M:-1:1][1 .+ mod(I .- 1, 2 * M)]
     elseif border == "reflect"
-        I = [1:M, M-1:-1:2][1 .+ mod(I .- 1, 2 * M - 2)]
+        I = [1:M; M-1:-1:2][1 .+ mod(I .- 1, 2 * M - 2)]
     else
         error("unknown border condition")
     end
