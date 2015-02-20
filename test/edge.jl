@@ -228,8 +228,8 @@ function nms_test_horiz_vert(img, which)
 
     @assert test_axis1 ? all(t[:,[1,2,4,5]] .== 0) : all(t[[1,2,4,5],:] .== 0)
     @assert test_axis1 ? all(t[:,3]   .== peakval) : all(t[3,:]   .== peakval)
-    @assert test_axis1 ? all(s[:,[1,2,4,5]] .== zero(Base.Graphics.Point)) :
-                         all(s[[1,2,4,5],:] .== zero(Base.Graphics.Point))
+    @assert test_axis1 ? all(s[:,[1,2,4,5]] .== zero(Graphics.Point)) :
+                         all(s[[1,2,4,5],:] .== zero(Graphics.Point))
 
     if transposed
         if which == :horizontal
