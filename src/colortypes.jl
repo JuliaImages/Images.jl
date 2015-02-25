@@ -251,7 +251,6 @@ end
 
 for f in (:mod, :rem, :mod1)
     @eval $f(x::Gray, m::Gray) = Gray($f(x.val, m.val))
-    @eval @vectorize_2arg Gray $f
 end
 
 # Return types for arithmetic operations
