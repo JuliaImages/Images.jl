@@ -1,11 +1,15 @@
 using Images, SIUnits
 using Base.Test
 
-const savedir = joinpath(tempdir(), "Images")
-const writedir = joinpath(savedir, "write")
+if !isdefined(:workdir)
+    const workdir = joinpath(tempdir(), "Images")
+end
+if !isdefined(:writedir)
+    const writedir = joinpath(workdir, "write")
+end
 
-if !isdir(savedir)
-    mkdir(savedir)
+if !isdir(workdir)
+    mkdir(workdir)
 end
 if !isdir(writedir)
     mkdir(writedir)

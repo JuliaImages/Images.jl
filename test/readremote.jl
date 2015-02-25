@@ -3,22 +3,26 @@ using Base.Test
 
 urlbase = "http://www.imagemagick.org/Usage/images/"
 
-const savedir = joinpath(tempdir(), "Images")
-const writedir = joinpath(savedir, "write")
+if !isdefined(:workdir)
+    const workdir = joinpath(tempdir(), "Images")
+end
+if !isdefined(:writedir)
+    const writedir = joinpath(workdir, "write")
+end
+
+if !isdir(workdir)
+    mkdir(workdir)
+end
+if !isdir(writedir)
+    mkdir(writedir)
+end
 
 function getfile(name)
-    file = joinpath(savedir, name)
+    file = joinpath(workdir, name)
     if !isfile(file)
         file = download(urlbase*name, file)
     end
     file
-end
-
-if !isdir(savedir)
-    mkdir(savedir)
-end
-if !isdir(writedir)
-    mkdir(writedir)
 end
 
 # Gray
