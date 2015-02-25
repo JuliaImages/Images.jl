@@ -87,6 +87,8 @@ Images.imwrite(img,joinpath(workdir,"cmap.jpg"))
 c = reinterpret(Images.BGRA{Ufixed8}, [0xf0884422]'')
 fn = joinpath(workdir, "alpha.png")
 Images.imwrite(c, fn)
+println(Images.LibMagick.libversion)
+run(`identify -verbose $fn`)
 C = Images.imread(fn)
 @test C[1] == c[1]
 Images.imwrite(reinterpret(ARGB32, [0xf0884422]''), fn)
