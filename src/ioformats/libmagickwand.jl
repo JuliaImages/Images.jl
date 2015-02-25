@@ -23,8 +23,8 @@ export MagickWand,
 
 
 # Find the library
-depsfile = Pkg.dir("Images","deps","deps.jl")
-versionfile = Pkg.dir("Images","deps","versioninfo.jl")
+depsfile = joinpath(dirname(@__FILE__),"..","..","deps","deps.jl")
+versionfile = joinpath(dirname(@__FILE__),"..","..","deps","versioninfo.jl")
 if isfile(depsfile)
     include(depsfile)
 else

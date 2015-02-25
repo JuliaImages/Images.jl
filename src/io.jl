@@ -22,7 +22,7 @@ filesrc = Array(String, 0)
 function _loadformat(index::Int)
     filename = joinpath("ioformats", filesrc[index])
     if !isfile(filename)
-        filename = joinpath(Pkg.dir(), "Images", "src", "ioformats", filesrc[index])
+        filename = joinpath(dirname(@__FILE__), "ioformats", filesrc[index])
     end
     include(filename)
     filesrcloaded[index] = true

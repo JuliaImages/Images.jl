@@ -13,7 +13,7 @@ end
 
 
 # Gray, raw
-img = imread(joinpath(Pkg.dir(), "Images", "test", "io", "small.nrrd"))
+img = imread(joinpath(dirname(@__FILE__), "io", "small.nrrd"))
 @assert colorspace(img) == "Gray"
 @assert ndims(img) == 3
 @assert colordim(img) == 0
@@ -23,14 +23,14 @@ imwrite(img, outname)
 imgc = imread(outname)
 @assert img.data == imgc.data
 
-img = imread(joinpath(Pkg.dir(), "Images", "test", "io", "units.nhdr"))
+img = imread(joinpath(dirname(@__FILE__), "io", "units.nhdr"))
 ps = pixelspacing(img)
 @test_approx_eq ps[1]/(0.1*Milli*Meter) 1
 @test_approx_eq ps[2]/(0.2*Milli*Meter) 1
 @test_approx_eq ps[3]/(1*Milli*Meter) 1
 
 # Gray, compressed (gzip)
-img = imread(joinpath(Pkg.dir(), "Images", "test", "io", "smallgz.nrrd"))
+img = imread(joinpath(dirname(@__FILE__), "io", "smallgz.nrrd"))
 @assert colorspace(img) == "Gray"
 @assert ndims(img) == 3
 @assert colordim(img) == 0
