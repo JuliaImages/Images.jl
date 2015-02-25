@@ -27,6 +27,7 @@ end
 (.-)(n::Number, img::AbstractImageDirect) = shareproperties(img, n.-data(img))
 (-)(img::AbstractImageDirect, A::BitArray) = shareproperties(img, data(img)-A)
 (-){T}(img::AbstractImageDirect{T,2}, A::Diagonal) = shareproperties(img, data(img)-A) # fixes an ambiguity warning
+(-)(img::AbstractImageDirect, A::Range) = shareproperties(img, data(img)-A)
 (-)(img::AbstractImageDirect, A::AbstractArray) = shareproperties(img, data(img)-data(A))
 (-)(img::AbstractImageDirect) = shareproperties(img, -data(img))
 (.-)(img::AbstractImageDirect, A::BitArray) = shareproperties(img, data(img).-A)

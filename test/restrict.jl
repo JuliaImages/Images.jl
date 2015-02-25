@@ -5,12 +5,21 @@ using Images
 
 url = "http://upload.wikimedia.org/wikipedia/commons/9/97/The_Earth_seen_from_Apollo_17.jpg"
 
-const savedir = joinpath(tempdir(), "Images")
-if !isdir(savedir)
-    mkdir(savedir)
+if !isdefined(:workdir)
+    const workdir = joinpath(tempdir(), "Images")
+end
+if !isdefined(:writedir)
+    const writedir = joinpath(workdir, "write")
 end
 
-const savename = joinpath(savedir, "The_Earth_seen_from_Apollo_17.jpg")
+if !isdir(workdir)
+    mkdir(workdir)
+end
+if !isdir(writedir)
+    mkdir(writedir)
+end
+
+const savename = joinpath(writedir, "The_Earth_seen_from_Apollo_17.jpg")
 if !isfile(savename)
     download(url, savename)
 end

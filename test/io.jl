@@ -1,15 +1,17 @@
 import Images
 using Color, FixedPointNumbers, Base.Test
 
-const writedir = joinpath(tempdir(), "Images")
+if !isdefined(:workdir)
+    const workdir = joinpath(tempdir(), "Images")
+end
 
-if !isdir(writedir)
-    mkdir(writedir)
+if !isdir(workdir)
+    mkdir(workdir)
 end
 
 a = rand(2,2)
 aa = convert(Array{Ufixed8}, a)
-fn = joinpath(writedir, "2by2.png")
+fn = joinpath(workdir, "2by2.png")
 Images.imwrite(a, fn)
 b = Images.imread(fn)
 @test convert(Array, b) == aa
@@ -44,7 +46,7 @@ imgrgb8 = convert(Images.Image{RGB{Ufixed8}}, img)
 
 # test writemime's use of restrict
 abig = Images.grayim(rand(Uint8, 1024, 1023))
-fn = joinpath(writedir, "big.png")
+fn = joinpath(workdir, "big.png")
 open(fn, "w") do file
     writemime(file, MIME("image/png"), abig, maxpixels=10^6)
 end
@@ -53,7 +55,7 @@ b = Images.imread(fn)
 
 # More writemime tests
 a = Images.colorim(rand(Uint8, 3, 2, 2))
-fn = joinpath(writedir, "2by2.png")
+fn = joinpath(workdir, "2by2.png")
 open(fn, "w") do file
     writemime(file, MIME("image/png"), a, minpixels=0)
 end
@@ -61,7 +63,7 @@ b = Images.imread(fn)
 @test Images.data(b) == Images.data(a)
 
 abig = Images.colorim(rand(Uint8, 3, 1021, 1026))
-fn = joinpath(writedir, "big.png")
+fn = joinpath(workdir, "big.png")
 open(fn, "w") do file
     writemime(file, MIME("image/png"), abig, maxpixels=10^6)
 end
@@ -80,10 +82,10 @@ f = linspace(0,1,128)
 cmaprgb[1:128] = [(1-x)*b + x*w for x in f]
 cmaprgb[129:end] = [(1-x)*w + x*r for x in f[2:end]]
 img = Images.ImageCmap(dataint, cmaprgb)
-Images.imwrite(img,joinpath(writedir,"cmap.jpg"))
+Images.imwrite(img,joinpath(workdir,"cmap.jpg"))
 
 c = reinterpret(Images.BGRA{Ufixed8}, [0xf0884422]'')
-fn = joinpath(writedir, "alpha.png")
+fn = joinpath(workdir, "alpha.png")
 Images.imwrite(c, fn)
 C = Images.imread(fn)
 @test C[1] == c[1]
