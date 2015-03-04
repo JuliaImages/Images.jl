@@ -203,7 +203,7 @@ thin_edges_subpix{T}(img::AbstractArray{T,2}, gradientangles::AbstractArray, bor
 #                  compatbility (Thanks to Chris Pudney)
 # June      2014 - Ported (and modified significantly) to Julia (Kevin Squire)
 
-import Graphics.Point
+import .Point
 
 if !applicable(zero, Point)
     import Base.zero
