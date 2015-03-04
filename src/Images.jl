@@ -10,7 +10,13 @@ import Base: atan2, clamp, convert, copy, copy!, ctranspose, delete!, done, elty
 
 using Color, FixedPointNumbers, Compat
 import Color: Fractional
-import Graphics: width, height
+if VERSION < v"0.4.0-dev+3275"
+    using Base.Graphics
+    import Base.Graphics: width, height, Point
+else
+    using Graphics
+    import Graphics: width, height, Point
+end
 import FixedPointNumbers: ufixed8, ufixed10, ufixed12, ufixed14, ufixed16
 
 using Base.Cartesian
