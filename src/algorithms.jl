@@ -49,8 +49,8 @@ end
 (./)(img::AbstractImageDirect, A::AbstractArray) = shareproperties(img, data(img)./A)
 (.^)(img::AbstractImageDirect, p::Number) = shareproperties(img, data(img).^p)
 sqrt(img::AbstractImageDirect) = shareproperties(img, sqrt(data(img)))
-atan2(img::AbstractImageDirect) = shareproperties(img, atan2(data(img)))
-hypot(img::AbstractImageDirect) = shareproperties(img, hypot(data(img)))
+atan2(img1::AbstractImageDirect, img2::AbstractImageDirect) = shareproperties(img1, atan2(data(img1),data(img2)))
+hypot(img1::AbstractImageDirect, img2::AbstractImageDirect) = shareproperties(img1, hypot(data(img1),data(img2)))
 
 
 function sum(img::AbstractImageDirect, region::Union(AbstractVector,Tuple,Integer))
