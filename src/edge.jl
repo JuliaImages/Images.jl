@@ -91,6 +91,11 @@ function imgradients(img::AbstractArray, method::String="ando3", border::String=
     return grad_x, grad_y
 end
 
+function imgradients{T<:ColorValue}(img::AbstractArray{T}, method::String="ando3", border::String="replicate")
+    # Remove ColorValue information
+    imgradients(reinterpret(eltype(eltype(img)), img), method, border)
+end
+
 # Magnitude of gradient, calculated from X and Y image gradients
 magnitude(grad_x::AbstractArray, grad_y::AbstractArray) = hypot(grad_x, grad_y)
 

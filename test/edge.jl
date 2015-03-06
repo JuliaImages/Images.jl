@@ -1,6 +1,6 @@
 ### Edge and Gradient related tests ###
 
-using Images, Base.Test
+using Images, Base.Test, Color
 
 EPS = 1e-14
 
@@ -34,28 +34,32 @@ cb_image_xy = grayim(cb_array)
 cb_image_yx = grayim(cb_array)
 cb_image_yx["spatialorder"] = ["y","x"]
 
+cb_image_gray = convert(Image{Gray}, cb_image_xy)
+cb_image_rgb = convert(Image{RGB}, cb_image_xy)
+cb_image_rgb2 = convert(Image{RGB{Float64}}, cb_image_xy)
+
 for method in ["sobel", "prewitt", "ando3", "ando4", "ando5", "ando4_sep", "ando5_sep"]
     ## Checkerboard array
 
     (agx, agy) = imgradients(cb_array, method)
     amag = magnitude(agx, agy)
     agphase = phase(agx, agy)
-    @assert (amag, agphase) == magnitude_phase(agx, agy)
+    @test (amag, agphase) == magnitude_phase(agx, agy)
 
-    @assert agx[1,SZ]   < 0.0   # white to black transition
-    @assert agx[1,2*SZ] > 0.0   # black to white transition
-    @assert agy[SZ,1]   < 0.0   # white to black transition
-    @assert agy[2*SZ,1] > 0.0   # black to white transition
+    @test agx[1,SZ]   < 0.0   # white to black transition
+    @test agx[1,2*SZ] > 0.0   # black to white transition
+    @test agy[SZ,1]   < 0.0   # white to black transition
+    @test agy[2*SZ,1] > 0.0   # black to white transition
 
     # Test direction of increasing gradient
-    @assert cos(agphase[1,SZ])   - (-1.0) < EPS   # increasing left  (=  pi   radians)
-    @assert cos(agphase[1,2*SZ]) -   1.0  < EPS   # increasing right (=   0   radians)
-    @assert sin(agphase[SZ,1])   -   1.0  < EPS   # increasing up    (=  pi/2 radians)
-    @assert sin(agphase[2*SZ,1]) - (-1.0) < EPS   # increasing down  (= -pi/2 radians)
+    @test cos(agphase[1,SZ])   - (-1.0) < EPS   # increasing left  (=  pi   radians)
+    @test cos(agphase[1,2*SZ]) -   1.0  < EPS   # increasing right (=   0   radians)
+    @test sin(agphase[SZ,1])   -   1.0  < EPS   # increasing up    (=  pi/2 radians)
+    @test sin(agphase[2*SZ,1]) - (-1.0) < EPS   # increasing down  (= -pi/2 radians)
 
     # Test that orientation is perpendicular to gradient
     aorient = orientation(agx, agy)
-    @assert all((cos(agphase).*cos(aorient) .+ sin(agphase).*sin(aorient) .< EPS) |
+    @test all((cos(agphase).*cos(aorient) .+ sin(agphase).*sin(aorient) .< EPS) |
                 ((agphase .== 0.0) & (aorient .== 0.0)))  # this part is where both are
                                                           # zero because there is no gradient
 
@@ -64,21 +68,21 @@ for method in ["sobel", "prewitt", "ando3", "ando4", "ando5", "ando4_sep", "ando
     (gx, gy) = imgradients(cb_image_xy, method)
     mag = magnitude(gx, gy)
     gphase = phase(gx, gy)
-    @assert (mag, gphase) == magnitude_phase(gx, gy)
+    @test (mag, gphase) == magnitude_phase(gx, gy)
 
-    @assert gx[SZ,1]   < 0.0   # white to black transition
-    @assert gx[2*SZ,1] > 0.0   # black to white transition
-    @assert gy[1,SZ]   < 0.0   # white to black transition
-    @assert gy[1,2*SZ] > 0.0   # black to white transition
+    @test gx[SZ,1]   < 0.0   # white to black transition
+    @test gx[2*SZ,1] > 0.0   # black to white transition
+    @test gy[1,SZ]   < 0.0   # white to black transition
+    @test gy[1,2*SZ] > 0.0   # black to white transition
 
-    @assert cos(gphase[SZ,1])   - (-1.0) < EPS   # increasing left  (=  pi   radians)
-    @assert cos(gphase[2*SZ,1]) -   1.0  < EPS   # increasing right (=   0   radians)
-    @assert sin(gphase[1,SZ])   -   1.0  < EPS   # increasing up    (=  pi/2 radians)
-    @assert sin(gphase[1,2*SZ]) - (-1.0) < EPS   # increasing down  (= -pi/2 radians)
+    @test cos(gphase[SZ,1])   - (-1.0) < EPS   # increasing left  (=  pi   radians)
+    @test cos(gphase[2*SZ,1]) -   1.0  < EPS   # increasing right (=   0   radians)
+    @test sin(gphase[1,SZ])   -   1.0  < EPS   # increasing up    (=  pi/2 radians)
+    @test sin(gphase[1,2*SZ]) - (-1.0) < EPS   # increasing down  (= -pi/2 radians)
 
     # Test that orientation is perpendicular to gradient
     orient = orientation(gx, gy)
-    @assert all((cos(gphase).*cos(orient) .+ sin(gphase).*sin(orient) .< EPS) |
+    @test all((cos(gphase).*cos(orient) .+ sin(gphase).*sin(orient) .< EPS) |
                 ((gphase .== 0.0) & (orient .== 0.0)))  # this part is where both are
                                                         # zero because there is no gradient
 
@@ -87,25 +91,93 @@ for method in ["sobel", "prewitt", "ando3", "ando4", "ando5", "ando4_sep", "ando
     (gx, gy) = imgradients(cb_image_yx, method)
     mag = magnitude(gx, gy)
     gphase = phase(gx, gy)
-    @assert (mag, gphase) == magnitude_phase(gx, gy)
+    @test (mag, gphase) == magnitude_phase(gx, gy)
 
-    @assert gx[1,SZ]   < 0.0   # white to black transition
-    @assert gx[1,2*SZ] > 0.0   # black to white transition
-    @assert gy[SZ,1]   < 0.0   # white to black transition
-    @assert gy[2*SZ,1] > 0.0   # black to white transition
+    @test gx[1,SZ]   < 0.0   # white to black transition
+    @test gx[1,2*SZ] > 0.0   # black to white transition
+    @test gy[SZ,1]   < 0.0   # white to black transition
+    @test gy[2*SZ,1] > 0.0   # black to white transition
 
     # Test direction of increasing gradient
-    @assert cos(gphase[1,SZ])   - (-1.0) < EPS   # increasing left  (=  pi   radians)
-    @assert cos(gphase[1,2*SZ]) -   1.0  < EPS   # increasing right (=   0   radians)
-    @assert sin(gphase[SZ,1])   -   1.0  < EPS   # increasing up    (=  pi/2 radians)
-    @assert sin(gphase[2*SZ,1]) - (-1.0) < EPS   # increasing down  (= -pi/2 radians)
+    @test cos(gphase[1,SZ])   - (-1.0) < EPS   # increasing left  (=  pi   radians)
+    @test cos(gphase[1,2*SZ]) -   1.0  < EPS   # increasing right (=   0   radians)
+    @test sin(gphase[SZ,1])   -   1.0  < EPS   # increasing up    (=  pi/2 radians)
+    @test sin(gphase[2*SZ,1]) - (-1.0) < EPS   # increasing down  (= -pi/2 radians)
 
     # Test that orientation is perpendicular to gradient
     orient = orientation(gx, gy)
-    @assert all((cos(gphase).*cos(orient) .+ sin(gphase).*sin(orient) .< EPS) |
+    @test all((cos(gphase).*cos(orient) .+ sin(gphase).*sin(orient) .< EPS) |
                 ((gphase .== 0.0) & (orient .== 0.0)))  # this part is where both are
                                                         # zero because there is no gradient
 
+    ## Checkerboard Image with Gray pixels
+
+    (gxg, gyg) = imgradients(cb_image_gray, method)
+    magg = magnitude(gxg, gyg)
+    gphaseg = phase(gxg, gyg)
+    @test (magg, gphaseg) == magnitude_phase(gxg, gyg)
+
+    @test gxg[SZ,1]   < 0.0   # white to black transition
+    @test gxg[2*SZ,1] > 0.0   # black to white transition
+    @test gyg[1,SZ]   < 0.0   # white to black transition
+    @test gyg[1,2*SZ] > 0.0   # black to white transition
+
+    @test cos(gphaseg[SZ,1])   - (-1.0) < EPS   # increasing left  (=  pi   radians)
+    @test cos(gphaseg[2*SZ,1]) -   1.0  < EPS   # increasing right (=   0   radians)
+    @test sin(gphaseg[1,SZ])   -   1.0  < EPS   # increasing up    (=  pi/2 radians)
+    @test sin(gphaseg[1,2*SZ]) - (-1.0) < EPS   # increasing down  (= -pi/2 radians)
+
+    # Test that orientation is perpendicular to gradient
+    orientg = orientation(gxg, gyg)
+    @test all((cos(gphaseg).*cos(orientg) .+ sin(gphaseg).*sin(orientg) .< EPS) |
+                ((gphaseg .== 0.0) & (orientg .== 0.0)))  # this part is where both are
+                                                        # zero because there is no gradient
+
+    ## Checkerboard Image with RBG pixels
+
+    (gx_rgb, gy_rgb) = imgradients(cb_image_rgb, method)
+    mag_rgb = magnitude(gx_rgb, gy_rgb)
+    gphase_rgb = phase(gx_rgb, gy_rgb)
+    @test (mag_rgb, gphase_rgb) == magnitude_phase(gx_rgb, gy_rgb)
+
+    @test gx_rgb[1,SZ,1]   < 0.0   # white to black transition
+    @test gx_rgb[1,2*SZ,1] > 0.0   # black to white transition
+    @test gy_rgb[1,1,SZ]   < 0.0   # white to black transition
+    @test gy_rgb[1,1,2*SZ] > 0.0   # black to white transition
+
+    @test cos(gphase_rgb[1,SZ,1])   - (-1.0) < EPS   # increasing left  (=  pi   radians)
+    @test cos(gphase_rgb[1,2*SZ,1]) -   1.0  < EPS   # increasing right (=   0   radians)
+    @test sin(gphase_rgb[1,1,SZ])   -   1.0  < EPS   # increasing up    (=  pi/2 radians)
+    @test sin(gphase_rgb[1,1,2*SZ]) - (-1.0) < EPS   # increasing down  (= -pi/2 radians)
+
+    # Test that orientation is perpendicular to gradient
+    orient_rgb = orientation(gx_rgb, gy_rgb)
+    @test all((cos(gphase_rgb).*cos(orient_rgb) .+ sin(gphase_rgb).*sin(orient_rgb) .< EPS) |
+                ((gphase_rgb .== 0.0) & (orient_rgb .== 0.0)))  # this part is where both are
+                                                                # zero because there is no gradient
+
+    ## Checkerboard Image with RBG{Float64} pixels
+
+    (gx_rgb, gy_rgb) = imgradients(cb_image_rgb2, method)
+    mag_rgb = magnitude(gx_rgb, gy_rgb)
+    gphase_rgb = phase(gx_rgb, gy_rgb)
+    @test (mag_rgb, gphase_rgb) == magnitude_phase(gx_rgb, gy_rgb)
+
+    @test gx_rgb[1,SZ,1]   < 0.0   # white to black transition
+    @test gx_rgb[1,2*SZ,1] > 0.0   # black to white transition
+    @test gy_rgb[1,1,SZ]   < 0.0   # white to black transition
+    @test gy_rgb[1,1,2*SZ] > 0.0   # black to white transition
+
+    @test cos(gphase_rgb[1,SZ,1])   - (-1.0) < EPS   # increasing left  (=  pi   radians)
+    @test cos(gphase_rgb[1,2*SZ,1]) -   1.0  < EPS   # increasing right (=   0   radians)
+    @test sin(gphase_rgb[1,1,SZ])   -   1.0  < EPS   # increasing up    (=  pi/2 radians)
+    @test sin(gphase_rgb[1,1,2*SZ]) - (-1.0) < EPS   # increasing down  (= -pi/2 radians)
+
+    # Test that orientation is perpendicular to gradient
+    orient_rgb = orientation(gx_rgb, gy_rgb)
+    @test all((cos(gphase_rgb).*cos(orient_rgb) .+ sin(gphase_rgb).*sin(orient_rgb) .< EPS) |
+                ((gphase_rgb .== 0.0) & (orient_rgb .== 0.0)))  # this part is where both are
+                                                                # zero because there is no gradient
 end
 
 # Create an image with white along diagonals -2:2 and black elsewhere
@@ -122,20 +194,20 @@ for method in ["sobel", "prewitt", "ando3", "ando4", "ando5", "ando4_sep", "ando
     (agx, agy) = imgradients(m, method)
     amag = magnitude(agx, agy)
     agphase = phase(agx, agy)
-    @assert (amag, agphase) == magnitude_phase(agx, agy)
+    @test (amag, agphase) == magnitude_phase(agx, agy)
 
-    @assert agx[7,9]  < 0.0   # white to black transition
-    @assert agx[10,8] > 0.0   # black to white transition
-    @assert agy[10,8] < 0.0   # white to black transition
-    @assert agy[7,9]  > 0.0   # black to white transition
+    @test agx[7,9]  < 0.0   # white to black transition
+    @test agx[10,8] > 0.0   # black to white transition
+    @test agy[10,8] < 0.0   # white to black transition
+    @test agy[7,9]  > 0.0   # black to white transition
 
     # Test direction of increasing gradient
-    @assert abs(agphase[10,8] -    pi/4 ) < EPS   # lower edge (increasing up-right  =   pi/4 radians)
-    @assert abs(agphase[7,9]  - (-3pi/4)) < EPS   # upper edge (increasing down-left = -3pi/4 radians)
+    @test abs(agphase[10,8] -    pi/4 ) < EPS   # lower edge (increasing up-right  =   pi/4 radians)
+    @test abs(agphase[7,9]  - (-3pi/4)) < EPS   # upper edge (increasing down-left = -3pi/4 radians)
 
     # Test that orientation is perpendicular to gradient
     aorient = orientation(agx, agy)
-    @assert all((cos(agphase).*cos(aorient) .+ sin(agphase).*sin(aorient) .< EPS) |
+    @test all((cos(agphase).*cos(aorient) .+ sin(agphase).*sin(aorient) .< EPS) |
                 ((agphase .== 0.0) & (aorient .== 0.0)))  # this part is where both are
                                                           # zero because there is no gradient
 
@@ -144,20 +216,20 @@ for method in ["sobel", "prewitt", "ando3", "ando4", "ando5", "ando4_sep", "ando
     (gx, gy) = imgradients(m_xy, method)
     mag = magnitude(gx, gy)
     gphase = phase(gx, gy)
-    @assert (mag, gphase) == magnitude_phase(gx, gy)
+    @test (mag, gphase) == magnitude_phase(gx, gy)
 
-    @assert gx[9,7]  < 0.0   # white to black transition
-    @assert gx[8,10] > 0.0   # black to white transition
-    @assert gy[8,10] < 0.0   # white to black transition
-    @assert gy[9,7]  > 0.0   # black to white transition
+    @test gx[9,7]  < 0.0   # white to black transition
+    @test gx[8,10] > 0.0   # black to white transition
+    @test gy[8,10] < 0.0   # white to black transition
+    @test gy[9,7]  > 0.0   # black to white transition
 
     # Test direction of increasing gradient
-    @assert abs(gphase[8,10] -    pi/4 ) < EPS   # lower edge (increasing up-right  =   pi/4 radians)
-    @assert abs(gphase[9,7]  - (-3pi/4)) < EPS   # upper edge (increasing down-left = -3pi/4 radians)
+    @test abs(gphase[8,10] -    pi/4 ) < EPS   # lower edge (increasing up-right  =   pi/4 radians)
+    @test abs(gphase[9,7]  - (-3pi/4)) < EPS   # upper edge (increasing down-left = -3pi/4 radians)
 
     # Test that orientation is perpendicular to gradient
     orient = orientation(gx, gy)
-    @assert all((cos(gphase).*cos(orient) .+ sin(gphase).*sin(orient) .< EPS) |
+    @test all((cos(gphase).*cos(orient) .+ sin(gphase).*sin(orient) .< EPS) |
                 ((gphase .== 0.0) & (orient .== 0.0)))  # this part is where both are
                                                         # zero because there is no gradient
 
@@ -166,20 +238,20 @@ for method in ["sobel", "prewitt", "ando3", "ando4", "ando5", "ando4_sep", "ando
     (gx, gy) = imgradients(m_yx, method)
     mag = magnitude(gx, gy)
     gphase = phase(gx, gy)
-    @assert (mag, gphase) == magnitude_phase(gx, gy)
+    @test (mag, gphase) == magnitude_phase(gx, gy)
 
-    @assert gx[7,9]  < 0.0   # white to black transition
-    @assert gx[10,8] > 0.0   # black to white transition
-    @assert gy[10,8] < 0.0   # white to black transition
-    @assert gy[7,9]  > 0.0   # black to white transition
+    @test gx[7,9]  < 0.0   # white to black transition
+    @test gx[10,8] > 0.0   # black to white transition
+    @test gy[10,8] < 0.0   # white to black transition
+    @test gy[7,9]  > 0.0   # black to white transition
 
     # Test direction of increasing gradient
-    @assert abs(gphase[10,8] -    pi/4 ) < EPS   # lower edge (increasing up-right  =   pi/4 radians)
-    @assert abs(gphase[7,9]  - (-3pi/4)) < EPS   # upper edge (increasing down-left = -3pi/4 radians)
+    @test abs(gphase[10,8] -    pi/4 ) < EPS   # lower edge (increasing up-right  =   pi/4 radians)
+    @test abs(gphase[7,9]  - (-3pi/4)) < EPS   # upper edge (increasing down-left = -3pi/4 radians)
 
     # Test that orientation is perpendicular to gradient
     orient = orientation(gx, gy)
-    @assert all((cos(gphase).*cos(orient) .+ sin(gphase).*sin(orient) .< EPS) |
+    @test all((cos(gphase).*cos(orient) .+ sin(gphase).*sin(orient) .< EPS) |
                 ((gphase .== 0.0) & (orient .== 0.0)))  # this part is where both are
                                                         # zero because there is no gradient
 end
@@ -215,7 +287,7 @@ function nms_test_horiz_vert(img, which)
     b = a + c - v2
     r = -b/2a
 
-    @assert abs(r - 1/6) < EPS
+    @test abs(r - 1/6) < EPS
 
     # Location and value at peak
     peakloc = r*1.35 + 3
@@ -226,26 +298,26 @@ function nms_test_horiz_vert(img, which)
 
     test_axis1 = transposed $ !horizontal
 
-    @assert test_axis1 ? all(t[:,[1,2,4,5]] .== 0) : all(t[[1,2,4,5],:] .== 0)
-    @assert test_axis1 ? all(t[:,3]   .== peakval) : all(t[3,:]   .== peakval)
-    @assert test_axis1 ? all(s[:,[1,2,4,5]] .== zero(Graphics.Point)) :
+    @test test_axis1 ? all(t[:,[1,2,4,5]] .== 0) : all(t[[1,2,4,5],:] .== 0)
+    @test test_axis1 ? all(t[:,3]   .== peakval) : all(t[3,:]   .== peakval)
+    @test test_axis1 ? all(s[:,[1,2,4,5]] .== zero(Graphics.Point)) :
                          all(s[[1,2,4,5],:] .== zero(Graphics.Point))
 
     if transposed
         if which == :horizontal
-            @assert     [pt.x for pt in s[:,3]]  == [1:5;]
-            @assert all([pt.y for pt in s[:,3]] .== peakloc)
+            @test     [pt.x for pt in s[:,3]]  == [1:5;]
+            @test all([pt.y for pt in s[:,3]] .== peakloc)
         else
-            @assert all([pt.x for pt in s[3,:]] .== peakloc)
-            @assert     [pt.y for pt in s[3,:]]  == [1:5;]
+            @test all([pt.x for pt in s[3,:]] .== peakloc)
+            @test     [pt.y for pt in s[3,:]]  == [1:5;]
         end
     else
         if which == :horizontal
-            @assert     [pt.x for pt in s[3,:]]  == [1:5;]
-            @assert all([pt.y for pt in s[3,:]] .== peakloc)
+            @test     [pt.x for pt in s[3,:]]  == [1:5;]
+            @test all([pt.y for pt in s[3,:]] .== peakloc)
         else
-            @assert all([pt.x for pt in s[:,3]] .== peakloc)
-            @assert     [pt.y for pt in s[:,3]]  == [1:5;]
+            @test all([pt.x for pt in s[:,3]] .== peakloc)
+            @test     [pt.y for pt in s[:,3]]  == [1:5;]
         end
     end
 end
@@ -301,7 +373,7 @@ function nms_test_diagonal(img)
     b = a + c - v2
     r = -b/2a
 
-    @assert (r - 1/6) < EPS
+    @test (r - 1/6) < EPS
 
     transposed = spatialorder(img)[1] == "x"
 
@@ -310,14 +382,14 @@ function nms_test_diagonal(img)
     x_peak_offset, y_peak_offset = r*fr, -r*fr
     peakval = a*r^2 + b*r + c
 
-    @assert all(diag(data(t))[2:4] .== peakval)  # Edge pixels aren't interpolated here
-    @assert all(t - diagm(diag(data(t))) .== 0)
+    @test all(diag(data(t))[2:4] .== peakval)  # Edge pixels aren't interpolated here
+    @test all(t - diagm(diag(data(t))) .== 0)
 
     diag_s = copyproperties(s, diagm(diag(data(s))))
-    @assert s == diag_s
+    @test s == diag_s
 
-    @assert all([pt.x for pt in diag(data(s))[2:4]] - ((2:4) + x_peak_offset) .< EPS)
-    @assert all([pt.y for pt in diag(data(s))[2:4]] - ((2:4) + y_peak_offset) .< EPS)
+    @test all([pt.x for pt in diag(data(s))[2:4]] - ((2:4) + x_peak_offset) .< EPS)
+    @test all([pt.y for pt in diag(data(s))[2:4]] - ((2:4) + y_peak_offset) .< EPS)
 
 end
 
