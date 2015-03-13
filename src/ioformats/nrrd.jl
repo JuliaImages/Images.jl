@@ -75,7 +75,7 @@ function myendian()
     end
 end
 
-function imread{S<:IO}(stream::S, ::Type{Images.NRRDFile})
+function imread{S<:IO}(stream::S, ::Union(Type{Images.NRRDFile}, Type{Images.NRRDHeader}))
     version = ascii(read(stream, Uint8, 4))
     skipchars(stream,isspace)
     header = Dict{ASCIIString, UTF8String}()
@@ -281,7 +281,7 @@ function imread{S<:IO}(stream::S, ::Type{Images.NRRDFile})
     Image(A, props)
 end
 
-function imwrite(img, sheader::IO, ::Type{Images.NRRDFile}; props::Dict = Dict{ASCIIString,Any}())
+function writenrrdheader(img, sheader::IO; props::Dict=Dict{ASCIIString,Any}())
     println(sheader, "NRRD0001")
     # Write the datatype
     T = get(props, "type", eltype(data(img)))
@@ -347,6 +347,9 @@ function imwrite(img, sheader::IO, ::Type{Images.NRRDFile}; props::Dict = Dict{A
         end
         print(sheader, "\n")
     end
+end
+
+function writenrrddata(img, sheader::IO; props::Dict = Dict{ASCIIString,Any}())
     datafilename = get(props, "datafile", "")
     if isempty(datafilename)
         datafilename = get(props, "data file", "")
@@ -362,6 +365,28 @@ function imwrite(img, sheader::IO, ::Type{Images.NRRDFile}; props::Dict = Dict{A
             end
         end
     end
+    sheader
+end
+
+#write only the header
+function imwrite(img, sheader::IO, ::Type{Images.NRRDHeader}; props::Dict = img.properties)
+    datafilename = get(props, "datafile", "")
+    if isempty(datafilename)
+        datafilename = get(props, "data file", "")
+    end
+    if isempty(datafilename)
+        error("When writing an NRRD header (.nhdr) only, your image must specify 'datafile' in the 'properties' dictionary\n")
+    end
+    props["headeronly"] = true
+    writenrrdheader(img, sheader; props=props)
+    sheader = writenrrddata(img, sheader; props=props)
+    sheader
+end
+
+#write header and data, unless props specifies otherwise
+function imwrite(img, sheader::IO, ::Type{Images.NRRDFile}; props::Dict = Dict{ASCIIString,Any}())
+    writenrrdheader(img, sheader; props)
+    sheader = writenrrddata(img, sheader; props=props)
     sheader
 end
 

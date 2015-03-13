@@ -590,7 +590,9 @@ add_image_file_format(".dummy", b"Dummy Image", Dummy, "dummy.jl")
 # NRRD image format
 type NRRDFile <: ImageFileType end
 add_image_file_format(".nrrd", b"NRRD", NRRDFile, "nrrd.jl")
-add_image_file_format(".nhdr", b"NRRD", NRRDFile, "nrrd.jl")
+# NRRD header only
+type NRRDHeader <: ImageFileType end
+add_image_file_format(".nhdr", b"NRRD", NRRDHeader, "nrrd.jl")
 
 # Andor Technologies SIF file format
 type AndorSIF <: Images.ImageFileType end
