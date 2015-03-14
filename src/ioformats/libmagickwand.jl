@@ -1,6 +1,6 @@
 module LibMagick
 
-using Color, FixedPointNumbers, ..ColorTypes, Compat
+using Color, FixedPointNumbers, ..ColorTypes, Compat, BinDeps
 
 import Base: error, size
 
@@ -23,13 +23,8 @@ export MagickWand,
 
 
 # Find the library
-depsfile = joinpath(dirname(@__FILE__),"..","..","deps","deps.jl")
+include_deps("Images")
 versionfile = joinpath(dirname(@__FILE__),"..","..","deps","versioninfo.jl")
-if isfile(depsfile)
-    include(depsfile)
-else
-    error("Images not properly installed. Please run Pkg.build(\"Images\") then restart Julia.")
-end
 if isfile(versionfile)
     include(versionfile)
 end
