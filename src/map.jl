@@ -265,7 +265,7 @@ for SI in (MapInfo, AbstractClamp)
             end
         end
         for OA in (:RGBA, :ARGB, :BGRA)
-            exAlphaGray = ST == MapNone ? : nothing : quote
+            exAlphaGray = ST == MapNone ? :nothing : quote
                 function map{T,S}(mapi::$ST{$OA{T}}, g::GrayAlpha{S})
                     x = map1(mapi, g.c.val)
                     $OA{T}(x,x,x,map1(mapi, g.alpha))
