@@ -223,7 +223,7 @@ immutable CoordOffset
     f::Float64  # fractional part
 end
 
-CoordOffset(x::Float64) = ((frac,i) = modf(x); CoordOffset(sign(frac), int(i), abs(frac)))
+CoordOffset(x::Float64) = ((frac,i) = modf(x); CoordOffset(sign(frac), round(Int, i), abs(frac)))
 (-)(off::CoordOffset) = CoordOffset(-off.s,-off.i, off.f)
 (*)(x::Number, off::CoordOffset) = x*(off.i + off.s*off.f)
 (*)(off::CoordOffset, x::Number) = x*(off.i + off.s*off.f)

@@ -117,7 +117,7 @@ function imread{S<:IO}(stream::S, ::Type{Images.NRRDFile})
         sdata = Zlib.Reader(sdata)
     end
     # Parse properties and read the data
-    nd = int(header["dimension"])
+    nd = parse(Int, header["dimension"])
     sz = parse_vector_int(header["sizes"])
     length(sz) == nd || error("parsing of sizes: $(header["sizes"]) is inconsistent with $nd dimensions")
     T = typedict[header["type"]]
@@ -181,20 +181,11 @@ function imread{S<:IO}(stream::S, ::Type{Images.NRRDFile})
     if haskey(header, "min") || haskey(header, "max")
         mn = typemin(T)
         mx = typemax(T)
-        if T <: Integer
-            if haskey(header, "min")
-                mn = convert(T, parseint(header["min"]))
-            end
-            if haskey(header, "max")
-                mx = convert(T, parseint(header["max"]))
-            end
-        else
-            if haskey(header, "min")
-                mn = convert(T, parsefloat(header["min"]))
-            end
-            if haskey(header, "max")
-                mx = convert(T, parsefloat(header["max"]))
-            end
+        if haskey(header, "min")
+            mn = parse(T, header["min"])
+        end
+        if haskey(header, "max")
+            mx = parse(T, header["max"])
         end
         props["limits"] = (mn, mx)
     end
@@ -202,7 +193,7 @@ function imread{S<:IO}(stream::S, ::Type{Images.NRRDFile})
         lbls = parse_vector_strings(header["labels"])
         props["spatialorder"] = lbls[isspatial]
     else
-        props["spatialorder"] = [string(char(97+(i+22)%26)) for i = 1:sum(isspatial)]
+        props["spatialorder"] = [string(convert(Char, 97+(i+22)%26)) for i = 1:sum(isspatial)]
     end
     spacedim = nd
     if haskey(header, "space")
@@ -369,7 +360,7 @@ function parse_vector_int(s::String)
     ss = split_nokeep(s, r"[ ,;]")
     v = Array(Int, length(ss))
     for i = 1:length(ss)
-        v[i] = int(ss[i])
+        v[i] = parse(Int, ss[i])
     end
     return v
 end
@@ -378,7 +369,7 @@ function parse_vector_float(s::String)
     ss = split_nokeep(s, r"[ ,;]")
     v = Array(Float64, length(ss))
     for i = 1:length(ss)
-        v[i] = float(ss[i])
+        v[i] = parse(Float64, ss[i])
     end
     return v
 end

@@ -211,7 +211,7 @@ function getblob(wand::MagickWand, format::String)
     setimageformat(wand, format)
     len = Array(Csize_t, 1)
     ptr = ccall((:MagickGetImagesBlob, libwand), Ptr{Uint8}, (Ptr{Void}, Ptr{Csize_t}), wand.ptr, len)
-    blob = pointer_to_array(ptr, int(len[1]))
+    blob = pointer_to_array(ptr, convert(Int, len[1]))
     finalizer(blob, relinquishmemory)
     blob
 end
@@ -243,10 +243,10 @@ end
 function size(wand::MagickWand)
     height = ccall((:MagickGetImageHeight, libwand), Csize_t, (Ptr{Void},), wand.ptr)
     width = ccall((:MagickGetImageWidth, libwand), Csize_t, (Ptr{Void},), wand.ptr)
-    return int(width), int(height)
+    return convert(Int, width), convert(Int, height)
 end
 
-getnumberimages(wand::MagickWand) = int(ccall((:MagickGetNumberImages, libwand), Csize_t, (Ptr{Void},), wand.ptr))
+getnumberimages(wand::MagickWand) = convert(Int, ccall((:MagickGetNumberImages, libwand), Csize_t, (Ptr{Void},), wand.ptr))
 
 nextimage(wand::MagickWand) = ccall((:MagickNextImage, libwand), Cint, (Ptr{Void},), wand.ptr) == 1
 
@@ -264,8 +264,9 @@ function getimageproperties(wand::MagickWand,patt::String)
     if p == C_NULL
         error("Pattern not in property names")
     else
-        ret = Array(ASCIIString, int(numbProp)[1])
-        for i = 1:int(numbProp)[1]
+        nP = convert(Int, numbProp[1])
+        ret = Array(ASCIIString, nP)
+        for i = 1:nP
             ret[i] = bytestring(unsafe_load(p,i))
         end
         ret
@@ -332,10 +333,10 @@ function setimageformat(wand::MagickWand, format::ASCIIString)
 end
 
 # get the pixel depth
-getimagedepth(wand::MagickWand) = int(ccall((:MagickGetImageDepth, libwand), Csize_t, (Ptr{Void},), wand.ptr))
+getimagedepth(wand::MagickWand) = convert(Int, ccall((:MagickGetImageDepth, libwand), Csize_t, (Ptr{Void},), wand.ptr))
 
 # pixel depth for given channel type
-getimagechanneldepth(wand::MagickWand, channelType::ChannelType) = int(ccall((:MagickGetImageChannelDepth, libwand), Csize_t, (Ptr{Void},Uint32), wand.ptr, channelType.value ))
+getimagechanneldepth(wand::MagickWand, channelType::ChannelType) = convert(Int, ccall((:MagickGetImageChannelDepth, libwand), Csize_t, (Ptr{Void},Uint32), wand.ptr, channelType.value ))
 
 pixelsetcolor(wand::PixelWand, colorstr::ByteString) = ccall((:PixelSetColor, libwand), Csize_t, (Ptr{Void},Ptr{Uint8}), wand.ptr, colorstr) == 0 && error(wand)
 

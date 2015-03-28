@@ -36,7 +36,7 @@ A = rand(Uint8,3,4)
 img = reinterpret(Images.Gray{Ufixed8}, Images.grayim(A))
 imgm = mean(img)
 imgn = img/imgm
-@test_approx_eq reinterpret(Float32, Images.data(imgn)) float32(A/mean(A))
+@test_approx_eq reinterpret(Float32, Images.data(imgn)) convert(Array{Float32}, A/mean(A))
 
 # Reductions
 let
@@ -56,7 +56,7 @@ let
     @test Images.minfinite(A) == 1
     @test Images.maxfinite(A) == 6
     @test Images.maxabsfinite(A) == 6
-    A = float32(rand(3,5,5))
+    A = rand(Float32,3,5,5)
     img = Images.colorim(A, "RGB")
     dc = Images.data(Images.meanfinite(img, 1))-reinterpret(RGB{Float32}, mean(A, 2), (1,5))
     @test maximum(map(abs, dc)) < 1e-6
@@ -210,7 +210,7 @@ A = zeros(Int, 9, 9); A[5, 5] = 1
 @test_throws ErrorException Images.imaverage([5])
 
 # restriction
-A = reshape(uint16(1:60), 4, 5, 3)
+A = reshape([convert(UInt16, i) for i = 1:60], 4, 5, 3)
 B = Images.restrict(A, (1,2))
 Btarget = cat(3, [ 0.96875  4.625   5.96875;
                    2.875   10.5    12.875;

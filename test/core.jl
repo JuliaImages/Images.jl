@@ -5,7 +5,7 @@ if testing_units
 end
 
 ## Constructors of Image types
-B = rand(uint16(1:20),3,5)    # support integer-valued types, but these are NOT recommended (use Ufixed)
+B = rand(convert(UInt16,1):convert(UInt16,20),3,5)    # support integer-valued types, but these are NOT recommended (use Ufixed)
 @test colorspace(B) == "Gray"
 @test colordim(B) == 0
 img = Image(B, colorspace="RGB", colordim=1)  # keyword constructor
@@ -15,20 +15,20 @@ img = grayim(B)
 @test colorspace(img) == "Gray"
 @test colordim(B) == 0
 @test grayim(img) == img
-Bf = grayim(uint8(B))  # this is recommended for "integer-valued" images (or even better, directly as a Ufixed type)
+Bf = grayim(round(UInt8, B))  # this is recommended for "integer-valued" images (or even better, directly as a Ufixed type)
 @test eltype(Bf) == Ufixed8
 @test colorspace(Bf) == "Gray"
 @test colordim(Bf) == 0
-Bf = grayim(uint16(B))
+Bf = grayim(B)
 @test eltype(Bf) == Ufixed16
-BfCV = reinterpret(Gray{Ufixed8}, uint8(B)) # colorspace encoded as a ColorValue (enables multiple dispatch)
+BfCV = reinterpret(Gray{Ufixed8}, round(UInt8, B)) # colorspace encoded as a ColorValue (enables multiple dispatch)
 @test colorspace(BfCV) == "Gray"
 @test colordim(BfCV) == 0
-Bf3 = grayim(reshape(uint8(1:36), 3,4,3))
+Bf3 = grayim(reshape(convert(UInt8,1):convert(UInt8,36), 3,4,3))
 @test eltype(Bf3) == Ufixed8
-Bf3 = grayim(reshape(uint16(1:36), 3,4,3))
+Bf3 = grayim(reshape(convert(UInt16,1):convert(UInt16,36), 3,4,3))
 @test eltype(Bf3) == Ufixed16
-Bf3 = grayim(reshape(float32(1:36), 3,4,3))
+Bf3 = grayim(reshape(1.0f0:36.0f0, 3,4,3))
 @test eltype(Bf3) == Float32
 
 # colorim
@@ -66,7 +66,7 @@ img = ImageCmap(copy(B), cmap, Dict{ASCIIString,Any}([("spatialorder",Images.yx)
 @test colorspace(img) == "RGB"
 img = ImageCmap(copy(B), cmap, spatialorder=Images.yx)
 @test colorspace(img) == "RGB"
-cmap = reinterpret(RGB, repmat(reinterpret(Ufixed8, uint8(linspace(12,255,20)))',3,1))
+cmap = reinterpret(RGB, repmat(reinterpret(Ufixed8, round(UInt8, linspace(12,255,20)))',3,1))
 img = ImageCmap(copy(B), cmap, Dict{ASCIIString,Any}([("pixelspacing",[2.0, 3.0]), ("spatialorder",Images.yx)]))
 imgd = convert(Image, img)
 @test eltype(img) == RGB{Ufixed8}
@@ -341,7 +341,7 @@ rawrgb8 = reinterpret(RGB, A8)
 @test eltype(rawrgb8) == RGB{Ufixed8}
 @test reinterpret(Ufixed8, rawrgb8) == A8
 @test reinterpret(Uint8, rawrgb8) == Au8
-rawrgb32 = float32(rawrgb8)
+rawrgb32 = convert(Array{RGB{Float32}}, rawrgb8)
 @test eltype(rawrgb32) == RGB{Float32}
 @test ufixed8(rawrgb32) == rawrgb8
 @test reinterpret(Ufixed8, rawrgb8) == A8
@@ -366,7 +366,7 @@ imrgb8_2 = convert(Image{RGB}, ims8)
 A = reinterpret(Ufixed8, Uint8[1 2; 3 4])
 imgray = convert(Image{Gray{Ufixed8}}, A)
 @test spatialorder(imgray) == Images.yx
-@test data(imgray) == reinterpret(Gray{Ufixed8}, uint8([1 2; 3 4]))
+@test data(imgray) == reinterpret(Gray{Ufixed8}, [0x01 0x02; 0x03 0x04])
 
 @test eltype(convert(Image{HSV{Float32}}, imrgb8)) == HSV{Float32}
 @test eltype(convert(Image{HSV}, float32(imrgb8))) == HSV{Float32}

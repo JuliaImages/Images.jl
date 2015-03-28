@@ -441,7 +441,7 @@ end
 function parse_netpbm_maxval(stream::IO)
     skipchars(stream, isspace, linecomment='#')
     maxvalline = strip(readline(stream))
-    parseint(maxvalline)
+    parse(Int, maxvalline)
 end
 
 function imread{S<:IO}(stream::S, ::Type{PPMBinary})
@@ -555,7 +555,7 @@ function parseints(line, n)
         if pos2 == 0
             pos2 = length(line)+1
         end
-        ret[i] = parseint(line[pos:pos2-1])
+        ret[i] = parse(Int, line[pos:pos2-1])
         pos = pos2+1
         if pos > length(line) && i < n
             error("Line terminated without finding all ", n, " integers")

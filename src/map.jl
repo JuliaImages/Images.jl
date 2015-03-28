@@ -158,13 +158,13 @@ immutable ScaleMinMax{To,From,S<:FloatingPoint} <: MapInfo{To}
 end
 
 ScaleMinMax{To,From}(::Type{To}, min::From, max::From, s::FloatingPoint) = ScaleMinMax{To,From,typeof(s)}(min, max, s)
-ScaleMinMax{To<:Union(Fractional,ColorType),From}(::Type{To}, mn::From, mx::From) = ScaleMinMax(To, mn, mx, 1.0f0/(float32(mx)-float32(mn)))
+ScaleMinMax{To<:Union(Fractional,ColorType),From}(::Type{To}, mn::From, mx::From) = ScaleMinMax(To, mn, mx, 1.0f0/(convert(Float32, mx)-convert(Float32, mn)))
 
 # ScaleMinMax constructors that take AbstractArray input
-ScaleMinMax{To,From<:Real}(::Type{To}, img::AbstractArray{From}, mn::Real, mx::Real) = ScaleMinMax(To, convert(From,mn), convert(From,mx), 1.0f0/(float32(convert(From,mx))-float32(convert(From,mn))))
-ScaleMinMax{To,From<:Real}(::Type{To}, img::AbstractArray{Gray{From}}, mn::Real, mx::Real) = ScaleMinMax(To, convert(From,mn), convert(From,mx), 1.0f0/(float32(convert(From,mx))-float32(convert(From,mn))))
-ScaleMinMax{To,From<:Real,R<:Real}(::Type{To}, img::AbstractArray{From}, mn::Gray{R}, mx::Gray{R}) = ScaleMinMax(To, convert(From,mn.val), convert(From,mx.val), 1.0f0/(float32(convert(From,mx.val))-float32(convert(From,mn.val))))
-ScaleMinMax{To,From<:Real,R<:Real}(::Type{To}, img::AbstractArray{Gray{From}}, mn::Gray{R}, mx::Gray{R}) = ScaleMinMax(To, convert(From,mn.val), convert(From,mx.val), 1.0f0/(float32(convert(From,mx.val))-float32(convert(From,mn.val))))
+ScaleMinMax{To,From<:Real}(::Type{To}, img::AbstractArray{From}, mn::Real, mx::Real) = ScaleMinMax(To, convert(From,mn), convert(From,mx), 1.0f0/(convert(Float32, convert(From, mx))-convert(Float32,convert(From, mn))))
+ScaleMinMax{To,From<:Real}(::Type{To}, img::AbstractArray{Gray{From}}, mn::Real, mx::Real) = ScaleMinMax(To, convert(From,mn), convert(From,mx), 1.0f0/(convert(Float32, convert(From,mx))-convert(Float32, convert(From,mn))))
+ScaleMinMax{To,From<:Real,R<:Real}(::Type{To}, img::AbstractArray{From}, mn::Gray{R}, mx::Gray{R}) = ScaleMinMax(To, convert(From,mn.val), convert(From,mx.val), 1.0f0/(convert(Float32, convert(From,mx.val))-convert(Float32, convert(From,mn.val))))
+ScaleMinMax{To,From<:Real,R<:Real}(::Type{To}, img::AbstractArray{Gray{From}}, mn::Gray{R}, mx::Gray{R}) = ScaleMinMax(To, convert(From,mn.val), convert(From,mx.val), 1.0f0/(convert(Float32, convert(From,mx.val))-convert(Float32, convert(From,mn.val))))
 ScaleMinMax{To}(::Type{To}, img::AbstractArray) = ScaleMinMax(To, img, minfinite(img), maxfinite(img))
 
 similar{T,F,To,From,S}(mapi::ScaleMinMax{To,From,S}, ::Type{T}, ::Type{F}) = ScaleMinMax{T,F,S}(convert(F,mapi.min), convert(F.mapi.max), mapi.s)

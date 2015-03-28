@@ -192,7 +192,7 @@ B = map(Images.ClampMin(Float32, 3), A)
 B = map(Images.ClampMax(Uint8, 7), A)
 @assert eltype(B) == Uint8 && B == [1 4 7; 2 5 7; 3 6 7]
 
-A = reinterpret(Ufixed8, [uint8(1:24);], (3, 2, 4))
+A = reinterpret(Ufixed8, [convert(UInt8,1):convert(UInt8,24);], (3, 2, 4))
 img = reinterpret(RGB{Ufixed8}, A, (2,4))
 @test separate(img) == permutedims(A, (2,3,1))
 
@@ -205,7 +205,7 @@ arr[2,2] = 0.5
 # color conversion
 gray = linspace(0.0,1.0,5) # a 1-dimensional image
 gray8 = round(Uint8, 255*gray)
-gray32 = Uint32[uint32(g)<<16 | uint32(g)<<8 | uint32(g) for g in gray8]
+gray32 = Uint32[convert(UInt32, g)<<16 | convert(UInt32, g)<<8 | convert(UInt32, g) for g in gray8]
 imgray = Images.Image(gray, Dict{ASCIIString,Any}([("colordim",0), ("colorspace","Gray")]))
 buf = map(Images.mapinfo(Uint32, imgray), imgray) # Images.uint32color(imgray)
 @test buf == gray32

@@ -1,6 +1,7 @@
 import Images, Images.ColorTypes
 using Base.Test, Color, FixedPointNumbers
 import Images.Gray, Images.GrayAlpha
+using Compat
 
 macro test_colortype_approx_eq(a, b)
     :(test_colortype_approx_eq($(esc(a)), $(esc(b)), $(string(a)), $(string(b))))
@@ -8,7 +9,7 @@ end
 
 function test_colortype_approx_eq(a::ColorValue, b::ColorValue, astr, bstr)
     typeof(a) == typeof(b) || error("types of $astr and $bstr do not match")
-    n = length(names(typeof(a)))
+    n = length(fieldnames(typeof(a)))
     for i = 1:n
         Base.Test.test_approx_eq(getfield(a, i), getfield(b,i), astr, bstr)
     end
@@ -16,7 +17,7 @@ end
 
 function test_colortype_approx_eq(a::AbstractAlphaColorValue, b::AbstractAlphaColorValue, astr, bstr)
     typeof(a) == typeof(b) || error("types of $astr and $bstr do not match")
-    n = length(names(typeof(a.c)))
+    n = length(fieldnames(typeof(a.c)))
     for i = 1:n
         Base.Test.test_approx_eq(getfield(a.c, i), getfield(b.c,i), astr, bstr)
     end
@@ -75,7 +76,7 @@ acu = Gray{Ufixed8}[cu]
 acf = Gray{Float32}[cf]
 @test typeof(acu+acf) == Vector{Gray{Float32}}
 @test typeof(2*acf) == Vector{Gray{Float32}}
-@test typeof(uint8(2)*acu) == Vector{Gray{Float32}}
+@test typeof(0x02*acu) == Vector{Gray{Float32}}
 @test typeof(acu/2) == Vector{Gray{typeof(Ufixed8(0.5)/2)}}
 
 # Arithmetic with GrayAlpha
@@ -127,7 +128,7 @@ acu = RGB{Ufixed8}[cu]
 acf = RGB{Float32}[cf]
 @test typeof(acu+acf) == Vector{RGB{Float32}}
 @test typeof(2*acf) == Vector{RGB{Float32}}
-@test typeof(uint8(2)*acu) == Vector{RGB{Float32}}
+@test typeof(convert(UInt8, 2)*acu) == Vector{RGB{Float32}}
 @test typeof(acu/2) == Vector{RGB{typeof(Ufixed8(0.5)/2)}}
 
 c = ColorTypes.Gray{Ufixed16}(0.8)
