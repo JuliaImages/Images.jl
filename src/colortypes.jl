@@ -247,6 +247,11 @@ end
 for f in (:trunc, :floor, :round, :ceil)
     @eval $f{T<:Integer}(::Type{T}, g::Gray) = Gray{T}($f(T, g.val))
     @eval $f{T<:Integer,G<:Gray,Ti}(::Type{T}, A::SparseMatrixCSC{G,Ti}) = error("not defined") # fix ambiguity warning
+    # Resolve ambiguities with Compat versions
+    if VERSION < v"0.3.99"
+        @eval $f{T<:Integer,G<:Gray}(::Type{T}, A::AbstractArray{G,1}) = [($f)(A[i]) for i = 1:length(A)]
+        @eval $f{T<:Integer,G<:Gray}(::Type{T}, A::AbstractArray{G,2}) = [($f)(A[i,j]) for i = 1:size(A,1), j = 1:size(A,2)]
+    end
     # The next resolve ambiguities with floatfuncs.jl definitions
     if VERSION < v"0.4.0-dev+3847"
         @eval $f{T<:Integer,G<:Gray}(::Type{T}, A::AbstractArray{G}) = reshape([($f)(A[i]) for i = 1:length(A)], size(A))
