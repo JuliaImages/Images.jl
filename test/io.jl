@@ -84,11 +84,13 @@ cmaprgb[129:end] = [(1-x)*w + x*r for x in f[2:end]]
 img = Images.ImageCmap(dataint, cmaprgb)
 Images.imwrite(img,joinpath(workdir,"cmap.jpg"))
 
-c = reinterpret(Images.BGRA{Ufixed8}, [0xf0884422]'')
+c = reinterpret(Images.BGRA{Ufixed8}, [0xa5884422]'')
 fn = joinpath(workdir, "alpha.png")
 Images.imwrite(c, fn)
+println(Images.LibMagick.libversion)
+run(`identify -verbose $fn`)
 C = Images.imread(fn)
 @test C[1] == c[1]
-Images.imwrite(reinterpret(ARGB32, [0xf0884422]''), fn)
+Images.imwrite(reinterpret(ARGB32, [0xa5884422]''), fn)
 D = Images.imread(fn)
 @test D[1] == c[1]

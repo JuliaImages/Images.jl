@@ -262,6 +262,7 @@ function imread(filename::String, ::Type{ImageMagick};extraprop="",extraproperty
     end
 
     channelorder = cs
+    @show cs
     if havealpha
         if channelorder == "sRGB" || channelorder == "RGB"
             if is_little_endian
