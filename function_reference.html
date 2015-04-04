@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="author" content="Tim Holy">
+  <meta charset="utf-8">
+  <title>Function Reference</title>
+  <link href='http://fonts.googleapis.com/css?family=Source+Sans+Pro:400,700|Source+Code+Pro:400,700'
+        rel='stylesheet' type='text/css'>
+  <link href="css/bootstrap.min.css" rel="stylesheet" type="text/css" media="all">
+  <link href="css/custom.css" rel="stylesheet" type="text/css" media="all">
+  <link href="css/hk-pyg.css" rel="stylesheet" type="text/css" media="all">
+  <script src="js/jquery-2.0.3.min.js" type="text/javascript"></script>
+  <script src="js/bootstrap.min.js" type="text/javascript"></script>
+  <script src="js/list.min.js" type="text/javascript"></script>
+</head>
+<body>
+  <div id="topbar" style="z-index: 3">
+    <div class="container">
+      <div class="row">
+        <ul>
+          <li><div id="pkgname">Images 0.4.34+</div></li>
+          <li><a href="http://github.com/timholy/Images.jl">Code</a></li>
+          <li><a href="http://github.com/timholy/Images.jl/issues">Issues</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="container" style="z-index: auto">
+    <div class="row">
+      <div class="col-sm-7">
+      <div id="body-content">
+<h1 id="function-reference">Function Reference</h1>
+<p>Below, <code>[]</code> in an argument list means an optional argument.</p>
+<h2 id="image-construction">Image construction</h2>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">Image(data, [properties])
+Image(data, prop1=val1, prop2=val2, ...)</code></pre>
+<p>creates a new direct image. In contrast with <code>convert</code>, <code>grayim</code> and <code>colorim</code>, this does not permute the data array or attempt to guess any of the <code>properties</code>. If <code>data</code> encodes color information along one of the dimensions of the array (as opposed to using a <code>ColorValue</code> array, from the <code>Color.jl</code> package), be sure to specify the <code>&quot;colordim&quot;</code> and <code>&quot;colorspace&quot;</code> in <code>properties</code>.</p>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">ImageCmap(data, cmap, [properties])</code></pre>
+<p>creates an indexed (colormap) image.</p>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">convert(Image, A)
+convert(<span class="dt">Array</span>, img)
+convert(Image{HSV}, img)</code></pre>
+<p>The first creates a 2d image from an array, setting up default properties. The data array is assumed to be in &quot;vertical-major&quot; order, and an m-by-n-by-3 array will be assumed to encode color along its third dimension.</p>
+<p><code>convert(Array, img)</code> works in the opposite direction, permuting dimensions (if needed) to put it in Matlab-standard storage order.</p>
+<p>The third syntax allows you to convert from one colorspace to another.</p>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">grayim(A)</code></pre>
+<p>creates a 2d or 3d <em>spatial</em> grayscale Image from an AbstractArray, assumed to be in &quot;horizontal-major&quot; order (and without permuting any dimensions). If you are working with 3d grayscale images, usage of this function is strongly recommended. This can fix errors like one of the following:</p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">ERROR: Wrong number of spatial dimensions <span class="kw">for</span> plain <span class="dt">Array</span>, use an AbstractImage <span class="kw">type</span>
+ERROR: Cannot infer colorspace of <span class="dt">Array</span>, use an AbstractImage <span class="kw">type</span>
+ERROR: Cannot infer pixelspacing of <span class="dt">Array</span>, use an AbstractImage <span class="kw">type</span></code></pre>
+<p>The main reason for such errors---and the reason that <code>grayim</code> is recommended---is the Matlab-derived convention that a <code>m x n x 3</code> array is to be interpreted as RGB. One might then say that an <code>m x n x k</code> array, for <code>k</code> different from 3, could be interpreted as grayscale. However, this would lead to difficult-to-track-down surprises on the day where <code>k</code> happened to be 3 for your grayscale image. Instead, the approach taken in <code>Images.jl</code> is to throw an error, encouraging users to develop the habit of wrapping their 3d grayscale arrays in an unambiguous <code>Image</code> type.</p>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">colorim(A, [colorspace])</code></pre>
+<p>Creates a 2d color image from an AbstractArray, auto-detecting which of the first or last dimension encodes the color and choosing between &quot;horizontal-&quot; and &quot;vertical-major&quot; accordingly. <code>colorspace</code> defaults to <code>&quot;RGB&quot;</code> but could also be e.g. <code>&quot;Lab&quot;</code> or <code>&quot;HSV&quot;</code>. If the array represents a 4-channel image, the <code>colorspace</code> option is mandatory since there is no way to automatically distinguish between <code>&quot;ARGB&quot;</code> and <code>&quot;RGBA&quot;</code>. If both the first and last dimensions happen to be of size 3 or 4, it is impossible to guess which one represents color and thus an error is generated. Thus, if your code should be robust to arbitrary-sized images, you should use the <code>Image</code> constructor directly.</p>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">copyproperties(img, data)</code></pre>
+<p>Creates a new image from the data array <code>data</code>, copying the properties from image <code>img</code>.</p>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">shareproperties(img, data)</code></pre>
+<p>Creates a new image from the data array <code>data</code>, <em>sharing</em> the properties of image <code>img</code>. Any modifications made to the properties of one will affect the other.</p>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">similar(img, [<span class="kw">type</span>], [dims])</code></pre>
+<p>Like the standard Julia command, this will create an <code>Image</code> of similar type, copying the properties.</p>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">Overlay(channels, colors, clim)
+Overlay(channels, colors, mapi)</code></pre>
+<p>Create an <code>Overlay</code> array from grayscale channels. <code>channels = (channel1, channel2, ...)</code>, <code>colors</code> is a vector or tuple of <code>ColorValue</code>s, and <code>clim</code> is a vector or tuple of min/max values, e.g., <code>clim = ((min1,max1),(min2,max2),...)</code>. Alternatively, you can supply a list of <code>MapInfo</code> objects</p>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">OverlayImage(channels, colors, clim)</code></pre>
+<p>Like <code>Overlay</code>, except it creates an Image (not just an array).</p>
+<h2 id="accessing-image-data">Accessing image data</h2>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">data(img)</code></pre>
+<p>returns a reference to the array data in the image. It allows you to use an algorithm written for <code>Array</code>s or <code>AbstractArray</code>s on <code>Image</code> types. This works for both <code>AbstractImage</code>s and <code>AbstractArray</code>s (for the latter it just returns the input), so is a &quot;safe&quot; component of any algorithm.</p>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">img[i, j, k,...]
+img[<span class="st">&quot;x&quot;</span>, <span class="fl">100</span>:<span class="fl">200</span>, <span class="st">&quot;y&quot;</span>, <span class="fl">400</span>:<span class="fl">600</span>]</code></pre>
+<p>return image data as an array. The latter syntax allows you to address dimensions by name, irrespective of the storage order. The returned values have the same storage order as the parent.</p>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">getindexim(img, i, j, k,...)
+getindexim(img, <span class="st">&quot;x&quot;</span>, <span class="fl">100</span>:<span class="fl">200</span>, <span class="st">&quot;y&quot;</span>, <span class="fl">400</span>:<span class="fl">600</span>)</code></pre>
+<p>return the image data as an <code>Image</code>, copying (and where necessary modifying) the properties of <code>img</code>.</p>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">sub(img, i, j, k, ...)
+sub(img, <span class="st">&quot;x&quot;</span>, <span class="fl">100</span>:<span class="fl">200</span>, <span class="st">&quot;y&quot;</span>, <span class="fl">400</span>:<span class="fl">600</span>)
+slice(img, i, j, k, ...)
+slice(img, <span class="st">&quot;x&quot;</span>, <span class="fl">15</span>, <span class="st">&quot;y&quot;</span>, <span class="fl">400</span>:<span class="fl">600</span>)</code></pre>
+<p>returns a <code>SubArray</code> of image data, with the ordinary meanings of <code>sub</code> and <code>slice</code>.</p>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">subim(img, i, j, k, ...)
+subim(img, <span class="st">&quot;x&quot;</span>, <span class="fl">100</span>:<span class="fl">200</span>, <span class="st">&quot;y&quot;</span>, <span class="fl">400</span>:<span class="fl">600</span>)
+sliceim(img, i, j, k, ...)
+subim(img, <span class="st">&quot;x&quot;</span>, <span class="fl">15</span>, <span class="st">&quot;y&quot;</span>, <span class="fl">400</span>:<span class="fl">600</span>)</code></pre>
+<p>returns an <code>Image</code> with <code>SubArray</code> data.</p>
+<h2 id="image-properties">Image properties</h2>
+<p>Unless specified, these functions work on both plain arrays (when properties can be inferred), and on <code>Image</code> types.</p>
+<h3 id="dictionary-like-interface">Dictionary-like interface</h3>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">val = img[<span class="st">&quot;propertyname&quot;</span>]
+img[<span class="st">&quot;propertyname&quot;</span>] = val</code></pre>
+<p>get and set, respectively, the value of a property. These work only for <code>Image</code> types.</p>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">haskey(img, <span class="st">&quot;propertyname&quot;</span>)</code></pre>
+<p>Tests whether the named property exists. Returns false for <code>Array</code>s.</p>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">get(img, <span class="st">&quot;propertyname&quot;</span>, defaultvalue)</code></pre>
+<p>Gets the named property, or returns the default if not present. For <code>Array</code>, the default is always returned.</p>
+<h3 id="accessor-function-interface">Accessor-function interface</h3>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">assert2d(img)</code></pre>
+<p>Triggers an error if the image has more than two spatial dimensions or has a time dimension.</p>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">assert_scalar_color(img)</code></pre>
+<p>Triggers an error if the image uses an array dimension to encode color.</p>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">assert_timedim_last(img)</code></pre>
+<p>Triggers an error if the image has a time dimension that is not the last dimension.</p>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">assert_xfirst(img)
+assert_yfirst(img)</code></pre>
+<p>Triggers an error if the first spatial dimension is not as specified.</p>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">colordim(img)</code></pre>
+<p>Returns the dimension used to encode color, or 0 if no dimension of the array is used for color. For example, an <code>Array</code> of size <code>(m, n, 3)</code> would result in 3, whereas an <code>Array</code> of <code>RGB</code> colorvalues would yield 0.</p>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">colorspace(img)</code></pre>
+<p>Returns a string specifying the colorspace representation of the image.</p>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">coords_spatial(img)</code></pre>
+<p>Returns a vector listing the spatial dimensions of the image. For example, an <code>Array</code> of size <code>(m,n,3)</code> would return <code>[1,2]</code>.</p>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">height(img)</code></pre>
+<p>Returns the vertical size of the image, regardless of storage order. By default horizontal corresponds to dimension <code>&quot;y&quot;</code>, but see <code>spatialpermutation</code> for other options.</p>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">isdirect(img)</code></pre>
+<p>True if <code>img</code> encodes its values directly, rather than via an indexed colormap.</p>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">isxfirst(img)
+isyfirst(img)</code></pre>
+<p>Tests whether the first spatial dimension is <code>&quot;x&quot;</code> or <code>&quot;y&quot;</code>, respectively.</p>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">limits(img)</code></pre>
+<p>Returns the value of the <code>&quot;limits&quot;</code> property, or infers the limits from the data type (e.g., <code>Uint8</code>) when the property does not exist. Setting a default value for FloatingPoint types presents a bit of a challenge; for <code>Image</code> FloatingPoint types, the default is <code>(-Inf, Inf)</code> (consistent with using <code>typemin/typemax</code> for integer types), but for plain <code>Array</code>s the convention is <code>(0,1)</code>. See also <code>climdefault</code> which always returns a finite value, defaulting to <code>(0,1)</code> for a FloatingPoint image type for which <code>&quot;limits&quot;</code> has not been explicitly set.</p>
+<p>For example, if you're using a 14-bit camera and encoding the values with <code>Uint16</code>, you can set the limits property to <code>(0x0000, 0x3fff)</code> to indicate that not all 16 bits are meaningful.</p>
+<p>Note that there is no guarantee that the image values fall within the stated limits; this is intended as a &quot;hint&quot; and is used particularly for setting default contrast when images are displayed.</p>
+<p>Arithmetic on images updates the setting of the <code>&quot;limits&quot;</code> property. For example, <code>imgdiff = img1-img2</code>, where both are <code>Image</code>s with <code>&quot;limits&quot;</code> set to <code>(0.0,1.0)</code>, will result in <code>limits(imgdiff) = (-1.0,1.0)</code>.</p>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">pixelspacing(img)</code></pre>
+<p>Returns a vector containing the spacing between adjacent pixels along each dimension. If this property is not set, it will be computed from <code>&quot;spacedirections&quot;</code> if present; otherwise it defaults to <code>ones(sdims(img))</code>. If desired, you can set this property in terms of physical <a href="https://github.com/loladiro/SIUnits.jl">units</a>.</p>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">spacedirections(img)</code></pre>
+<p>Returns a vector-of-vectors, each indicating the displacement between adjacent pixels along each spatial axis of the image array, relative to some external coordinate system (&quot;physical coordinates&quot;). For example, you could indicate that a photograph was taken with the camera tilted 30-degree relative to vertical using</p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">img[<span class="st">&quot;spacedirections&quot;</span>] = [[<span class="fl">0.866025</span>,-<span class="fl">0.5</span>],[<span class="fl">0.5</span>,<span class="fl">0.866025</span>]]</code></pre>
+<p>If not specified, it will be computed from <code>pixelspacing(img)</code>, placing the spacing along the &quot;diagonal&quot;. If desired, you can set this property in terms of physical <a href="https://github.com/loladiro/SIUnits.jl">units</a>.</p>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">nimages(img)</code></pre>
+<p>The number of time-points in the image array. This is safer than <code>size(img, &quot;t&quot;)</code> because it also works for plain <code>AbstractArray</code> types.</p>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">sdims(img)</code></pre>
+<p>Similar to <code>ndims</code>, but it returns just the number of <em>spatial</em> dimensions in the image array (excluding color and time).</p>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">size(img, <span class="fl">2</span>)
+size(img, <span class="st">&quot;t&quot;</span>)</code></pre>
+<p>Obtains the size of the specified dimension, even for dimensions specified by name. See also <code>nimages</code>, <code>size_spatial</code>, <code>width</code>, <code>height</code>, and <code>widthheight</code>.</p>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">size_spatial(img)</code></pre>
+<p>Returns a tuple listing the sizes of the spatial dimensions of the image. For example, an <code>Array</code> of size <code>(m,n,3)</code> would return <code>(m,n)</code>.</p>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">spatialorder(img)
+spatialorder(ImageType)</code></pre>
+<p>Returns the storage order of the <em>spatial</em> coordinates of the image, e.g., <code>[&quot;y&quot;, &quot;x&quot;]</code>. The second version works on a type, e.g., <code>Matrix</code>. See <code>storageorder</code>, <code>timedim</code>, and <code>colordim</code> for related properties.</p>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">spatialpermutation(to, img)</code></pre>
+<p>Calculates the <em>spatial</em> permutation needed to convert the spatial dimension to a given format. This is probably easiest to understand by examples: for an <code>Array</code> <code>A</code> of size <code>(m,n,3)</code>, <code>spatialorder(A)</code> would yield <code>[&quot;y&quot;, &quot;x&quot;]</code>, so <code>spatialpermutation([&quot;y&quot;, &quot;x&quot;], A) = [1,2]</code> and <code>spatialpermutation([&quot;x&quot;, &quot;y&quot;], A) = [2,1]</code>. For an image type, here's a demonstration:</p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">julia&gt; Aimg = convert(Image, A)
+RGB Image with:
+  data: <span class="fl">4</span>x5x3 <span class="dt">Array</span>{<span class="dt">Float64</span>,<span class="fl">3</span>}
+  properties:
+    limits: (<span class="fl">0.0</span>,<span class="fl">1.0</span>)
+    colordim: <span class="fl">3</span>
+    spatialorder:  y x
+    colorspace: RGB
+
+julia&gt; Ap = permutedims(Aimg, [<span class="fl">3</span>, <span class="fl">1</span>, <span class="fl">2</span>])
+RGB Image with:
+  data: <span class="fl">3</span>x4x5 <span class="dt">Array</span>{<span class="dt">Float64</span>,<span class="fl">3</span>}
+  properties:
+    limits: (<span class="fl">0.0</span>,<span class="fl">1.0</span>)
+    colordim: <span class="fl">1</span>
+    spatialorder:  y x
+    colorspace: RGB
+
+julia&gt; spatialpermutation([<span class="st">&quot;x&quot;</span>,<span class="st">&quot;y&quot;</span>], Ap)
+<span class="fl">2</span>-element <span class="dt">Array</span>{<span class="dt">Int64</span>,<span class="fl">1</span>}:
+ <span class="fl">2</span>
+ <span class="fl">1</span></code></pre>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">spatialproperties(img)</code></pre>
+<p>Returns all properties whose values are of the form of an array or tuple, with one entry per spatial dimension. If you have a custom type with additional spatial properties, you can set <code>img[&quot;spatialproperties&quot;] = [&quot;property1&quot;, &quot;property2&quot;, ...]</code>. An advantage is that functions that change spatial dimensions, like <code>permutedims</code> and <code>slice</code>, will also adjust the properties. The default is <code>[&quot;spatialorder&quot;, &quot;pixelspacing&quot;]</code>; however, if you override the setting then these are not included automatically (you'll want to do so manually, if applicable).</p>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">storageorder(img)</code></pre>
+<p>Returns the complete storage order of the image array, including <code>&quot;t&quot;</code> for time and <code>&quot;color&quot;</code> for color.</p>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">timedim(img)</code></pre>
+<p>Returns the dimension used to represent time, or 0 if this is a single image.</p>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">width(img)</code></pre>
+<p>Returns the horizontal size of the image, regardless of storage order. By default horizontal corresponds to dimension <code>&quot;x&quot;</code>, but see <code>spatialpermutation</code> for other options.</p>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">widthheight(img)</code></pre>
+<p>Returns the <code>(w,h)</code> tuple. See <code>width</code> and <code>height</code>.</p>
+<h2 id="element-transformation-and-intensity-scaling">Element transformation and intensity scaling</h2>
+<p>Many images require some type of transformation before you can use or view them. For example, visualization libraries work in terms of 8-bit data, so if you're using a 16-bit scientific camera, your image values will need to be scaled before display.</p>
+<p>One can directly rescale the pixel intensities in the image array. In general, element-wise transformations are handled by <code>map</code> or <code>map!</code>, where the latter is used when you want to provide a pre-allocated output. You can use an anonymous function of your own design, or, if speed is paramount, the &quot;anonymous functions&quot; of the <a href="https://github.com/timholy/FastAnonymous.jl">FastAnonymous</a> package.</p>
+<p>Images also supports &quot;lazy transformations.&quot; When loading a very large image, (e.g., loaded by memory-mapping) you may use or view just a small portion of it. In such cases, it would be quite wasteful to force transformation of the entire image, and indeed on might exhaust available memory or need to write a new file on disk. <code>Images</code> supports lazy-evaluation scaling through the <code>MapInfo</code> abstract type. The basic syntax is</p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">valout = map(mapi::MapInfo, valin)</code></pre>
+<p>Here <code>val</code> can refer to a single pixel's data, or to the entire image array. The <code>mapi</code> input is a type that determines how the input value is scale and converted to a new type.</p>
+<p>Here is how to directly construct the major concrete <code>MapInfo</code> types:</p>
+<ul>
+<li><code>MapNone(T)</code>, indicating that the only form of scaling is conversion to type</li>
+</ul>
+<ol start="20" type="A">
+<li>This is not very safe, as values &quot;wrap around&quot;: for example, converting <code>258</code> to a <code>Uint8</code> results in <code>0x02</code>, which would look dimmer than <code>255 =    0xff</code>.</li>
+</ol>
+<ul>
+<li><p><code>ClampMin(T, minvalue)</code>, <code>ClampMax(T, maxvalue)</code>, and <code>ClampMinMax(T,    minvalue, maxvalue)</code> create <code>MapInfo</code> objects that clamp pixel values at the specified min, max, and min/max values, respectively, before converting. Clamping is equivalent to <code>clampedval = min(max(val, minvalue),    maxvalue)</code>. This is much safer than <code>MapNone</code>.</p></li>
+<li><p><code>BitShift(T, N)</code> or <code>BitShift{T,N}()</code>, for scaling by bit-shift operators. <code>N</code> specifies the number of bits to right-shift by. For example you could convert a 14-bit image to 8-bits using <code>BitShift(Uint8, 6)</code>. In general this will be faster than using multiplication.</p></li>
+<li><p><code>ScaleMinMax(T, min, max, [scalefactor])</code> clamps the image at the specified min/max values, subtracts the min value, scales the result by multiplying by <code>scalefactor</code>, and finally converts the type. If <code>scalefactor</code> is not specified, it defaults to scaling the range <code>[min,max]</code> to <code>[0,1]</code>.</p></li>
+<li><p><code>ScaleAutoMinMax(T)</code> will cause images to be dynamically scaled to their specific min/max values, using the same algorithm for <code>ScaleMinMax</code>. When displaying a movie, the min/max will be recalculated for each frame, so this can result in inconsistent contrast scaling.</p></li>
+<li><p><code>ScaleSigned(T, scalefactor)</code> multiplies the image by the scalefactor, then clamps to the range <code>[-1,1]</code>. If <code>T</code> is a floating-point type, it stays in this representation. If <code>T</code> is <code>RGB24</code> or <code>RGB{Ufixed8}</code>, then it is encoded as a magenta (positive)/green (negative) image.</p></li>
+</ul>
+<p><br /></p>
+<p>There are also convenience functions:</p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">imstretch(img, m, slope)</code></pre>
+<p>which, for an image with intensities between 0 and 1, enhances or reduces (for slope &gt; 1 or &lt; 1, respectively) the contrast near saturation (0 and 1). This is essentially a symmetric gamma-correction. For a pixel of brightness <code>p</code>, the new intensity is <code>1/(1+m/(p+eps)^slope)</code>.</p>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">sc(img)
+sc(img, min, max)</code></pre>
+<p>Applies default or specified ScaleMinMax scaling to the image.</p>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">mapinfo(client, img)</code></pre>
+<p>returns the default scaling for a specified &quot;client.&quot; For example, clients <code>RGB24</code> and <code>ARGB32</code> are used for display, and <code>Images.ImageMagick</code> is used when saving to disk. You could define additional implementations for custom clients.</p>
+<p><br /></p>
+<h2 id="color-conversion">Color conversion</h2>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">convert(Image{ColorValue}, img)</code></pre>
+<p>as described above. Use <code>convert(Image{Gray}, img)</code> to calculate a grayscale representation of a color image using the <a href="http://en.wikipedia.org/wiki/Luma_%28video%29#Rec._601_luma_versus_Rec._709_luma_coefficients">Rec 601 luma</a>.</p>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">map(mapi, img)
+map!(mapi, dest, img)</code></pre>
+<p>can be used to specify both the form of the result and the algorithm used.</p>
+<h2 id="image-io">Image I/O</h2>
+<p>See also the more <a href="extendingIO.md">thorough description</a>.</p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">add_image_file_format(extension, [magicbytes,] FileType, srcfilename)</code></pre>
+<p>&quot;Register&quot; a source file that can handle reading/writing image files of the given format. <code>FileType</code> must be a subtype of <code>ImageFileType</code>. For those (unfortunate) formats without magic bytes, you can still register them, but reading will be based solely on extension name and/or can be forced by specifying the file type in <code>imread</code>.</p>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">imread(filename;[extraprop=<span class="st">&quot;&quot;</span>,extrapropertynames=false])
+imread(filename, FileType;[extraprop=<span class="st">&quot;&quot;</span>,extrapropertynames=false])
+imread(stream, FileType)</code></pre>
+<p>Reads an image, inferring the format from (1) the magic bytes where possible (even if this doesn't agree with the extension name), and (2) otherwise by the extension name. The format can also be directly controlled by <code>FileType</code>.</p>
+<p>Note that imread will return images in native storage format, e.g., a 2D RGB image will (for most file formats) be returned as a 2D <code>RGB</code> array. Because file formats are horizontal major, you access the value of pixel <code>(x,y)</code> by <code>img[x,y]</code> or <code>img[&quot;x&quot;,x,&quot;y&quot;,y]</code>.</p>
+<p>When reading with ImageMagick, arbitrary properties of the image can be transfered to the properties dictionary. If <code>extrapropertynames</code> is <code>true</code>, <code>imread</code> just returns a vector of the property names stored in the image. The <code>extraprop</code> argument takes a string or a vector of strings and adds the named properties to the dictionary.</p>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">imwrite(img, filename, [FileType,] args...)</code></pre>
+<p>Write an image, specifying the type by the extension name or (optionally) directly. Some writers take additional arguments, for example</p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">imwrite(img, <span class="st">&quot;myimage.jpg&quot;</span>, quality=<span class="fl">80</span>)</code></pre>
+<p>to control the quality setting in JPEG compression.</p>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">loadformat(FileType)</code></pre>
+<p>Image file format code (in the <code>src/io</code> directory) is not loaded until needed, usually triggered by reading or writing a file of the given format. You can use this command to force the format to load, for example to gain access to specific functions in the corresponding module. See the end of <code>io.jl</code> for a list of <code>FileType</code>s.</p>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">writemime(io, MIME(<span class="st">&quot;image/png&quot;</span>), img; mapi=Images.mapinfo_writemime(img), minpixels=<span class="fl">10</span>^<span class="fl">4</span>, maxpixels=<span class="fl">10</span>^<span class="fl">6</span>)</code></pre>
+<p>Write to stream <code>io</code> as a PNG. This is used for display front-ends such as IJulia. The keyword arguments allow you to specify the <code>mapinfo</code> transformation to be used, the minimum number of pixels used to display the image, and the maximum number of pixels used, respectively. Shrinking is performed by <code>restrict</code>; enlarging is done by duplication of adjacent pixels.</p>
+<h2 id="image-algorithms">Image algorithms</h2>
+<p>You can perform arithmetic with <code>Image</code>s and <code>ColorValue</code>s. Algorithms also include the following functions:</p>
+<h2 id="linear-filtering-and-padding">Linear filtering and padding</h2>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">imfilter(img, kernel, [border, value])</code></pre>
+<p>filters the image with the given (array) kernel, using boundary conditions specified by <code>border</code> and <code>value</code>. See <code>padarray</code> below for an explanation of the boundary conditions. Default is to use <code>&quot;replicate&quot;</code> boundary conditions. This uses finite-impulse-response (FIR) filtering, and is fast only for relatively small <code>kernel</code>s.</p>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">imfilter!(dest, img, kernel)</code></pre>
+<p>filters the image with the given (array) kernel, storing the output in the pre-allocated output <code>dest</code>. The size of <code>dest</code> must not be greater than the size of the result of <code>imfilter</code> with <code>border = &quot;inner&quot;</code>, and it behaves identically. This uses finite-impulse-response (FIR) filtering, and is fast only for relatively small <code>kernel</code>s.</p>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">imfilter_fft(img, kernel, [border, value])</code></pre>
+<p>filters the image with the given (array) kernel, using an FFT algorithm. This is slower than <code>imfilter</code> for small kernels, but much faster for large kernels. For Gaussian blur, an even better choice is <code>imfilter_gaussian</code>.</p>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">imfilter_gaussian(img, sigma)</code></pre>
+<p>filters the image with a Gaussian of the specified width. <code>sigma</code> should have one value per array dimension (any number of dimensions are supported), 0 indicating that no filtering is to occur along that dimension. Uses the Young, van Vliet, and van Ginkel IIR-based algorithm to provide fast gaussian filtering even with large <code>sigma</code>. Edges are handled by &quot;NA&quot; conditions, meaning the result is normalized by the number and weighting of available pixels, and missing data (NaNs) are handled likewise.</p>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">imfilter_LoG(img, sigma, [border])</code></pre>
+<p>filters a 2D image with a Laplacian of Gaussian of the specified width. <code>sigma</code> may be a vector with one value per array dimension, or may be a single scalar value for uniform filtering in both dimensions. Uses the Huertas and Medioni separable algorithm.</p>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">imgradients(img, [method], [border])</code></pre>
+<p>Edge-detection filtering. <code>method</code> is one of <code>&quot;sobel&quot;</code>, <code>&quot;prewitt&quot;</code>, <code>&quot;ando3&quot;</code>, <code>&quot;ando4&quot;</code>, <code>&quot;ando4_sep&quot;</code>, <code>&quot;ando5&quot;</code>, or <code>&quot;ando5_sep&quot;</code>, defaulting to <code>&quot;ando3&quot;</code> (see the functions of the same name for more information). <code>border</code> is any of the boundary conditions specified in <code>padarray</code>.</p>
+<p>Returns a tuple containing <code>x</code> (horizontal) and <code>y</code> (vertical) gradient images of the same size as <code>img</code>, calculated using the requested method and border.</p>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">magnitude(grad_x, grad_y)</code></pre>
+<p>Calculates the magnitude of the gradient images given by <code>grad_x</code> and <code>grad_y</code>. Equivalent to <code>sqrt(grad_x.^2 + grad_y.^2)</code>.</p>
+<p>Returns a magnitude image the same size as <code>grad_x</code> and <code>grad_y</code>.</p>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">phase(grad_x, grad_y)</code></pre>
+<p>Calculates the rotation angle of the gradient images given by <code>grad_x</code> and <code>grad_y</code>. Equivalent to <code>atan2(-grad_y, grad_x)</code>. When both <code>grad_x[i]</code> and <code>grad_y[i]</code> are zero, the corresponding angle is set to zero.</p>
+<p>Returns a phase image the same size as <code>grad_x</code> and <code>grad_y</code>, with values in [-pi,pi].</p>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">orientation(grad_x, grad_y)</code></pre>
+<p>Calculates the orientation angle of the strongest edge from gradient images given by <code>grad_x</code> and <code>grad_y</code>. Equivalent to <code>atan2(grad_x, grad_y)</code>. When both <code>grad_x[i]</code> and <code>grad_y[i]</code> are zero, the corresponding angle is set to zero.</p>
+<p>Returns a phase image the same size as <code>grad_x</code> and <code>grad_y</code>, with values in [-pi,pi].</p>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">magnitude_phase(grad_x, grad_y)</code></pre>
+<p>Convenience function for calculating the magnitude and phase of the gradient images given in <code>grad_x</code> and <code>grad_y</code>. Returns a tuple containing the magnitude and phase images. See <code>magnitude</code> and <code>phase</code> for details.</p>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">imedge(img, [method], [border])</code></pre>
+<p>Edge-detection filtering. <code>method</code> is one of <code>&quot;sobel&quot;</code>, <code>&quot;prewitt&quot;</code>, <code>&quot;ando3&quot;</code>, <code>&quot;ando4&quot;</code>, <code>&quot;ando4_sep&quot;</code>, <code>&quot;ando5&quot;</code>, or <code>&quot;ando5_sep&quot;</code>, defaulting to <code>&quot;ando3&quot;</code> (see the functions of the same name for more information). <code>border</code> is any of the boundary conditions specified in <code>padarray</code>.</p>
+<p>Returns a tuple <code>(grad_x, grad_y, mag, orient)</code>, which are the horizontal gradient, vertical gradient, and the magnitude and orientation of the strongest edge, respectively.</p>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">thin_edges(img, gradientangle, [border])
+thin_edges_subpix(img, gradientangle, [border])
+thin_edges_nonmaxsup(img, gradientangle, [border]; [radius::<span class="dt">Float64</span>=<span class="fl">1.35</span>], [theta=pi/<span class="fl">180</span>])
+thin_edges_nonmaxsup_subpix(img, gradientangle, [border]; [radius::<span class="dt">Float64</span>=<span class="fl">1.35</span>], [theta=pi/<span class="fl">180</span>])</code></pre>
+<p>Edge thinning for 2D edge images. Currently the only algorithm available is non-maximal suppression, which takes an edge image and its gradient angle, and checks each edge point for local maximality in the direction of the gradient. The returned image is non-zero only at maximal edge locations.</p>
+<p><code>border</code> is any of the boundary conditions specified in <code>padarray</code>.</p>
+<p>In addition to the maximal edge image, the <code>_subpix</code> versions of these functions also return an estimate of the subpixel location of each local maxima, as a 2D array or image of <code>Graphics.Point</code> objects. Additionally, each local maxima is adjusted to the estimated value at the subpixel location.</p>
+<p>Currently, the <code>_nonmaxsup</code> functions are identical to the first two function calls, except that they also accept additional keyword arguments. <code>radius</code> indicates the step size to use when searching in the direction of the gradient; values between 1.2 and 1.5 are suggested (default 1.35). <code>theta</code> indicates the step size to use when discretizing angles in the <code>gradientangle</code> image, in radians (default: 1 degree in radians = pi/180).</p>
+<p>Example:</p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">g = rgb2gray(rgb_image)
+gx, gy = imgradients(g)
+mag, grad_angle = magnitude_phase(gx,gy)
+mag[mag .&lt; <span class="fl">0.5</span>] = <span class="fl">0.0</span>  <span class="co"># Threshold magnitude image</span>
+thinned, subpix =  thin_edges_subpix(mag, gradient)</code></pre>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">thin_edges_nonmaxsup!(out, img, gradientangle, [border]; [radius::<span class="dt">Float64</span>=<span class="fl">1.35</span>], [theta=pi/<span class="fl">180</span>])
+thin_edges_nonmaxsup_subpix!(out, location, img, gradientangle, [border]; [radius::<span class="dt">Float64</span>=<span class="fl">1.35</span>], [theta=pi/<span class="fl">180</span>])</code></pre>
+<p>For advanced usage, these versions will put results into preallocated arrays or images. <code>out</code> must be the same size and type as <code>img</code>. <code>location</code> must be an array of type <code>Graphics.Point</code> and must be the same size as <code>img</code>.</p>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">forwarddiffx(img)
+backdiffx(img)
+forwarddiffy(img)
+backdiffy(img)</code></pre>
+<p>Forward- and backward finite differencing along the x- and y- axes. The size of the image is preserved, so the first (for <code>backdiff</code>) or last (for <code>forwarddiff</code>) row/column will be zero. These currently operate only on matrices (2d with scalar color).</p>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">padarray(img, prepad, postpad, border, value)</code></pre>
+<p>For an <code>N</code>-dimensional array, apply padding on both edges. <code>prepad</code> and <code>postpad</code> are vectors of length <code>N</code> specifying the number of pixels used to pad each dimension. <code>border</code> is a string, one of <code>&quot;value&quot;</code> (to pad with a specific pixel value), <code>&quot;replicate&quot;</code> (to repeat the edge value), <code>&quot;circular&quot;</code> (periodic boundary conditions), <code>&quot;reflect&quot;</code> (reflecting boundary conditions, where the reflection is centered on edge), and <code>&quot;symmetric&quot;</code> (reflecting boundary conditions, where the reflection is centered a half-pixel spacing beyond the edge, so the edge value gets repeated). Arrays are automatically padded before filtering. Use <code>&quot;inner&quot;</code> to avoid padding altogether; the output array will be smaller than the input.</p>
+<h2 id="filtering-kernels">Filtering kernels</h2>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">gaussian2d(sigma, filtersize)</code></pre>
+<p>returns a kernel for FIR-based Gaussian filtering. See also <code>imfilter_gaussian</code>.</p>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">imaverage(filtersize)</code></pre>
+<p>constructs a boxcar-filter of the specified size.</p>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">imdog(sigma)</code></pre>
+<p>creates a difference-of-gaussians kernel (<code>sigma</code>s differing by a factor of <code>sqrt(2)</code>)</p>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">imlaplacian(filtersize)</code></pre>
+<p>returns a kernel for laplacian filtering.</p>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">imlog(sigma)</code></pre>
+<p>returns a laplacian-of-gaussian kernel.</p>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">sobel()
+prewitt()
+ando3()
+ando4()
+ando4_sep()
+ando5()
+ando5_sep()</code></pre>
+<p>Return x- and y- derivative filters of the specified type:</p>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Name</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>&quot;sobel&quot;</code></td>
+<td style="text-align: left;">Sobel filter</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>&quot;prewitt&quot;</code></td>
+<td style="text-align: left;">Prewitt filter</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>&quot;ando3&quot;</code></td>
+<td style="text-align: left;">Optimal 3x3 filter from Ando 2000</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>&quot;ando4&quot;</code></td>
+<td style="text-align: left;">Optimal 4x4 filter from Ando 2000</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>&quot;ando4_sep&quot;</code></td>
+<td style="text-align: left;">Separable approximation of <code>&quot;ando4&quot;</code></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>&quot;ando5&quot;</code></td>
+<td style="text-align: left;">Optimal 5x5 filter from Ando 2000</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>&quot;ando5_sep&quot;</code></td>
+<td style="text-align: left;">Separable approximation of <code>&quot;ando5&quot;</code></td>
+</tr>
+</tbody>
+</table>
+<p>The ando filters were derived in Ando Shigeru, IEEE Trans. Pat. Anal. Mach. Int., vol. 22 no 3, March 2000. As written in the paper, the 4x4 and 5x5 papers are not separable, so the <code>&quot;ando4_sep&quot;</code> and <code>&quot;ando5_sep&quot;</code> filters are provided as separable (and therefore faster) approximations of <code>&quot;ando4&quot;</code> and <code>&quot;ando5&quot;</code>, respectively.</p>
+<h2 id="nonlinear-filtering-and-transformation">Nonlinear filtering and transformation</h2>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">imROF(img, lambda, iterations)</code></pre>
+<p>Perform Rudin-Osher-Fatemi (ROF) filtering, more commonly known as Total Variation (TV) denoising or TV regularization. <code>lambda</code> is the regularization coefficient for the derivative, and <code>iterations</code> is the number of relaxation iterations taken. 2d only.</p>
+<h2 id="resizing">Resizing</h2>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">restrict(img[, region])</code></pre>
+<p>performs two-fold reduction in size along the dimensions listed in <code>region</code>, or all spatial coordinates if <code>region</code> is not specified. It anti-aliases the image as it goes, so is better than a naive summation over 2x2 blocks.</p>
+<h2 id="image-statistics">Image statistics</h2>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">minfinite(img)
+maxfinite(img)
+maxabsfinite(img)</code></pre>
+<p>Return the minimum and maximum value in the image, respectively, ignoring any values that are not finite (Inf or NaN).</p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">meanfinite(img, region)</code></pre>
+<p>Calculate the mean value along the dimensions listed in <code>region</code>, ignoring any non-finite values.</p>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">ssd(img1, img2)
+ssdn(img1, img2)</code></pre>
+<p>Sum-of-squared-differences (pixelwise). <code>ssdn</code> is the mean-of-squared-differences (i.e., normalized by <code>n</code>, the number of pixels).</p>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">sad(img1, img2)
+sadn(img1, img2)</code></pre>
+<p>sum and mean of <code>abs(img1-img2)</code>.</p>
+<h2 id="morphological-operations">Morphological operations</h2>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">dilate(img, [region])
+erode(img, [region])</code></pre>
+<p>perform a max-filter and min-filter, respectively, over nearest-neighbors. The default is 8-connectivity in 2d, 27-connectivity in 3d, etc. You can specify the list of dimensions that you want to include in the connectivity, e.g., region = [1,2] would exclude the third dimension from filtering.</p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">opening(img, [region])
+closing(img, [region])</code></pre>
+<p>perform the <code>opening</code> and <code>closing</code> morphology operations. <code>opening</code> does first <code>erode</code> the image and then <code>dilate</code> the image. <code>opening</code> applies both operations in the oposite way. The region parameter is passed to <code>erode</code> and <code>dilate</code> and describes the kernel size over which these operations are performed.</p>
+<p><br /></p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">label_components(tf, [connectivity])
+label_components(tf, [region])</code></pre>
+<p>Find the connected components in a binary array <code>tf</code>. There are two forms that <code>connectivity</code> can take: it can be a boolean array of the same dimensionality as <code>tf</code>, of size 1 or 3 along each dimension. Each entry in the array determines whether a given neighbor is used for connectivity analyses. For example,</p>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">connectivity = trues(<span class="fl">3</span>,<span class="fl">3</span>)</code></pre>
+<p>would use 8-connectivity and test all pixels that touch the current one, even the corners. The other form is specific for connectivity to just the nearest neighbors (e.g., 4-connectivity in 2d and 6-connectivity in 3d). You can provide a list indicating which dimensions are used to determine connectivity. For example, <code>region = [1,3]</code> would not test neighbors along dimension 2 for connectivity.</p>
+<p>The default is <code>region = 1:ndims(A)</code>.</p>
+<p>The output is an integer array, where 0 is used for background pixels, and each connected region gets a different integer index.</p>
+<h2 id="phantoms">Phantoms</h2>
+<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">shepp_logan(N,[M]; highContrast=true)</code></pre>
+<p>output the NxM Shepp-Logan phantom, which is a standard test image usually used for comparing image reconstruction algorithms in the field of computed tomography (CT) and magnetic resonance imaging (MRI). If the argument M is omitted, the phantom is of size NxN. When setting the keyword argument `<code>highConstrast</code> to false, the CT version of the phantom is created. Otherwise, the high contrast MRI version is calculated.</p>
+        <hr>
+      </div>
+      </div>
+
+      <div class="col-sm-offset-8" style="z-index: 2">
+        <div id="table-of-contents">
+          <div id="table-of-contents-content">
+            <input class="search" placeholder="SEARCH" />
+            <ul class="toc list nav"><li>
+                <a class="toc-item" href="index.html">Introduction</a>
+            </li>
+            <li>
+                <a class="toc-item" href="aims.html">Aims</a>
+            </li>
+            <li>
+                <a class="toc-item" href="install.html">Installation</a>
+            </li>
+            <li>
+                <a class="toc-item" href="core.html">Core Concepts</a>
+            </li>
+            <li>
+                <a class="toc-item toc-current-doc" href="function_reference.html">Function Reference</a>
+            </li>
+            <li>
+                <a style="margin-left: 0.5em" class="toc-item" href="#function-reference">Function Reference</a>
+            </li>
+            <li>
+                <a style="margin-left: 1.0em" class="toc-item" href="#image-construction">Image construction</a>
+            </li>
+            <li>
+                <a style="margin-left: 1.0em" class="toc-item" href="#accessing-image-data">Accessing image data</a>
+            </li>
+            <li>
+                <a style="margin-left: 1.0em" class="toc-item" href="#image-properties">Image properties</a>
+            </li>
+            <li>
+                <a style="margin-left: 1.0em" class="toc-item" href="#element-transformation-and-intensity-scaling">Element transformation and intensity scaling</a>
+            </li>
+            <li>
+                <a style="margin-left: 1.0em" class="toc-item" href="#color-conversion">Color conversion</a>
+            </li>
+            <li>
+                <a style="margin-left: 1.0em" class="toc-item" href="#image-io">Image I/O</a>
+            </li>
+            <li>
+                <a style="margin-left: 1.0em" class="toc-item" href="#image-algorithms">Image algorithms</a>
+            </li>
+            <li>
+                <a style="margin-left: 1.0em" class="toc-item" href="#linear-filtering-and-padding">Linear filtering and padding</a>
+            </li>
+            <li>
+                <a style="margin-left: 1.0em" class="toc-item" href="#filtering-kernels">Filtering kernels</a>
+            </li>
+            <li>
+                <a style="margin-left: 1.0em" class="toc-item" href="#nonlinear-filtering-and-transformation">Nonlinear filtering and transformation</a>
+            </li>
+            <li>
+                <a style="margin-left: 1.0em" class="toc-item" href="#resizing">Resizing</a>
+            </li>
+            <li>
+                <a style="margin-left: 1.0em" class="toc-item" href="#image-statistics">Image statistics</a>
+            </li>
+            <li>
+                <a style="margin-left: 1.0em" class="toc-item" href="#morphological-operations">Morphological operations</a>
+            </li>
+            <li>
+                <a style="margin-left: 1.0em" class="toc-item" href="#phantoms">Phantoms</a>
+            </li>
+            <li>
+                <a class="toc-item" href="overlays.html">Overlays</a>
+            </li>
+            <li>
+                <a class="toc-item" href="extendingIO.html">Extending IO</a>
+            </li>
+            <li>
+                <a class="toc-item" href="fixing_breakages.html">Troubleshooting</a>
+            </li>
+            <li>
+                <a class="toc-item" href="status.html">Development Status</a>
+            </li>
+            </ul>
+
+            <script>
+                var toclist = new List("table-of-contents",
+                                       {valueNames: ["toc-item"]})
+
+                $("body").scrollspy({target: "#table-of-contents"});
+
+                $("#table-of-contents li").on("activate.bs.scrollspy",
+                    function(event) {
+                        $("#table-of-contents ul").find("a").css({"font-weight": "normal"});
+                        $(this).children("a").css({"font-weight": "bolder"});
+                    });
+            </script>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  <footer class="col-sm-8">
+    <p class="muted">Last modified by Tim Holy on Sat Apr  4 17:29:47 CDT 2015. Generated with
+    <a href="https://github.com/dcjones/Judo.jl">Judo</a>.</p>
+  </footer>
+
+  </div>
+</body>
+</html>
+

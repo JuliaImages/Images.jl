@@ -1,4 +1,10 @@
-## Image I/O
+---
+title: Extending IO
+author: Tim Holy
+order: 70
+...
+
+# Image I/O
 
 `Images` supports a number of image file formats. Popular formats such as PNG,
 JPEG, and TIFF are currently loaded and saved via
@@ -8,35 +14,40 @@ JPEG, and TIFF are currently loaded and saved via
 work:
 
 - [NRRD](http://teem.sourceforge.net/nrrd/), "nearly raw raster data" which
-despite its name allows for considerable metadata. Currently, this is perhaps the best default choice of formats for storing image data.
-- SIF, a file format used by Andor Technology for
-their scientific CCD cameras
+  despite its name allows for considerable metadata. Currently, this is perhaps
+  the best default choice of formats for storing image data.
+- SIF, a file format used by Andor Technology for their scientific CCD cameras
 - [B16](http://www.pco.de/links/), a format used by PCO/Cooke cameras
-- [Imagine](http://holylab.wustl.edu/), a format used for 4D (3 spatial dimensions + time) imaging
+- [Imagine](http://holylab.wustl.edu/), a format used for 4D (3 spatial
+  dimensions + time) imaging
 
 Finally, [HDF5](https://github.com/timholy/HDF5.jl) and JLD can also be used to
-store images. There is an official [HDF5 image standard](http://www.hdfgroup.org/HDF5/doc/ADGuide/ImageSpec.html),
+store images. There is an official
+[HDF5 image standard](http://www.hdfgroup.org/HDF5/doc/ADGuide/ImageSpec.html),
 which we could fairly easily support, but the author's searching has yet to turn
-up an example file that complies with this standard. 
-Many HDF5 images seem to be stored with custom attributes, which fortunately are
-quite easy to parse.
+up an example file that complies with this standard.  Many HDF5 images seem to
+be stored with custom attributes, which fortunately are quite easy to parse.
 
 To read an image, one typically says
-```
+
+```{.julia execute="false"}
 img = imread("filename.fmt")
 ```
+
 and to write,
-```
+
+```{.julia execute="false"}
 imwrite(img, "filename.fmt")
 ```
 
 You can read from streams and control format this way:
-```
+
+```{.julia execute="false"}
 img = imread(stream, Images.NRRDFile)
 ```
+
 would load an image from a stream, interpreting it as having NRRD format. The
 stream should already be advanced past the format's magic bytes.
-
 
 ## Extending Image I/O
 
@@ -44,7 +55,7 @@ It is not difficult to extend the `Images` library to handle custom
 image files.  For an example, here are the essential steps to set up
 support for a `.sif` file.
 
-### Implementation for personal use
+## Implementation for personal use
 
 All of the following code is found in
 one file, `SIF.jl`.
@@ -54,7 +65,7 @@ First, we create a new type for the image, whose parent is
 the "magic bytes" to the new type.  The magic bytes are found at
 the start of the file and are used to uniquely identify the format.
 
-```julia
+```{.julia execute="false"}
 # SIF.jl, adds an imread function for Andor .sif images
 
 using Images
@@ -67,7 +78,7 @@ Next, we create an imread function to handle the new image type.  But
 first, we have to explicitly import the imread function so that we can
 extend it:
 
-```julia
+```{.julia execute="false"}
 import Images.imread
 function imread{S<:IO}(stream::S, ::Type{AndorSIF})
     seek(stream, 0)
@@ -87,7 +98,7 @@ changes, pulling out the rug from underneath you).  This particular file
 type has a large number of fields.  For completeness, we will store
 all of these fields in a `Dict` named `ixon`:
 
-```julia
+```{.julia execute="false"}
     # ...skipped a few uninteresting fields before here
     l = strip(readline(stream))
     fields = split(l)
@@ -106,27 +117,27 @@ byte of the actual image data.  Along the way, we collect variables
 array, an image sequence over time).  Now we are ready to read the
 actual pixel data:
 
-```julia
+```{.julia execute="false"}
     pixels = read(stream, Float32, width, height, frames)
 ```
 
 Finally, we wrap up by setting the properties, including the new
 `ixon` collection with suppressed printing, and return the `Image`:
 
-```julia
+```{.julia execute="false"}
     prop = {"colorspace" => "Gray", "spatialorder" => ["y", "x", "t"], "ixon" =>
 ixon, "suppress" => Set({"ixon"})}
     Image(pixels, prop)
 end # imread()
 ```
 
-### Contributing a file format to Images
+## Contributing a file format to Images
 
 To make your file format available to others, only a few changes are
 needed.  First, move your "registration" code from `SIF.jl` to
 Images' `io.jl`:
 
-```julia
+```{.julia execute="false"}
 type AndorSIF <: ImageFileType end
 add_image_file_format(".sif", b"Andor Technology Multi-Channel File", AndorSIF,
 "SIF.jl")
@@ -140,7 +151,7 @@ first time you try to read or write a SIF file.
 Second, the `AndorSIF` type is now found in the `Images` module, so
 tell the `imread` call to look there in `SIF.jl`:
 
-```julia
+```{.julia execute="false"}
 function imread{S<:IO}(stream::S, ::Type{Images.AndorSIF})
 ```
 
