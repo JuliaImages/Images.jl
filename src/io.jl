@@ -18,6 +18,7 @@ filemagic = Array(Vector{Uint8}, 0)
 filetype = Array(Any, 0)
 filesrcloaded = Array(Bool, 0)
 filesrc = Array(String, 0)
+filemmap = Array(Bool,0)  # if it supports memory-mapped operation
 
 function _loadformat(index::Int)
     filename = joinpath("ioformats", filesrc[index])
@@ -39,7 +40,10 @@ function loadformat{FileType<:ImageFileType}(::Type{FileType})
     nothing
 end
 
-function add_image_file_format{ImageType<:ImageFileType}(ext::ByteString, magic::Vector{Uint8}, ::Type{ImageType}, filecode::ASCIIString)
+# if supportmmap == true, then imread() should take a mmap keyword argument that is either
+#   :auto, true or false.
+function add_image_file_format{ImageType<:ImageFileType}(ext::ByteString, magic::Vector{Uint8}, 
+                        ::Type{ImageType}, filecode::ASCIIString; supportsmmap::Bool=false)
     # Check to see whether these magic bytes are already in the database
     for i in 1:length(filemagic)
         if magic == filemagic[i]
@@ -59,16 +63,23 @@ function add_image_file_format{ImageType<:ImageFileType}(ext::ByteString, magic:
     end
     push!(filesrcloaded, isempty(filecode))
     push!(filesrc, filecode)
+    push!(filemmap, supportsmmap)
 end
-add_image_file_format{ImageType<:ImageFileType}(ext::ByteString, magic::Vector{Uint8}, ::Type{ImageType}) = add_image_file_format(ext, magic, ImageType, "")
-add_image_file_format{ImageType<:ImageFileType}(ext::ByteString, ::Type{ImageType}, filecode::ASCIIString) = add_image_file_format(ext, b"", ImageType, filecode)
+add_image_file_format{ImageType<:ImageFileType}(ext::ByteString, magic::Vector{Uint8}, ::Type{ImageType}; supportsmmap::Bool=false) =
+    add_image_file_format(ext, magic, ImageType, "", supportsmmap=supportsmmap)
+add_image_file_format{ImageType<:ImageFileType}(ext::ByteString, ::Type{ImageType}, filecode::ASCIIString; supportsmmap::Bool=false) =
+    add_image_file_format(ext, b"", ImageType, filecode, supportsmmap=supportsmmap)
 
 # Define our fallback file formats now, because we need them in generic imread.
 # This has no extension (and is not added to the database), because it is always used as a stream.
 type ImageMagick <: ImageFileType end
 type OSXNative <: ImageFileType end
 
-function imread(filename::String;extraprop="",extrapropertynames=false)
+function imread(filename::String;extraprop="",extrapropertynames=false,mmap=:auto)
+
+    if (mmap != :auto) && (mmap != true) && (mmap != false)
+        error("Argument mmap must be either true, false or :auto")
+    end
 
     _, ext = splitext(filename)
     ext = lowercase(ext)
@@ -83,7 +94,14 @@ function imread(filename::String;extraprop="",extrapropertynames=false)
                 if !filesrcloaded[index]
                     _loadformat(index)
                 end
-                imread(stream, filetype[index])
+
+                if mmap == true && !filemmap[index]  # find out if it supports mmap
+                    error("Reader does not support memory-mapped operation")
+                elseif filemmap[index]
+                    imread(stream, filetype[index], mmap=mmap)
+                else
+                    imread(stream, filetype[index])
+                end
             end
         end
 
@@ -103,6 +121,10 @@ function imread(filename::String;extraprop="",extrapropertynames=false)
     end
 
     @osx_only begin
+        if mmap == true
+            error("mmap not supported with the OSX native interface")
+        end
+
         img = imread(filename, OSXNative)
         if img != nothing
             return img
@@ -111,6 +133,9 @@ function imread(filename::String;extraprop="",extrapropertynames=false)
 
     # There are no registered readers for this type. Try using ImageMagick if available.
     if have_imagemagick
+        if mmap == true
+            error("mmap not supported for this file type (trying with ImageMagick)")
+        end
         return imread(filename, ImageMagick,extraprop=extraprop,extrapropertynames=extrapropertynames)
     else
         error("Do not know how to read file ", filename, ". Is ImageMagick installed properly? See README.")
@@ -589,8 +614,8 @@ add_image_file_format(".dummy", b"Dummy Image", Dummy, "dummy.jl")
 
 # NRRD image format
 type NRRDFile <: ImageFileType end
-add_image_file_format(".nrrd", b"NRRD", NRRDFile, "nrrd.jl")
-add_image_file_format(".nhdr", b"NRRD", NRRDFile, "nrrd.jl")
+add_image_file_format(".nrrd", b"NRRD", NRRDFile, "nrrd.jl", supportsmmap=true)
+add_image_file_format(".nhdr", b"NRRD", NRRDFile, "nrrd.jl", supportsmmap=true)
 
 # Andor Technologies SIF file format
 type AndorSIF <: Images.ImageFileType end
