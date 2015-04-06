@@ -76,7 +76,7 @@ function myendian()
     end
 end
 
-function imread{S<:IO}(stream::S, ::Type{Images.NRRDFile})
+function imread{S<:IO}(stream::S, ::Type{Images.NRRDFile}; mmap=:auto)
     version = ascii(read(stream, Uint8, 4))
     skipchars(stream,isspace)
     header = Dict{ASCIIString, UTF8String}()
@@ -124,7 +124,17 @@ function imread{S<:IO}(stream::S, ::Type{Images.NRRDFile})
     T = typedict[header["type"]]
     local A
     need_bswap = haskey(header, "endian") && header["endian"] != myendian() && sizeof(T) > 1
-    if header["encoding"] == "raw" && prod(sz) > 10^8 && !need_bswap
+
+    can_mmap = header["encoding"] == "raw" && !need_bswap
+
+    if mmap == true && (!can_mmap)
+        error("Cannot use memory-mapped for reading a non-raw or bswapped file")
+    end
+
+    do_mmap = can_mmap && (prod(sz) > 10^8) && (mmap == :auto)
+    do_mmap |= can_mmap && (mmap == true)
+
+    if do_mmap
         # Use memory-mapping for large files
         fn = stream2name(sdata)
         datalen = div(filesize(fn) - position(sdata), sizeof(T))
