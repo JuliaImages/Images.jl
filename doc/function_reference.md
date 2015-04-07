@@ -4,12 +4,11 @@ author: Tim Holy
 order: 50
 ...
 
-# Function Reference
-
 Below, `[]` in an argument list means an optional argument.
 
-## Image construction
+# Image construction
 
+## Image (type)
 ```{.julia execute="false"}
 Image(data, [properties])
 Image(data, prop1=val1, prop2=val2, ...)
@@ -22,14 +21,14 @@ the array (as opposed to using a `ColorValue` array, from the `Color.jl`
 package), be sure to specify the `"colordim"` and `"colorspace"` in
 `properties`.
 
-<br />
+## ImageCmap
 ```{.julia execute="false"}
 ImageCmap(data, cmap, [properties])
 ```
 
 creates an indexed (colormap) image.
 
-<br />
+## convert
 ```{.julia execute="false"}
 convert(Image, A)
 convert(Array, img)
@@ -45,7 +44,7 @@ needed) to put it in Matlab-standard storage order.
 
 The third syntax allows you to convert from one colorspace to another.
 
-<br />
+## grayim
 ```{.julia execute="false"}
 grayim(A)
 ```
@@ -70,7 +69,7 @@ grayscale image. Instead, the approach taken in `Images.jl` is to throw an
 error, encouraging users to develop the habit of wrapping their 3d grayscale
 arrays in an unambiguous `Image` type.
 
-<br />
+## colorim
 ```{.julia execute="false"}
 colorim(A, [colorspace])
 ```
@@ -86,7 +85,7 @@ represents color and thus an error is generated.  Thus, if your code should be
 robust to arbitrary-sized images, you should use the `Image` constructor
 directly.
 
-<br />
+## copyproperties
 ```{.julia execute="false"}
 copyproperties(img, data)
 ```
@@ -94,7 +93,7 @@ copyproperties(img, data)
 Creates a new image from the data array `data`, copying the properties from
 image `img`.
 
-<br />
+## shareproperties
 ```{.julia execute="false"}
 shareproperties(img, data)
 ```
@@ -103,7 +102,7 @@ Creates a new image from the data array `data`, _sharing_ the properties of
 image `img`. Any modifications made to the properties of one will affect the
 other.
 
-<br />
+## similar
 ```{.julia execute="false"}
 similar(img, [type], [dims])
 ```
@@ -111,7 +110,7 @@ similar(img, [type], [dims])
 Like the standard Julia command, this will create an `Image` of similar type,
 copying the properties.
 
-<br />
+## Overlay
 ```{.julia execute="false"}
 Overlay(channels, colors, clim)
 Overlay(channels, colors, mapi)
@@ -122,15 +121,16 @@ channel2, ...)`, `colors` is a vector or tuple of `ColorValue`s, and `clim` is a
 vector or tuple of min/max values, e.g., `clim = ((min1,max1),(min2,max2),...)`.
 Alternatively, you can supply a list of `MapInfo` objects
 
-<br />
+## OverlayImage
 ```{.julia execute="false"}
 OverlayImage(channels, colors, clim)
 ```
 
 Like `Overlay`, except it creates an Image (not just an array).
 
-## Accessing image data
+# Accessing image data
 
+## data
 ```{.julia execute="false"}
 data(img)
 ```
@@ -140,7 +140,7 @@ algorithm written for `Array`s or `AbstractArray`s on `Image` types.  This works
 for both `AbstractImage`s and `AbstractArray`s (for the latter it just returns
 the input), so is a "safe" component of any algorithm.
 
-<br />
+## img[] (indexing)
 ```{.julia execute="false"}
 img[i, j, k,...]
 img["x", 100:200, "y", 400:600]
@@ -150,7 +150,7 @@ return image data as an array. The latter syntax allows you to address
 dimensions by name, irrespective of the storage order. The returned values have
 the same storage order as the parent.
 
-<br />
+## getindexim
 ```{.julia execute="false"}
 getindexim(img, i, j, k,...)
 getindexim(img, "x", 100:200, "y", 400:600)
@@ -159,7 +159,7 @@ getindexim(img, "x", 100:200, "y", 400:600)
 return the image data as an `Image`, copying (and where necessary modifying) the
 properties of `img`.
 
-<br />
+## sub and slice
 ```{.julia execute="false"}
 sub(img, i, j, k, ...)
 sub(img, "x", 100:200, "y", 400:600)
@@ -170,7 +170,7 @@ slice(img, "x", 15, "y", 400:600)
 returns a `SubArray` of image data, with the ordinary meanings of `sub` and
 `slice`.
 
-<br />
+## subim and sliceim
 ```{.julia execute="false"}
 subim(img, i, j, k, ...)
 subim(img, "x", 100:200, "y", 400:600)
@@ -180,12 +180,10 @@ subim(img, "x", 15, "y", 400:600)
 
 returns an `Image` with `SubArray` data.
 
-## Image properties
-
+# Properties dictionary-like interface
 Unless specified, these functions work on both plain arrays (when properties can
 be inferred), and on `Image` types.
 
-### Dictionary-like interface
 ```{.julia execute="false"}
 val = img["propertyname"]
 img["propertyname"] = val
@@ -194,14 +192,14 @@ img["propertyname"] = val
 get and set, respectively, the value of a property. These work only for `Image`
 types.
 
-<br />
+## haskey
 ```{.julia execute="false"}
 haskey(img, "propertyname")
 ```
 
 Tests whether the named property exists. Returns false for `Array`s.
 
-<br />
+## get
 ```{.julia execute="false"}
 get(img, "propertyname", defaultvalue)
 ```
@@ -209,8 +207,11 @@ get(img, "propertyname", defaultvalue)
 Gets the named property, or returns the default if not present. For `Array`, the
 default is always returned.
 
-### Accessor-function interface
+# Properties accessor-function interface
+Unless specified, these functions work on both plain arrays (when properties can
+be inferred), and on `Image` types.
 
+## assert2d
 ```{.julia execute="false"}
 assert2d(img)
 ```
@@ -218,21 +219,21 @@ assert2d(img)
 Triggers an error if the image has more than two spatial
 dimensions or has a time dimension.
 
-<br />
+## assert_scalar_color
 ```{.julia execute="false"}
 assert_scalar_color(img)
 ```
 
 Triggers an error if the image uses an array dimension to encode color.
 
-<br />
+## assert_timedim_last
 ```{.julia execute="false"}
 assert_timedim_last(img)
 ```
 
 Triggers an error if the image has a time dimension that is not the last dimension.
 
-<br />
+## assert_xfirst
 ```{.julia execute="false"}
 assert_xfirst(img)
 assert_yfirst(img)
@@ -240,7 +241,7 @@ assert_yfirst(img)
 
 Triggers an error if the first spatial dimension is not as specified.
 
-<br />
+## colordim
 ```{.julia execute="false"}
 colordim(img)
 ```
@@ -249,14 +250,14 @@ Returns the dimension used to encode color, or 0 if no dimension of the array is
 used for color. For example, an `Array` of size `(m, n, 3)` would result in 3,
 whereas an `Array` of `RGB` colorvalues would yield 0.
 
-<br />
+## colorspace
 ```{.julia execute="false"}
 colorspace(img)
 ```
 
 Returns a string specifying the colorspace representation of the image.
 
-<br />
+## coords_spatial
 ```{.julia execute="false"}
 coords_spatial(img)
 ```
@@ -264,7 +265,7 @@ coords_spatial(img)
 Returns a vector listing the spatial dimensions of the image. For example, an
 `Array` of size `(m,n,3)` would return `[1,2]`.
 
-<br />
+## height
 ```{.julia execute="false"}
 height(img)
 ```
@@ -273,14 +274,14 @@ Returns the vertical size of the image, regardless of storage order. By default
 horizontal corresponds to dimension `"y"`, but see `spatialpermutation` for
 other options.
 
-<br />
+## isdirect
 ```{.julia execute="false"}
 isdirect(img)
 ```
 
 True if `img` encodes its values directly, rather than via an indexed colormap.
 
-<br />
+## isxfirst, isyfirst
 ```{.julia execute="false"}
 isxfirst(img)
 isyfirst(img)
@@ -288,7 +289,7 @@ isyfirst(img)
 
 Tests whether the first spatial dimension is `"x"` or `"y"`, respectively.
 
-<br />
+## limits
 ```{.julia execute="false"}
 limits(img)
 ```
@@ -313,7 +314,7 @@ Arithmetic on images updates the setting of the `"limits"` property. For
 example, `imgdiff = img1-img2`, where both are `Image`s with `"limits"` set to
 `(0.0,1.0)`, will result in `limits(imgdiff) = (-1.0,1.0)`.
 
-<br />
+## pixelsplacing
 ```{.julia execute="false"}
 pixelspacing(img)
 ```
@@ -324,7 +325,7 @@ dimension. If this property is not set, it will be computed from
 desired, you can set this property in terms of physical
 [units](https://github.com/loladiro/SIUnits.jl).
 
-<br />
+## spaeddirections
 ```{.julia execute="false"}
 spacedirections(img)
 ```
@@ -343,7 +344,7 @@ If not specified, it will be computed from `pixelspacing(img)`, placing the
 spacing along the "diagonal".  If desired, you can set this property in terms of
 physical [units](https://github.com/loladiro/SIUnits.jl).
 
-<br />
+## nimages
 ```{.julia execute="false"}
 nimages(img)
 ```
@@ -351,7 +352,7 @@ nimages(img)
 The number of time-points in the image array. This is safer than
 `size(img, "t")` because it also works for plain `AbstractArray` types.
 
-<br />
+## sdims
 ```{.julia execute="false"}
 sdims(img)
 ```
@@ -359,7 +360,7 @@ sdims(img)
 Similar to `ndims`, but it returns just the number of _spatial_ dimensions in
 the image array (excluding color and time).
 
-<br />
+## size
 ```{.julia execute="false"}
 size(img, 2)
 size(img, "t")
@@ -368,7 +369,7 @@ size(img, "t")
 Obtains the size of the specified dimension, even for dimensions specified by
 name. See also `nimages`, `size_spatial`, `width`, `height`, and `widthheight`.
 
-<br />
+## size_spatial
 ```{.julia execute="false"}
 size_spatial(img)
 ```
@@ -376,7 +377,7 @@ size_spatial(img)
 Returns a tuple listing the sizes of the spatial dimensions of the image. For
 example, an `Array` of size `(m,n,3)` would return `(m,n)`.
 
-<br />
+## spatialorder
 ```{.julia execute="false"}
 spatialorder(img)
 spatialorder(ImageType)
@@ -386,7 +387,7 @@ Returns the storage order of the _spatial_ coordinates of the image, e.g.,
 `["y", "x"]`. The second version works on a type, e.g., `Matrix`. See
 `storageorder`, `timedim`, and `colordim` for related properties.
 
-<br />
+## spatialpermutation
 ```{.julia execute="false"}
 spatialpermutation(to, img)
 ```
@@ -422,7 +423,7 @@ julia> spatialpermutation(["x","y"], Ap)
  1
 ```
 
-<br />
+## spatialproperties
 ```{.julia execute="false"}
 spatialproperties(img)
 
@@ -437,7 +438,7 @@ default is `["spatialorder", "pixelspacing"]`; however, if you override the
 setting then these are not included automatically (you'll want to do so
 manually, if applicable).
 
-<br />
+## storageorder
 ```{.julia execute="false"}
 storageorder(img)
 ```
@@ -445,14 +446,14 @@ storageorder(img)
 Returns the complete storage order of the image array, including `"t"` for time
 and `"color"` for color.
 
-<br />
+## timedim
 ```{.julia execute="false"}
 timedim(img)
 ```
 
 Returns the dimension used to represent time, or 0 if this is a single image.
 
-<br />
+## width
 ```{.julia execute="false"}
 width(img)
 ```
@@ -461,14 +462,14 @@ Returns the horizontal size of the image, regardless of storage order. By
 default horizontal corresponds to dimension `"x"`, but see `spatialpermutation`
 for other options.
 
-<br />
+## widthheight
 ```{.julia execute="false"}
 widthheight(img)
 ```
 
 Returns the `(w,h)` tuple. See `width` and `height`.
 
-## Element transformation and intensity scaling
+# Element transformation and intensity scaling
 
 Many images require some type of transformation before you can use or view
 them. For example, visualization libraries work in terms of 8-bit data, so if
@@ -497,18 +498,20 @@ Here `val` can refer to a single pixel's data, or to the entire image array.
 The `mapi` input is a type that determines how the input value is scale and
 converted to a new type.
 
+## MapInfo
+
 Here is how to directly construct the major concrete `MapInfo` types:
 
 - `MapNone(T)`, indicating that the only form of scaling is conversion to type
-   T.  This is not very safe, as values "wrap around": for example, converting
-   `258` to a `Uint8` results in `0x02`, which would look dimmer than `255 =
-   0xff`.
+  T.  This is not very safe, as values "wrap around": for example, converting
+  `258` to a `Uint8` results in `0x02`, which would look dimmer than `255 =
+  0xff`.
 
 - `ClampMin(T, minvalue)`, `ClampMax(T, maxvalue)`, and `ClampMinMax(T,
-   minvalue, maxvalue)` create `MapInfo` objects that clamp pixel values at the
-   specified min, max, and min/max values, respectively, before
-   converting. Clamping is equivalent to `clampedval = min(max(val, minvalue),
-   maxvalue)`.  This is much safer than `MapNone`.
+  minvalue, maxvalue)` create `MapInfo` objects that clamp pixel values at the
+  specified min, max, and min/max values, respectively, before
+  converting. Clamping is equivalent to `clampedval = min(max(val, minvalue),
+  maxvalue)`.  This is much safer than `MapNone`.
 
 - `BitShift(T, N)` or `BitShift{T,N}()`, for scaling by bit-shift operators.
   `N` specifies the number of bits to right-shift by.  For example you could
@@ -530,10 +533,9 @@ Here is how to directly construct the major concrete `MapInfo` types:
   this representation.  If `T` is `RGB24` or `RGB{Ufixed8}`, then it is encoded
   as a magenta (positive)/green (negative) image.
 
-<br />
-
 There are also convenience functions:
 
+## imstretch
 ```{.julia execute="false"}
 imstretch(img, m, slope)
 ```
@@ -543,7 +545,7 @@ slope > 1 or < 1, respectively) the contrast near saturation (0 and 1). This is
 essentially a symmetric gamma-correction. For a pixel of brightness `p`, the new
 intensity is `1/(1+m/(p+eps)^slope)`.
 
-<br />
+## sc
 ```{.julia execute="false"}
 sc(img)
 sc(img, min, max)
@@ -551,7 +553,7 @@ sc(img, min, max)
 
 Applies default or specified ScaleMinMax scaling to the image.
 
-<br />
+## mapinfo
 ```{.julia execute="false"}
 mapinfo(client, img)
 ```
@@ -561,10 +563,9 @@ For example, clients `RGB24` and `ARGB32` are used for display,
 and `Images.ImageMagick` is used when saving to disk.
 You could define additional implementations for custom clients.
 
-<br />
+# Color conversion
 
-## Color conversion
-
+## convert
 ```{.julia execute="false"}
 convert(Image{ColorValue}, img)
 ```
@@ -573,8 +574,7 @@ as described above. Use `convert(Image{Gray}, img)` to calculate
 a grayscale representation of a color image using the
 [Rec 601 luma](http://en.wikipedia.org/wiki/Luma_%28video%29#Rec._601_luma_versus_Rec._709_luma_coefficients).
 
-
-<br />
+## map
 ```{.julia execute="false"}
 map(mapi, img)
 map!(mapi, dest, img)
@@ -582,10 +582,11 @@ map!(mapi, dest, img)
 
 can be used to specify both the form of the result and the algorithm used.
 
-## Image I/O
+# Image I/O
 
-See also the more [thorough description](extendingIO.md).
+See also the more [thorough description](extendingIO.html).
 
+## add_image_file_format
 ```{.julia execute="false"}
 add_image_file_format(extension, [magicbytes,] FileType, srcfilename)
 ```
@@ -596,7 +597,7 @@ given format. `FileType` must be a subtype of `ImageFileType`. For those
 reading will be based solely on extension name and/or can be forced by
 specifying the file type in `imread`.
 
-<br />
+## imread
 ```{.julia execute="false"}
 imread(filename;[extraprop="",extrapropertynames=false])
 imread(filename, FileType;[extraprop="",extrapropertynames=false])
@@ -618,7 +619,7 @@ transfered to the properties dictionary. If `extrapropertynames` is `true`,
 `extraprop` argument takes a string or a vector of strings and adds the named
 properties to the dictionary.
 
-<br />
+## imwrite
 ```{.julia execute="false"}
 imwrite(img, filename, [FileType,] args...)
 ```
@@ -632,7 +633,7 @@ imwrite(img, "myimage.jpg", quality=80)
 
 to control the quality setting in JPEG compression.
 
-<br />
+## loadformat
 ```{.julia execute="false"}
 loadformat(FileType)
 ```
@@ -643,7 +644,7 @@ this command to force the format to load, for example to gain access to specific
 functions in the corresponding module. See the end of `io.jl` for a list of
 `FileType`s.
 
-<br />
+## writemime
 ```{.julia execute="false"}
 writemime(io, MIME("image/png"), img; mapi=Images.mapinfo_writemime(img), minpixels=10^4, maxpixels=10^6)
 ```
@@ -654,13 +655,14 @@ to be used, the minimum number of pixels used to display the image, and the
 maximum number of pixels used, respectively. Shrinking is performed by
 `restrict`; enlarging is done by duplication of adjacent pixels.
 
-## Image algorithms
+# Image algorithms
 
 You can perform arithmetic with `Image`s and `ColorValue`s. Algorithms also
 include the following functions:
 
-## Linear filtering and padding
+# Linear filtering and padding
 
+## imfilter
 ```{.julia execute="false"}
 imfilter(img, kernel, [border, value])
 ```
@@ -671,7 +673,7 @@ the boundary conditions. Default is to use `"replicate"` boundary conditions.
 This uses finite-impulse-response (FIR) filtering, and is fast only for
 relatively small `kernel`s.
 
-<br />
+## imfilter!
 ```{.julia execute="false"}
 imfilter!(dest, img, kernel)
 ```
@@ -682,7 +684,7 @@ size of the result of `imfilter` with `border = "inner"`, and it behaves
 identically.  This uses finite-impulse-response (FIR) filtering, and is fast
 only for relatively small `kernel`s.
 
-<br />
+## imfilter_fft
 ```{.julia execute="false"}
 imfilter_fft(img, kernel, [border, value])
 ```
@@ -691,7 +693,7 @@ filters the image with the given (array) kernel, using an FFT algorithm.  This
 is slower than `imfilter` for small kernels, but much faster for large
 kernels. For Gaussian blur, an even better choice is `imfilter_gaussian`.
 
-<br />
+## imfilter_gaussian
 ```{.julia execute="false"}
 imfilter_gaussian(img, sigma)
 ```
@@ -704,7 +706,7 @@ even with large `sigma`. Edges are handled by "NA" conditions, meaning the
 result is normalized by the number and weighting of available pixels, and
 missing data (NaNs) are handled likewise.
 
-<br />
+## imfilter_LoG
 ```{.julia execute="false"}
 imfilter_LoG(img, sigma, [border])
 ```
@@ -714,7 +716,7 @@ may be a vector with one value per array dimension, or may be a single scalar
 value for uniform filtering in both dimensions.  Uses the Huertas and Medioni
 separable algorithm.
 
-<br />
+## imgradients
 ```{.julia execute="false"}
 imgradients(img, [method], [border])
 ```
@@ -727,7 +729,7 @@ the boundary conditions specified in `padarray`.
 Returns a tuple containing `x` (horizontal) and `y` (vertical) gradient images
 of the same size as `img`, calculated using the requested method and border.
 
-<br />
+## magnitude
 ```{.julia execute="false"}
 magnitude(grad_x, grad_y)
 ```
@@ -737,7 +739,7 @@ Equivalent to ``sqrt(grad_x.^2 + grad_y.^2)``.
 
 Returns a magnitude image the same size as `grad_x` and `grad_y`.
 
-<br />
+## phase
 ```{.julia execute="false"}
 phase(grad_x, grad_y)
 ```
@@ -748,7 +750,7 @@ Calculates the rotation angle of the gradient images given by `grad_x` and
 
 Returns a phase image the same size as `grad_x` and `grad_y`, with values in [-pi,pi].
 
-<br />
+## orientation
 ```{.julia execute="false"}
 orientation(grad_x, grad_y)
 ```
@@ -761,7 +763,7 @@ zero.
 Returns a phase image the same size as `grad_x` and `grad_y`, with values in
 [-pi,pi].
 
-<br />
+## magnitude_phase
 ```{.julia execute="false"}
 magnitude_phase(grad_x, grad_y)
 ```
@@ -770,7 +772,7 @@ Convenience function for calculating the magnitude and phase of the gradient
 images given in `grad_x` and `grad_y`.  Returns a tuple containing the magnitude
 and phase images.  See `magnitude` and `phase` for details.
 
-<br />
+## imedge
 ```{.julia execute="false"}
 imedge(img, [method], [border])
 ```
@@ -784,7 +786,7 @@ Returns a tuple `(grad_x, grad_y, mag, orient)`, which are the horizontal
 gradient, vertical gradient, and the magnitude and orientation of the strongest
 edge, respectively.
 
-<br />
+## thin_edges
 ```{.julia execute="false"}
 thin_edges(img, gradientangle, [border])
 thin_edges_subpix(img, gradientangle, [border])
@@ -821,7 +823,7 @@ mag[mag .< 0.5] = 0.0  # Threshold magnitude image
 thinned, subpix =  thin_edges_subpix(mag, gradient)
 ```
 
-<br />
+## thin_edges!
 ```{.julia execute="false"}
 thin_edges_nonmaxsup!(out, img, gradientangle, [border]; [radius::Float64=1.35], [theta=pi/180])
 thin_edges_nonmaxsup_subpix!(out, location, img, gradientangle, [border]; [radius::Float64=1.35], [theta=pi/180])
@@ -831,7 +833,7 @@ For advanced usage, these versions will put results into preallocated arrays or
 images.  `out` must be the same size and type as `img`.  `location` must be an
 array of type `Graphics.Point` and must be the same size as `img`.
 
-<br />
+## forwarddiffx, backdiffx
 ```{.julia execute="false"}
 forwarddiffx(img)
 backdiffx(img)
@@ -845,7 +847,7 @@ The size of the image is preserved, so the first (for `backdiff`) or last (for
 These currently operate only on matrices
 (2d with scalar color).
 
-<br />
+## padarray
 ```{.julia execute="false"}
 padarray(img, prepad, postpad, border, value)
 ```
@@ -861,22 +863,23 @@ edge, so the edge value gets repeated). Arrays are automatically padded before
 filtering. Use `"inner"` to avoid padding altogether; the output array will be
 smaller than the input.
 
-## Filtering kernels
+# Filtering kernels
 
+## gaussian2d
 ```{.julia execute="false"}
 gaussian2d(sigma, filtersize)
 ```
 
 returns a kernel for FIR-based Gaussian filtering. See also `imfilter_gaussian`.
 
-<br />
+## imaverage
 ```{.julia execute="false"}
 imaverage(filtersize)
 ```
 
 constructs a boxcar-filter of the specified size.
 
-<br />
+## imdog
 ```{.julia execute="false"}
 imdog(sigma)
 ```
@@ -884,21 +887,21 @@ imdog(sigma)
 creates a difference-of-gaussians kernel (`sigma`s differing by a factor of
 `sqrt(2)`)
 
-<br />
+## imlaplacian
 ```{.julia execute="false"}
 imlaplacian(filtersize)
 ```
 
 returns a kernel for laplacian filtering.
 
-<br />
+## imlog
 ```{.julia execute="false"}
 imlog(sigma)
 ```
 
 returns a laplacian-of-gaussian kernel.
 
-<br />
+## sobel, prewitt, ando
 ```{.julia execute="false"}
 sobel()
 prewitt()
@@ -927,8 +930,9 @@ paper, the 4x4 and 5x5 papers are not separable, so the `"ando4_sep"` and
 `"ando5_sep"` filters are provided as separable (and therefore faster)
 approximations of `"ando4"` and `"ando5"`, respectively.
 
-## Nonlinear filtering and transformation
+# Nonlinear filtering and transformation
 
+## imROF
 ```{.julia execute="false"}
 imROF(img, lambda, iterations)
 ```
@@ -938,8 +942,9 @@ Variation (TV) denoising or TV regularization. `lambda` is the regularization
 coefficient for the derivative, and `iterations` is the number of relaxation
 iterations taken. 2d only.
 
-## Resizing
+# Resizing
 
+## restrict
 ```{.julia execute="false"}
 restrict(img[, region])
 ```
@@ -948,8 +953,9 @@ performs two-fold reduction in size along the dimensions listed in `region`, or
 all spatial coordinates if `region` is not specified.  It anti-aliases the image
 as it goes, so is better than a naive summation over 2x2 blocks.
 
-## Image statistics
+# Image statistics
 
+## minfinite, maxfinite, maxabsfinite
 ```{.julia execute="false"}
 minfinite(img)
 maxfinite(img)
@@ -959,13 +965,14 @@ maxabsfinite(img)
 Return the minimum and maximum value in the image, respectively, ignoring any
 values that are not finite (Inf or NaN).
 
+## meanfinite
 ```{.julia execute="false"}
 meanfinite(img, region)
 ```
 
 Calculate the mean value along the dimensions listed in `region`, ignoring any non-finite values.
 
-<br />
+## ssd, ssdn
 ```{.julia execute="false"}
 ssd(img1, img2)
 ssdn(img1, img2)
@@ -974,7 +981,7 @@ ssdn(img1, img2)
 Sum-of-squared-differences (pixelwise). `ssdn` is the
 mean-of-squared-differences (i.e., normalized by `n`, the number of pixels).
 
-<br />
+## sad, sadn
 ```{.julia execute="false"}
 sad(img1, img2)
 sadn(img1, img2)
@@ -982,8 +989,9 @@ sadn(img1, img2)
 
 sum and mean of `abs(img1-img2)`.
 
-## Morphological operations
+# Morphological operations
 
+## dilate, erode
 ```{.julia execute="false"}
 dilate(img, [region])
 erode(img, [region])
@@ -994,6 +1002,7 @@ default is 8-connectivity in 2d, 27-connectivity in 3d, etc. You can specify the
 list of dimensions that you want to include in the connectivity, e.g., region =
 [1,2] would exclude the third dimension from filtering.
 
+## opening, closing
 ```{.julia execute="false"}
 opening(img, [region])
 closing(img, [region])
@@ -1004,7 +1013,7 @@ perform the `opening` and `closing` morphology operations. `opening` does first
 in the oposite way. The region parameter is passed to `erode` and `dilate` and describes
 the kernel size over which these operations are performed.
 
-<br />
+## label_components
 ```{.julia execute="false"}
 label_components(tf, [connectivity])
 label_components(tf, [region])
@@ -1016,6 +1025,7 @@ it can be a boolean array of the same dimensionality as `tf`, of size 1 or 3
 along each dimension. Each entry in the array determines whether a given
 neighbor is used for connectivity analyses. For example,
 
+## connectivity
 ```{.julia execute="false"}
 connectivity = trues(3,3)
 ```
@@ -1032,8 +1042,9 @@ The default is `region = 1:ndims(A)`.
 The output is an integer array, where 0 is used for background pixels, and each
 connected region gets a different integer index.
 
-## Phantoms
+# Phantoms
 
+## shepp_logan
 ```{.julia execute="false"}
 shepp_logan(N,[M]; highContrast=true)
 ```
