@@ -169,11 +169,11 @@ the range 0 to 1 will be used.
 - `pixelspacing`: the spacing between adjacent pixels along spatial dimensions
 - `spacedirections`: more detailed information about the orientation of array axes
 relative to an external coordinate system (see the [function reference](function_reference.md)).
-- `spatialorder`: a string naming each spatial dimension of the array, in the
+- `spatialorder`: an array of strings, in which each element names each spatial dimension of the image array,  reflecting the
 storage order of the data array.
 Names can be arbitrary, but the choices "x" and "y" have special
 meaning (horizontal and vertical, respectively, irrespective of storage order).
-If supplied, you must have one entry per spatial dimension.
+If supplied, you must have one entry per spatial dimension. For example, for a 2D image that is stored as an array with dimensions (3, x, y), where 3 is the number of color values (e.g., RGB), x is the number of horizontal pixels, and y is the number of vertical pixels, one would specify `"spatialorder" = ["x", "y"]`. 
 
 If you specify their values in the `properties` dictionary, your values will be
 used; if not, hopefully-reasonable defaults will be chosen.
