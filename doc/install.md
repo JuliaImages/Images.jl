@@ -4,7 +4,9 @@ author: Tim Holy
 order: 30
 ...
 
-### Manual installation on Windows
+<h1>Installation Notes</h1>
+
+# Manual installation on Windows
 
 Modern versions of Images should install ImageMagick automatically even on
 Windows.  However, if this fails, get the current version from
@@ -17,9 +19,9 @@ file as (for example) `push!(Base.DL_LOAD_PATH,
 "C:/programs/ImageMagick-6.8.8"`)
 
 **When manual intervention is necessary, you need to restart Julia for the
-  necessary changes to take effect.**
+necessary changes to take effect.**
 
-### Fixing broken installations on Macs
+# Fixing broken installations on Macs
 
 Before asking for help, please try the following sequence:
 
@@ -31,7 +33,7 @@ Homebrew.add("imagemagick")
 Pkg.build("Images")
 ```
 
-## Reading images on Macs
+# Reading images on Macs
 
 On Macs, there is now support for reading images using the built-in OS X
 frameworks.  For many common image types, this reader will be tried before
@@ -39,7 +41,7 @@ ImageMagick.  This reader is now enabled by default on Macs; if you need to
 disable it in favor of ImageMagick, just comment out the line of `src/io.jl`
 which reads `img = imread(filename, OSXNative)`.
 
-## Debugging installation problems
+# Debugging installation problems
 
 Images depends on ImageMagick, and this dependency is the main source of trouble
 installing Images.  If this fails, try the following steps:

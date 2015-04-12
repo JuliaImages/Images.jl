@@ -30,14 +30,16 @@
     <div class="row">
       <div class="col-sm-7">
       <div id="body-content">
-<h1 id="fixing-breakages-from-changes-in-images">Fixing breakages from changes in Images</h1>
+<h1>
+Fixing breakages from changes in Images
+</h1>
 <p>There were some big changes between the 0.3 and 0.4 series. Every attempt has been made to introduce deprecations; for example, the old <code>ImageView</code> works out-of-the-box with the new Images. Nevertheless, omissions are likely, and certain things cannot be deprecated. Here are some tips on moving over to the new version of Images:</p>
 <ul>
 <li><p>Images are returned as <code>ColorValue</code> arrays, meaning that a color, two-dimensional image will now have two dimensions. If your code needs a color dimension to the array, try <code>reinterpret</code> or <code>separate</code> as described in the <a href="../README.md">README</a>. That said, it's probably preferable to leave it in ColorValue format, so you can leverage the power of the <a href="https://github.com/JuliaLang/Color.jl">Color package</a>.</p></li>
 <li><p>Many images will be returned in terms of a <code>Ufixed8</code> type, which acts like a &quot;floating point&quot; (really, fractional) number but internally is represented as a Uint8. If you're used to thinking of 255 as &quot;saturated&quot; when you happen to know that the underlying image is of integral type, now you should adjust to thinking of 1.0 as saturated, no matter whether your image is &quot;integral&quot; (<code>Ufixed</code>) or floating-point.</p></li>
-<li><p><code>Scale*</code> has generally been replaced by <code>Map*</code> (examples: <code>ScaleInfo -&gt; MapInfo</code>, <code>ScaleNone -&gt; MapNone</code>). If you used the functions you should get deprecation warnings, but any direct usage of the types (e.g., <code>ScaleNone{Float32}()</code>) cannot be deprecated. So you'll get errors, rather than warnings, in such circumstances.</p></li>
+<li><p><code>Scale*</code> has generally been replaced by <code>Map*</code> (examples: <code>ScaleInfo -&gt;   MapInfo</code>, <code>ScaleNone -&gt; MapNone</code>). If you used the functions you should get deprecation warnings, but any direct usage of the types (e.g., <code>ScaleNone{Float32}()</code>) cannot be deprecated. So you'll get errors, rather than warnings, in such circumstances.</p></li>
 </ul>
-<p>If you discover other forms of breakage, please feel free to add to this page (click the pencil icon at the top to edit it).</p>
+<p>If you discover other forms of breakage, please feel free to file a doc issue.</p>
         <hr>
       </div>
       </div>
@@ -71,9 +73,6 @@
                 <a class="toc-item toc-current-doc" href="fixing_breakages.html">Troubleshooting</a>
             </li>
             <li>
-                <a style="margin-left: 0.5em" class="toc-item" href="#fixing-breakages-from-changes-in-images">Fixing breakages from changes in Images</a>
-            </li>
-            <li>
                 <a class="toc-item" href="status.html">Development Status</a>
             </li>
             </ul>
@@ -96,7 +95,7 @@
     </div>
 
   <footer class="col-sm-8">
-    <p class="muted">Last modified by Tim Holy on Mon Apr  6 21:08:04 CDT 2015. Generated with
+    <p class="muted">Last modified by Tim Holy on Sun Apr 12 09:41:43 CDT 2015. Generated with
     <a href="https://github.com/dcjones/Judo.jl">Judo</a>.</p>
   </footer>
 

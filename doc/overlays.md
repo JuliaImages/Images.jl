@@ -4,7 +4,7 @@ author: Tim Holy
 order: 60
 ...
 
-# Overlays
+<h1>Overlays</h1>
 
 Frequently one wants to combine two (or more) grayscale images into a single
 colorized image.  `Images` defines an `AbstractArray` type, `Overlay`, making

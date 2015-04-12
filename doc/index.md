@@ -4,15 +4,11 @@ author: Tim Holy
 order: 1
 ...
 
-# Images.jl
+<h1>Images.jl</h1>
 
 An image processing library for [Julia](http://julialang.org/).
 
-[![Images](http://pkg.julialang.org/badges/Images_release.svg)](http://pkg.julialang.org/?pkg=Images&ver=release)
-[![Coverage Status](https://coveralls.io/repos/timholy/Images.jl/badge.png?branch=master)](https://coveralls.io/r/timholy/Images.jl?branch=master)
-[![Build status](https://ci.appveyor.com/api/projects/status/github/timholy/Images.jl?svg=true&branch=master)](https://ci.appveyor.com/project/timholy/images-jl/branch/master)
-
-## Installation
+# Installation
 
 Install via the package manager,
 
@@ -29,7 +25,7 @@ trouble; you may find
 [debugging Homebrew](https://github.com/JuliaLang/Homebrew.jl/wiki/Debugging-Homebrew.jl)
 useful.
 
-## Package interactions
+# Package interactions
 
 A few other packages define overlapping functions or types
 ([PyPlot](https://github.com/stevengj/PyPlot.jl) defines `imread`, and
@@ -37,7 +33,7 @@ A few other packages define overlapping functions or types
 both Images and these packages, you can always specify which version you want
 with `Images.imread("myimage.png")`.
 
-## Image viewing
+# Image viewing
 
 If you're using the [IJulia](https://github.com/JuliaLang/IJulia.jl) notebook,
 images will be displayed
@@ -47,7 +43,7 @@ Julia code for the display of images can be found in
 [ImageView](https://github.com/timholy/ImageView.jl).  Installation of this
 package is recommended but not required.
 
-## TestImages
+# TestImages
 
 When testing ideas or just following along with the documentation, it can be
 useful to have some images to work with.  The
@@ -62,7 +58,7 @@ img = testimage("mandrill")
 The examples below will assume you're loading a particular file from your disk,
 but you can substitute those commands with `testimage`.
 
-## Getting started
+# Getting started
 
 For these examples you'll need to install both `Images` and `ImageView`.
 Depending on your task, it's also very useful to have two other packages loaded,
@@ -74,7 +70,7 @@ the code for all of these packages with
 using Images, Color, FixedPointNumbers, ImageView
 ```
 
-### Loading your first image: how images are represented
+## Loading your first image: how images are represented
 
 You likely have a number of images already at your disposal, and you can use
 these, TestImages.jl, or run `readremote.jl` in the `test/` directory.  (This
@@ -171,7 +167,7 @@ The Images package is designed to work with either plain arrays or with Image
 types---in general, though, you're probably best off leaving things as an Image,
 particularly if you work with movies, 3d images, or other more complex objects.
 
-### Storage order and changing the representation of images
+## Storage order and changing the representation of images
 
 In the example above, the `"spatialorder"` property has value `["x", "y"]`.
 This indicates that the image data are in "horizontal-major" order, meaning that
@@ -283,7 +279,8 @@ view(imh)
 (Hue without saturation or value generates gray or black, so we used a constant
 different from zero for these parameters.)
 
-![raw](doc/figures/rose_hsv.png)
+<!-- use standard html instead of markdown, to set resize behavior -->
+<img class="img-responsive" src="doc/figures/rose_hsv.png" />
 
 Of course, you can combine these commands, for example
 
@@ -296,7 +293,7 @@ you want to interact with external code (a C-library, for example).  Assuming
 you don't want to lose orientation information, you can wrap a returned array
 `B` as `shareproperties(img, B)`.
 
-### Other properties, and usage of Units
+## Other properties, and usage of Units
 
 The `"pixelspacing"` property informs ImageView that this image has an aspect
 ratio 1.  In scientific or medical imaging, you can use actual units to encode
@@ -320,7 +317,7 @@ mriscan["pixelspacing"] = [0.2mm, 0.2mm, 2mm]
 ImageView includes facilities for scale bars, and by supplying your pixel
 spacing you can ensure that the scale bars are accurate.
 
-### A brief demonstration of image processing
+## A brief demonstration of image processing
 
 Now let's work through a more sophisticated example:
 
@@ -337,20 +334,21 @@ imgs = 2imgf
 view(imgs)
 ```
 
-![processing](doc/figures/mandrill.jpg)
+<!-- use standard html instead of markdown, to set resize behavior -->
+<img class="img-responsive" src="doc/figures/mandrill.jpg" />
 
-## Further documentation ##
+# Further documentation
 
-Detailed documentation about the design of the library
-and the available functions
-can be found in the `doc/` directory. Here are some of the topics available:
+Detailed documentation about the design of the library and the available
+functions can be found in the `doc/` directory. Here are some of the topics
+available:
 
-- The [core](doc/core.md), i.e., the representation of images
-- [I/O](doc/extendingIO.md) and custom image file formats
-- [Function reference](doc/function_reference.md)
-- [Overlays](doc/overlays.md), a type for combining multiple grayscale arrays
+- The [core](core.html), i.e., the representation of images
+- [I/O](extendingIO.html) and custom image file formats
+- [Function reference](function_reference.html)
+- [Overlays](overlays.html), a type for combining multiple grayscale arrays
   into a single color array
-- [Changes](doc/fixing_breakages.md) describes some recent changes and how to
+- [Changes](fixing_breakages.html) describes some recent changes and how to
   fix likely breakages in old code
 
 # Credits

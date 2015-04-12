@@ -4,11 +4,11 @@ author: Tim Holy
 order: 40
 ...
 
-# Julia Images Guide
+<h1>Julia Images Guide</h1>
 
-## The basic types
+# The basic types
 
-### Plain arrays
+## Plain arrays
 
 Images can be plain arrays, which are interpreted to be in "Matlab format": the
 first two dimensions are height (`h`) and width (`w`), a storage order here
@@ -47,7 +47,7 @@ to work.
 However, a more flexible approach is to use one of the self-documenting image
 types.
 
-### Image types
+## Image types
 
 All image types should descend from `AbstractImage`, an abstract base type used
 to indicate that an array is to be interpreted as an image. If you're writing a
@@ -95,7 +95,7 @@ end
 The `data` array here just encodes the index used to look up the color in the
 `cmap` field.
 
-## Addressing image data
+# Addressing image data
 
 For any valid image type, `data(img)` returns the array that corresponds to the
 image.  This works when `img` is a plain `Array` (in which case no operation is
@@ -132,7 +132,7 @@ imgs = sliceim(img, "z", 14)      # cuts out the 14th frame in a stack
 
 These routines "do the right thing" no matter what storage order is being used.
 
-## Image properties and accessor functions
+# Image properties and accessor functions
 
 The `properties` dictionary can contain any information you want to store along
 with your images. Typically, each property is also affiliated with an accessor
@@ -159,27 +159,27 @@ parameters.
 Here is a list of the properties supported in `core.jl`:
 
 - `colorspace`: "RGB", "RGBA", "Gray", "Binary", "24bit", "Lab", "HSV", etc.  If
-your image is represented as a ColorValue array, you cannot override that choice
-by specifying a `colorspace` property.  (Use `reinterpret` if you want to change
-the interpretation without changing the raw values.)
+  your image is represented as a ColorValue array, you cannot override that
+  choice by specifying a `colorspace` property.  (Use `reinterpret` if you want
+  to change the interpretation without changing the raw values.)
 - `colordim`: the array dimension used to store color information, or 0 if there
-is no dimension corresponding to color
+  is no dimension corresponding to color
 - `timedim`: the array dimension used for time (i.e., sequence), or 0 for single
-images
+  images
 - `scalei`: a property that controls default contrast scaling upon display.
-This should be a
-[`MapInfo`](https://github.com/timholy/Images.jl/blob/master/doc/function_reference.md#intensity-scaling)
-value, to be used for setting the contrast upon display. In the absence of this
-property, the range 0 to 1 will be used.
+  This should be a
+  [`MapInfo`](https://github.com/timholy/Images.jl/blob/master/doc/function_reference.md#intensity-scaling)
+  value, to be used for setting the contrast upon display. In the absence of
+  this property, the range 0 to 1 will be used.
 - `pixelspacing`: the spacing between adjacent pixels along spatial dimensions
 - `spacedirections`: more detailed information about the orientation of array
-axes relative to an external coordinate system (see the
-[function reference](function_reference.md)).
+  axes relative to an external coordinate system (see the
+  [function reference](function_reference.md)).
 - `spatialorder`: a string naming each spatial dimension of the array, in the
-storage order of the data array.
-Names can be arbitrary, but the choices "x" and "y" have special
-meaning (horizontal and vertical, respectively, irrespective of storage order).
-If supplied, you must have one entry per spatial dimension.
+  storage order of the data array.  Names can be arbitrary, but the choices "x"
+  and "y" have special meaning (horizontal and vertical, respectively,
+  irrespective of storage order).  If supplied, you must have one entry per
+  spatial dimension.
 
 If you specify their values in the `properties` dictionary, your values will be
 used; if not, hopefully-reasonable defaults will be chosen.
@@ -189,7 +189,7 @@ the date/time at which the image was captured, the patient ID, etc. The main
 point of having a properties dictionary, rather than a type with fixed fields,
 is the flexibility of adding whatever metadata you find to be useful.
 
-## Writing generic algorithms
+# Writing generic algorithms
 
 Let's say you have an algorithm implemented for `Array`s, and you want to extend
 it to work on `Image` types. Let's consider the example of a hypothetical

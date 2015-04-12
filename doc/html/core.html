@@ -30,16 +30,18 @@
     <div class="row">
       <div class="col-sm-7">
       <div id="body-content">
-<h1 id="julia-images-guide">Julia Images Guide</h1>
-<h2 id="the-basic-types">The basic types</h2>
-<h3 id="plain-arrays">Plain arrays</h3>
+<h1>
+Julia Images Guide
+</h1>
+<h1 id="the-basic-types">The basic types</h1>
+<h2 id="plain-arrays">Plain arrays</h2>
 <p>Images can be plain arrays, which are interpreted to be in &quot;Matlab format&quot;: the first two dimensions are height (<code>h</code>) and width (<code>w</code>), a storage order here called &quot;vertical-major&quot;. This ordering is inspired by the column/row index order of matrices and the desire to have a displayed image look like what one sees when a matrix is written out in text.</p>
 <p>If you're working with RGB color, your best approach is to encode color as a <code>ColorValue</code>, as defined in the <code>Color</code> package. That package provides many utility functions for analyzing and manipulating colors. Alternatively, you can use a third dimension of size 3, or encode your images as either <code>RGB24</code> or <code>ARGB32</code>, which use an internal <code>Uint32</code> representation of color.</p>
 <p>It's worth noting that these Matlab conventions are sometimes inconvenient. For example, the <code>x</code> coordinate (horizontal) is second and the <code>y</code> coordinate (vertical) is first; in other words, one uses <code>img[y,x]</code> to address a pixel that is displayed at a particular <code>x,y</code> position. This often catches newcomers (and sometimes even old-timers) by surprise. Moreover, most image file formats, cameras, and graphics libraries such as Cairo use &quot;horizontal-major&quot; storage of images, and have the color dimension first (fastest). The native Image type---which allows arbitrary ordering of the data array---permits you to use this raw representation directly, but when using plain arrays you need to permute the dimensions of the raw data array.</p>
 <p>The convention that a <code>m x n x 3</code> array implies RGB is also problematic for anyone doing 3d imaging, and can result in hard-to-find bugs when the third dimension happens to be of size 3. For 3d imaging, the use of an Image type---perhaps converting Arrays via <code>grayim</code>---is highly recommended.</p>
 <p>The conventions for plain arrays are &quot;baked in&quot; via a few simple utility functions in the file <code>core.jl</code>; if you really need to use plain arrays but want to work with different conventions, you can (locally) change these defaults with just a few lines. Algorithms which have been written generically should continue to work.</p>
 <p>However, a more flexible approach is to use one of the self-documenting image types.</p>
-<h3 id="image-types">Image types</h3>
+<h2 id="image-types">Image types</h2>
 <p>All image types should descend from <code>AbstractImage</code>, an abstract base type used to indicate that an array is to be interpreted as an image. If you're writing a custom image type, it is more likely that you'll want to derive from either <code>AbstractImageDirect</code> or <code>AbstractImageIndexed</code>. The former is for direct images (where intensity at a pixel is represented directly), the latter for indexed images (where intensity is looked up in a colormap table).</p>
 <p>In practice, it is assumed that <code>AbstractImages</code> have at least two fields, called <code>data</code> and <code>properties</code>. (In code, you should not use these directly, instead using the functions <code>data</code> and <code>properties</code> to extract these.) These are the only two fields in the first concrete image type, called <code>Image</code>:</p>
 <pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia"><span class="kw">type</span> Image{T,N,A&lt;:<span class="dt">AbstractArray</span>} &lt;: AbstractImageDirect{T,N}
@@ -55,7 +57,7 @@
     properties::<span class="dt">Dict</span>{<span class="dt">ASCIIString</span>,<span class="dt">Any</span>}
 <span class="kw">end</span></code></pre>
 <p>The <code>data</code> array here just encodes the index used to look up the color in the <code>cmap</code> field.</p>
-<h2 id="addressing-image-data">Addressing image data</h2>
+<h1 id="addressing-image-data">Addressing image data</h1>
 <p>For any valid image type, <code>data(img)</code> returns the array that corresponds to the image. This works when <code>img</code> is a plain <code>Array</code> (in which case no operation is performed) as well as for an <code>Image</code> (in which case it returns <code>img.data</code>). This is our first example of how to write generic algorithms.</p>
 <p>If <code>img</code> is an <code>Image</code>, then <code>img[i,j]</code> looks up the value <code>img.data[i,j]</code>. Assignment, <code>sub</code>, and <code>slice</code> work similarly. In other words, for indexing an <code>Image</code> works just as if you were using plain arrays.</p>
 <p>If you load your image data using Image's <code>imread</code>, note that the storage order is not changed from the on-disk representation. Therefore, a 2D RGB image will most likely be stored in color-horizontal-vertical order, meaning that a pixel at <code>(x,y)</code> is accessed as <code>img[x,y]</code>. Note that this is quite different from Matlab's default representation.</p>
@@ -64,7 +66,7 @@
 <pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">A = img[<span class="st">&quot;x&quot;</span>, <span class="fl">200</span>:<span class="fl">400</span>, <span class="st">&quot;y&quot;</span>, <span class="fl">500</span>:<span class="fl">700</span>]
 imgs = sliceim(img, <span class="st">&quot;z&quot;</span>, <span class="fl">14</span>)      <span class="co"># cuts out the 14th frame in a stack</span></code></pre>
 <p>These routines &quot;do the right thing&quot; no matter what storage order is being used.</p>
-<h2 id="image-properties-and-accessor-functions">Image properties and accessor functions</h2>
+<h1 id="image-properties-and-accessor-functions">Image properties and accessor functions</h1>
 <p>The <code>properties</code> dictionary can contain any information you want to store along with your images. Typically, each property is also affiliated with an accessor function of the same name.</p>
 <p>Let's illustrate this with one of the default properties, <code>&quot;colorspace&quot;</code>. The value of this property is a string, such as <code>&quot;RGB&quot;</code> or <code>&quot;Gray&quot;</code> or <code>&quot;HSV&quot;</code>. You can extract the value of this field using a function:</p>
 <pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">cs = colorspace(img)</code></pre>
@@ -81,7 +83,7 @@ imgs = sliceim(img, <span class="st">&quot;z&quot;</span>, <span class="fl">14</
 </ul>
 <p>If you specify their values in the <code>properties</code> dictionary, your values will be used; if not, hopefully-reasonable defaults will be chosen.</p>
 <p>Naturally, you can add whatever additional properties you want: you could add the date/time at which the image was captured, the patient ID, etc. The main point of having a properties dictionary, rather than a type with fixed fields, is the flexibility of adding whatever metadata you find to be useful.</p>
-<h2 id="writing-generic-algorithms">Writing generic algorithms</h2>
+<h1 id="writing-generic-algorithms">Writing generic algorithms</h1>
 <p>Let's say you have an algorithm implemented for <code>Array</code>s, and you want to extend it to work on <code>Image</code> types. Let's consider the example of a hypothetical <code>imfilter</code>, written to perform kernel-based filtering in arbitrary dimensions. Let's say your <code>imfilter</code> looks like this:</p>
 <pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia"><span class="kw">function</span> imfilter{T,N}(A::<span class="dt">Array</span>{T,N}, kernel::<span class="dt">Array</span>{T,N}, options...)</code></pre>
 <p>The first step might be to simply provide a version for <code>AbstractImage</code> types:</p>
@@ -127,19 +129,22 @@ imgs = sliceim(img, <span class="st">&quot;z&quot;</span>, <span class="fl">14</
                 <a class="toc-item toc-current-doc" href="core.html">Core Concepts</a>
             </li>
             <li>
-                <a style="margin-left: 0.5em" class="toc-item" href="#julia-images-guide">Julia Images Guide</a>
+                <a style="margin-left: 0.5em" class="toc-item" href="#the-basic-types">The basic types</a>
             </li>
             <li>
-                <a style="margin-left: 1.0em" class="toc-item" href="#the-basic-types">The basic types</a>
+                <a style="margin-left: 1.0em" class="toc-item" href="#plain-arrays">Plain arrays</a>
             </li>
             <li>
-                <a style="margin-left: 1.0em" class="toc-item" href="#addressing-image-data">Addressing image data</a>
+                <a style="margin-left: 1.0em" class="toc-item" href="#image-types">Image types</a>
             </li>
             <li>
-                <a style="margin-left: 1.0em" class="toc-item" href="#image-properties-and-accessor-functions">Image properties and accessor functions</a>
+                <a style="margin-left: 0.5em" class="toc-item" href="#addressing-image-data">Addressing image data</a>
             </li>
             <li>
-                <a style="margin-left: 1.0em" class="toc-item" href="#writing-generic-algorithms">Writing generic algorithms</a>
+                <a style="margin-left: 0.5em" class="toc-item" href="#image-properties-and-accessor-functions">Image properties and accessor functions</a>
+            </li>
+            <li>
+                <a style="margin-left: 0.5em" class="toc-item" href="#writing-generic-algorithms">Writing generic algorithms</a>
             </li>
             <li>
                 <a class="toc-item" href="function_reference.html">Function Reference</a>
@@ -176,7 +181,7 @@ imgs = sliceim(img, <span class="st">&quot;z&quot;</span>, <span class="fl">14</
     </div>
 
   <footer class="col-sm-8">
-    <p class="muted">Last modified by Tim Holy on Mon Apr  6 21:08:04 CDT 2015. Generated with
+    <p class="muted">Last modified by Tim Holy on Sun Apr 12 09:41:43 CDT 2015. Generated with
     <a href="https://github.com/dcjones/Judo.jl">Judo</a>.</p>
   </footer>
 

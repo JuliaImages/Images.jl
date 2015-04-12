@@ -30,27 +30,28 @@
     <div class="row">
       <div class="col-sm-7">
       <div id="body-content">
-<h1 id="images.jl">Images.jl</h1>
+<h1>
+Images.jl
+</h1>
 <p>An image processing library for <a href="http://julialang.org/">Julia</a>.</p>
-<p><a href="http://pkg.julialang.org/?pkg=Images&amp;ver=release"><img src="http://pkg.julialang.org/badges/Images_release.svg" alt="Images" /></a> <a href="https://coveralls.io/r/timholy/Images.jl?branch=master"><img src="https://coveralls.io/repos/timholy/Images.jl/badge.png?branch=master" alt="Coverage Status" /></a> <a href="https://ci.appveyor.com/project/timholy/images-jl/branch/master"><embed src="https://ci.appveyor.com/api/projects/status/github/timholy/Images.jl?svg=true&amp;branch=master" /></a></p>
-<h2 id="installation">Installation</h2>
+<h1 id="installation">Installation</h1>
 <p>Install via the package manager,</p>
 <pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">Pkg.add(<span class="st">&quot;Images&quot;</span>)</code></pre>
 <p>It's helpful to have ImageMagick installed on your system, as Images relies on it for reading and writing many common image types. ImageMagick <em>should</em> be installed for you automatically. In case of trouble, more details about manual installation and troubleshooting can be found in the <a href="doc/install.md">installation help</a>. Mac users in particular seem to have trouble; you may find <a href="https://github.com/JuliaLang/Homebrew.jl/wiki/Debugging-Homebrew.jl">debugging Homebrew</a> useful.</p>
-<h2 id="package-interactions">Package interactions</h2>
+<h1 id="package-interactions">Package interactions</h1>
 <p>A few other packages define overlapping functions or types (<a href="https://github.com/stevengj/PyPlot.jl">PyPlot</a> defines <code>imread</code>, and <a href="https://github.com/nolta/Winston.jl">Winston</a> defines <code>Image</code>). When using both Images and these packages, you can always specify which version you want with <code>Images.imread(&quot;myimage.png&quot;)</code>.</p>
-<h2 id="image-viewing">Image viewing</h2>
+<h1 id="image-viewing">Image viewing</h1>
 <p>If you're using the <a href="https://github.com/JuliaLang/IJulia.jl">IJulia</a> notebook, images will be displayed <a href="http://htmlpreview.github.com/?https://github.com/timholy/Images.jl/blob/master/ImagesDemo.html">automatically</a>.</p>
 <p>Julia code for the display of images can be found in <a href="https://github.com/timholy/ImageView.jl">ImageView</a>. Installation of this package is recommended but not required.</p>
-<h2 id="testimages">TestImages</h2>
+<h1 id="testimages">TestImages</h1>
 <p>When testing ideas or just following along with the documentation, it can be useful to have some images to work with. The <a href="https://github.com/timholy/TestImages.jl">TestImages</a> package bundles several &quot;standard&quot; images for you. To load one of the images from this package, say</p>
 <pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">using TestImages
 img = testimage(<span class="st">&quot;mandrill&quot;</span>)</code></pre>
 <p>The examples below will assume you're loading a particular file from your disk, but you can substitute those commands with <code>testimage</code>.</p>
-<h2 id="getting-started">Getting started</h2>
+<h1 id="getting-started">Getting started</h1>
 <p>For these examples you'll need to install both <code>Images</code> and <code>ImageView</code>. Depending on your task, it's also very useful to have two other packages loaded, <a href="https://github.com/JuliaLang/Color.jl">Color</a> and <a href="https://github.com/JeffBezanson/FixedPointNumbers.jl">FixedPointNumbers</a>. Load the code for all of these packages with</p>
 <pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">using Images, Color, FixedPointNumbers, ImageView</code></pre>
-<h3 id="loading-your-first-image-how-images-are-represented">Loading your first image: how images are represented</h3>
+<h2 id="loading-your-first-image-how-images-are-represented">Loading your first image: how images are represented</h2>
 <p>You likely have a number of images already at your disposal, and you can use these, TestImages.jl, or run <code>readremote.jl</code> in the <code>test/</code> directory. (This requires an internet connection.) These will be deposited inside an <code>Images</code> directory inside your temporary directory (e.g., <code>/tmp</code> on Linux systems). The <code>&quot;rose.png&quot;</code> image in this example comes from the latter.</p>
 <p>Let's begin by reading an image from a file:</p>
 <pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">julia&gt; img = imread(<span class="st">&quot;rose.png&quot;</span>)
@@ -76,7 +77,7 @@ RGB{Ufixed8}(<span class="fl">0.188</span>,<span class="fl">0.184</span>,<span c
 imgs = shareproperties(img, A)</code></pre>
 <p><code>imgc</code> has its own properties dictionary, initialized to be a copy of the one used by <code>img</code>. In contrast, <code>imgs</code> shares a properties dictionary with <code>img</code>; any modification to the properties of <code>img</code> will also modify them for <code>imgs</code>. Use either as appropriate to your circumstance.</p>
 <p>The Images package is designed to work with either plain arrays or with Image types---in general, though, you're probably best off leaving things as an Image, particularly if you work with movies, 3d images, or other more complex objects.</p>
-<h3 id="storage-order-and-changing-the-representation-of-images">Storage order and changing the representation of images</h3>
+<h2 id="storage-order-and-changing-the-representation-of-images">Storage order and changing the representation of images</h2>
 <p>In the example above, the <code>&quot;spatialorder&quot;</code> property has value <code>[&quot;x&quot;, &quot;y&quot;]</code>. This indicates that the image data are in &quot;horizontal-major&quot; order, meaning that a pixel at spatial location <code>(x,y)</code> would be addressed as <code>img[x,y]</code> rather than <code>img[y,x]</code>. <code>[&quot;y&quot;, &quot;x&quot;]</code> would indicate vertical-major. Consequently, this image is 70 pixels wide and 46 pixels high.</p>
 <p>Images returns this image in horizontal-major order because this is how it was stored on disk. Because the Images package is designed to scale to terabyte-sized images, a general philosophy is to work with whatever format users provide without forcing changes to the raw array representation. Consequently, when you load an image, its representation will match that used in the file.</p>
 <p>Of course, if you prefer to work with plain arrays, you can convert it:</p>
@@ -130,13 +131,12 @@ view(imv)</code></pre>
 <pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">imh = shareproperties(imhsv, [HSV(imhsv[i,j].h, <span class="fl">0.5</span>, <span class="fl">0.5</span>) <span class="kw">for</span> i = <span class="fl">1</span>:size(imhsv,<span class="fl">1</span>),j = <span class="fl">1</span>:size(imhsv,<span class="fl">2</span>)])
 view(imh)</code></pre>
 <p>(Hue without saturation or value generates gray or black, so we used a constant different from zero for these parameters.)</p>
-<figure>
-<img src="doc/figures/rose_hsv.png" alt="raw" /><figcaption>raw</figcaption>
-</figure>
+<!-- use standard html instead of markdown, to set resize behavior -->
+<p><img class="img-responsive" src="doc/figures/rose_hsv.png" /></p>
 <p>Of course, you can combine these commands, for example</p>
 <pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">A = reinterpret(<span class="dt">Uint8</span>, data(img))</code></pre>
 <p>will, for a <code>RGB{Ufixed8}</code> image, return a raw 3d array. This can be useful if you want to interact with external code (a C-library, for example). Assuming you don't want to lose orientation information, you can wrap a returned array <code>B</code> as <code>shareproperties(img, B)</code>.</p>
-<h3 id="other-properties-and-usage-of-units">Other properties, and usage of Units</h3>
+<h2 id="other-properties-and-usage-of-units">Other properties, and usage of Units</h2>
 <p>The <code>&quot;pixelspacing&quot;</code> property informs ImageView that this image has an aspect ratio 1. In scientific or medical imaging, you can use actual units to encode this property, for example through the <a href="https://github.com/Keno/SIUnits.jl">SIUnits</a> package. For example, if you're doing microscopy you might specify</p>
 <pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">using SIUnits
 img[<span class="st">&quot;pixelspacing&quot;</span>] = [<span class="fl">0.32</span>Micro*Meter,<span class="fl">0.32</span>Micro*Meter]</code></pre>
@@ -144,7 +144,7 @@ img[<span class="st">&quot;pixelspacing&quot;</span>] = [<span class="fl">0.32</
 <pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">using SIUnits.ShortUnits
 mriscan[<span class="st">&quot;pixelspacing&quot;</span>] = [<span class="fl">0.2</span>mm, <span class="fl">0.2</span>mm, <span class="fl">2</span>mm]</code></pre>
 <p>ImageView includes facilities for scale bars, and by supplying your pixel spacing you can ensure that the scale bars are accurate.</p>
-<h3 id="a-brief-demonstration-of-image-processing">A brief demonstration of image processing</h3>
+<h2 id="a-brief-demonstration-of-image-processing">A brief demonstration of image processing</h2>
 <p>Now let's work through a more sophisticated example:</p>
 <pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">using Images, TestImages, ImageView
 img = testimage(<span class="st">&quot;mandrill&quot;</span>)
@@ -156,17 +156,16 @@ view(imgf)
 <span class="co"># Let&#39;s make an oversaturated image</span>
 imgs = <span class="fl">2im</span>gf
 view(imgs)</code></pre>
-<figure>
-<img src="doc/figures/mandrill.jpg" alt="processing" /><figcaption>processing</figcaption>
-</figure>
-<h2 id="further-documentation">Further documentation</h2>
+<!-- use standard html instead of markdown, to set resize behavior -->
+<p><img class="img-responsive" src="doc/figures/mandrill.jpg" /></p>
+<h1 id="further-documentation">Further documentation</h1>
 <p>Detailed documentation about the design of the library and the available functions can be found in the <code>doc/</code> directory. Here are some of the topics available:</p>
 <ul>
-<li>The <a href="doc/core.md">core</a>, i.e., the representation of images</li>
-<li><a href="doc/extendingIO.md">I/O</a> and custom image file formats</li>
-<li><a href="doc/function_reference.md">Function reference</a></li>
-<li><a href="doc/overlays.md">Overlays</a>, a type for combining multiple grayscale arrays into a single color array</li>
-<li><a href="doc/fixing_breakages.md">Changes</a> describes some recent changes and how to fix likely breakages in old code</li>
+<li>The <a href="core.html">core</a>, i.e., the representation of images</li>
+<li><a href="extendingIO.html">I/O</a> and custom image file formats</li>
+<li><a href="function_reference.html">Function reference</a></li>
+<li><a href="overlays.html">Overlays</a>, a type for combining multiple grayscale arrays into a single color array</li>
+<li><a href="fixing_breakages.html">Changes</a> describes some recent changes and how to fix likely breakages in old code</li>
 </ul>
 <h1 id="credits">Credits</h1>
 <p>Elements of this package descend from &quot;image.jl&quot; that once lived in Julia's <code>extras/</code> directory. That file had several authors, of which the primary were Jeff Bezanson, Stefan Kroboth, Tim Holy, Mike Nolta, and Stefan Karpinski. This repository has been quite heavily reworked; the current package maintainer is Tim Holy, and important contributions have been made by Ron Rock, Kevin Squire, Lucas Beyer, Elliot Saba, Isaiah Norton, Daniel Perry, Waldir Pimenta, Tobias Knopp, Jason Merrill, Dahua Lin, and several others.</p>
@@ -182,25 +181,34 @@ view(imgs)</code></pre>
                 <a class="toc-item toc-current-doc" href="index.html">Introduction</a>
             </li>
             <li>
-                <a style="margin-left: 0.5em" class="toc-item" href="#imagesjl">Images.jl</a>
+                <a style="margin-left: 0.5em" class="toc-item" href="#installation">Installation</a>
             </li>
             <li>
-                <a style="margin-left: 1.0em" class="toc-item" href="#installation">Installation</a>
+                <a style="margin-left: 0.5em" class="toc-item" href="#package-interactions">Package interactions</a>
             </li>
             <li>
-                <a style="margin-left: 1.0em" class="toc-item" href="#package-interactions">Package interactions</a>
+                <a style="margin-left: 0.5em" class="toc-item" href="#image-viewing">Image viewing</a>
             </li>
             <li>
-                <a style="margin-left: 1.0em" class="toc-item" href="#image-viewing">Image viewing</a>
+                <a style="margin-left: 0.5em" class="toc-item" href="#testimages">TestImages</a>
             </li>
             <li>
-                <a style="margin-left: 1.0em" class="toc-item" href="#testimages">TestImages</a>
+                <a style="margin-left: 0.5em" class="toc-item" href="#getting-started">Getting started</a>
             </li>
             <li>
-                <a style="margin-left: 1.0em" class="toc-item" href="#getting-started">Getting started</a>
+                <a style="margin-left: 1.0em" class="toc-item" href="#loading-your-first-image-how-images-are-represented">Loading your first image: how images are represented</a>
             </li>
             <li>
-                <a style="margin-left: 1.0em" class="toc-item" href="#further-documentation">Further documentation</a>
+                <a style="margin-left: 1.0em" class="toc-item" href="#storage-order-and-changing-the-representation-of-images">Storage order and changing the representation of images</a>
+            </li>
+            <li>
+                <a style="margin-left: 1.0em" class="toc-item" href="#other-properties-and-usage-of-units">Other properties, and usage of Units</a>
+            </li>
+            <li>
+                <a style="margin-left: 1.0em" class="toc-item" href="#a-brief-demonstration-of-image-processing">A brief demonstration of image processing</a>
+            </li>
+            <li>
+                <a style="margin-left: 0.5em" class="toc-item" href="#further-documentation">Further documentation</a>
             </li>
             <li>
                 <a style="margin-left: 0.5em" class="toc-item" href="#credits">Credits</a>
@@ -249,7 +257,7 @@ view(imgs)</code></pre>
     </div>
 
   <footer class="col-sm-8">
-    <p class="muted">Last modified by Tim Holy on Mon Apr  6 21:08:05 CDT 2015. Generated with
+    <p class="muted">Last modified by Tim Holy on Sun Apr 12 09:41:44 CDT 2015. Generated with
     <a href="https://github.com/dcjones/Judo.jl">Judo</a>.</p>
   </footer>
 

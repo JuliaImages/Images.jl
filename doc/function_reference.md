@@ -4,6 +4,8 @@ author: Tim Holy
 order: 50
 ...
 
+<h1>Function Reference</h1>
+
 Below, `[]` in an argument list means an optional argument.
 
 # Image construction
