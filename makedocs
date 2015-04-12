@@ -17,7 +17,7 @@ function collate(package::String, outdir::String; template::String="default")
 
     pkgurl = "#"
     try
-        pkgurl_mat = match(pkgurl_pat, Pkg.Dir.cd(() -> Pkg.Read.url(package)))
+        pkgurl_mat = match(Judo.pkgurl_pat, Pkg.Dir.cd(() -> Pkg.Read.url(package)))
         if pkgurl_mat != nothing
             pkgurl = string("http://github.com/", pkgurl_mat.captures[1])
         end
