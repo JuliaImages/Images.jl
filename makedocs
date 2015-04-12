@@ -1,0 +1,39 @@
+#!/usr/bin/env julia
+
+import Judo, Judo.collate
+
+# Add a method to set the output dir when building a package
+function collate(package::String, outdir::String; template::String="default")
+    declarations = Judo.harvest(package)
+
+    pkgver = ""
+    try
+        pkgver = Pkg.Dir.cd(() -> Pkg.Read.installed()[package][1])
+    catch
+    end
+    pkgver_out = IOBuffer()
+    print(pkgver_out, pkgver)
+    pkgver = takebuf_string(pkgver_out)
+
+    pkgurl = "#"
+    try
+        pkgurl_mat = match(pkgurl_pat, Pkg.Dir.cd(() -> Pkg.Read.url(package)))
+        if pkgurl_mat != nothing
+            pkgurl = string("http://github.com/", pkgurl_mat.captures[1])
+        end
+    catch
+    end
+
+    filenames = {}
+    for filename in Judo.walkdir(joinpath(Pkg.dir(package), "doc"))
+        if match(Judo.ext_doc_pat, filename) != nothing
+            push!(filenames, filename)
+        end
+    end
+
+    Judo.collate(filenames, template=template, outdir=outdir, pkgname=package,
+            pkgver=pkgver, pkgurl=pkgurl, declarations=declarations)
+end
+
+outdir = Pkg.dir("Images")
+collate("Images", outdir)
