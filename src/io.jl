@@ -42,7 +42,7 @@ end
 
 # if supportmmap == true, then imread() should take a mmap keyword argument that is either
 #   :auto, true or false.
-function add_image_file_format{ImageType<:ImageFileType}(ext::ByteString, magic::Vector{Uint8}, 
+function add_image_file_format{ImageType<:ImageFileType}(ext::ByteString, magic::Vector{Uint8},
                         ::Type{ImageType}, filecode::ASCIIString; supportsmmap::Bool=false)
     # Check to see whether these magic bytes are already in the database
     for i in 1:length(filemagic)
@@ -241,8 +241,8 @@ mapinfo_writemime(img::AbstractImage) = mapinfo(Ufixed8,img)
 #### Implementation of specific formats ####
 
 #### OSX Native readers from CoreGraphics
+imread(source, ::Type{OSXNative}) = LibOSXNative.imread(source)
 
-imread(filename::String, ::Type{OSXNative}) = LibOSXNative.imread(filename)
 
 #### ImageMagick library
 
@@ -257,7 +257,7 @@ function imread(filename::String, ::Type{ImageMagick};extraprop="",extraproperty
     if extrapropertynames
         return(LibMagick.getimageproperties(wand,"*"))
     end
-    
+
     imtype = LibMagick.getimagetype(wand)
     # Determine what we need to know about the image format
     sz = size(wand)
@@ -278,7 +278,7 @@ function imread(filename::String, ::Type{ImageMagick};extraprop="",extraproperty
             prop[extra] = LibMagick.getimageproperty(wand,extra)
         end
     end
-        
+
     depth = LibMagick.getimagechanneldepth(wand, LibMagick.DefaultChannels)
     if depth <= 8
         T = Ufixed8     # always use 8-bit for 8-bit and less

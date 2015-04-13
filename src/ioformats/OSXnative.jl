@@ -5,10 +5,24 @@ using Images, Color, Images.ColorTypes, FixedPointNumbers, Compat
 
 export imread
 
+imread(io::IOStream) = imread(readbytes(io))
+
+function imread(b::Array{Uint8,1})
+  data = CFDataCreate(b)
+  imgsrc = CGImageSourceCreateWithData(data)
+  CFRelease(data)
+  read_and_release_imgsrc(imgsrc)
+end
+
 function imread(filename)
     myURL = CFURLCreateWithFileSystemPath(abspath(filename))
     imgsrc = CGImageSourceCreateWithURL(myURL)
     CFRelease(myURL)
+    read_and_release_imgsrc(imgsrc)
+end
+
+## core, internal function
+function read_and_release_imgsrc(imgsrc)
     imgsrc == C_NULL && return nothing
 
     # Get image information
@@ -326,6 +340,9 @@ end
 CGImageSourceCreateWithURL(myURL::Ptr{Void}) =
     ccall((:CGImageSourceCreateWithURL, imageio), Ptr{Void}, (Ptr{Void}, Ptr{Void}), myURL, C_NULL)
 
+CGImageSourceCreateWithData(data::Ptr{Void}) =
+    ccall((:CGImageSourceCreateWithData, imageio), Ptr{Void}, (Ptr{Void}, Ptr{Void}), data, C_NULL)
+
 CGImageSourceGetType(CGImageSourceRef::Ptr{Void}) =
     ccall(:CGImageSourceGetType, Ptr{Void}, (Ptr{Void}, ), CGImageSourceRef)
 
@@ -409,5 +426,7 @@ CFDataGetBytePtr{T}(CFDataRef::Ptr{Void}, ::Type{T}) =
 CFDataGetLength(CFDataRef::Ptr{Void}) =
     ccall(:CFDataGetLength, Ptr{Int64}, (Ptr{Void}, ), CFDataRef)
 
+CFDataCreate(bytes::Array{Uint8,1}) =
+  ccall(:CFDataCreate,Ptr{Void},(Ptr{Void},Ptr{Uint8},Csize_t),C_NULL,bytes,length(bytes))
 
 end # Module
