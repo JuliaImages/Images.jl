@@ -6,6 +6,12 @@ An image processing library for [Julia](http://julialang.org/).
 [![Coverage Status](https://coveralls.io/repos/timholy/Images.jl/badge.png?branch=master)](https://coveralls.io/r/timholy/Images.jl?branch=master)
 [![Build status](https://ci.appveyor.com/api/projects/status/github/timholy/Images.jl?svg=true&branch=master)](https://ci.appveyor.com/project/timholy/images-jl/branch/master)
 
+## Documentation
+
+<!-- Note: to update the documentation after editing the markdown files on
+master: git checkout gh-pages; git merge master; ./makedocs -->
+[Full documentation is found here](http://timholy.github.io/Images.jl)
+
 ## Installation
 
 Install via the package manager,
