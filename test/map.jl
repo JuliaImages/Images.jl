@@ -60,6 +60,10 @@ mapi = BitShift(ARGB{Ufixed8}, 8)
 @chk map(mapi, RGB{Ufixed16}(1.0,0.8,0.6)) ARGB{Ufixed8}(1.0,0.8,0.6,1.0)
 mapi = BitShift(RGBA{Ufixed8}, 8)
 @chk map(mapi, RGB{Ufixed16}(1.0,0.8,0.6)) RGBA{Ufixed8}(1.0,0.8,0.6,1.0)
+# Issue, #269, IJulia issue #294
+bs = BitShift(Gray{Ufixed8}, 8)
+v = Gray(ufixed16(0.8))
+@chk map(bs, v) Gray{Ufixed8}(0.8)
 
 # Clamp
 mapi = ClampMin(Float32, 0.0)
