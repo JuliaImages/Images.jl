@@ -212,6 +212,7 @@ end
 # In other cases---or if you don't want the storage order altered---just use data(img)
 convert{T<:Real,N}(::Type{Array{T}}, img::AbstractImageDirect{T,N}) = convert(Array{T,N}, img)
 convert{T<:ColorType,N}(::Type{Array{T}}, img::AbstractImageDirect{T,N}) = convert(Array{T,N}, img)
+convert{T}(::Type{Vector{T}}, img::AbstractImageDirect{T,1}) = convert(Vector{T}, data(img))
 function convert{T,N}(::Type{Array{T,N}}, img::AbstractImageDirect{T,N})
     assert2d(img)  # only well-defined in 2d
     p = permutation_canonical(img)
@@ -648,15 +649,18 @@ isdirect(img::AbstractArray) = true
 isdirect(img::AbstractImageDirect) = true
 isdirect(img::AbstractImageIndexed) = false
 
+colorspace{C<:ColorValue}(img::AbstractVector{C}) = string(C.name.name)
 colorspace{C<:ColorValue}(img::AbstractMatrix{C}) = string(C.name.name)
 colorspace{C<:ColorValue}(img::AbstractArray{C,3}) = string(C.name.name)
 colorspace{C<:ColorValue}(img::AbstractImage{C}) = string(C.name.name)
 colorspace{C<:ColorValue,T}(img::AbstractArray{AlphaColorValue{C,T},2}) = (S = string(C.name.name); S == "Gray" ? "GrayAlpha" : string(S, "A"))
 colorspace{C<:ColorValue,T}(img::AbstractImage{AlphaColorValue{C,T}}) = (S = string(C.name.name); S == "Gray" ? "GrayAlpha" : string(S, "A"))
+colorspace(img::AbstractVector{Bool}) = "Binary"
 colorspace(img::AbstractMatrix{Bool}) = "Binary"
 colorspace(img::AbstractArray{Bool}) = "Binary"
 colorspace(img::AbstractArray{Bool,3}) = "Binary"
 colorspace(img::AbstractMatrix{Uint32}) = "RGB24"
+colorspace(img::AbstractVector) = "Gray"
 colorspace(img::AbstractMatrix) = "Gray"
 colorspace{T}(img::AbstractArray{T,3}) = (size(img, defaultarraycolordim) == 3) ? "RGB" : error("Cannot infer colorspace of Array, use an AbstractImage type")
 colorspace(img::AbstractImage{Bool}) = "Binary"
@@ -696,6 +700,7 @@ colordim{C<:ColorType}(img::AbstractVector{C}) = 0
 colordim{C<:ColorType}(img::AbstractMatrix{C}) = 0
 colordim{C<:ColorType}(img::AbstractArray{C,3}) = 0
 colordim{C<:ColorType}(img::AbstractImage{C}) = 0
+colordim(img::AbstractVector) = 0
 colordim(img::AbstractMatrix) = 0
 colordim{T}(img::AbstractImageDirect{T,3}) = get(img, "colordim", 0)::Int
 colordim{T}(img::AbstractArray{T,3}) = (size(img, defaultarraycolordim) == 3) ? 3 : 0
