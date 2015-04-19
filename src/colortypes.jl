@@ -3,7 +3,7 @@ module ColorTypes
 using Color, FixedPointNumbers, Compat, Base.Cartesian
 import Color: Fractional, _convert
 
-import Base: ==, abs, abs2, clamp, convert, div, isfinite, isinf,
+import Base: ==, abs, abs2, clamp, convert, div, eps, isfinite, isinf,
     isnan, isless, length, one, promote_array_type, promote_rule, zero,
     trunc, floor, round, ceil, bswap,
     mod, rem
@@ -240,10 +240,11 @@ for ACV in (ColorValue, AbstractRGB, AbstractGray, AbstractAlphaColorValue)
     end
 end
 
-for f in (:trunc, :floor, :round, :ceil, :abs, :abs2, :isfinite, :isnan, :isinf, :bswap)
+for f in (:trunc, :floor, :round, :ceil, :abs, :abs2, :eps, :isfinite, :isnan, :isinf, :bswap)
     @eval $f{T}(g::Gray{T}) = Gray{T}($f(g.val))
     @eval @vectorize_1arg Gray $f
 end
+eps{T}(::Type{Gray{T}}) = Gray(eps(T))
 for f in (:trunc, :floor, :round, :ceil)
     @eval $f{T<:Integer}(::Type{T}, g::Gray) = Gray{T}($f(T, g.val))
     @eval $f{T<:Integer,G<:Gray,Ti}(::Type{T}, A::SparseMatrixCSC{G,Ti}) = error("not defined") # fix ambiguity warning

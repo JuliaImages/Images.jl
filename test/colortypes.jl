@@ -71,6 +71,7 @@ f = Ufixed8(0.5)
 @test isinf(Gray(Inf)) == true
 @test isnan(Gray(Inf)) == false
 @test_approx_eq abs(Gray(0.1)) 0.1
+@test eps(Gray{Ufixed8}) == Gray(eps(Ufixed8))  # #282
 
 acu = Gray{Ufixed8}[cu]
 acf = Gray{Float32}[cf]
