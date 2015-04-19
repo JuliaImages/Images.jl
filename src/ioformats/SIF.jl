@@ -19,13 +19,13 @@ function imread{S<:IO}(stream::S, ::Type{Images.AndorSIF})
         error("Unknown TInstaImage version number at line 3: " * fields[1])
 
     ixon = Dict{Any,Any}()
-    ixon["data_type"] = int(fields[2])
-    ixon["active"] = int(fields[3])
-    ixon["structure_vers"] = int(fields[4]) # (== 1)
+    ixon["data_type"] = round(Int,fields[2])
+    ixon["active"] = convert(Int,fields[3])
+    ixon["structure_vers"] = round(Int,fields[4]) # (== 1)
     # date is recored as seconds counted from 1970.1.1 00:00:00
-    ixon["date"] = int(fields[5]) # need to convert to actual date
-    ixon["temperature"] = max(int(fields[6]), int(fields[48]))
-    ixon["temperature_stable"] = int(fields[6]) != -999
+    ixon["date"] = round(Int,fields[5]) # need to convert to actual date
+    ixon["temperature"] = max(round(Int,fields[6]), round(Int,fields[48]))
+    ixon["temperature_stable"] = round(Int,fields[6]) != -999
     ixon["head"] = fields[7]
     ixon["store_type"] = fields[8]
     ixon["data_type"] = fields[9]
@@ -35,22 +35,22 @@ function imread{S<:IO}(stream::S, ::Type{Images.AndorSIF})
     ixon["exposure_time"] = float(fields[13])
     ixon["frame_delay"] = float(fields[14])
     ixon["integration_cycle_time"] = float(fields[15])
-    ixon["no_integrations"] = int(fields[16])
+    ixon["no_integrations"] = round(Int,fields[16])
     ixon["sync"] = fields[17]
     ixon["kin_cycle_time"] = float(fields[18])
     ixon["pixel_readout_time"] = float(fields[19])
-    ixon["no_points"] = int(fields[20])
-    ixon["fast_track_height"] = int(fields[21])
-    ixon["gain"] = int(fields[22])
+    ixon["no_points"] = round(Int,fields[20])
+    ixon["fast_track_height"] = round(Int,fields[21])
+    ixon["gain"] = round(Int,fields[22])
     ixon["gate_delay"] = float(fields[23])
     ixon["gate_width"] = float(fields[24])
     ixon["gate_step"] = float(fields[25])
-    ixon["track_height"] = int(fields[26])
-    ixon["series_length"] = int(fields[27])
+    ixon["track_height"] = round(Int,fields[26])
+    ixon["series_length"] = round(Int,fields[27])
     ixon["read_pattern"] = fields[28]
     ixon["shutter_delay"] = fields[29]
-    ixon["st_center_row"] = int(fields[30])
-    ixon["mt_offset"] = int(fields[31])
+    ixon["st_center_row"] = round(Int,fields[30])
+    ixon["mt_offset"] = round(Int,fields[31])
     ixon["operation_mode"] = fields[32]
     ixon["flipx"] = fields[33]
     ixon["flipy"] = fields[34]
@@ -64,20 +64,20 @@ function imread{S<:IO}(stream::S, ::Type{Images.AndorSIF})
     ixon["data_v_shift_speed"] = float(fields[42])
     ixon["output_amp"] = fields[43]
     ixon["pre_amp_gain"] = float(fields[44])
-    ixon["serial"] = int(fields[45])
-    ixon["num_pulses"] = int(fields[46])
-    ixon["m_frame_transfer_acq_mode"] = int(fields[47])
-    ixon["unstabilized_temperature"] = int(fields[48])
-    ixon["m_baseline_clamp"] = int(fields[49])
-    ixon["m_pre_scan"] = int(fields[50])
-    ixon["m_em_real_gain"] = int(fields[51])
-    ixon["m_baseline_offset"] = int(fields[52])
+    ixon["serial"] = round(Int,fields[45])
+    ixon["num_pulses"] = round(Int,fields[46])
+    ixon["m_frame_transfer_acq_mode"] = round(Int,fields[47])
+    ixon["unstabilized_temperature"] = round(Int,fields[48])
+    ixon["m_baseline_clamp"] = round(Int,fields[49])
+    ixon["m_pre_scan"] = round(Int,fields[50])
+    ixon["m_em_real_gain"] = round(Int,fields[51])
+    ixon["m_baseline_offset"] = round(Int,fields[52])
     _ = fields[53]
     _ = fields[54]
-    ixon["sw_vers1"] = int(fields[55])
-    ixon["sw_vers2"] = int(fields[56])
-    ixon["sw_vers3"] = int(fields[57])
-    ixon["sw_vers4"] = int(fields[58])
+    ixon["sw_vers1"] = round(Int,fields[55])
+    ixon["sw_vers2"] = round(Int,fields[56])
+    ixon["sw_vers3"] = round(Int,fields[57])
+    ixon["sw_vers4"] = round(Int,fields[58])
 
     # line 4
     ixon["camera_model"] = strip(readline(stream))
@@ -92,7 +92,7 @@ function imread{S<:IO}(stream::S, ::Type{Images.AndorSIF})
     l = strip(readline(stream))
     fields = split(l)
     fields[1] == "65538" || error("Unknown TUserText version number in line 7: $fields[1]")
-    usertextlen = int(fields[2]) # don't need?
+    usertextlen = round(Int,fields[2]) # don't need?
 
     # line 8
     usertext = strip(readline(stream))
@@ -119,47 +119,47 @@ function imread{S<:IO}(stream::S, ::Type{Images.AndorSIF})
 
     # what a bizarre file format here
     # length of the next string is in this line
-    next_str_len = int(strip(readline(stream)))
+    next_str_len = round(Int,strip(readline(stream)))
     # and here is the next string, followed by the length
     # of the following string, with no delimeter in between!
     l = strip(readline(stream))
-    next_str_len = int(l[(next_str_len + 1):end])
+    next_str_len = round(Int,l[(next_str_len + 1):end])
     # lather, rinse, repeat...
     l = strip(readline(stream))
-    next_str_len = int(l[(next_str_len + 1):end])
+    next_str_len = round(Int,l[(next_str_len + 1):end])
     l = strip(readline(stream))
     l = l[(next_str_len + 1):end]
     fields = split(l)
     fields[1] == "65538" || error("Unknown version number at image dims record")
-    ixon["image_format_left"] = int(fields[2])
-    ixon["image_format_top"] = int(fields[3])
-    ixon["image_format_right"] = int(fields[4])
-    ixon["image_format_bottom"] = int(fields[5])
-    frames = int(fields[6])
+    ixon["image_format_left"] = round(Int,fields[2])
+    ixon["image_format_top"] = round(Int,fields[3])
+    ixon["image_format_right"] = round(Int,fields[4])
+    ixon["image_format_bottom"] = round(Int,fields[5])
+    frames = round(Int,fields[6])
     ixon["frames"] = frames
-    ixon["num_subimages"] = int(fields[7])
-    ixon["total_length"] = int(fields[8]) # in pixels across all frames
-    ixon["single_frame_length"] = int(fields[9])
+    ixon["num_subimages"] = round(Int,fields[7])
+    ixon["total_length"] = round(Int,fields[8]) # in pixels across all frames
+    ixon["single_frame_length"] = round(Int,fields[9])
 
     # Now at the first (and only) subimage
     l = strip(readline(stream))
     fields = split(l)
     fields[1] == "65538" || error("unknown TSubImage version number: " * fields[1])
-    left = int(fields[2])
-    top = int(fields[3])
-    right = int(fields[4])
-    bottom = int(fields[5])
-    vertical_bin = int(fields[6])
-    horizontal_bin = int(fields[7])
-    subimage_offset = int(fields[8])
+    left = round(Int,fields[2])
+    top = round(Int,fields[3])
+    right = round(Int,fields[4])
+    bottom = round(Int,fields[5])
+    vertical_bin = round(Int,fields[6])
+    horizontal_bin = round(Int,fields[7])
+    subimage_offset = round(Int,fields[8])
 
     # calculate frame width, height, with binning
     width = right - left + 1
     mod = width%horizontal_bin
-    width = int((width - mod)/horizontal_bin)
+    width = round(Int,(width - mod)/horizontal_bin)
     height = top - bottom + 1
     mod = height%vertical_bin
-    height = int((height - mod)/vertical_bin)
+    height = round(Int,(height - mod)/vertical_bin)
 
     ixon["left"] = left
     ixon["top"] = top

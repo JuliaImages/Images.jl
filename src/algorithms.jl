@@ -539,14 +539,14 @@ end
 
 for N = 1:5
     @eval begin
-        function copyreal!{T<:Real}(dst::Array{T,$N}, src, I::(UnitRange{Int}...))
+        function copyreal!{T<:Real}(dst::Array{T,$N}, src, I::(@compat Tuple{Vararg{UnitRange{Int}}}))
             @nexprs $N d->(I_d = I[d])
             @nloops $N i dst d->(j_d = first(I_d)+i_d-1) begin
                 (@nref $N dst i) = real(@nref $N src j)
             end
             dst
         end
-        function copyreal!{T<:Complex}(dst::Array{T,$N}, src, I::(UnitRange{Int}...))
+        function copyreal!{T<:Complex}(dst::Array{T,$N}, src, I::(@compat Tuple{Vararg{UnitRange{Int}}}))
             @nexprs $N d->I_d = I[d]
             @nloops $N i dst d->(j_d = first(I_d)+i_d-1) begin
                 (@nref $N dst i) = @nref $N src j
@@ -873,7 +873,7 @@ if isdefined(:restrict)
     import Grid.restrict
 end
 
-restrict(img::AbstractImageDirect, ::()) = img
+restrict(img::AbstractImageDirect, ::(@compat Tuple{})) = img
 
 function restrict(img::AbstractImageDirect, region::Union(Dims, Vector{Int})=coords_spatial(img))
     A = data(img)
@@ -894,7 +894,7 @@ function restrict(A::AbstractArray, region::Union(Dims, Vector{Int})=coords_spat
     A
 end
 
-function restrict{S<:ByteString}(img::AbstractImageDirect, region::Union((ByteString...), Vector{S}))
+function restrict{S<:ByteString}(img::AbstractImageDirect, region::Union((@compat Tuple{Vararg{ByteString}}), Vector{S}))
     so = spatialorder(img)
     regioni = Int[]
     for i = 1:length(region)
