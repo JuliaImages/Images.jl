@@ -203,7 +203,7 @@ arr[2,2] = 0.5
 @assert sc(arr, 0.0, 0.75)[2,2] == 0xaauf8
 
 # color conversion
-gray = linspace(0.0,1.0,5) # a 1-dimensional image
+gray = collect(linspace(0.0,1.0,5)) # a 1-dimensional image
 gray8 = round(Uint8, 255*gray)
 gray32 = Uint32[convert(UInt32, g)<<16 | convert(UInt32, g)<<8 | convert(UInt32, g) for g in gray8]
 imgray = Images.Image(gray, Dict{ASCIIString,Any}([("colordim",0), ("colorspace","Gray")]))

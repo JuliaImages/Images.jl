@@ -421,8 +421,8 @@ sliceim(img::AbstractImage, I...) = sliceim(img, ntuple(length(I), i-> isa(I[i],
 # Iteration
 # Defer to the array object in case it has special iteration defined
 if VERSION >= v"0.4.0-dev+1623"
-    next{T,N}(img::AbstractImage{T,N}, s::(Bool,Base.IteratorsMD.CartesianIndex{N})) = next(data(img), s)
-    done{T,N}(img::AbstractImage{T,N}, s::(Bool,Base.IteratorsMD.CartesianIndex{N})) = done(data(img), s)
+    next{T,N}(img::AbstractImage{T,N}, s::(@compat Tuple{Bool,Base.IteratorsMD.CartesianIndex{N}})) = next(data(img), s)
+    done{T,N}(img::AbstractImage{T,N}, s::(@compat Tuple{Bool,Base.IteratorsMD.CartesianIndex{N}})) = done(data(img), s)
 end
 start(img::AbstractImage) = start(data(img))
 next(img::AbstractImage, s) = next(data(img), s)
@@ -432,9 +432,9 @@ done(img::AbstractImage, s) = done(data(img), s)
 # We'll frequently want to pull out different 2d slices from the same image, so here's a type and set of functions making that easier.
 # We deliberately do not require the user to specify the full list of new slicing/ranging parameters, as often we'll want to change some aspects (e.g., z-slice) but not others (e.g., color coordinates)
 type SliceData
-    slicedims::(Int...,)
-    slicestrides::(Int...,)
-    rangedims::(Int...,)
+    slicedims::(@compat Tuple{Vararg{Int}})
+    slicestrides::(@compat Tuple{Vararg{Int}})
+    rangedims::(@compat Tuple{Vararg{Int}})
 
     function SliceData(A::AbstractArray, slicedims::Int...)
         keep = trues(ndims(A))
@@ -496,7 +496,7 @@ function reslice!(img::AbstractImage, sd::SliceData, I::Int...)
     img
 end
 
-function rerange!(A::SubArray, sd::SliceData, I::(RangeIndex...,))
+function rerange!(A::SubArray, sd::SliceData, I::(@compat Tuple{Vararg{RangeIndex}}))
     indexes = RangeIndex[A.indexes...]
     for i = 1:length(I)
         indexes[sd.rangedims[i]] = I[i]
@@ -506,7 +506,7 @@ function rerange!(A::SubArray, sd::SliceData, I::(RangeIndex...,))
     A
 end
 
-function rerange!(img::AbstractImage, sd::SliceData, I::(RangeIndex...,))
+function rerange!(img::AbstractImage, sd::SliceData, I::(@compat Tuple{Vararg{RangeIndex}}))
     rerange!(img.data, sd, I...)
     img
 end
@@ -866,9 +866,9 @@ function spatialpermutation(to, img::AbstractImage)
 end
 
 # Permute the dimensions of an image, also permuting the relevant properties. If you have non-default properties that are vectors or matrices relative to spatial dimensions, include their names in the list of spatialprops.
-permutedims(img::AbstractImage, p::(), spatialprops::Vector = spatialproperties(img)) = img
+permutedims(img::AbstractImage, p::(@compat Tuple{}), spatialprops::Vector = spatialproperties(img)) = img
 
-function permutedims(img::AbstractImage, p::Union(Vector{Int}, (Int...)), spatialprops::Vector = spatialproperties(img))
+function permutedims(img::AbstractImage, p::Union(Vector{Int}, (@compat Tuple{Vararg{Int}})), spatialprops::Vector = spatialproperties(img))
     if length(p) != ndims(img)
         error("The permutation must have length equal to the number of dimensions")
     end
@@ -903,7 +903,7 @@ function permutedims(img::AbstractImage, p::Union(Vector{Int}, (Int...)), spatia
     ret
 end
 
-permutedims{S<:String}(img::AbstractImage, pstr::Union(Vector{S}, (S...)), spatialprops::Vector = spatialproperties(img)) = permutedims(img, dimindexes(img, pstr...), spatialprops)
+permutedims{S<:String}(img::AbstractImage, pstr::Union(Vector{S}, (@compat Tuple{Vararg{S}})), spatialprops::Vector = spatialproperties(img)) = permutedims(img, dimindexes(img, pstr...), spatialprops)
 
 function permutation_canonical(img)
     assert2d(img)
@@ -1045,7 +1045,7 @@ require_dimindex(img::AbstractImage, dimname, so) = (di = dimindex(img, dimname,
 dimindexes(img::AbstractImage, dimnames::String...) = Int[dimindex(img, nam, spatialorder(img)) for nam in dimnames]
 
 to_vector(v::AbstractVector) = v
-to_vector(v::Tuple) = [v...]
+to_vector(v::(@compat Tuple)) = [v...]
 
 # converts keyword argument to a dictionary
 function kwargs2dict(kwargs)
