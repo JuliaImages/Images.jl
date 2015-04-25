@@ -180,6 +180,9 @@ function _reinterpret_array_cv{T,CV<:ColorType}(::Type{CV}, A::Array{T})
     end
     error("result shape not specified")
 end
+# This version is used by the deserializer to convert UInt8 buffers back to their original type. Fixes #287.
+_reinterpret_array_cv{CV<:ColorType}(::Type{CV}, A::Vector{UInt8}) =
+    reinterpret(CV, A, (div(length(A), sizeof(CV)),))
 
 # Images
 function reinterpret{T,CV<:ColorType}(::Type{CV}, img::AbstractImageDirect{T})
