@@ -310,7 +310,7 @@ function CFStringGetCString(CFStringRef::Ptr{Void})
     res = ccall(:CFStringGetCString, Bool, (Ptr{Void}, Ptr{Uint8}, Uint, Uint16),
                 CFStringRef, buffer, length(buffer), 0x0600)
     res == C_NULL && return ""
-    return bytestring(convert(Ptr{Uint8}, buffer))
+    return bytestring(pointer(buffer))
 end
 
 # These were unsafe, can return null pointers at random times.
