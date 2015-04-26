@@ -1037,7 +1037,7 @@ function imresize!(resized, original)
     resized
 end
 
-imresize(original, new_size) = imresize_julia!(similar(original, new_size), original)
+imresize(original, new_size) = imresize!(similar(original, new_size), original)
 
 convertsafely{T<:FloatingPoint}(::Type{T}, val) = convert(T, val)
 convertsafely{T<:Integer}(::Type{T}, val::Integer) = convert(T, val)

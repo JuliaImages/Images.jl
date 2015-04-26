@@ -322,3 +322,8 @@ P = [ 0.0  0.0  0.0   0.0   0.0   0.0   0.0  0.0;
 
 Q = Images.shepp_logan(8,highContrast=false)
 @test norm((P-Q)[:]) < 1e-10
+
+# image resize
+img = convert(Images.Image, zeros(10,10))
+img2 = Images.imresize(img, (5,5))
+@test length(img2) == 25
