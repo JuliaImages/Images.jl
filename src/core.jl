@@ -201,6 +201,20 @@ function reinterpret{T,S}(::Type{T}, img::AbstractImageDirect{S})
     shareproperties(img, reinterpret(T, data(img)))
 end
 
+## To get data in raw format, and unwrap UfixedBase if present
+function raw(img::AbstractArray)
+    elemType = eltype(eltype(data(img)))
+
+    if (elemType <: None)  # weird fallback case
+        data(img)
+    elseif eltype(eltype(data(img))) <: FixedPointNumbers.UfixedBase
+        reinterpret( FixedPointNumbers.rawtype(eltype(eltype(img))), data(img) )
+    else
+        data(img)
+    end
+end
+
+
 ## convert
 convert{T}(::Type{Image{T}}, img::Image{T}) = img
 convert(::Type{Image}, img::Image) = img

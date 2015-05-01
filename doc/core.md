@@ -100,7 +100,9 @@ The `data` array here just encodes the index used to look up the color in the
 For any valid image type, `data(img)` returns the array that corresponds to the
 image.  This works when `img` is a plain `Array` (in which case no operation is
 performed) as well as for an `Image` (in which case it returns `img.data`).
-This is our first example of how to write generic algorithms.
+For some image formats, Images.jl may interpret raw data with the `FixedPointNumbers`
+package. The function `raw(img)` can be used to recover the buffer in its raw format
+(e.g. `UInt8`). This is our first example of how to write generic algorithms.
 
 If `img` is an `Image`, then `img[i,j]` looks up the value `img.data[i,j]`.
 Assignment, `sub`, and `slice` work similarly. In other words, for indexing an

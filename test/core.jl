@@ -387,3 +387,13 @@ imgray = convert(Image{Gray{Ufixed8}}, A)
 img = Image(reinterpret(Gray{Ufixed16}, rand(Uint16, 5, 5)))
 imgs = subim(img, :, :)
 @test isa(minfinite(imgs), Ufixed16)
+
+# raw()
+imgdata = rand(Uint16, 5, 5)
+img = Image(reinterpret(Gray{Ufixed16}, imgdata))
+@test all(raw(img) .== imgdata)
+@test typeof(raw(img)) == Array{Uint16,2}
+@test typeof(raw(Image(rawrgb8))) == Array{Uint8,3}  # check color images
+@test size(raw(Image(rawrgb8))) == (3,5,4)
+@test typeof(raw(imgdata)) == typeof(imgdata)  # check array fallback
+@test all(raw(imgdata) .== imgdata)
