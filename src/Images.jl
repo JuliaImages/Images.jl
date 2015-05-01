@@ -154,6 +154,7 @@ export # types
     timedim,
     width,
     widthheight,
+    raw,
 
     # io functions
     add_image_file_format,
