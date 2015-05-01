@@ -292,7 +292,7 @@ function imwrite(img, sheader::IO, ::Type{Images.NRRDFile}; props::Dict = Dict{A
                                    (T == Float64) ? "double" :
                                    (T == Float16) ? "float16" :
                                    error("Can't write type $T"))
-    elseif T <: FixedPointNumbers.UfixedBase
+    elseif eltype(T) <: FixedPointNumbers.UfixedBase
         # we don't want to write something like "type: ufixedbase{uint8,8}", so fix it
         T = FixedPointNumbers.rawtype(eltype(eltype(img)))
         println(sheader, "type: ", lowercase(string(T)))
