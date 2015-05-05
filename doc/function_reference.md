@@ -142,6 +142,23 @@ algorithm written for `Array`s or `AbstractArray`s on `Image` types.  This works
 for both `AbstractImage`s and `AbstractArray`s (for the latter it just returns
 the input), so is a "safe" component of any algorithm.
 
+## raw
+```{.julia execute="false"}
+raw(img)
+```
+
+returns a reference to the array data in raw storage format. This is particularly
+useful when Images.jl wraps image data in a `FixedPointNumbers` type, and raw data
+access is desired. For example
+
+```{.julia execute="false"}
+img = imread("someimage.tif")
+typeof( data(img) )  # returns array with element type UfixedBase{Uint8,8}
+typeof( raw(img) )   # returns array with element type Uint8
+
+```
+
+
 ## img[] (indexing)
 ```{.julia execute="false"}
 img[i, j, k,...]
