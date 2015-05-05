@@ -168,7 +168,7 @@ Here is a list of the properties supported in `core.jl`:
   images
 - `scalei`: a property that controls default contrast scaling upon display.
   This should be a
-  [`MapInfo`](https://github.com/timholy/Images.jl/blob/master/doc/function_reference.html#intensity-scaling)
+  [`MapInfo`](function_reference.html#mapinfo)
   value, to be used for setting the contrast upon display. In the absence of
   this property, the range 0 to 1 will be used.
 - `pixelspacing`: the spacing between adjacent pixels along spatial dimensions
