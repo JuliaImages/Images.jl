@@ -20,7 +20,7 @@ It's helpful to have ImageMagick installed on your system, as Images relies on
 it for reading and writing many common image types.  ImageMagick _should_ be
 installed for you automatically. In case of trouble, more details about manual
 installation and troubleshooting can be found in the
-[installation help](doc/install.html). Mac users in particular seem to have
+[installation help](install.html). Mac users in particular seem to have
 trouble; you may find
 [debugging Homebrew](https://github.com/JuliaLang/Homebrew.jl/wiki/Debugging-Homebrew.jl)
 useful.
@@ -340,10 +340,10 @@ view(imgs)
 # Further documentation
 
 Detailed documentation about the design of the library and the available
-functions can be found in the `doc/` directory. Here are some of the topics
-available:
+functions can be found in the navigation list to the right. Here are some of the
+topics available:
 
-- The [core](core.html), i.e., the representation of images
+- The [core](core.html) representation of images
 - [I/O](extendingIO.html) and custom image file formats
 - [Function reference](function_reference.html)
 - [Overlays](overlays.html), a type for combining multiple grayscale arrays
