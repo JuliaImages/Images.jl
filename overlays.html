@@ -18,7 +18,7 @@
     <div class="container">
       <div class="row">
         <ul>
-          <li><div id="pkgname">Images 0.4.35+</div></li>
+          <li><div id="pkgname">Images 0.4.36+</div></li>
           <li><a href="http://github.com/timholy/Images.jl">Code</a></li>
           <li><a href="http://github.com/timholy/Images.jl/issues">Issues</a></li>
         </ul>
@@ -35,7 +35,7 @@ Overlays
 </h1>
 <p>Frequently one wants to combine two (or more) grayscale images into a single colorized image. <code>Images</code> defines an <code>AbstractArray</code> type, <code>Overlay</code>, making this straightforward.</p>
 <p>To create an overlay, use the following syntax:</p>
-<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">O = Overlay((gray1,gray2,...), (color1,color2,...), (clim1,clim2,...))</code></pre>
+<div class="sourceCode" execute="false"><pre class="sourceCode julia julia"><code class="sourceCode julia">O = Overlay((gray1,gray2,...), (color1,color2,...), (clim1,clim2,...))</code></pre></div>
 <p>Here <code>gray1</code> and <code>gray2</code> are the arrays representing individual &quot;channels&quot; of information, each equivalent to a grayscale image. <code>color1</code> and <code>color2</code> are the <a href="https://github.com/JuliaLang/Color.jl">Colors</a> that will be used for the corresponding grayscale arrays; for example, to put <code>gray1</code> in the red channel, you'd use <code>color1 = RGB(1,0,0)</code>. (You can choose any RGB value you want, it doesn't have to be a &quot;pure&quot; RGB channel.) Finally, <code>clim1</code> and <code>clim2</code> represent the intensity-scaling applied to each image; setting <code>clim1 = (400,3000)</code> would send any values in <code>gray1</code> less than 400 to black, and any values bigger than 3000 to red, with other values between encoded linearly.</p>
 <p>Once constructed, an <code>Overlay</code> acts as an <code>Array{RGB}</code>. You can embed it in an <code>Image</code> or just use it directly.</p>
         <hr>
@@ -93,7 +93,7 @@ Overlays
     </div>
 
   <footer class="col-sm-8">
-    <p class="muted">Last modified by Tim Holy on Thu Apr 16 17:01:52 CDT 2015. Generated with
+    <p class="muted">Last modified by Tim Holy on Tue May  5 14:06:43 CDT 2015. Generated with
     <a href="https://github.com/dcjones/Judo.jl">Judo</a>.</p>
   </footer>
 

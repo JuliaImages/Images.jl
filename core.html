@@ -18,7 +18,7 @@
     <div class="container">
       <div class="row">
         <ul>
-          <li><div id="pkgname">Images 0.4.35+</div></li>
+          <li><div id="pkgname">Images 0.4.36+</div></li>
           <li><a href="http://github.com/timholy/Images.jl">Code</a></li>
           <li><a href="http://github.com/timholy/Images.jl/issues">Issues</a></li>
         </ul>
@@ -44,18 +44,18 @@ Julia Images Guide
 <h2 id="image-types">Image types</h2>
 <p>All image types should descend from <code>AbstractImage</code>, an abstract base type used to indicate that an array is to be interpreted as an image. If you're writing a custom image type, it is more likely that you'll want to derive from either <code>AbstractImageDirect</code> or <code>AbstractImageIndexed</code>. The former is for direct images (where intensity at a pixel is represented directly), the latter for indexed images (where intensity is looked up in a colormap table).</p>
 <p>In practice, it is assumed that <code>AbstractImages</code> have at least two fields, called <code>data</code> and <code>properties</code>. (In code, you should not use these directly, instead using the functions <code>data</code> and <code>properties</code> to extract these.) These are the only two fields in the first concrete image type, called <code>Image</code>:</p>
-<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia"><span class="kw">type</span> Image{T,N,A&lt;:<span class="dt">AbstractArray</span>} &lt;: AbstractImageDirect{T,N}
+<div class="sourceCode" execute="false"><pre class="sourceCode julia julia"><code class="sourceCode julia"><span class="kw">type</span> Image{T,N,A&lt;:<span class="dt">AbstractArray</span>} &lt;: AbstractImageDirect{T,N}
     data::A
     properties::<span class="dt">Dict</span>{<span class="dt">ASCIIString</span>,<span class="dt">Any</span>}
-<span class="kw">end</span></code></pre>
-<p><code>data</code> stores the actual image data, and is an <code>AbstractArray</code>. This fact alone is the basis for a great deal of customizability: <code>data</code> might be a plain <code>Array</code> stored in memory, a <code>SubArray</code>, a memory-mapped array (which is still just an <code>Array</code>), a custom type that stores additional information about &quot;missing data&quot; (like bad pixels or dropped frames), or a custom type that seamlessly presents views of a large number of separate files. One concrete example in the Images codebase is the color <code>Overlay</code> <a href="overlays.md">type</a>. If you have a suitably-defined <code>AbstractArray</code> type, you can probably use <code>Image</code> without needing to create alternative <code>AbstractImageDirect</code> types.</p>
+<span class="kw">end</span></code></pre></div>
+<p><code>data</code> stores the actual image data, and is an <code>AbstractArray</code>. This fact alone is the basis for a great deal of customizability: <code>data</code> might be a plain <code>Array</code> stored in memory, a <code>SubArray</code>, a memory-mapped array (which is still just an <code>Array</code>), a custom type that stores additional information about &quot;missing data&quot; (like bad pixels or dropped frames), or a custom type that seamlessly presents views of a large number of separate files. One concrete example in the Images codebase is the color <code>Overlay</code> <a href="overlays.html">type</a>. If you have a suitably-defined <code>AbstractArray</code> type, you can probably use <code>Image</code> without needing to create alternative <code>AbstractImageDirect</code> types.</p>
 <p><code>properties</code> is a dictionary, with <code>String</code> keys, that allows you to annotate images. More detail about this point can be found below.</p>
 <p>The only other concrete image type is for indexed images:</p>
-<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia"><span class="kw">type</span> ImageCmap{T,N,A&lt;:<span class="dt">AbstractArray</span>,C&lt;:<span class="dt">AbstractArray</span>} &lt;: AbstractImageIndexed{T,N}
+<div class="sourceCode" execute="false"><pre class="sourceCode julia julia"><code class="sourceCode julia"><span class="kw">type</span> ImageCmap{T,N,A&lt;:<span class="dt">AbstractArray</span>,C&lt;:<span class="dt">AbstractArray</span>} &lt;: AbstractImageIndexed{T,N}
     data::A
     cmap::C
     properties::<span class="dt">Dict</span>{<span class="dt">ASCIIString</span>,<span class="dt">Any</span>}
-<span class="kw">end</span></code></pre>
+<span class="kw">end</span></code></pre></div>
 <p>The <code>data</code> array here just encodes the index used to look up the color in the <code>cmap</code> field.</p>
 <h1 id="addressing-image-data">Addressing image data</h1>
 <p>For any valid image type, <code>data(img)</code> returns the array that corresponds to the image. This works when <code>img</code> is a plain <code>Array</code> (in which case no operation is performed) as well as for an <code>Image</code> (in which case it returns <code>img.data</code>). This is our first example of how to write generic algorithms.</p>
@@ -63,36 +63,36 @@ Julia Images Guide
 <p>If you load your image data using Image's <code>imread</code>, note that the storage order is not changed from the on-disk representation. Therefore, a 2D RGB image will most likely be stored in color-horizontal-vertical order, meaning that a pixel at <code>(x,y)</code> is accessed as <code>img[x,y]</code>. Note that this is quite different from Matlab's default representation.</p>
 <p>If you are indexing over an extended region and want to get back an <code>Image</code>, rather than a value or an <code>Array</code>, then you will want to use <code>getindexim</code>, <code>subim</code>, and <code>sliceim</code>. For the first two, the resulting image will share everything but the <code>data</code> field with the original image; if you make modifications in one, the other will also be affected. For <code>sliceim</code>, because it can change the dimensionality some adjustments to <code>properties</code> are needed; in this case a copy is made.</p>
 <p>One of the properties (see below) that you can grant to images is <code>spatialorder</code>, which provides a name for each spatial dimension in the image. Using this feature, you can cut out regions or slices from images in the following ways:</p>
-<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">A = img[<span class="st">&quot;x&quot;</span>, <span class="fl">200</span>:<span class="fl">400</span>, <span class="st">&quot;y&quot;</span>, <span class="fl">500</span>:<span class="fl">700</span>]
-imgs = sliceim(img, <span class="st">&quot;z&quot;</span>, <span class="fl">14</span>)      <span class="co"># cuts out the 14th frame in a stack</span></code></pre>
+<div class="sourceCode" execute="false"><pre class="sourceCode julia julia"><code class="sourceCode julia">A = img[<span class="st">&quot;x&quot;</span>, <span class="fl">200</span>:<span class="fl">400</span>, <span class="st">&quot;y&quot;</span>, <span class="fl">500</span>:<span class="fl">700</span>]
+imgs = sliceim(img, <span class="st">&quot;z&quot;</span>, <span class="fl">14</span>)      <span class="co"># cuts out the 14th frame in a stack</span></code></pre></div>
 <p>These routines &quot;do the right thing&quot; no matter what storage order is being used.</p>
 <h1 id="image-properties-and-accessor-functions">Image properties and accessor functions</h1>
 <p>The <code>properties</code> dictionary can contain any information you want to store along with your images. Typically, each property is also affiliated with an accessor function of the same name.</p>
 <p>Let's illustrate this with one of the default properties, <code>&quot;colorspace&quot;</code>. The value of this property is a string, such as <code>&quot;RGB&quot;</code> or <code>&quot;Gray&quot;</code> or <code>&quot;HSV&quot;</code>. You can extract the value of this field using a function:</p>
-<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia">cs = colorspace(img)</code></pre>
+<div class="sourceCode" execute="false"><pre class="sourceCode julia julia"><code class="sourceCode julia">cs = colorspace(img)</code></pre></div>
 <p>The reason to have a function, rather than just looking it up in the <code>properties</code> dictionary, is that we can provide defaults. For example, images represented as plain <code>Array</code>s don't have a <code>properties</code> dictionary; if we are to write generic code, we don't want to have to wonder whether this information is available. So for plain arrays, there are a number of defaults specified for the output of the <code>colorspace</code> function, depending on the element type and size of the array. Likewise, images stored as <code>ColorValue</code> arrays have no need of a <code>&quot;colorspace&quot;</code> property, because the colorspace is encoded in the type parameters.</p>
 <p>Here is a list of the properties supported in <code>core.jl</code>:</p>
 <ul>
 <li><code>colorspace</code>: &quot;RGB&quot;, &quot;RGBA&quot;, &quot;Gray&quot;, &quot;Binary&quot;, &quot;24bit&quot;, &quot;Lab&quot;, &quot;HSV&quot;, etc. If your image is represented as a ColorValue array, you cannot override that choice by specifying a <code>colorspace</code> property. (Use <code>reinterpret</code> if you want to change the interpretation without changing the raw values.)</li>
 <li><code>colordim</code>: the array dimension used to store color information, or 0 if there is no dimension corresponding to color</li>
 <li><code>timedim</code>: the array dimension used for time (i.e., sequence), or 0 for single images</li>
-<li><code>scalei</code>: a property that controls default contrast scaling upon display. This should be a <a href="https://github.com/timholy/Images.jl/blob/master/doc/function_reference.md#intensity-scaling"><code>MapInfo</code></a> value, to be used for setting the contrast upon display. In the absence of this property, the range 0 to 1 will be used.</li>
+<li><code>scalei</code>: a property that controls default contrast scaling upon display. This should be a <a href="https://github.com/timholy/Images.jl/blob/master/doc/function_reference.html#intensity-scaling"><code>MapInfo</code></a> value, to be used for setting the contrast upon display. In the absence of this property, the range 0 to 1 will be used.</li>
 <li><code>pixelspacing</code>: the spacing between adjacent pixels along spatial dimensions</li>
-<li><code>spacedirections</code>: more detailed information about the orientation of array axes relative to an external coordinate system (see the <a href="function_reference.md">function reference</a>).</li>
+<li><code>spacedirections</code>: more detailed information about the orientation of array axes relative to an external coordinate system (see the <a href="function_reference.html">function reference</a>).</li>
 <li><code>spatialorder</code>: a string naming each spatial dimension of the array, in the storage order of the data array. Names can be arbitrary, but the choices &quot;x&quot; and &quot;y&quot; have special meaning (horizontal and vertical, respectively, irrespective of storage order). If supplied, you must have one entry per spatial dimension.</li>
 </ul>
 <p>If you specify their values in the <code>properties</code> dictionary, your values will be used; if not, hopefully-reasonable defaults will be chosen.</p>
 <p>Naturally, you can add whatever additional properties you want: you could add the date/time at which the image was captured, the patient ID, etc. The main point of having a properties dictionary, rather than a type with fixed fields, is the flexibility of adding whatever metadata you find to be useful.</p>
 <h1 id="writing-generic-algorithms">Writing generic algorithms</h1>
 <p>Let's say you have an algorithm implemented for <code>Array</code>s, and you want to extend it to work on <code>Image</code> types. Let's consider the example of a hypothetical <code>imfilter</code>, written to perform kernel-based filtering in arbitrary dimensions. Let's say your <code>imfilter</code> looks like this:</p>
-<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia"><span class="kw">function</span> imfilter{T,N}(A::<span class="dt">Array</span>{T,N}, kernel::<span class="dt">Array</span>{T,N}, options...)</code></pre>
+<div class="sourceCode" execute="false"><pre class="sourceCode julia julia"><code class="sourceCode julia"><span class="kw">function</span> imfilter{T,N}(A::<span class="dt">Array</span>{T,N}, kernel::<span class="dt">Array</span>{T,N}, options...)</code></pre></div>
 <p>The first step might be to simply provide a version for <code>AbstractImage</code> types:</p>
-<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia"><span class="kw">function</span> imfilter{T,N}(img::AbstractImage{T,N}, kernel::<span class="dt">Array</span>{T,N}, options...)
+<div class="sourceCode" execute="false"><pre class="sourceCode julia julia"><code class="sourceCode julia"><span class="kw">function</span> imfilter{T,N}(img::AbstractImage{T,N}, kernel::<span class="dt">Array</span>{T,N}, options...)
     out = imfilter(data(img), kernel, options...)
     shareproperties(img, out)
-<span class="kw">end</span></code></pre>
+<span class="kw">end</span></code></pre></div>
 <p>Now let's say you additionally want to allow the user to filter color images---where one dimension of the array is used to encode color---with a filter of dimension <code>N-1</code> applied to each color channel separately. We can implement this version simultaneously for both <code>Image</code> types and other array types as follows:</p>
-<pre class="sourceCode julia julia" execute="false"><code class="sourceCode julia"><span class="kw">function</span> imfilter{T,N,N1}(img::<span class="dt">AbstractArray</span>{T,N}, kernel::<span class="dt">Array</span>{T,N1}, options...)
+<div class="sourceCode" execute="false"><pre class="sourceCode julia julia"><code class="sourceCode julia"><span class="kw">function</span> imfilter{T,N,N1}(img::<span class="dt">AbstractArray</span>{T,N}, kernel::<span class="dt">Array</span>{T,N1}, options...)
     cd = colordim(img)
     <span class="kw">if</span> N1 != N - (cd != <span class="fl">0</span>)
         error(<span class="st">&quot;kernel has the wrong dimensionality&quot;</span>)
@@ -104,7 +104,7 @@ imgs = sliceim(img, <span class="st">&quot;z&quot;</span>, <span class="fl">14</
         copy!(outsl, imfilter(imsl, kernel, options...))
     <span class="kw">end</span>
     out
-<span class="kw">end</span></code></pre>
+<span class="kw">end</span></code></pre></div>
 <p>There are other ways to achieve a similar effect; if you examine the actual implementation of <code>imfilter</code>, you'll see that the kernel is reshaped to be commensurate with the data array.</p>
 <p>These solutions work no matter which dimension is used to store color, a feat that would be essentially impossible to achieve robustly in a generic algorithm if we didn't exploit metadata. Note also that if the user supplies an <code>Array</code>, s/he will get an <code>Array</code> back, and if using an <code>Image</code> will get an <code>Image</code> back with properties inherited from <code>img</code>.</p>
 <p>Naturally, you can find other examples of generic implementations throughout the source code of <code>Images</code>.</p>
@@ -181,7 +181,7 @@ imgs = sliceim(img, <span class="st">&quot;z&quot;</span>, <span class="fl">14</
     </div>
 
   <footer class="col-sm-8">
-    <p class="muted">Last modified by Tim Holy on Thu Apr 16 17:01:52 CDT 2015. Generated with
+    <p class="muted">Last modified by Tim Holy on Tue May  5 14:06:43 CDT 2015. Generated with
     <a href="https://github.com/dcjones/Judo.jl">Judo</a>.</p>
   </footer>
 
