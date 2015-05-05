@@ -20,7 +20,7 @@ It's helpful to have ImageMagick installed on your system, as Images relies on
 it for reading and writing many common image types.  ImageMagick _should_ be
 installed for you automatically. In case of trouble, more details about manual
 installation and troubleshooting can be found in the
-[installation help](doc/install.md). Mac users in particular seem to have
+[installation help](doc/install.html). Mac users in particular seem to have
 trouble; you may find
 [debugging Homebrew](https://github.com/JuliaLang/Homebrew.jl/wiki/Debugging-Homebrew.jl)
 useful.

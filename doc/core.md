@@ -74,7 +74,7 @@ is the basis for a great deal of customizability: `data` might be a plain
 just an `Array`), a custom type that stores additional information about
 "missing data" (like bad pixels or dropped frames), or a custom type that
 seamlessly presents views of a large number of separate files.  One concrete
-example in the Images codebase is the color `Overlay` [type](overlays.md).  If
+example in the Images codebase is the color `Overlay` [type](overlays.html).  If
 you have a suitably-defined `AbstractArray` type, you can probably use `Image`
 without needing to create alternative `AbstractImageDirect` types.
 
@@ -168,13 +168,13 @@ Here is a list of the properties supported in `core.jl`:
   images
 - `scalei`: a property that controls default contrast scaling upon display.
   This should be a
-  [`MapInfo`](https://github.com/timholy/Images.jl/blob/master/doc/function_reference.md#intensity-scaling)
+  [`MapInfo`](https://github.com/timholy/Images.jl/blob/master/doc/function_reference.html#intensity-scaling)
   value, to be used for setting the contrast upon display. In the absence of
   this property, the range 0 to 1 will be used.
 - `pixelspacing`: the spacing between adjacent pixels along spatial dimensions
 - `spacedirections`: more detailed information about the orientation of array
   axes relative to an external coordinate system (see the
-  [function reference](function_reference.md)).
+  [function reference](function_reference.html)).
 - `spatialorder`: a string naming each spatial dimension of the array, in the
   storage order of the data array.  Names can be arbitrary, but the choices "x"
   and "y" have special meaning (horizontal and vertical, respectively,
