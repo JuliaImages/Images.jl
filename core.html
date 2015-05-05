@@ -76,7 +76,7 @@ imgs = sliceim(img, <span class="st">&quot;z&quot;</span>, <span class="fl">14</
 <li><code>colorspace</code>: &quot;RGB&quot;, &quot;RGBA&quot;, &quot;Gray&quot;, &quot;Binary&quot;, &quot;24bit&quot;, &quot;Lab&quot;, &quot;HSV&quot;, etc. If your image is represented as a ColorValue array, you cannot override that choice by specifying a <code>colorspace</code> property. (Use <code>reinterpret</code> if you want to change the interpretation without changing the raw values.)</li>
 <li><code>colordim</code>: the array dimension used to store color information, or 0 if there is no dimension corresponding to color</li>
 <li><code>timedim</code>: the array dimension used for time (i.e., sequence), or 0 for single images</li>
-<li><code>scalei</code>: a property that controls default contrast scaling upon display. This should be a <a href="https://github.com/timholy/Images.jl/blob/master/doc/function_reference.html#intensity-scaling"><code>MapInfo</code></a> value, to be used for setting the contrast upon display. In the absence of this property, the range 0 to 1 will be used.</li>
+<li><code>scalei</code>: a property that controls default contrast scaling upon display. This should be a <a href="function_reference.html#mapinfo"><code>MapInfo</code></a> value, to be used for setting the contrast upon display. In the absence of this property, the range 0 to 1 will be used.</li>
 <li><code>pixelspacing</code>: the spacing between adjacent pixels along spatial dimensions</li>
 <li><code>spacedirections</code>: more detailed information about the orientation of array axes relative to an external coordinate system (see the <a href="function_reference.html">function reference</a>).</li>
 <li><code>spatialorder</code>: a string naming each spatial dimension of the array, in the storage order of the data array. Names can be arbitrary, but the choices &quot;x&quot; and &quot;y&quot; have special meaning (horizontal and vertical, respectively, irrespective of storage order). If supplied, you must have one entry per spatial dimension.</li>
@@ -181,7 +181,7 @@ imgs = sliceim(img, <span class="st">&quot;z&quot;</span>, <span class="fl">14</
     </div>
 
   <footer class="col-sm-8">
-    <p class="muted">Last modified by Tim Holy on Tue May  5 14:06:43 CDT 2015. Generated with
+    <p class="muted">Last modified by Tim Holy on Tue May  5 14:18:45 CDT 2015. Generated with
     <a href="https://github.com/dcjones/Judo.jl">Judo</a>.</p>
   </footer>
 
