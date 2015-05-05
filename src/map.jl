@@ -63,6 +63,7 @@ immutable BS{N} end
 _map{T<:Unsigned,N}(::Type{T}, ::Type{BS{N}}, val::Unsigned) = (v = val>>>N; tm = oftype(val, typemax(T)); convert(T, ifelse(v > tm, tm, v)))
 _map{T<:Ufixed,N}(::Type{T}, ::Type{BS{N}}, val::Ufixed) = reinterpret(T, _map(FixedPointNumbers.rawtype(T), BS{N}, reinterpret(val)))
 map{T<:Real,N}(mapi::BitShift{T,N}, val::Real) = _map(T, BS{N}, val)
+map{T<:Real,N}(mapi::BitShift{Gray{T},N}, val::Gray) = Gray(_map(T, BS{N}, val.val))
 map1{N}(mapi::Union(BitShift{RGB24,N},BitShift{ARGB32,N}), val::Unsigned) = _map(Uint8, BS{N}, val)
 map1{N}(mapi::Union(BitShift{RGB24,N},BitShift{ARGB32,N}), val::Ufixed) = _map(Ufixed8, BS{N}, val)
 map1{CT<:ColorType,N}(mapi::BitShift{CT,N}, val::Ufixed) = _map(eltype(CT), BS{N}, val)

@@ -26,7 +26,7 @@ function read_and_release_imgsrc(imgsrc)
     imgsrc == C_NULL && return nothing
 
     # Get image information
-    imframes = int(CGImageSourceGetCount(imgsrc))
+    imframes = convert(Int,CGImageSourceGetCount(imgsrc))
     if imframes == 0
         # Bail out to ImageMagick
         warn("OSX reader found no frames")
@@ -67,7 +67,7 @@ function read_and_release_imgsrc(imgsrc)
     CFRelease(dict)
 
     # Allocate the buffer and get the pixel data
-    sz = imframes > 1 ? (int(imwidth), int(imheight), int(imframes)) : (int(imwidth), int(imheight))
+    sz = imframes > 1 ? (convert(Int,imwidth), convert(Int,imheight), convert(Int,imframes)) : (convert(Int,imwidth), convert(Int,imheight))
     T = pixeldepth <= 8 ? Ufixed8 : Images.ufixedtype[pixeldepth]
     if colormodel == "Gray" && alphacode == 0 && storagedepth == 1
         buf = Array(Gray{T}, sz)
@@ -120,7 +120,7 @@ function alpha_and_depth(imgsrc)
     # https://developer.apple.com/library/mac/documentation/graphicsimaging/reference/CGImage/Reference/reference.html#//apple_ref/doc/uid/TP30000956-CH3g-459700
     # Dividing bits per pixel by bits per component tells us how many
     # color + alpha slices we have in the file.
-    alphacode, int(div(bitsperpixel, bitspercomponent))
+    alphacode, convert(Int,div(bitsperpixel, bitspercomponent))
 end
 
 function fillgray!{T}(buffer::AbstractArray{T, 2}, imgsrc)
@@ -188,8 +188,8 @@ end
 
 ## OSX Framework Wrappers ######################################################
 
-const foundation = find_library(["/System/Library/Frameworks/Foundation.framework/Resources/BridgeSupport/Foundation"])
-const imageio = find_library(["/System/Library/Frameworks/ImageIO.framework/ImageIO"])
+const foundation = Libdl.find_library(["/System/Library/Frameworks/Foundation.framework/Resources/BridgeSupport/Foundation"])
+const imageio = Libdl.find_library(["/System/Library/Frameworks/ImageIO.framework/ImageIO"])
 
 const kCFNumberSInt8Type = 1
 const kCFNumberSInt16Type = 2

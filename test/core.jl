@@ -94,6 +94,18 @@ imgds = separate(imgd)
 @test ncolorelem(imgd) == 1
 @test ncolorelem(imgds) == 3
 
+# # 1-dimensional "images"
+@test colordim(1:5) == 0
+@test nimages(1:5) == 1
+@test colorspace(1:5) == "Gray"
+img1 = Image(map(Gray, 0.1:0.1:0.5), spatialorder=["z"])
+@test colordim(img1) == 0
+@test colorspace(img1) == "Gray"
+@test sdims(img1) == 1
+@test convert(Vector{Gray{Float64}}, img1) == map(Gray, 0.1:0.1:0.5)
+@test size(img1, "z") == 5
+@test_throws ErrorException size(img1, "x")
+
 # printing
 iob = IOBuffer()
 show(iob, img)

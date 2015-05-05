@@ -60,6 +60,10 @@ mapi = BitShift(ARGB{Ufixed8}, 8)
 @chk map(mapi, RGB{Ufixed16}(1.0,0.8,0.6)) ARGB{Ufixed8}(1.0,0.8,0.6,1.0)
 mapi = BitShift(RGBA{Ufixed8}, 8)
 @chk map(mapi, RGB{Ufixed16}(1.0,0.8,0.6)) RGBA{Ufixed8}(1.0,0.8,0.6,1.0)
+# Issue, #269, IJulia issue #294
+bs = BitShift(Gray{Ufixed8}, 8)
+v = Gray(ufixed16(0.8))
+@chk map(bs, v) Gray{Ufixed8}(0.8)
 
 # Clamp
 mapi = ClampMin(Float32, 0.0)
@@ -203,7 +207,7 @@ arr[2,2] = 0.5
 @assert sc(arr, 0.0, 0.75)[2,2] == 0xaauf8
 
 # color conversion
-gray = linspace(0.0,1.0,5) # a 1-dimensional image
+gray = collect(linspace(0.0,1.0,5)) # a 1-dimensional image
 gray8 = round(Uint8, 255*gray)
 gray32 = Uint32[convert(UInt32, g)<<16 | convert(UInt32, g)<<8 | convert(UInt32, g) for g in gray8]
 imgray = Images.Image(gray, Dict{ASCIIString,Any}([("colordim",0), ("colorspace","Gray")]))

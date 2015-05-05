@@ -15,7 +15,7 @@ new version of Images:
 - Images are returned as `ColorValue` arrays, meaning that a color,
   two-dimensional image will now have two dimensions. If your code needs a color
   dimension to the array, try `reinterpret` or `separate` as described in the
-  [README](../README.md). That said, it's probably preferable to leave it in
+  [README](../README.html). That said, it's probably preferable to leave it in
   ColorValue format, so you can leverage the power of the
   [Color package](https://github.com/JuliaLang/Color.jl).
 

@@ -180,6 +180,9 @@ function _reinterpret_array_cv{T,CV<:ColorType}(::Type{CV}, A::Array{T})
     end
     error("result shape not specified")
 end
+# This version is used by the deserializer to convert UInt8 buffers back to their original type. Fixes #287.
+_reinterpret_array_cv{CV<:ColorType}(::Type{CV}, A::Vector{UInt8}) =
+    reinterpret(CV, A, (div(length(A), sizeof(CV)),))
 
 # Images
 function reinterpret{T,CV<:ColorType}(::Type{CV}, img::AbstractImageDirect{T})
@@ -212,6 +215,7 @@ end
 # In other cases---or if you don't want the storage order altered---just use data(img)
 convert{T<:Real,N}(::Type{Array{T}}, img::AbstractImageDirect{T,N}) = convert(Array{T,N}, img)
 convert{T<:ColorType,N}(::Type{Array{T}}, img::AbstractImageDirect{T,N}) = convert(Array{T,N}, img)
+convert{T}(::Type{Vector{T}}, img::AbstractImageDirect{T,1}) = convert(Vector{T}, data(img))
 function convert{T,N}(::Type{Array{T,N}}, img::AbstractImageDirect{T,N})
     assert2d(img)  # only well-defined in 2d
     p = permutation_canonical(img)
@@ -421,8 +425,8 @@ sliceim(img::AbstractImage, I...) = sliceim(img, ntuple(length(I), i-> isa(I[i],
 # Iteration
 # Defer to the array object in case it has special iteration defined
 if VERSION >= v"0.4.0-dev+1623"
-    next{T,N}(img::AbstractImage{T,N}, s::(Bool,Base.IteratorsMD.CartesianIndex{N})) = next(data(img), s)
-    done{T,N}(img::AbstractImage{T,N}, s::(Bool,Base.IteratorsMD.CartesianIndex{N})) = done(data(img), s)
+    next{T,N}(img::AbstractImage{T,N}, s::(@compat Tuple{Bool,Base.IteratorsMD.CartesianIndex{N}})) = next(data(img), s)
+    done{T,N}(img::AbstractImage{T,N}, s::(@compat Tuple{Bool,Base.IteratorsMD.CartesianIndex{N}})) = done(data(img), s)
 end
 start(img::AbstractImage) = start(data(img))
 next(img::AbstractImage, s) = next(data(img), s)
@@ -432,9 +436,9 @@ done(img::AbstractImage, s) = done(data(img), s)
 # We'll frequently want to pull out different 2d slices from the same image, so here's a type and set of functions making that easier.
 # We deliberately do not require the user to specify the full list of new slicing/ranging parameters, as often we'll want to change some aspects (e.g., z-slice) but not others (e.g., color coordinates)
 type SliceData
-    slicedims::(Int...,)
-    slicestrides::(Int...,)
-    rangedims::(Int...,)
+    slicedims::(@compat Tuple{Vararg{Int}})
+    slicestrides::(@compat Tuple{Vararg{Int}})
+    rangedims::(@compat Tuple{Vararg{Int}})
 
     function SliceData(A::AbstractArray, slicedims::Int...)
         keep = trues(ndims(A))
@@ -496,7 +500,7 @@ function reslice!(img::AbstractImage, sd::SliceData, I::Int...)
     img
 end
 
-function rerange!(A::SubArray, sd::SliceData, I::(RangeIndex...,))
+function rerange!(A::SubArray, sd::SliceData, I::(@compat Tuple{Vararg{RangeIndex}}))
     indexes = RangeIndex[A.indexes...]
     for i = 1:length(I)
         indexes[sd.rangedims[i]] = I[i]
@@ -506,7 +510,7 @@ function rerange!(A::SubArray, sd::SliceData, I::(RangeIndex...,))
     A
 end
 
-function rerange!(img::AbstractImage, sd::SliceData, I::(RangeIndex...,))
+function rerange!(img::AbstractImage, sd::SliceData, I::(@compat Tuple{Vararg{RangeIndex}}))
     rerange!(img.data, sd, I...)
     img
 end
@@ -648,15 +652,18 @@ isdirect(img::AbstractArray) = true
 isdirect(img::AbstractImageDirect) = true
 isdirect(img::AbstractImageIndexed) = false
 
+colorspace{C<:ColorValue}(img::AbstractVector{C}) = string(C.name.name)
 colorspace{C<:ColorValue}(img::AbstractMatrix{C}) = string(C.name.name)
 colorspace{C<:ColorValue}(img::AbstractArray{C,3}) = string(C.name.name)
 colorspace{C<:ColorValue}(img::AbstractImage{C}) = string(C.name.name)
 colorspace{C<:ColorValue,T}(img::AbstractArray{AlphaColorValue{C,T},2}) = (S = string(C.name.name); S == "Gray" ? "GrayAlpha" : string(S, "A"))
 colorspace{C<:ColorValue,T}(img::AbstractImage{AlphaColorValue{C,T}}) = (S = string(C.name.name); S == "Gray" ? "GrayAlpha" : string(S, "A"))
+colorspace(img::AbstractVector{Bool}) = "Binary"
 colorspace(img::AbstractMatrix{Bool}) = "Binary"
 colorspace(img::AbstractArray{Bool}) = "Binary"
 colorspace(img::AbstractArray{Bool,3}) = "Binary"
 colorspace(img::AbstractMatrix{Uint32}) = "RGB24"
+colorspace(img::AbstractVector) = "Gray"
 colorspace(img::AbstractMatrix) = "Gray"
 colorspace{T}(img::AbstractArray{T,3}) = (size(img, defaultarraycolordim) == 3) ? "RGB" : error("Cannot infer colorspace of Array, use an AbstractImage type")
 colorspace(img::AbstractImage{Bool}) = "Binary"
@@ -696,6 +703,7 @@ colordim{C<:ColorType}(img::AbstractVector{C}) = 0
 colordim{C<:ColorType}(img::AbstractMatrix{C}) = 0
 colordim{C<:ColorType}(img::AbstractArray{C,3}) = 0
 colordim{C<:ColorType}(img::AbstractImage{C}) = 0
+colordim(img::AbstractVector) = 0
 colordim(img::AbstractMatrix) = 0
 colordim{T}(img::AbstractImageDirect{T,3}) = get(img, "colordim", 0)::Int
 colordim{T}(img::AbstractArray{T,3}) = (size(img, defaultarraycolordim) == 3) ? 3 : 0
@@ -866,9 +874,9 @@ function spatialpermutation(to, img::AbstractImage)
 end
 
 # Permute the dimensions of an image, also permuting the relevant properties. If you have non-default properties that are vectors or matrices relative to spatial dimensions, include their names in the list of spatialprops.
-permutedims(img::AbstractImage, p::(), spatialprops::Vector = spatialproperties(img)) = img
+permutedims(img::AbstractImage, p::(@compat Tuple{}), spatialprops::Vector = spatialproperties(img)) = img
 
-function permutedims(img::AbstractImage, p::Union(Vector{Int}, (Int...)), spatialprops::Vector = spatialproperties(img))
+function permutedims(img::AbstractImage, p::Union(Vector{Int}, (@compat Tuple{Vararg{Int}})), spatialprops::Vector = spatialproperties(img))
     if length(p) != ndims(img)
         error("The permutation must have length equal to the number of dimensions")
     end
@@ -903,7 +911,7 @@ function permutedims(img::AbstractImage, p::Union(Vector{Int}, (Int...)), spatia
     ret
 end
 
-permutedims{S<:String}(img::AbstractImage, pstr::Union(Vector{S}, (S...)), spatialprops::Vector = spatialproperties(img)) = permutedims(img, dimindexes(img, pstr...), spatialprops)
+permutedims{S<:String}(img::AbstractImage, pstr::Union(Vector{S}, (@compat Tuple{Vararg{S}})), spatialprops::Vector = spatialproperties(img)) = permutedims(img, dimindexes(img, pstr...), spatialprops)
 
 function permutation_canonical(img)
     assert2d(img)
@@ -1045,7 +1053,7 @@ require_dimindex(img::AbstractImage, dimname, so) = (di = dimindex(img, dimname,
 dimindexes(img::AbstractImage, dimnames::String...) = Int[dimindex(img, nam, spatialorder(img)) for nam in dimnames]
 
 to_vector(v::AbstractVector) = v
-to_vector(v::Tuple) = [v...]
+to_vector(v::(@compat Tuple)) = [v...]
 
 # converts keyword argument to a dictionary
 function kwargs2dict(kwargs)

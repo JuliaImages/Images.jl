@@ -103,9 +103,9 @@ fields = split(l)
 fields[1] == "65547" || fields[1] == "65558" ||
     error("Unknown TInstaImage version number at line 3: " * fields[1])
 
-ixon = {"data_type" => int(fields[2])}
-ixon["active"] = int(fields[3])
-ixon["structure_vers"] = int(fields[4]) # (== 1)
+ixon = {"data_type" => convert(Int,fields[2])}
+ixon["active"] = convert(Int,fields[3])
+ixon["structure_vers"] = convert(Int,fields[4]) # (== 1)
 # ...and skip a whole bunch of uninteresting fields after here
 ```
 
