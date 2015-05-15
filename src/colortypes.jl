@@ -3,7 +3,7 @@ module ColorTypes
 using Color, FixedPointNumbers, Compat, Base.Cartesian
 import Color: Fractional, _convert
 
-import Base: ==, abs, abs2, clamp, convert, div, eps, isfinite, isinf,
+import Base: ==, abs, abs2, clamp, convert, copy, div, eps, isfinite, isinf,
     isnan, isless, length, one, promote_array_type, promote_rule, zero,
     trunc, floor, round, ceil, bswap,
     mod, rem
@@ -267,11 +267,13 @@ end
 multype(a::Type,b::Type) = typeof(one(a)*one(b))
 sumtype(a::Type,b::Type) = typeof(one(a)+one(b))
 divtype(a::Type,b::Type) = typeof(one(a)/one(b))
+powtype(a::Type,b::Type) = typeof(one(a)^one(b))
 
 # Math on ColorValues. These implementations encourage inlining and,
 # for the case of Ufixed types, nearly halve the number of multiplications.
 for CV in subtypes(AbstractRGB)
     @eval begin
+        copy{T}(c::$CV{T}) = c
         (*){R<:Real,T}(f::R, c::$CV{T}) = $CV{multype(R,T)}(f*c.r, f*c.g, f*c.b)
         (*){R<:Real,T}(f::R, c::AlphaColorValue{$CV{T},T}) =
             AlphaColorValue{$CV{multype(R,T)},multype(R,T)}(f*c.c.r, f*c.c.g, f*c.c.b, f*c.alpha)
@@ -400,6 +402,7 @@ end
 # Math on Gray
 for CV in subtypes(AbstractGray)
     @eval begin
+        copy{T}(c::$CV{T}) = c
         (*){R<:Real,T}(f::R, c::$CV{T}) = $CV{multype(R,T)}(f*c.val)
         (*){R<:Real,T}(f::R, c::AlphaColorValue{$CV{T},T}) = AlphaColorValue($CV{multype(R,T)}(f*c.c.val), f*c.alpha)
         (*){R<:Real,T}(f::R, c::AlphaColor{$CV{T},T}) = AlphaColor($CV{multype(R,T)}(f*c.c.val), f*c.alpha)
@@ -424,6 +427,8 @@ for CV in subtypes(AbstractGray)
             AlphaColor($CV{sumtype(S,T)}(a.c.val+b.c.val), a.alpha+b.alpha)
         (-){S,T}(a::$CV{S}, b::$CV{T}) = $CV{sumtype(S,T)}(a.val-b.val)
         (*){S,T}(a::$CV{S}, b::$CV{T}) = $CV{multype(S,T)}(a.val*b.val)
+        (^){S}(a::$CV{S}, b::Integer) = $CV{powtype(S,Int)}(a.val^convert(Int,b))
+        (^){S,T<:Real}(a::$CV{S}, b::T) = $CV{powtype(S,T)}(a.val^b)
         (+)(A::AbstractArray{$CV}, b::AbstractGray) = (.+)(A, b)
         (-)(A::AbstractArray{$CV}, b::AbstractGray) = (.-)(A, b)
         (+)(b::AbstractGray, A::AbstractArray{$CV}) = (.+)(b, A)
