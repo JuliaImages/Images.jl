@@ -119,6 +119,12 @@ mapi = Clamp(BGRA{Ufixed8})
 @chk clamp(ARGB{Float64}(1.2,0.5,-.3,0.2)) ARGB{Float64}(1.0,0.5,0.0,0.2)
 @chk clamp(RGBA{Float64}(1.2,0.5,-.3,0.2)) RGBA{Float64}(1.0,0.5,0.0,0.2)
 
+# Issue #285
+a = [Gray(0xd0uf8)]
+a1 = 10*a
+mapi = mapinfo(Gray{Ufixed8}, a1)
+@chk map(mapi, a1[1]) Gray(0xffuf8)
+
 # ScaleMinMax
 mapi = ScaleMinMax(Ufixed8, 100, 1000)
 @chk map(mapi, 100) Ufixed8(0.0)
