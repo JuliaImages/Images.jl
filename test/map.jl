@@ -174,6 +174,12 @@ A = [100,550,1000]
 mapi = ScaleAutoMinMax(RGB24)
 @chk map(mapi, A) RGB24[0x00000000, 0x00808080, 0x00ffffff]
 
+# Issue #304
+imgr = colorim(rand(UInt16, 3, 2, 2))
+mi = ScaleAutoMinMax(RGB{Ufixed16})
+res = map(mi, imgr)
+@test raw(res) == raw(map(ScaleAutoMinMax(Ufixed16), raw(imgr)))
+
 # scaling, ssd
 img = Images.grayim(fill(typemax(Uint16), 3, 3))
 mapi = Images.mapinfo(Ufixed8, img)
