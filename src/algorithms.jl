@@ -1120,6 +1120,8 @@ end
 ### Morphological operations
 
 # Erode and dilate support 3x3 regions only (and higher-dimensional generalizations).
+dilate(img::AbstractImageDirect, region=coords_spatial(img)) = shareproperties(img, dilate!(copy(data(img)), region))
+erode(img::AbstractImageDirect, region=coords_spatial(img)) = shareproperties(img, erode!(copy(data(img)), region))
 dilate(img::AbstractArray, region=coords_spatial(img)) = dilate!(copy(img), region)
 erode(img::AbstractArray, region=coords_spatial(img)) = erode!(copy(img), region)
 
