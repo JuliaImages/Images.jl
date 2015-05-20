@@ -63,20 +63,20 @@ let
 
     a = convert(Array{Uint8}, [1, 1, 1])
     b = convert(Array{Uint8}, [134, 252, 4])
-    @test sad(a, b) == 387
-    @test ssd(a, b) == 80699
+    @test Images.sad(a, b) == 387
+    @test Images.ssd(a, b) == 80699
     af = reinterpret(Ufixed8, a)
     bf = reinterpret(Ufixed8, b)
-    @test_approx_eq sad(af, bf) 387f0/255
-    @test_approx_eq ssd(af, bf) 80699f0/255^2
+    @test_approx_eq Images.sad(af, bf) 387f0/255
+    @test_approx_eq Images.ssd(af, bf) 80699f0/255^2
     ac = reinterpret(RGB{Ufixed8}, a)
     bc = reinterpret(RGB{Ufixed8}, b)
-    @test_approx_eq sad(ac, bc) 387f0/255
-    @test_approx_eq ssd(ac, bc) 80699f0/255^2
+    @test_approx_eq Images.sad(ac, bc) 387f0/255
+    @test_approx_eq Images.ssd(ac, bc) 80699f0/255^2
     ag = reinterpret(RGB{Ufixed8}, a)
     bg = reinterpret(RGB{Ufixed8}, b)
-    @test_approx_eq sad(ag, bg) 387f0/255
-    @test_approx_eq ssd(ag, bg) 80699f0/255^2
+    @test_approx_eq Images.sad(ag, bg) 387f0/255
+    @test_approx_eq Images.ssd(ag, bg) 80699f0/255^2
 end
 
 # fft and ifft
