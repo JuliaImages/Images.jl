@@ -337,24 +337,22 @@ function ncc{T}(A::AbstractArray{T}, B::AbstractArray{T})
 end
 
 # Array padding
-function padarray{T,n}(img::AbstractArray{T,n}, prepad::Union(Vector{Int},Dims), postpad::Union(Vector{Int},Dims), border::String)
+function padindexes{T,n}(img::AbstractArray{T,n}, prepad::Union(Vector{Int},Dims), postpad::Union(Vector{Int},Dims), border::String)
     I = Array(Vector{Int}, n)
     for d = 1:n
-        M = size(img, d)
-        I[d] = (1 - prepad[d]):(M + postpad[d])
-        if border == "replicate"
-            I[d] = min(max(I[d], 1), M)
-        elseif border == "circular"
-            I[d] = 1 .+ mod(I[d] .- 1, M)
-        elseif border == "symmetric"
-            I[d] = [1:M; M:-1:1][1 .+ mod(I[d] .- 1, 2 * M)]
-        elseif border == "reflect"
-            I[d] = [1:M; M-1:-1:2][1 .+ mod(I[d] .- 1, 2 * M - 2)]
-        else
-            error("unknown border condition")
-        end
+        I[d] = padindexes(img, d, prepad[d], postpad[d], border)
     end
-    img[I...]::Array{T,n}
+    I
+end
+
+function padarray{T,n}(img::AbstractArray{T,n}, prepad::Union(Vector{Int},Dims), postpad::Union(Vector{Int},Dims), border::String)
+    img[padindexes(img, prepad, postpad, border)...]::Array{T,n}
+end
+function padarray{n}(img::BitArray{n}, prepad::Union(Vector{Int},Dims), postpad::Union(Vector{Int},Dims), border::String)
+    img[padindexes(img, prepad, postpad, border)...]::BitArray{n}
+end
+function padarray{n,A<:BitArray}(img::Image{Bool,n,A}, prepad::Union(Vector{Int},Dims), postpad::Union(Vector{Int},Dims), border::String)
+    img[padindexes(img, prepad, postpad, border)...]::BitArray{n}
 end
 
 function padarray{T,n}(img::AbstractArray{T,n}, prepad::Union(Vector{Int},Dims), postpad::Union(Vector{Int},Dims), border::String, value)
@@ -365,7 +363,7 @@ function padarray{T,n}(img::AbstractArray{T,n}, prepad::Union(Vector{Int},Dims),
     fill!(A, value)
     I = Vector{Int}[1+prepad[d]:size(A,d)-postpad[d] for d = 1:n]
     A[I...] = img
-    A::typeof(img)
+    A::Array{T,n}
 end
 
 padarray{T,n}(img::AbstractArray{T,n}, padding::Union(Vector{Int},Dims), border::String = "replicate") = padarray(img, padding, padding, border)

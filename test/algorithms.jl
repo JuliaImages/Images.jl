@@ -117,6 +117,12 @@ let A = [1 2; 3 4]
     @test_throws ErrorException Images.padarray(A, (1,1), "unknown")
 end
 
+# issue #292
+let A = trues(3,3)
+    @test typeof(Images.padarray(A, (1,2), (2,1), "replicate")) == BitArray{2}
+    @test typeof(Images.padarray(Images.grayim(A), (1,2), (2,1), "replicate")) == BitArray{2}
+end
+
 # filtering
 EPS = 1e-14
 imgcol = Images.colorim(rand(3,5,6))
