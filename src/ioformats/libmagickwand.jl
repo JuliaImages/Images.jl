@@ -270,7 +270,7 @@ function getimageproperties(wand::MagickWand,patt::String)
             ret[i] = bytestring(unsafe_load(p,i))
         end
         ret
-     
+
     end
 end
 

@@ -223,19 +223,28 @@ function writemime(stream::IO, ::MIME"image/png", img::AbstractImage; mapi=mapin
         r[coords_spatial(img)] = fac
         A = repeat(A, inner=r)
     end
-    if eltype(A) != eltype(img)
-        mapi = similar(mapi, eltype(mapi), eltype(A))
-    end
     wand = image2wand(shareproperties(img, A), mapi, nothing)
     blob = LibMagick.getblob(wand, "png")
     write(stream, blob)
 end
 
-mapinfo_writemime{T}(img::AbstractImage{Gray{T}}) = mapinfo(Gray{Ufixed8},img)
-mapinfo_writemime{C<:ColorValue}(img::AbstractImage{C}) = mapinfo(RGB{Ufixed8},img)
-mapinfo_writemime{AC<:GrayAlpha}(img::AbstractImage{AC}) = mapinfo(GrayAlpha{Ufixed8},img)
-mapinfo_writemime{AC<:AbstractAlphaColorValue}(img::AbstractImage{AC}) = mapinfo(RGBA{Ufixed8},img)
-mapinfo_writemime(img::AbstractImage) = mapinfo(Ufixed8,img)
+function mapinfo_writemime(img; maxpixels=10^6)
+    if length(img) <= maxpixels
+        return mapinfo_writemime_(img)
+    end
+    mapinfo_writemime_restricted(img)
+end
+mapinfo_writemime_{T}(img::AbstractImage{Gray{T}}) = mapinfo(Gray{Ufixed8},img)
+mapinfo_writemime_{C<:ColorValue}(img::AbstractImage{C}) = mapinfo(RGB{Ufixed8},img)
+mapinfo_writemime_{AC<:GrayAlpha}(img::AbstractImage{AC}) = mapinfo(GrayAlpha{Ufixed8},img)
+mapinfo_writemime_{AC<:AbstractAlphaColorValue}(img::AbstractImage{AC}) = mapinfo(RGBA{Ufixed8},img)
+mapinfo_writemime_(img::AbstractImage) = mapinfo(Ufixed8,img)
+
+mapinfo_writemime_restricted{T}(img::AbstractImage{Gray{T}}) = ClampMinMax(Gray{Ufixed8},0.0,1.0)
+mapinfo_writemime_restricted{C<:ColorValue}(img::AbstractImage{C}) = ClampMinMax(RGB{Ufixed8},0.0,1.0)
+mapinfo_writemime_restricted{AC<:GrayAlpha}(img::AbstractImage{AC}) = ClampMinMax(GrayAlpha{Ufixed8},0.0,1.0)
+mapinfo_writemime_restricted{AC<:AbstractAlphaColorValue}(img::AbstractImage{AC}) = ClampMinMax(RGBA{Ufixed8},0.0,1.0)
+mapinfo_writemime_restricted(img::AbstractImage) = mapinfo(Ufixed8,img)
 
 
 #### Implementation of specific formats ####

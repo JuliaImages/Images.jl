@@ -70,6 +70,14 @@ end
 b = Images.imread(fn)
 @test Images.data(b) == convert(Array{RGB{Ufixed8},2}, Images.data(Images.restrict(abig, (1,2))))
 
+# Issue #269
+abig = Images.colorim(rand(Uint16, 3, 1024, 1023))
+open(fn, "w") do file
+    writemime(file, MIME("image/png"), abig, maxpixels=10^6)
+end
+b = Images.imread(fn)
+@test Images.data(b) == convert(Array{RGB{Ufixed8},2}, Images.data(Images.restrict(abig, (1,2))))
+
 using Color
 datafloat = reshape(linspace(0.5, 1.5, 6), 2, 3)
 dataint = round(Uint8, 254*(datafloat .- 0.5) .+ 1)  # ranges from 1 to 255
