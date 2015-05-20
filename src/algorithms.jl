@@ -1063,9 +1063,10 @@ function imcomplement{T}(img::AbstractArray{T})
     return 1 - img
 end
 
-function imstretch{T}(img::AbstractArray{T}, m::Number, slope::Number)
-    shareproperties(img, 1./(1 + (m./(data(img) + eps(T))).^slope))
+function _imstretch{T}(img::AbstractArray{T}, m::Number, slope::Number)
+    shareproperties(img, 1./(1 + (m./(data(img) .+ eps(T))).^slope))
 end
+imstretch(img::AbstractArray, m::Number, slope::Number) = _imstretch(float(img), m, slope)
 
 # image gradients
 

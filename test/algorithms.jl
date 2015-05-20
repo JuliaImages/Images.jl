@@ -333,3 +333,8 @@ Q = Images.shepp_logan(8,highContrast=false)
 img = convert(Images.Image, zeros(10,10))
 img2 = Images.imresize(img, (5,5))
 @test length(img2) == 25
+
+# Issue #282
+img = convert(Images.Image{Gray{Ufixed8}}, eye(2,2))
+imgs = Images.imstretch(img, 0.3, 0.4)
+@test_approx_eq data(imgs) 1./(1 + (0.3./(eye(2,2) + eps())).^0.4)
