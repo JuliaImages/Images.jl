@@ -243,6 +243,8 @@ end
 convert(::Type{Array}, img::AbstractImage) = convert(Array{eltype(img)}, img)
 
 convert{C<:ColorType}(::Type{Image{C}}, img::Image{C}) = img
+convert{Cdest<:ColorType,Csrc<:ColorType}(::Type{Image{Cdest}}, img::Image{Csrc}) =
+    copyproperties(img, _convert(Array{Cdest}, data(img)))  # FIXME when Julia issue ?? is fixed
 convert{Cdest<:ColorType,Csrc<:ColorType}(::Type{Image{Cdest}}, img::AbstractImageDirect{Csrc}) =
     copyproperties(img, _convert(Array{Cdest}, data(img)))  # FIXME when Julia issue ?? is fixed
 _convert{Cdest<:ColorType,Csrc<:ColorType,N}(::Type{Array{Cdest}}, img::AbstractArray{Csrc,N}) =
