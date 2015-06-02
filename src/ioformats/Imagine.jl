@@ -46,7 +46,7 @@ function imread{S<:IO}(s::S, ::Type{Images.ImagineFile})
             sz[end] = n_stacks
         end
         sc = open(camfilename, "r")
-        data = mmap_array(T, ntuple(length(sz), i->sz[i]), sc)
+        data = mmap_array(T, ntuple(i->sz[i], length(sz)), sc)
     end
     um_per_pixel = h["um per pixel"]*µm
     pstart = h["piezo"]["stop position"]

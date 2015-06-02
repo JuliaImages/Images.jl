@@ -213,9 +213,9 @@ fft{CV<:ColorType}(img::AbstractImageDirect{CV}) = fft(img, 1:ndims(img))
 function fft{CV<:ColorType}(img::AbstractImageDirect{CV}, region, args...)
     imgr = reinterpret(eltype(CV), img)
     if ndims(imgr) > ndims(img)
-        newregion = ntuple(length(region), i->region[i]+1)
+        newregion = ntuple(i->region[i]+1, length(region))
     else
-        newregion = ntuple(length(region), i->region[i])
+        newregion = ntuple(i->region[i], length(region))
     end
     F = fft(data(imgr), newregion, args...)
     props = copy(properties(imgr))
@@ -359,7 +359,7 @@ function padarray{T,n}(img::AbstractArray{T,n}, prepad::Union(Vector{Int},Dims),
     if border != "value"
         return padarray(img, prepad, postpad, border)
     end
-    A = Array(T, ntuple(n, d->size(img,d)+prepad[d]+postpad[d]))
+    A = Array(T, ntuple(d->size(img,d)+prepad[d]+postpad[d], n))
     fill!(A, value)
     I = Vector{Int}[1+prepad[d]:size(A,d)-postpad[d] for d = 1:n]
     A[I...] = img
@@ -418,7 +418,7 @@ imfilter_inseparable{T,K,N,M}(img::AbstractArray{T,N}, kern::AbstractArray{K,M},
 
 function imfilter_inseparable{T,K,N}(img::AbstractArray{T,N}, kern::AbstractArray{K,N}, border::String, value)
     if border == "inner"
-        result = Array(typeof(one(T)*one(K)), ntuple(N, d->max(0, size(img,d)-size(kern,d)+1)))
+        result = Array(typeof(one(T)*one(K)), ntuple(d->max(0, size(img,d)-size(kern,d)+1), N))
         imfilter!(result, img, kern)
     else
         prepad  = [div(size(kern,i)-1, 2) for i = 1:N]
@@ -504,22 +504,22 @@ function imfilter_fft_inseparable{T<:Real,K,N}(img::AbstractArray{T,N}, kern::Ab
         fullpad = [nextprod([2,3], size(img,i) + prepad[i] + postpad[i]) - size(img, i) - prepad[i] for i = 1:N]
         A = padarray(img, prepad, fullpad, border, convert(T, value))
         krn = zeros(eltype(one(T)*one(K)), size(A))
-        indexesK = ntuple(N, d->[size(krn,d)-prepad[d]+1:size(krn,d);1:size(kern,d)-prepad[d]])
+        indexesK = ntuple(d->[size(krn,d)-prepad[d]+1:size(krn,d);1:size(kern,d)-prepad[d]], N)
         krn[indexesK...] = reflect(kern)
         AF = ifft(fft(A).*fft(krn))
         out = Array(realtype(eltype(AF)), size(img))
-        indexesA = ntuple(N, d->postpad[d]+1:size(img,d)+postpad[d])
+        indexesA = ntuple(d->postpad[d]+1:size(img,d)+postpad[d], N)
         copyreal!(out, AF, indexesA)
     else
         A = data(img)
         prepad  = [div(size(kern,i)-1, 2) for i = 1:N]
         postpad = [div(size(kern,i),   2) for i = 1:N]
         krn = zeros(eltype(one(T)*one(K)), size(A))
-        indexesK = ntuple(N, d->[size(krn,d)-prepad[d]+1:size(krn,d);1:size(kern,d)-prepad[d]])
+        indexesK = ntuple(d->[size(krn,d)-prepad[d]+1:size(krn,d);1:size(kern,d)-prepad[d]], N)
         krn[indexesK...] = reflect(kern)
         AF = ifft(fft(A).*fft(krn))
         out = Array(realtype(eltype(AF)), ([size(img)...] - prepad - postpad)...)
-        indexesA = ntuple(N, d->postpad[d]+1:size(img,d)-prepad[d])
+        indexesA = ntuple(d->postpad[d]+1:size(img,d)-prepad[d], N)
         copyreal!(out, AF, indexesA)
     end
     out
@@ -905,7 +905,7 @@ function _restrict(A, dim)
     if size(A, dim) <= 2
         return A
     end
-    out = Array(typeof(A[1]/4+A[2]/2), ntuple(ndims(A), i->i==dim?restrict_size(size(A,dim)):size(A,i)))
+    out = Array(typeof(A[1]/4+A[2]/2), ntuple(i->i==dim?restrict_size(size(A,dim)):size(A,i), ndims(A)))
     restrict!(out, A, dim)
     out
 end
