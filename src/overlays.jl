@@ -19,14 +19,14 @@ Overlay{NC,T}(channels::(@compat Tuple{Vararg{AbstractArray}}), colors::NTuple{N
     Overlay{T,ndims(channels[1]),NC,typeof(channels),typeof(mapi)}(channels,colors,mapi)
 
 function Overlay(channels::(@compat Tuple{Vararg{AbstractArray}}), colors,
-                 clim = ntuple(length(channels), i->(zero(eltype(channels[i])), one(eltype(channels[i])))))
+                 clim = ntuple(i->(zero(eltype(channels[i])), one(eltype(channels[i]))), length(channels)))
     n = length(channels)
     for i = 1:n
         if length(clim[i]) != 2
             error("clim must be a 2-vector")
         end
     end
-    mapi = ntuple(n, i->ScaleMinMax(Float32, channels[i], clim[i][1], clim[i][2]))
+    mapi = ntuple(i->ScaleMinMax(Float32, channels[i], clim[i][1], clim[i][2]), n)
     Overlay(channels, colors, mapi)
 end
 

@@ -243,6 +243,10 @@ end
 convert(::Type{Array}, img::AbstractImage) = convert(Array{eltype(img)}, img)
 
 convert{C<:ColorType}(::Type{Image{C}}, img::Image{C}) = img
+if !(VERSION < v"0.4.0-dev")
+    convert{Cdest<:ColorType,Csrc<:ColorType}(::Type{Image{Cdest}}, img::Image{Csrc}) =
+        copyproperties(img, _convert(Array{Cdest}, data(img)))  # FIXME when Julia issue ?? is fixed
+end
 convert{Cdest<:ColorType,Csrc<:ColorType}(::Type{Image{Cdest}}, img::AbstractImageDirect{Csrc}) =
     copyproperties(img, _convert(Array{Cdest}, data(img)))  # FIXME when Julia issue ?? is fixed
 _convert{Cdest<:ColorType,Csrc<:ColorType,N}(::Type{Array{Cdest}}, img::AbstractArray{Csrc,N}) =
@@ -431,9 +435,9 @@ subim(img::AbstractImage, I::AbstractVector...) = error("Indexes must be integer
 sliceim(img::AbstractImage, I::AbstractVector...) = error("Indexes must be integers or ranges")
 
 # Support colon indexes
-getindexim(img::AbstractImage, I...) = getindexim(img, ntuple(length(I), i-> isa(I[i], Colon) ? (1:size(img,i)) : I[i])...)
-subim(img::AbstractImage, I...) = subim(img, ntuple(length(I), i-> isa(I[i], Colon) ? (1:size(img,i)) : I[i])...)
-sliceim(img::AbstractImage, I...) = sliceim(img, ntuple(length(I), i-> isa(I[i], Colon) ? (1:size(img,i)) : I[i])...)
+getindexim(img::AbstractImage, I...) = getindexim(img, ntuple(i-> isa(I[i], Colon) ? (1:size(img,i)) : I[i], length(I))...)
+subim(img::AbstractImage, I...) = subim(img, ntuple(i-> isa(I[i], Colon) ? (1:size(img,i)) : I[i], length(I))...)
+sliceim(img::AbstractImage, I...) = sliceim(img, ntuple(i-> isa(I[i], Colon) ? (1:size(img,i)) : I[i], length(I))...)
 
 
 # Iteration
@@ -460,7 +464,7 @@ type SliceData
             keep[slicedims[i]] = false
         end
         s = strides(A)
-        new(slicedims, ntuple(length(slicedims), i->s[slicedims[i]]), tuple((1:ndims(A))[keep]...))
+        new(slicedims, ntuple(i->s[slicedims[i]], length(slicedims)), tuple((1:ndims(A))[keep]...))
     end
 end
 
