@@ -33,11 +33,11 @@ function imread{S<:IO}(s::S, ::Type{Images.ImagineFile})
     else
         fsz = filesize(camfilename)
         n_stacks = sz[end]
-        if fsz != sizeof(T)*prod(int64(sz))  # guard against overflow on 32bit
+        if fsz != sizeof(T)*prod(map(Int64,sz))  # guard against overflow on 32bit
             warn("Size of image file is different from expected value")
             n_stacks = ifloor(fsz / sizeof(T) / prod(sz[1:end-1]))
         end
-        if sizeof(T)*prod(int64(sz[1:end-1]))*n_stacks > typemax(Uint)
+        if sizeof(T)*prod(map(Int64,sz[1:end-1]))*n_stacks > typemax(Uint)
             warn("File size is too big to mmap on 32bit")
             n_stacks = ifloor(fsz / sizeof(T) / typemax(Uint))
         end
@@ -59,7 +59,7 @@ function imread{S<:IO}(s::S, ::Type{Images.ImagineFile})
         "spatialorder" => havez ? ["x", "l", "z"] : ["x", "l"],
         "colorspace" => "Gray",
         "pixelspacing" => havez ? [um_per_pixel, um_per_pixel, dz] : [um_per_pixel, um_per_pixel],
-        "limits" => (uint16(0), uint16(2^h["original image depth"]-1)),
+        "limits" => (@compat(UInt16(0)), @compat(UInt16(2^h["original image depth"]-1))),
         "imagineheader" => h,
         "suppress" => Set(Any["imagineheader"])
     )
@@ -77,10 +77,10 @@ const nrrd_endian_dict = @compat Dict(LittleEndian=>"little",BigEndian=>"big")
 parse_endian(s::ASCIIString) = endian_dict[lowercase(s)]
 
 function parse_vector_int(s::String)
-    ss = split(s, r"[ ,;]", false)
+    ss = @compat split(s, r"[ ,;]", keep=false)
     v = Array(Int, length(ss))
     for i = 1:length(ss)
-        v[i] = int(ss[i])
+        v[i] = parse(Int,ss[i])
     end
     return v
 end
@@ -106,7 +106,7 @@ function float64_or_empty(s::ASCIIString)
     if isempty(s)
         return NaN
     else
-        return float64(s)
+        return parse(Float64,s)
     end
 end
 
@@ -125,7 +125,7 @@ function parse_quantity(s::String, strict::Bool = true)
     if m == nothing
         error("String does not have a 'value unit' structure")
     end
-    val = float64(s[1:m.offset])
+    val = parse(Float64, s[1:m.offset])
     ustr = strip(s[m.offset+1:end])
     if isempty(ustr)
         if strict
@@ -140,7 +140,7 @@ end
 # Read and parse a *.imagine file (an Imagine header file)
 const compound_fields = Any["piezo", "binning"]
 const field_key_dict = @compat Dict{String,Function}(
-    "header version"               => float64,
+    "header version"               => x->parse(Float64,x),
     "app version"                  => identity,
     "date and time"                => identity,
     "rig"                          => identity,
@@ -151,42 +151,42 @@ const field_key_dict = @compat Dict{String,Function}(
     "image data file"              => identity,
     "start position"               => parse_quantity,
     "stop position"                => parse_quantity,
-    "bidirection"                  => x->bool(int(x)),
+    "bidirection"                  => x->parse(Int,x) != 0,
     "output scan rate"             => x->parse_quantity(x, false),
-    "nscans"                       => int,
+    "nscans"                       => x->parse(Int,x),
     "channel list"                 => parse_vector_int,
     "label list"                   => identity,
     "scan rate"                    => x->parse_quantity(x, false),
-    "min sample"                   => int,
-    "max sample"                   => int,
-    "min input"                    => float64,
-    "max input"                    => float64,
-    "original image depth"         => int,
-    "saved image depth"            => int,
-    "image width"                  => int,
-    "image height"                 => int,
-    "number of frames requested"   => int,
-    "nStacks"                      => int,
+    "min sample"                   => x->parse(Int,x),
+    "max sample"                   => x->parse(Int,x),
+    "min input"                    => x->parse(Float64,x),
+    "max input"                    => x->parse(Float64,x),
+    "original image depth"         => x->parse(Int,x),
+    "saved image depth"            => x->parse(Int,x),
+    "image width"                  => x->parse(Int,x),
+    "image height"                 => x->parse(Int,x),
+    "number of frames requested"   => x->parse(Int,x),
+    "nStacks"                      => x->parse(Int,x),
     "idle time between stacks"     => parse_quantity,
     "pre amp gain"                 => float64_or_empty,
     "EM gain"                      => float64_or_empty,
     "gain"                         => float64_or_empty,
     "exposure time"                => parse_quantity,
     "vertical shift speed"         => parse_quantity_or_empty,
-    "vertical clock vol amp"       => float64,
+    "vertical clock vol amp"       => x->parse(Float64,x),
     "readout rate"                 => parse_quantity_or_empty,
     "pixel order"                  => identity,
-    "frame index offset"           => int,
-    "frames per stack"             => int,
+    "frame index offset"           => x->parse(Int,x),
+    "frames per stack"             => x->parse(Int,x),
     "pixel data type"              => parse_bittypename,
     "camera"                       => identity,
-    "um per pixel"                 => float64,
-    "hbin"                         => int,
-    "vbin"                         => int,
-    "hstart"                       => int,
-    "hend"                         => int,
-    "vstart"                       => int,
-    "vend"                         => int,
+    "um per pixel"                 => x->parse(Float64,x),
+    "hbin"                         => x->parse(Int,x),
+    "vbin"                         => x->parse(Int,x),
+    "hstart"                       => x->parse(Int,x),
+    "hend"                         => x->parse(Int,x),
+    "vstart"                       => x->parse(Int,x),
+    "vend"                         => x->parse(Int,x),
     "angle from horizontal (deg)"  => float64_or_empty)
 
 function parse_header(s::IOStream, ::Type{Images.ImagineFile})
