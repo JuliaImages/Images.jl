@@ -176,9 +176,9 @@ function exportimagepixels!{T}(buffer::AbstractArray{T}, wand::MagickWand,  colo
     ncolors = colorsize(buffer, channelorder)
     p = pointer(buffer)
     for i = 1:nimages
+        nextimage(wand)
         status = ccall((:MagickExportImagePixels, libwand), Cint, (Ptr{Void}, Cssize_t, Cssize_t, Csize_t, Csize_t, Ptr{Uint8}, Cint, Ptr{Void}), wand.ptr, x, y, cols, rows, channelorder, storagetype(T), p)
         status == 0 && error(wand)
-        nextimage(wand)
         p += sizeof(T)*cols*rows*ncolors
     end
     buffer

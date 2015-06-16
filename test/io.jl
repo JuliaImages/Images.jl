@@ -100,3 +100,10 @@ C = Images.imread(fn)
 Images.imwrite(reinterpret(ARGB32, [0xf0884422]''), fn)
 D = Images.imread(fn)
 # @test D[1] == c[1]
+
+# 3D TIFF (issue #307)
+A = Images.grayim(rand(0x00:0xff, 2, 2, 4))
+fn = joinpath(workdir, "3d.tif")
+Images.imwrite(A, fn)
+B = Images.imread(fn)
+@test A == B
