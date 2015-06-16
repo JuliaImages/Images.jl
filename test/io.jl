@@ -107,3 +107,13 @@ fn = joinpath(workdir, "3d.tif")
 Images.imwrite(A, fn)
 B = Images.imread(fn)
 @test A == B
+
+# Clamping (issue #256)
+A = grayim(rand(2,2))
+A[1,1] = -0.4
+fn = joinpath(workdir, "2by2.png")
+@test_throws InexactError Images.imwrite(A, fn)
+Images.imwrite(A, fn, mapi=Images.mapinfo(Images.Clamp, A))
+B = Images.imread(fn)
+A[1,1] = 0
+@test B == map(Ufixed8, A)
