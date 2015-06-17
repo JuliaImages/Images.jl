@@ -650,7 +650,15 @@ directly. Some writers take additional arguments, for example
 imwrite(img, "myimage.jpg", quality=80)
 ```
 
-to control the quality setting in JPEG compression.
+to control the quality setting in JPEG compression. Another useful keyword argument
+is `mapi`, which allows you apply a MapInfo transformation on the elements
+before writing. For example, if you have floating-point images whose values are
+sometimes out-of-bounds (smaller than 0 or bigger than 1), you can avoid an error
+upon writing with
+```{.julia execute="false"}
+imwrite(img, "myimage.png", mapi=mapinfo(Clamp, img))
+```
+and values will be clamped, as needed, before writing.
 
 ## loadformat
 ```{.julia execute="false"}
