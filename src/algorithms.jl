@@ -1126,7 +1126,7 @@ erode(img::AbstractArray, region=coords_spatial(img)) = erode!(copy(img), region
 
 dilate!(maxfilt, region=coords_spatial(maxfilt)) = extremefilt!(data(maxfilt), Base.Order.Forward, region)
 erode!(minfilt, region=coords_spatial(minfilt)) = extremefilt!(data(minfilt), Base.Order.Reverse, region)
-function extremefilt!(extrfilt::Array, order::Ordering, region=coords_spatial(extrfilt))
+function extremefilt!(extrfilt::AbstractArray, order::Ordering, region=coords_spatial(extrfilt))
     for d = 1:ndims(extrfilt)
         if size(extrfilt, d) == 1 || !in(d, region)
             continue

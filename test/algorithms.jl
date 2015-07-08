@@ -271,6 +271,8 @@ Ag = [0 0 0 0;
       0 0 0 0;
       0 0 0 0.6]
 @test Ae == cat(3, Ar, Ag, zeros(4,4))
+# issue #311
+@test Images.dilate(trues(3)) == trues(3)
 
 # opening/closing
 A = zeros(4,4,3)
