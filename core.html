@@ -18,7 +18,7 @@
     <div class="container">
       <div class="row">
         <ul>
-          <li><div id="pkgname">Images 0.4.36+</div></li>
+          <li><div id="pkgname">Images 0.4.38+</div></li>
           <li><a href="http://github.com/timholy/Images.jl">Code</a></li>
           <li><a href="http://github.com/timholy/Images.jl/issues">Issues</a></li>
         </ul>
@@ -58,7 +58,7 @@ Julia Images Guide
 <span class="kw">end</span></code></pre></div>
 <p>The <code>data</code> array here just encodes the index used to look up the color in the <code>cmap</code> field.</p>
 <h1 id="addressing-image-data">Addressing image data</h1>
-<p>For any valid image type, <code>data(img)</code> returns the array that corresponds to the image. This works when <code>img</code> is a plain <code>Array</code> (in which case no operation is performed) as well as for an <code>Image</code> (in which case it returns <code>img.data</code>). This is our first example of how to write generic algorithms.</p>
+<p>For any valid image type, <code>data(img)</code> returns the array that corresponds to the image. This works when <code>img</code> is a plain <code>Array</code> (in which case no operation is performed) as well as for an <code>Image</code> (in which case it returns <code>img.data</code>). For some image formats, Images.jl may interpret raw data with the <code>FixedPointNumbers</code> package. The function <code>raw(img)</code> can be used to recover the buffer in its raw format (e.g. <code>UInt8</code>). This is our first example of how to write generic algorithms.</p>
 <p>If <code>img</code> is an <code>Image</code>, then <code>img[i,j]</code> looks up the value <code>img.data[i,j]</code>. Assignment, <code>sub</code>, and <code>slice</code> work similarly. In other words, for indexing an <code>Image</code> works just as if you were using plain arrays.</p>
 <p>If you load your image data using Image's <code>imread</code>, note that the storage order is not changed from the on-disk representation. Therefore, a 2D RGB image will most likely be stored in color-horizontal-vertical order, meaning that a pixel at <code>(x,y)</code> is accessed as <code>img[x,y]</code>. Note that this is quite different from Matlab's default representation.</p>
 <p>If you are indexing over an extended region and want to get back an <code>Image</code>, rather than a value or an <code>Array</code>, then you will want to use <code>getindexim</code>, <code>subim</code>, and <code>sliceim</code>. For the first two, the resulting image will share everything but the <code>data</code> field with the original image; if you make modifications in one, the other will also be affected. For <code>sliceim</code>, because it can change the dimensionality some adjustments to <code>properties</code> are needed; in this case a copy is made.</p>
@@ -181,7 +181,7 @@ imgs = sliceim(img, <span class="st">&quot;z&quot;</span>, <span class="fl">14</
     </div>
 
   <footer class="col-sm-8">
-    <p class="muted">Last modified by Tim Holy on Tue May  5 14:18:45 CDT 2015. Generated with
+    <p class="muted">Last modified by Tim Holy on Fri Jul 10 13:11:20 CDT 2015. Generated with
     <a href="https://github.com/dcjones/Judo.jl">Judo</a>.</p>
   </footer>
 
