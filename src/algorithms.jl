@@ -213,9 +213,9 @@ fft{CV<:ColorType}(img::AbstractImageDirect{CV}) = fft(img, 1:ndims(img))
 function fft{CV<:ColorType}(img::AbstractImageDirect{CV}, region, args...)
     imgr = reinterpret(eltype(CV), img)
     if ndims(imgr) > ndims(img)
-        newregion = ntuple(length(region), i->region[i]+1)
+        newregion = ntuple(i->region[i]+1, length(region))
     else
-        newregion = ntuple(length(region), i->region[i])
+        newregion = ntuple(i->region[i], length(region))
     end
     F = fft(data(imgr), newregion, args...)
     props = copy(properties(imgr))
@@ -337,35 +337,33 @@ function ncc{T}(A::AbstractArray{T}, B::AbstractArray{T})
 end
 
 # Array padding
-function padarray{T,n}(img::AbstractArray{T,n}, prepad::Union(Vector{Int},Dims), postpad::Union(Vector{Int},Dims), border::String)
+function padindexes{T,n}(img::AbstractArray{T,n}, prepad::Union(Vector{Int},Dims), postpad::Union(Vector{Int},Dims), border::String)
     I = Array(Vector{Int}, n)
     for d = 1:n
-        M = size(img, d)
-        I[d] = (1 - prepad[d]):(M + postpad[d])
-        if border == "replicate"
-            I[d] = min(max(I[d], 1), M)
-        elseif border == "circular"
-            I[d] = 1 .+ mod(I[d] .- 1, M)
-        elseif border == "symmetric"
-            I[d] = [1:M; M:-1:1][1 .+ mod(I[d] .- 1, 2 * M)]
-        elseif border == "reflect"
-            I[d] = [1:M; M-1:-1:2][1 .+ mod(I[d] .- 1, 2 * M - 2)]
-        else
-            error("unknown border condition")
-        end
+        I[d] = padindexes(img, d, prepad[d], postpad[d], border)
     end
-    img[I...]::Array{T,n}
+    I
+end
+
+function padarray{T,n}(img::AbstractArray{T,n}, prepad::Union(Vector{Int},Dims), postpad::Union(Vector{Int},Dims), border::String)
+    img[padindexes(img, prepad, postpad, border)...]::Array{T,n}
+end
+function padarray{n}(img::BitArray{n}, prepad::Union(Vector{Int},Dims), postpad::Union(Vector{Int},Dims), border::String)
+    img[padindexes(img, prepad, postpad, border)...]::BitArray{n}
+end
+function padarray{n,A<:BitArray}(img::Image{Bool,n,A}, prepad::Union(Vector{Int},Dims), postpad::Union(Vector{Int},Dims), border::String)
+    img[padindexes(img, prepad, postpad, border)...]::BitArray{n}
 end
 
 function padarray{T,n}(img::AbstractArray{T,n}, prepad::Union(Vector{Int},Dims), postpad::Union(Vector{Int},Dims), border::String, value)
     if border != "value"
         return padarray(img, prepad, postpad, border)
     end
-    A = Array(T, ntuple(n, d->size(img,d)+prepad[d]+postpad[d]))
+    A = Array(T, ntuple(d->size(img,d)+prepad[d]+postpad[d], n))
     fill!(A, value)
     I = Vector{Int}[1+prepad[d]:size(A,d)-postpad[d] for d = 1:n]
     A[I...] = img
-    A::typeof(img)
+    A::Array{T,n}
 end
 
 padarray{T,n}(img::AbstractArray{T,n}, padding::Union(Vector{Int},Dims), border::String = "replicate") = padarray(img, padding, padding, border)
@@ -420,7 +418,7 @@ imfilter_inseparable{T,K,N,M}(img::AbstractArray{T,N}, kern::AbstractArray{K,M},
 
 function imfilter_inseparable{T,K,N}(img::AbstractArray{T,N}, kern::AbstractArray{K,N}, border::String, value)
     if border == "inner"
-        result = Array(typeof(one(T)*one(K)), ntuple(N, d->max(0, size(img,d)-size(kern,d)+1)))
+        result = Array(typeof(one(T)*one(K)), ntuple(d->max(0, size(img,d)-size(kern,d)+1), N))
         imfilter!(result, img, kern)
     else
         prepad  = [div(size(kern,i)-1, 2) for i = 1:N]
@@ -506,22 +504,22 @@ function imfilter_fft_inseparable{T<:Real,K,N}(img::AbstractArray{T,N}, kern::Ab
         fullpad = [nextprod([2,3], size(img,i) + prepad[i] + postpad[i]) - size(img, i) - prepad[i] for i = 1:N]
         A = padarray(img, prepad, fullpad, border, convert(T, value))
         krn = zeros(eltype(one(T)*one(K)), size(A))
-        indexesK = ntuple(N, d->[size(krn,d)-prepad[d]+1:size(krn,d);1:size(kern,d)-prepad[d]])
+        indexesK = ntuple(d->[size(krn,d)-prepad[d]+1:size(krn,d);1:size(kern,d)-prepad[d]], N)
         krn[indexesK...] = reflect(kern)
         AF = ifft(fft(A).*fft(krn))
         out = Array(realtype(eltype(AF)), size(img))
-        indexesA = ntuple(N, d->postpad[d]+1:size(img,d)+postpad[d])
+        indexesA = ntuple(d->postpad[d]+1:size(img,d)+postpad[d], N)
         copyreal!(out, AF, indexesA)
     else
         A = data(img)
         prepad  = [div(size(kern,i)-1, 2) for i = 1:N]
         postpad = [div(size(kern,i),   2) for i = 1:N]
         krn = zeros(eltype(one(T)*one(K)), size(A))
-        indexesK = ntuple(N, d->[size(krn,d)-prepad[d]+1:size(krn,d);1:size(kern,d)-prepad[d]])
+        indexesK = ntuple(d->[size(krn,d)-prepad[d]+1:size(krn,d);1:size(kern,d)-prepad[d]], N)
         krn[indexesK...] = reflect(kern)
         AF = ifft(fft(A).*fft(krn))
         out = Array(realtype(eltype(AF)), ([size(img)...] - prepad - postpad)...)
-        indexesA = ntuple(N, d->postpad[d]+1:size(img,d)-prepad[d])
+        indexesA = ntuple(d->postpad[d]+1:size(img,d)-prepad[d], N)
         copyreal!(out, AF, indexesA)
     end
     out
@@ -907,7 +905,7 @@ function _restrict(A, dim)
     if size(A, dim) <= 2
         return A
     end
-    out = Array(typeof(A[1]/4+A[2]/2), ntuple(ndims(A), i->i==dim?restrict_size(size(A,dim)):size(A,i)))
+    out = Array(typeof(A[1]/4+A[2]/2), ntuple(i->i==dim?restrict_size(size(A,dim)):size(A,i), ndims(A)))
     restrict!(out, A, dim)
     out
 end
@@ -1065,9 +1063,10 @@ function imcomplement{T}(img::AbstractArray{T})
     return 1 - img
 end
 
-function imstretch{T}(img::AbstractArray{T}, m::Number, slope::Number)
-    shareproperties(img, 1./(1 + (m./(data(img) + eps(T))).^slope))
+function _imstretch{T}(img::AbstractArray{T}, m::Number, slope::Number)
+    shareproperties(img, 1./(1 + (m./(data(img) .+ eps(T))).^slope))
 end
+imstretch(img::AbstractArray, m::Number, slope::Number) = _imstretch(float(img), m, slope)
 
 # image gradients
 
@@ -1120,12 +1119,14 @@ end
 ### Morphological operations
 
 # Erode and dilate support 3x3 regions only (and higher-dimensional generalizations).
+dilate(img::AbstractImageDirect, region=coords_spatial(img)) = shareproperties(img, dilate!(copy(data(img)), region))
+erode(img::AbstractImageDirect, region=coords_spatial(img)) = shareproperties(img, erode!(copy(data(img)), region))
 dilate(img::AbstractArray, region=coords_spatial(img)) = dilate!(copy(img), region)
 erode(img::AbstractArray, region=coords_spatial(img)) = erode!(copy(img), region)
 
 dilate!(maxfilt, region=coords_spatial(maxfilt)) = extremefilt!(data(maxfilt), Base.Order.Forward, region)
 erode!(minfilt, region=coords_spatial(minfilt)) = extremefilt!(data(minfilt), Base.Order.Reverse, region)
-function extremefilt!(extrfilt::Array, order::Ordering, region=coords_spatial(extrfilt))
+function extremefilt!(extrfilt::AbstractArray, order::Ordering, region=coords_spatial(extrfilt))
     for d = 1:ndims(extrfilt)
         if size(extrfilt, d) == 1 || !in(d, region)
             continue

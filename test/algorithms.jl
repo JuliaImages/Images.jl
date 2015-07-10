@@ -63,20 +63,20 @@ let
 
     a = convert(Array{Uint8}, [1, 1, 1])
     b = convert(Array{Uint8}, [134, 252, 4])
-    @test sad(a, b) == 387
-    @test ssd(a, b) == 80699
+    @test Images.sad(a, b) == 387
+    @test Images.ssd(a, b) == 80699
     af = reinterpret(Ufixed8, a)
     bf = reinterpret(Ufixed8, b)
-    @test_approx_eq sad(af, bf) 387f0/255
-    @test_approx_eq ssd(af, bf) 80699f0/255^2
+    @test_approx_eq Images.sad(af, bf) 387f0/255
+    @test_approx_eq Images.ssd(af, bf) 80699f0/255^2
     ac = reinterpret(RGB{Ufixed8}, a)
     bc = reinterpret(RGB{Ufixed8}, b)
-    @test_approx_eq sad(ac, bc) 387f0/255
-    @test_approx_eq ssd(ac, bc) 80699f0/255^2
+    @test_approx_eq Images.sad(ac, bc) 387f0/255
+    @test_approx_eq Images.ssd(ac, bc) 80699f0/255^2
     ag = reinterpret(RGB{Ufixed8}, a)
     bg = reinterpret(RGB{Ufixed8}, b)
-    @test_approx_eq sad(ag, bg) 387f0/255
-    @test_approx_eq ssd(ag, bg) 80699f0/255^2
+    @test_approx_eq Images.sad(ag, bg) 387f0/255
+    @test_approx_eq Images.ssd(ag, bg) 80699f0/255^2
 end
 
 # fft and ifft
@@ -115,6 +115,12 @@ let A = [1 2; 3 4]
     @test Images.padarray(A, (1,1)) == ["a" "a" "b" "b"; "a" "a" "b" "b"; "c" "c" "d" "d"; "c" "c" "d" "d"]
     @test_throws ErrorException Images.padindexes(A, 1, 1, 1, "unknown")
     @test_throws ErrorException Images.padarray(A, (1,1), "unknown")
+end
+
+# issue #292
+let A = trues(3,3)
+    @test typeof(Images.padarray(A, (1,2), (2,1), "replicate")) == BitArray{2}
+    @test typeof(Images.padarray(Images.grayim(A), (1,2), (2,1), "replicate")) == BitArray{2}
 end
 
 # filtering
@@ -265,6 +271,8 @@ Ag = [0 0 0 0;
       0 0 0 0;
       0 0 0 0.6]
 @test Ae == cat(3, Ar, Ag, zeros(4,4))
+# issue #311
+@test Images.dilate(trues(3)) == trues(3)
 
 # opening/closing
 A = zeros(4,4,3)
@@ -327,3 +335,8 @@ Q = Images.shepp_logan(8,highContrast=false)
 img = convert(Images.Image, zeros(10,10))
 img2 = Images.imresize(img, (5,5))
 @test length(img2) == 25
+
+# Issue #282
+img = convert(Images.Image{Gray{Ufixed8}}, eye(2,2))
+imgs = Images.imstretch(img, 0.3, 0.4)
+@test_approx_eq data(imgs) 1./(1 + (0.3./(eye(2,2) + eps())).^0.4)

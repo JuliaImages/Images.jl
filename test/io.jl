@@ -70,6 +70,14 @@ end
 b = Images.imread(fn)
 @test Images.data(b) == convert(Array{RGB{Ufixed8},2}, Images.data(Images.restrict(abig, (1,2))))
 
+# Issue #269
+abig = Images.colorim(rand(Uint16, 3, 1024, 1023))
+open(fn, "w") do file
+    writemime(file, MIME("image/png"), abig, maxpixels=10^6)
+end
+b = Images.imread(fn)
+@test Images.data(b) == convert(Array{RGB{Ufixed8},2}, Images.data(Images.restrict(abig, (1,2))))
+
 using Color
 datafloat = reshape(linspace(0.5, 1.5, 6), 2, 3)
 dataint = round(Uint8, 254*(datafloat .- 0.5) .+ 1)  # ranges from 1 to 255
@@ -92,3 +100,20 @@ C = Images.imread(fn)
 Images.imwrite(reinterpret(ARGB32, [0xf0884422]''), fn)
 D = Images.imread(fn)
 # @test D[1] == c[1]
+
+# 3D TIFF (issue #307)
+A = Images.grayim(rand(0x00:0xff, 2, 2, 4))
+fn = joinpath(workdir, "3d.tif")
+Images.imwrite(A, fn)
+B = Images.imread(fn)
+@test A == B
+
+# Clamping (issue #256)
+A = grayim(rand(2,2))
+A[1,1] = -0.4
+fn = joinpath(workdir, "2by2.png")
+@test_throws InexactError Images.imwrite(A, fn)
+Images.imwrite(A, fn, mapi=Images.mapinfo(Images.Clamp, A))
+B = Images.imread(fn)
+A[1,1] = 0
+@test B == map(Ufixed8, A)

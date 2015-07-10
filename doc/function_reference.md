@@ -142,6 +142,23 @@ algorithm written for `Array`s or `AbstractArray`s on `Image` types.  This works
 for both `AbstractImage`s and `AbstractArray`s (for the latter it just returns
 the input), so is a "safe" component of any algorithm.
 
+## raw
+```{.julia execute="false"}
+raw(img)
+```
+
+returns a reference to the array data in raw storage format. This is particularly
+useful when Images.jl wraps image data in a `FixedPointNumbers` type, and raw data
+access is desired. For example
+
+```{.julia execute="false"}
+img = imread("someimage.tif")
+typeof( data(img) )  # returns array with element type UfixedBase{Uint8,8}
+typeof( raw(img) )   # returns array with element type Uint8
+
+```
+
+
 ## img[] (indexing)
 ```{.julia execute="false"}
 img[i, j, k,...]
@@ -633,7 +650,15 @@ directly. Some writers take additional arguments, for example
 imwrite(img, "myimage.jpg", quality=80)
 ```
 
-to control the quality setting in JPEG compression.
+to control the quality setting in JPEG compression. Another useful keyword argument
+is `mapi`, which allows you apply a MapInfo transformation on the elements
+before writing. For example, if you have floating-point images whose values are
+sometimes out-of-bounds (smaller than 0 or bigger than 1), you can avoid an error
+upon writing with
+```{.julia execute="false"}
+imwrite(img, "myimage.png", mapi=mapinfo(Clamp, img))
+```
+and values will be clamped, as needed, before writing.
 
 ## loadformat
 ```{.julia execute="false"}

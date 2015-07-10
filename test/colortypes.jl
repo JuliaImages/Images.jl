@@ -49,6 +49,9 @@ ccmp = Gray{Float32}(0.2)
 @test cf*2 == ccmp
 @test ccmp/2 == cf
 @test 2.0f0*cf == ccmp
+@test_colortype_approx_eq cf*cf Gray{Float32}(0.01)
+@test_colortype_approx_eq cf^2 Gray{Float32}(0.01)
+@test_colortype_approx_eq cf^3.0f0 Gray{Float32}(0.001)
 @test eltype(2.0*cf) == Float64
 cu = Gray{Ufixed8}(0.1)
 @test 2*cu == Gray(2*cu.val)
@@ -79,6 +82,7 @@ acf = Gray{Float32}[cf]
 @test typeof(2*acf) == Vector{Gray{Float32}}
 @test typeof(0x02*acu) == Vector{Gray{Float32}}
 @test typeof(acu/2) == Vector{Gray{typeof(Ufixed8(0.5)/2)}}
+@test typeof(acf.^2) == Vector{Gray{Float32}}
 
 # Arithmetic with GrayAlpha
 p1 = GrayAlpha{Float32}(Gray(0.8), 0.2)
