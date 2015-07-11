@@ -1,9 +1,7 @@
 addprocs(2)
-@everywhere require("Images.jl")
+using Images, Color
 
 # Issue #287
-using Images
-import Images.RGB
 @everywhere function test287(img)
     return 0;
 end
