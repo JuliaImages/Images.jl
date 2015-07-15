@@ -229,7 +229,7 @@ function readimage(wand::MagickWand, filename::String)
 end
 
 function readimage(wand::MagickWand, stream::IO)
-    status = ccall((:MagickReadImageFile, libwand), Cint, (Ptr{Void}, Ptr{Void}), wand.ptr, CFILE(stream))
+    status = ccall((:MagickReadImageFile, libwand), Cint, (Ptr{Void}, Ptr{Void}), wand.ptr, Libc.FILE(stream).ptr)
     status == 0 && error(wand)
     nothing
 end

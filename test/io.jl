@@ -117,3 +117,10 @@ Images.imwrite(A, fn, mapi=Images.mapinfo(Images.Clamp, A))
 B = Images.imread(fn)
 A[1,1] = 0
 @test B == map(Ufixed8, A)
+
+# Reading from a stream (issue #312)
+fn = joinpath(workdir, "2by2.png")
+io = open(fn)
+img = Images.imread(io, Images.ImageMagick)
+close(io)
+@test isa(img, Images.Image)
