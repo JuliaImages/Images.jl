@@ -1,4 +1,5 @@
 language: julia
+sudo: false
 os:
     - linux
     - osx
@@ -12,4 +13,5 @@ script:
     - julia -e 'Pkg.clone(pwd()); Pkg.build("Images")'
     - julia -e 'Pkg.test("Images", coverage=true)'
 after_success:
-    - if [ $TRAVIS_JULIA_VERSION = "nightly" ]; then julia -e 'cd(Pkg.dir("Images")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'; fi
+    - if [ $TRAVIS_JULIA_VERSION = "nightly" ]; then julia -e 'cd(Pkg.dir("Images")); Pkg.add("Coverage"); Pkg.checkout("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'; fi
+    - if [ $TRAVIS_JULIA_VERSION = "nightly" ]; then julia -e 'cd(Pkg.dir("Images")); Pkg.add("Coverage"); Pkg.checkout("Coverage"); using Coverage; Codecov.submit(Codecov.process_folder())'; fi
