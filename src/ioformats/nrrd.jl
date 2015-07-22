@@ -349,7 +349,11 @@ function imwrite(img, sheader::IO, ::Type{Images.NRRDFile}; props::Dict = Dict{A
     if printunits
         print(sheader, "space units:")
         for x in ps
-            print(sheader," \"", strip(string(SIUnits.unit(x))), "\"")
+            if isa(x, SIUnits.SIQuantity)
+                print(sheader," \"", strip(string(SIUnits.unit(x))), "\"")
+            else
+                print(sheader," \"", x, "\"")
+            end
         end
         print(sheader, "\n")
     end
