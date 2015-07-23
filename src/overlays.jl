@@ -53,22 +53,19 @@ end
 
 for NC = 1:3
     NCm = NC-1
-    @eval begin
-@nsplat K 1:4 function getindex{T,N,AT,MITypes}(O::Overlay{T,N,$NC,AT,MITypes}, indexes::NTuple{K,Real}...)
-    @inbounds begin
-        sc = O.mapi[$NC]
-        ch = O.channels[$NC]
-        cl = O.colors[$NC]
-    end
-    out = map(sc, getindex(ch, indexes...)) * cl  # one of them needs a bounds-check
-    @inbounds @nexprs $NCm c->begin
-        sc = O.mapi[c]
-        ch = O.channels[c]
-        cl = O.colors[c]
-        out += map(sc, getindex(ch, indexes...)) * cl
-    end
-    clamp01(out)
-end
+    for K = 1:4
+        indexargs = Symbol[symbol(string("i_",d)) for d = 1:K]
+        sigargs = Expr[:($a::Integer) for a in indexargs]
+        @eval begin
+            function getindex{T,N,AT,MITypes}(O::Overlay{T,N,$NC,AT,MITypes}, $(sigargs...))
+                # one of them needs a bounds-check
+                out = map(O.mapi[$NC], getindex(O.channels[$NC], $(indexargs...))) * O.colors[$NC]
+                @inbounds @nexprs $NCm c->begin
+                    out += map(O.mapi[c], getindex(O.channels[c], $(indexargs...))) * O.colors[c]
+                end
+                clamp01(eltype(O), out)
+            end
+        end
     end
 end
 

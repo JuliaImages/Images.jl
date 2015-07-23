@@ -4,7 +4,7 @@ addprocs(2)
 # a no-op. So we have to force the workers to load it manually.
 # See https://github.com/JuliaLang/julia/issues/3674
 @sync for p in workers()
-    @spawnat p Base.require("Images")
+    @spawnat p eval(Expr(:using, :Images))   # FIXME: on 0.4 you can say :(using Images) directly
 end
 using Color
 
