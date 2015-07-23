@@ -33,13 +33,13 @@ ovr = Images.Overlay((gray, 0*gray), [RGB(1,0,1), RGB(0,1,0)], ([0,1],[0,1]))
 @test_throws ErrorException ovr[1] = RGB(0.2,0.4,0.6)
 
 img1 = Images.Image(gray, Dict{ASCIIString,Any}([("colorspace","Gray"), ("spatialorder",["x"])]))
-ovr = Images.OverlayImage((2gray,img1), (RGB{Ufixed8}(1,0,1), RGB{Ufixed8}(0,1,0)), ((0,1),(0,1)))
+ovr = Images.OverlayImage((2gray,img1), (RGB{Float32}(1,0,1), RGB{Float32}(0,1,0)), ((0,1),(0,1)))
 @test isa(ovr, Images.Image)
 @test !haskey(ovr, "colorspace")
 @test Images.colorspace(ovr) == "RGB"
 @test ovr[2] == RGB{Float32}(0.5,0.25,0.5)
 a = rand(Float32,3,2)
 b = rand(Float32,3,2)
-ovr = Images.OverlayImage((a,b), (RGB{Ufixed8}(1,0,1), RGB{Ufixed8}(0,1,0)), ((0,1),(0,1)))
+ovr = Images.OverlayImage((a,b), (RGB{Float32}(1,0,1), RGB{Float32}(0,1,0)), ((0,1),(0,1)))
 @test isa(ovr, Images.Image)
 @test abs(ovr[1,2] - RGB{Float32}(a[1,2],b[1,2],a[1,2])) < 1e-5
