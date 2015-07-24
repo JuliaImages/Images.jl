@@ -8,4 +8,3 @@ deps/usr/*
 /*.tar.gz
 /tmp
 src/gen/*.jl_julia*
-codecov.sh
