@@ -27,8 +27,9 @@ include("readstream.jl")
 @osx_only include("readOSX.jl")
 include("algorithms.jl")
 include("edge.jl")
-include("parallel.jl") # TODO: some errors, related to "require"?
 
 isinteractive() || FactCheck.exitstatus()
 
 end
+
+include("parallel.jl")
