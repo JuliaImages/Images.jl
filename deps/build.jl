@@ -32,26 +32,23 @@ end
     magick_base = "http://www.imagemagick.org/download/binaries"
     binariesfn = download(magick_base)
     str = readall(binariesfn)
-    pattern = ">ImageMagick-6.9.*-Q16-$(OS_ARCH)-dll.exe"
+    pattern = ">ImageMagick-6.9.*-portable-Q16-$(OS_ARCH).zip"
     m = match(Regex(pattern), str)
-    magick_exe = convert(ASCIIString, m.match)[2:end]
+    magick_zip = convert(ASCIIString, m.match)[2:end]
 
     magick_tmpdir = BinDeps.downloadsdir(libwand)
-    magick_url = "$(magick_base)/$(magick_exe)"
+    magick_url = "$(magick_base)/$(magick_zip)"
     magick_libdir = joinpath(BinDeps.libdir(libwand), OS_ARCH)
-
-    innounp_url = "https://julialang.s3.amazonaws.com/bin/winnt/extras/innounp.exe"
 
     provides(BuildProcess,
         (@build_steps begin
             CreateDirectory(magick_tmpdir)
             CreateDirectory(magick_libdir)
-            FileDownloader(magick_url, joinpath(magick_tmpdir, magick_exe))
-            FileDownloader(innounp_url, joinpath(magick_tmpdir, "innounp.exe"))
+            FileDownloader(magick_url, joinpath(magick_tmpdir, magick_zip))
             @build_steps begin
                 ChangeDirectory(magick_tmpdir)
                 info("Installing ImageMagick library")
-                `innounp.exe -q -y -b -e -x -d$(magick_libdir) $(magick_exe)`
+                `7z x -o$(magick_libdir) $(magick_zip)`
             end
         end),
         libwand,
