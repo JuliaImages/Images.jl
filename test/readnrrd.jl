@@ -1,45 +1,49 @@
-using Images, SIUnits
-using Base.Test
+using FactCheck, Images, Color, FixedPointNumbers
 
-if !isdefined(:workdir)
-    const workdir = joinpath(tempdir(), "Images")
-end
-if !isdefined(:writedir)
-    const writedir = joinpath(workdir, "write")
+testing_units = Int == Int64
+if testing_units
+    using SIUnits, SIUnits.ShortUnits
 end
 
-if !isdir(workdir)
-    mkdir(workdir)
+facts("Read NRRD") do
+    workdir = joinpath(tempdir(), "Images")
+    writedir = joinpath(workdir, "write")
+    if !isdir(workdir)
+        mkdir(workdir)
+    end
+    if !isdir(writedir)
+        mkdir(writedir)
+    end
+
+    context("Gray, raw") do
+        img = imread(joinpath(dirname(@__FILE__), "io", "small.nrrd"))
+        @fact colorspace(img) => "Gray"
+        @fact ndims(img) => 3
+        @fact colordim(img) => 0
+        @fact eltype(img) => Float32
+        outname = joinpath(writedir, "small.nrrd")
+        imwrite(img, outname)
+        imgc = imread(outname)
+        @fact img.data => imgc.data
+    end
+    
+    context("Units") do
+        img = imread(joinpath(dirname(@__FILE__), "io", "units.nhdr"))
+        ps = pixelspacing(img)
+        @fact ps[1]/(0.1*Milli*Meter) => roughly(1)
+        @fact ps[2]/(0.2*Milli*Meter)  => roughly(1)
+        @fact ps[3]/(1*Milli*Meter)  => roughly(1)
+    end
+    
+    context("Gray, compressed (gzip)") do
+        img = imread(joinpath(dirname(@__FILE__), "io", "smallgz.nrrd"))
+        @fact colorspace(img) => "Gray"
+        @fact ndims(img) => 3
+        @fact colordim(img) => 0
+        @fact eltype(img) => Float32
+        outname = joinpath(writedir, "smallgz.nrrd")
+        imwrite(img, outname)
+        imgc = imread(outname)
+        @fact img.data => imgc.data
+    end
 end
-if !isdir(writedir)
-    mkdir(writedir)
-end
-
-
-# Gray, raw
-img = imread(joinpath(dirname(@__FILE__), "io", "small.nrrd"))
-@assert colorspace(img) == "Gray"
-@assert ndims(img) == 3
-@assert colordim(img) == 0
-@assert eltype(img) == Float32
-outname = joinpath(writedir, "small.nrrd")
-imwrite(img, outname)
-imgc = imread(outname)
-@assert img.data == imgc.data
-
-img = imread(joinpath(dirname(@__FILE__), "io", "units.nhdr"))
-ps = pixelspacing(img)
-@test_approx_eq ps[1]/(0.1*Milli*Meter) 1
-@test_approx_eq ps[2]/(0.2*Milli*Meter) 1
-@test_approx_eq ps[3]/(1*Milli*Meter) 1
-
-# Gray, compressed (gzip)
-img = imread(joinpath(dirname(@__FILE__), "io", "smallgz.nrrd"))
-@assert colorspace(img) == "Gray"
-@assert ndims(img) == 3
-@assert colordim(img) == 0
-@assert eltype(img) == Float32
-outname = joinpath(writedir, "smallgz.nrrd")
-imwrite(img, outname)
-imgc = imread(outname)
-@assert img.data == imgc.data

@@ -1,4 +1,5 @@
 addprocs(2)
+using Images, Base.Test, Color
 # Normally "using Images" would suffice, but since Images has
 # already been loaded by the time this file runs, that yields
 # a no-op. So we have to force the workers to load it manually.
@@ -6,7 +7,6 @@ addprocs(2)
 @sync for p in workers()
     @spawnat p eval(Expr(:using, :Images))   # FIXME: on 0.4 you can say :(using Images) directly
 end
-using Color
 
 # Issue #287
 @everywhere function test287(img)
