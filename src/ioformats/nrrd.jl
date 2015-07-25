@@ -214,6 +214,8 @@ function imread{S<:IO}(stream::S, ::Type{Images.NRRDFile}; mmap=:auto)
     elseif haskey(header, "space dimension")
         spacedim = int(header["space dimension"])
         spacedim == sum(isspatial) || error("spacedim $spacedim disagrees with isspatial=$isspatial")
+    else
+        spacedim = sum(isspatial)
     end
     units = Array(Union(SIUnits.SIUnit,SIUnits.SIQuantity), 0)
     if haskey(header, "space units")
@@ -270,7 +272,6 @@ function imread{S<:IO}(stream::S, ::Type{Images.NRRDFile}; mmap=:auto)
         length(ps) == nd || error("parsing of spacings: $(header["spacings"]) is inconsistent with $nd dimensions")
         pss = ps[isspatial]
         if !isempty(units)
-            unitss = units[isspatial]
             vu = [pss[i]*units[i] for i = 1:length(pss)]
             props["pixelspacing"] = vu
         else
@@ -351,8 +352,6 @@ function imwrite(img, sheader::IO, ::Type{Images.NRRDFile}; props::Dict = Dict{A
         for x in ps
             if isa(x, SIUnits.SIQuantity)
                 print(sheader," \"", strip(string(SIUnits.unit(x))), "\"")
-            else
-                print(sheader," \"", x, "\"")
             end
         end
         print(sheader, "\n")
