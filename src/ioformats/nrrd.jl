@@ -206,7 +206,7 @@ function imread{S<:IO}(stream::S, ::Type{Images.NRRDFile}; mmap=:auto)
     else
         props["spatialorder"] = [string(convert(Char, 97+(i+22)%26)) for i = 1:sum(isspatial)]
     end
-    spacedim = nd
+    spacedim = sum(isspatial)
     if haskey(header, "space")
         props["space"] = header["space"]
         spacedim = spacedimdict[lowercase(header["space"])]
@@ -214,8 +214,6 @@ function imread{S<:IO}(stream::S, ::Type{Images.NRRDFile}; mmap=:auto)
     elseif haskey(header, "space dimension")
         spacedim = int(header["space dimension"])
         spacedim == sum(isspatial) || error("spacedim $spacedim disagrees with isspatial=$isspatial")
-    else
-        spacedim = sum(isspatial)
     end
     units = Array(Union(SIUnits.SIUnit,SIUnits.SIQuantity), 0)
     if haskey(header, "space units")
