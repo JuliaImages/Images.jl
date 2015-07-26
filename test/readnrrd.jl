@@ -46,4 +46,13 @@ facts("Read NRRD") do
         imgc = imread(outname)
         @fact img.data => imgc.data
     end
+    
+    context("Time is 4th dimension") do
+        img = imread(joinpath(dirname(@__FILE__), "io", "small_time.nrrd"))
+        @fact timedim(img) => 4
+        outname = joinpath(writedir, "small_time.nrrd")
+        imwrite(img, outname)
+        imgc = imread(outname)
+        @fact img.data => imgc.data    
+    end
 end
