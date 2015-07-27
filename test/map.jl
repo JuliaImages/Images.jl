@@ -1,7 +1,7 @@
 using FactCheck, Images, Color, FixedPointNumbers
 
 macro chk(a, b)
-    :(@fact $a == $b && typeof($a) == typeof($b) => true)
+    :(@fact ($a == $b && typeof($a) == typeof($b)) => true)
 end
 
 facts("Map") do
@@ -34,7 +34,7 @@ facts("Map") do
         mapi = MapNone{Images.ColorTypes.BGRA{Ufixed8}}()
         @chk map(mapi, c) convert(Images.ColorTypes.BGRA{Ufixed8}, c)
     end
-    
+
     context("BitShift") do
         mapi = BitShift{Uint8,7}()
         @chk map(mapi, 0xff) 0x01
@@ -67,7 +67,7 @@ facts("Map") do
         v = Gray(ufixed16(0.8))
         @chk map(bs, v) Gray{Ufixed8}(0.8)
     end
-    
+
     context("Clamp") do
         mapi = ClampMin(Float32, 0.0)
         @chk map(mapi,  1.2) 1.2f0
@@ -122,14 +122,14 @@ facts("Map") do
         @chk clamp(ARGB{Float64}(1.2,0.5,-.3,0.2)) ARGB{Float64}(1.0,0.5,0.0,0.2)
         @chk clamp(RGBA{Float64}(1.2,0.5,-.3,0.2)) RGBA{Float64}(1.0,0.5,0.0,0.2)
     end
-    
-    context("Issue #285") do 
+
+    context("Issue #285") do
         a = [Gray(0xd0uf8)]
         a1 = 10*a
         mapi = mapinfo(Gray{Ufixed8}, a1)
         @chk map(mapi, a1[1]) Gray(0xffuf8)
     end
-    
+
     context("ScaleMinMax") do
         mapi = ScaleMinMax(Ufixed8, 100, 1000)
         @chk map(mapi, 100) Ufixed8(0.0)
@@ -160,7 +160,7 @@ facts("Map") do
         mapi = ScaleMinMax(RGB{Ufixed8}, A, 0.0, 0.2)
         @fact map(mapi, A) => [RGB{Ufixed8}(1,1,1)]
     end
-    
+
     context("ScaleSigned") do
         mapi = ScaleSigned(Float32, 1/5)
         @chk map(mapi, 7) 1.0f0
@@ -173,7 +173,7 @@ facts("Map") do
         @chk map(mapi, -10.0) RGB24(0x0000ff00)
         @chk map(mapi, 0) RGB24(0x00000000)
     end
-    
+
     context("ScaleAutoMinMax") do
         mapi = ScaleAutoMinMax()
         A = [100,550,1000]
@@ -187,7 +187,7 @@ facts("Map") do
         res = map(mi, imgr)
         @fact raw(res) => raw(map(ScaleAutoMinMax(Ufixed16), raw(imgr)))
     end
-    
+
     context("Scaling and ssd") do
         img = Images.grayim(fill(typemax(Uint16), 3, 3))
         mapi = Images.mapinfo(Ufixed8, img)
@@ -212,9 +212,9 @@ facts("Map") do
         @fact Images.ssd(imgs, (A.-mnA)/(mxA-mnA)) => less_than(eps())
         A = reshape(1:9, 3, 3)
         B = map(Images.ClampMin(Float32, 3), A)
-        @fact eltype(B) == Float32 && B == [3 4 7; 3 5 8; 3 6 9] => true
+        @fact (eltype(B) == Float32 && B == [3 4 7; 3 5 8; 3 6 9]) => true
         B = map(Images.ClampMax(Uint8, 7), A)
-        @fact eltype(B) == Uint8 && B == [1 4 7; 2 5 7; 3 6 7] => true
+        @fact (eltype(B) == Uint8 && B == [1 4 7; 2 5 7; 3 6 7]) => true
 
         A = reinterpret(Ufixed8, [convert(UInt8,1):convert(UInt8,24);], (3, 2, 4))
         img = reinterpret(RGB{Ufixed8}, A, (2,4))
@@ -227,7 +227,7 @@ facts("Map") do
         @fact sc(arr)[2,2] => 0xffuf8
         @fact sc(arr, 0.0, 0.75)[2,2] => 0xaauf8
     end
-    
+
     context("Color conversion") do
         gray = collect(linspace(0.0,1.0,5)) # a 1-dimensional image
         gray8 = round(Uint8, 255*gray)
@@ -256,7 +256,7 @@ facts("Map") do
         b = blue(img)
         @fact b => gray
     end
-    
+
     context("Map and indexed images") do
         img = Images.ImageCmap([1 2 3; 3 2 1], [RGB{Ufixed16}(1.0,0.6,0.4), RGB{Ufixed16}(0.2, 0.4, 0.6), RGB{Ufixed16}(0.5,0.5,0.5)])
         mapi = MapNone(RGB{Ufixed8})
