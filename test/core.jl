@@ -133,7 +133,7 @@ facts("Core") do
         @fact imgc.data => A
         img2 = similar(img)
         @fact isa(img2, ImageCmap) => true
-        @fact img2.data == img.data => false
+        @fact (img2.data == img.data) => false
         img2 = similar(imgd)
         @fact isa(img2, Image) => true
         img2 = similar(img, (4,4))
