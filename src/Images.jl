@@ -1,6 +1,7 @@
 module Images
 
 import Base.Order: Ordering, ForwardOrdering, ReverseOrdering
+import Base: ==, .==, +, -, *, /, .+, .-, .*, ./, .^, .<, .>
 import Base: atan2, clamp, convert, copy, copy!, ctranspose, delete!, done, eltype,
              fft, float32, float64, get, getindex, haskey, hypot, ifft, length, map, map!,
              maximum, mimewritable, minimum, next, ndims, one, parent, permutedims, reinterpret,

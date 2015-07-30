@@ -3,7 +3,8 @@ module ColorTypes
 using Color, FixedPointNumbers, Compat, Base.Cartesian
 import Color: Fractional, _convert
 
-import Base: ==, abs, abs2, clamp, convert, copy, div, eps, isfinite, isinf,
+import Base: ==, +, -, *, /, .+, .-, .*, ./, ^, <
+import Base: abs, abs2, clamp, convert, copy, div, eps, isfinite, isinf,
     isnan, isless, length, one, promote_array_type, promote_rule, zero,
     trunc, floor, round, ceil, bswap,
     mod, rem
