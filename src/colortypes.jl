@@ -558,15 +558,13 @@ for ACV in (ColorValue, AbstractRGB, AbstractGray)
     end
 end
 
-for (CV, CVstr, fields) in ((BGR,  "BGR",  (:(c.r),:(c.g),:(c.b))),
-                            (RGB1, "RGB1", (:(c.r),:(c.g),:(c.b))),
-                            (RGB4, "RGB4", (:(c.r),:(c.g),:(c.b))),
-                            (ARGB, "ARGB", (:(c.c.r),:(c.c.g),:(c.c.b),:(c.alpha))),
-                            (BGRA, "BGRA", (:(c.c.r),:(c.c.g),:(c.c.b),:(c.alpha))),
-                            (Gray, "Gray", (:(c.val),)),
-                            (GrayAlpha, "GrayAlpha", (:(c.c.val),:(c.alpha))))
-    Color.makeshow(CV, CVstr, fields)
-end
+Color.@makeshow BGR (r, g, b)
+Color.@makeshow RGB1 (r, g, b)
+Color.@makeshow RGB4 (r, g, b)
+Color.@makeshow ARGB (c.r, c.g, c.b, alpha)
+Color.@makeshow BGRA (c.r, c.g, c.b, alpha)
+Color.@makeshow Gray (val,)
+Color.@makeshow GrayAlpha (c.val, alpha)
 
 for T in (RGB24, ARGB32, Gray24, AGray32)
     @eval begin
