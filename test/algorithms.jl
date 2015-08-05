@@ -182,7 +182,9 @@ facts("Algorithms") do
         Afft = Images.imfilter_fft(A, kern, "inner")
         @fact Af => roughly(Afft)
         h = [0.24,0.87]
-        @fact Images.imfilter(eye(3), h, "inner") => roughly(Images.imfilter_fft(eye(3), h, "inner"))  # issue #204
+        hfft = Images.imfilter_fft(eye(3), h, "inner")
+        hfft[abs(hfft) .< 3eps()] = 0
+        @fact Images.imfilter(eye(3), h, "inner") => roughly(hfft)  # issue #204
 
         @fact approx_equal(Images.imfilter_gaussian(ones(4,4), [5,5]), 1.0) => true
         A = fill(convert(Float32, NaN), 3, 3)
