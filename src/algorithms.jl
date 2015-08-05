@@ -321,6 +321,7 @@ difftype{CV<:AbstractRGB,T<:Real}(::Type{CV}, ::Type{T}) = RGB{Float32}
 difftype{CV<:AbstractRGB}(::Type{CV}, ::Type{Float64}) = RGB{Float64}
 
 accum{T<:Integer}(::Type{T}) = Int
+accum(::Type{Float32})    = Float32
 accum{T<:Real}(::Type{T}) = Float64
 
 # normalized by Array size
