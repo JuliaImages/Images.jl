@@ -49,7 +49,7 @@ facts("Read remote") do
         @fact ndims(img) => 2
         @fact colordim(img) => 0
         @fact eltype(img) => Images.ColorTypes.GrayAlpha{Ufixed8}
-        @osx? nothing : begin
+        @linux_only begin
             outname = joinpath(writedir, "wmark_image.png")
             imwrite(img, outname)
             sleep(0.2)
