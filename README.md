@@ -309,6 +309,6 @@ Jeff Bezanson, Stefan Kroboth, Tim Holy, Mike Nolta, and Stefan Karpinski.
 This repository has been quite heavily reworked;
 the current package maintainer is Tim Holy, and
 important contributions have been made by Ron Rock,
-Kevin Squire, Lucas Beyer, Elliot Saba, Isaiah Norton,
-Daniel Perry, Waldir Pimenta, Tobias Knopp,
-Jason Merrill, Dahua Lin, and several others.
+Kevin Squire, Lucas Beyer, Tony Kelman, Isaiah Norton, Elliot Saba, 
+Cody Greer, Daniel Perry, Waldir Pimenta, Tobias Knopp,
+Jason Merrill, Sean Garborg, romainFr, Dahua Lin, and several others.
