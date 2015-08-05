@@ -40,7 +40,7 @@ end
     magick_url = "$(magick_base)/$(magick_exe)"
     magick_libdir = joinpath(BinDeps.libdir(libwand), OS_ARCH)
 
-    innounp_url = "https://julialang.s3.amazonaws.com/bin/winnt/extras/innounp.exe"
+    innounp_url = "https://bintray.com/artifact/download/julialang/generic/innounp.exe"
 
     provides(BuildProcess,
         (@build_steps begin
