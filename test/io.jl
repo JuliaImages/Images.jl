@@ -127,7 +127,7 @@ facts("IO") do
         @fact B => map(Ufixed8, A)
     end
     
-    context("Reading from a stream (issue #312)") do
+    @unix_only context("Reading from a stream (issue #312)") do
         fn = joinpath(workdir, "2by2.png")
         io = open(fn)
         img = Images.imread(io, Images.ImageMagick)
