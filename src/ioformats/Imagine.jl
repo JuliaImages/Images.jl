@@ -56,9 +56,9 @@ function imread{S<:IO}(s::S, ::Type{Images.ImagineFile})
     else dz = 0.0 end
 
     props = @compat Dict(
-        "spatialorder" => havez ? ["x", "l", "z"] : ["x", "l"],
+        "spatialorder" => (havez ? ["x", "l", "z"] : ["x", "l"]),
         "colorspace" => "Gray",
-        "pixelspacing" => havez ? [um_per_pixel, um_per_pixel, dz] : [um_per_pixel, um_per_pixel],
+        "pixelspacing" => (havez ? [um_per_pixel, um_per_pixel, dz] : [um_per_pixel, um_per_pixel]),
         "limits" => (@compat(UInt16(0)), @compat(UInt16(2^h["original image depth"]-1))),
         "imagineheader" => h,
         "suppress" => Set(Any["imagineheader"])
