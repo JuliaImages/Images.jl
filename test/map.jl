@@ -1,7 +1,7 @@
 using FactCheck, Images, Color, FixedPointNumbers
 
 macro chk(a, b)
-    :(@fact ($a == $b && typeof($a) == typeof($b)) => true)
+    :(@fact ($a == $b && typeof($a) == typeof($b)) --> true)
 end
 
 facts("Map") do
@@ -11,7 +11,7 @@ facts("Map") do
         @chk map(mapi, 0x07) 7
         a7 = Int[7]
         @chk map(mapi, [0x07]) a7
-        @fact map(mapi, a7) => exactly(a7)
+        @fact map(mapi, a7) --> exactly(a7)
         mapi = MapNone{RGB24}()
         g = Ufixed8(0.1)
         @chk Images.map1(mapi, 0.1) g
@@ -138,9 +138,9 @@ facts("Map") do
         @chk map(mapi, 2000) Ufixed8(1.0)
         @chk map(mapi, 550) Ufixed8(0.5)
         mapinew = ScaleMinMax(Ufixed8, [100,500,1000])
-        @fact mapinew => mapi
+        @fact mapinew --> mapi
         mapinew = ScaleMinMax(Ufixed8, [0,500,2000], convert(Uint16, 100), convert(Uint16, 1000))
-        @fact mapinew => mapi
+        @fact mapinew --> mapi
         mapi = ScaleMinMax(ARGB32, 100, 1000)
         @chk map(mapi, 100) ARGB32(0x00,0x00,0x00,0xff)
         @chk map(mapi, 550) ARGB32(0x80,0x80,0x80,0xff)
@@ -150,15 +150,15 @@ facts("Map") do
         @chk map(mapi, 550) RGB{Float32}(0.5, 0.5, 0.5)
         @chk map(mapi,2000) RGB(1.0f0, 1.0f0, 1.0f0)
         A = Gray{Ufixed8}[Ufixed8(0.1), Ufixed8(0.9)]
-        @fact mapinfo(RGB24, A) => MapNone{RGB24}()
+        @fact mapinfo(RGB24, A) --> MapNone{RGB24}()
         mapi = ScaleMinMax(RGB24, A, zero(Gray{Ufixed8}), one(Gray{Ufixed8}))
-        @fact map(mapi, A) => map(mapinfo(RGB24, A), A)
+        @fact map(mapi, A) --> map(mapinfo(RGB24, A), A)
         mapi = ScaleMinMax(Float32, [Gray(one(Ufixed8))], 0, 1) # issue #180
         @chk map(mapi, Gray(Ufixed8(0.6))) 0.6f0
         @fact_throws ErrorException ScaleMinMax(Float32, 0, 0, 1.0) # issue #245
         A = [Gray{Float64}(0.2)]
         mapi = ScaleMinMax(RGB{Ufixed8}, A, 0.0, 0.2)
-        @fact map(mapi, A) => [RGB{Ufixed8}(1,1,1)]
+        @fact map(mapi, A) --> [RGB{Ufixed8}(1,1,1)]
     end
 
     context("ScaleSigned") do
@@ -185,14 +185,14 @@ facts("Map") do
         imgr = colorim(rand(UInt16, 3, 2, 2))
         mi = ScaleAutoMinMax(RGB{Ufixed16})
         res = map(mi, imgr)
-        @fact raw(res) => raw(map(ScaleAutoMinMax(Ufixed16), raw(imgr)))
+        @fact raw(res) --> raw(map(ScaleAutoMinMax(Ufixed16), raw(imgr)))
     end
 
     context("Scaling and ssd") do
         img = Images.grayim(fill(typemax(Uint16), 3, 3))
         mapi = Images.mapinfo(Ufixed8, img)
         img8 = map(mapi, img)
-        @fact all(img8 .== typemax(Ufixed8)) => true
+        @fact all(img8 .== typemax(Ufixed8)) --> true
         A = 0
         mnA, mxA = 1.0, -1.0
         while mnA > 0 || mxA < 0
@@ -203,29 +203,29 @@ facts("Map") do
         img = convert(Images.Image, A .+ offset)
         mapi = Images.ScaleMinMax(Ufixed8, offset, offset+mxA, 1/mxA)
         imgs = map(mapi, img)
-        @fact minimum(imgs) => 0
-        @fact maximum(imgs) => 1
-        @fact eltype(imgs) => Ufixed8
+        @fact minimum(imgs) --> 0
+        @fact maximum(imgs) --> 1
+        @fact eltype(imgs) --> Ufixed8
         imgs = Images.imadjustintensity(img, [])
         @fact_throws ErrorException Images.imadjustintensity(img, [1])
         mnA = minimum(A)
-        @fact Images.ssd(imgs, (A.-mnA)/(mxA-mnA)) => less_than(eps())
+        @fact Images.ssd(imgs, (A.-mnA)/(mxA-mnA)) --> less_than(eps())
         A = reshape(1:9, 3, 3)
         B = map(Images.ClampMin(Float32, 3), A)
-        @fact (eltype(B) == Float32 && B == [3 4 7; 3 5 8; 3 6 9]) => true
+        @fact (eltype(B) == Float32 && B == [3 4 7; 3 5 8; 3 6 9]) --> true
         B = map(Images.ClampMax(Uint8, 7), A)
-        @fact (eltype(B) == Uint8 && B == [1 4 7; 2 5 7; 3 6 7]) => true
+        @fact (eltype(B) == Uint8 && B == [1 4 7; 2 5 7; 3 6 7]) --> true
 
         A = reinterpret(Ufixed8, [convert(UInt8,1):convert(UInt8,24);], (3, 2, 4))
         img = reinterpret(RGB{Ufixed8}, A, (2,4))
-        @fact separate(img) => permutedims(A, (2,3,1))
+        @fact separate(img) --> permutedims(A, (2,3,1))
     end
 
     context("sc") do
         arr = zeros(4,4)
         arr[2,2] = 0.5
-        @fact sc(arr)[2,2] => 0xffuf8
-        @fact sc(arr, 0.0, 0.75)[2,2] => 0xaauf8
+        @fact sc(arr)[2,2] --> 0xffuf8
+        @fact sc(arr, 0.0, 0.75)[2,2] --> 0xaauf8
     end
 
     context("Color conversion") do
@@ -234,27 +234,27 @@ facts("Map") do
         gray32 = Uint32[convert(UInt32, g)<<16 | convert(UInt32, g)<<8 | convert(UInt32, g) for g in gray8]
         imgray = Images.Image(gray, Dict{ASCIIString,Any}([("colordim",0), ("colorspace","Gray")]))
         buf = map(Images.mapinfo(Uint32, imgray), imgray) # Images.uint32color(imgray)
-        @fact buf => gray32
+        @fact buf --> gray32
         rgb = RGB{Float64}[RGB(g, g, g) for g in gray]
         buf = map(Images.mapinfo(Uint32, rgb), rgb) # Images.uint32color(rgb)
-        @fact buf => gray32
+        @fact buf --> gray32
         r = red(rgb)
-        @fact r => gray
-        img = Images.Image(reinterpret(RGB24, gray32)) # , ["colordim"=>0, "colorspace"=>"RGB24"])
+        @fact r --> gray
+        img = Images.Image(reinterpret(RGB24, gray32)) # , ["colordim"-->0, "colorspace"=>"RGB24"])
         buf = map(Images.mapinfo(Uint32, img), img) # Images.uint32color(img)
-        @fact buf => gray32
+        @fact buf --> gray32
         rgb = repeat(gray, outer=[1,3])
         img = Images.Image(rgb, Dict{ASCIIString,Any}([("colordim",2), ("colorspace","RGB"), ("spatialorder",["x"])]))
         buf = map(Images.mapinfo(Uint32, img), img) # Images.uint32color(img)
-        @fact buf => gray32
+        @fact buf --> gray32
         g = green(img)
-        @fact g => gray
+        @fact g --> gray
         rgb = repeat(gray', outer=[3,1])
         img = Images.Image(rgb, Dict{ASCIIString,Any}([("colordim",1), ("colorspace","RGB"), ("spatialorder",["x"])]))
         buf = map(Images.mapinfo(Uint32, img), img) # Images.uint32color(img)
-        @fact buf => gray32
+        @fact buf --> gray32
         b = blue(img)
-        @fact b => gray
+        @fact b --> gray
     end
 
     context("Map and indexed images") do
@@ -262,6 +262,6 @@ facts("Map") do
         mapi = MapNone(RGB{Ufixed8})
         imgd = map(mapi, img)
         cmap = [RGB{Ufixed8}(1.0,0.6,0.4), RGB{Ufixed8}(0.2, 0.4, 0.6), RGB{Ufixed8}(0.5,0.5,0.5)]
-        @fact imgd => reshape(cmap[[1,3,2,2,3,1]], (2,3))
+        @fact imgd --> reshape(cmap[[1,3,2,2,3,1]], (2,3))
     end
 end

@@ -12,27 +12,27 @@ facts("IO") do
         fn = joinpath(workdir, "2by2.png")
         Images.imwrite(a, fn)
         b = Images.imread(fn)
-        @fact convert(Array, b) => aa
+        @fact convert(Array, b) --> aa
         Images.imwrite(aa, fn)
         b = Images.imread(fn)
-        @fact convert(Array, b) => aa
+        @fact convert(Array, b) --> aa
         aaimg = Images.grayim(aa)
         open(fn, "w") do file
             writemime(file, MIME("image/png"), aaimg, minpixels=0)
         end
         b = Images.imread(fn)
-        @fact b => aaimg
+        @fact b --> aaimg
         aa = convert(Array{Ufixed16}, a)
         Images.imwrite(aa, fn)
         b = Images.imread(fn)
-        @fact convert(Array, b) => aa
+        @fact convert(Array, b) --> aa
         aa = Ufixed12[0.6 0.2;
                       1.4 0.8]
         open(fn, "w") do file
             writemime(file, MIME("image/png"), Images.grayim(aa), minpixels=0)
         end
         b = Images.imread(fn)
-        @fact Images.data(b) => Ufixed8[0.6 0.2;
+        @fact Images.data(b) --> Ufixed8[0.6 0.2;
                                         1.0 0.8]
     end
     
@@ -43,7 +43,7 @@ facts("IO") do
         Images.imwrite(img24, fn)
         b = Images.imread(fn)
         imgrgb8 = convert(Images.Image{RGB{Ufixed8}}, img)
-        @fact Images.data(imgrgb8) => Images.data(b)
+        @fact Images.data(imgrgb8) --> Images.data(b)
     end
     
     context("Writemime's use of restrict") do
@@ -53,7 +53,7 @@ facts("IO") do
             writemime(file, MIME("image/png"), abig, maxpixels=10^6)
         end
         b = Images.imread(fn)
-        @fact Images.data(b) => convert(Array{Ufixed8,2}, Images.data(Images.restrict(abig, (1,2))))
+        @fact Images.data(b) --> convert(Array{Ufixed8,2}, Images.data(Images.restrict(abig, (1,2))))
     end
     
     context("More writemime tests") do
@@ -63,7 +63,7 @@ facts("IO") do
             writemime(file, MIME("image/png"), a, minpixels=0)
         end
         b = Images.imread(fn)
-        @fact Images.data(b) => Images.data(a)
+        @fact Images.data(b) --> Images.data(a)
 
         abig = Images.colorim(rand(Uint8, 3, 1021, 1026))
         fn = joinpath(workdir, "big.png")
@@ -71,7 +71,7 @@ facts("IO") do
             writemime(file, MIME("image/png"), abig, maxpixels=10^6)
         end
         b = Images.imread(fn)
-        @fact Images.data(b) => convert(Array{RGB{Ufixed8},2}, Images.data(Images.restrict(abig, (1,2))))
+        @fact Images.data(b) --> convert(Array{RGB{Ufixed8},2}, Images.data(Images.restrict(abig, (1,2))))
 
         # Issue #269
         abig = Images.colorim(rand(Uint16, 3, 1024, 1023))
@@ -79,7 +79,7 @@ facts("IO") do
             writemime(file, MIME("image/png"), abig, maxpixels=10^6)
         end
         b = Images.imread(fn)
-        @fact Images.data(b) => convert(Array{RGB{Ufixed8},2}, Images.data(Images.restrict(abig, (1,2))))
+        @fact Images.data(b) --> convert(Array{RGB{Ufixed8},2}, Images.data(Images.restrict(abig, (1,2))))
     end
 
     context("Colormap usage") do
@@ -113,7 +113,7 @@ facts("IO") do
         fn = joinpath(workdir, "3d.tif")
         Images.imwrite(A, fn)
         B = Images.imread(fn)
-        @fact A => B
+        @fact A --> B
     end
     
     context("Clamping (issue #256)") do
@@ -124,7 +124,7 @@ facts("IO") do
         Images.imwrite(A, fn, mapi=Images.mapinfo(Images.Clamp, A))
         B = Images.imread(fn)
         A[1,1] = 0
-        @fact B => map(Ufixed8, A)
+        @fact B --> map(Ufixed8, A)
     end
     
     @unix_only context("Reading from a stream (issue #312)") do
@@ -132,6 +132,6 @@ facts("IO") do
         io = open(fn)
         img = Images.imread(io, Images.ImageMagick)
         close(io)
-        @fact isa(img, Images.Image) => true
+        @fact isa(img, Images.Image) --> true
     end
 end

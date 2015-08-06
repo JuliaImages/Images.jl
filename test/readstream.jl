@@ -17,7 +17,7 @@ facts("Read stream") do
         open(testfile, "r") do io
             img = imread(io, Images.OSXNative)
         end
-        @pending something => true
+        @pending something --> true
         rm(workdir, recursive=true)
     end
 end

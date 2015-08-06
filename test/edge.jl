@@ -40,23 +40,23 @@ facts("Edge") do
             (agx, agy) = imgradients(cb_array, method)
             amag = magnitude(agx, agy)
             agphase = phase(agx, agy)
-            @fact (amag, agphase) => magnitude_phase(agx, agy)
+            @fact (amag, agphase) --> magnitude_phase(agx, agy)
 
-            @fact agx[1,SZ]   => less_than(0.0)      # white to black transition
-            @fact agx[1,2*SZ] => greater_than(0.0)   # black to white transition
-            @fact agy[SZ,1]   => less_than(0.0)      # white to black transition
-            @fact agy[2*SZ,1] => greater_than(0.0)   # black to white transition
+            @fact agx[1,SZ]   --> less_than(0.0)      # white to black transition
+            @fact agx[1,2*SZ] --> greater_than(0.0)   # black to white transition
+            @fact agy[SZ,1]   --> less_than(0.0)      # white to black transition
+            @fact agy[2*SZ,1] --> greater_than(0.0)   # black to white transition
 
             # Test direction of increasing gradient
-            @fact cos(agphase[1,SZ])   - (-1.0) => less_than(EPS)   # increasing left  (=  pi   radians)
-            @fact cos(agphase[1,2*SZ]) -   1.0  => less_than(EPS)   # increasing right (=   0   radians)
-            @fact sin(agphase[SZ,1])   -   1.0  => less_than(EPS)   # increasing up    (=  pi/2 radians)
-            @fact sin(agphase[2*SZ,1]) - (-1.0) => less_than(EPS)   # increasing down  (= -pi/2 radians)
+            @fact cos(agphase[1,SZ])   - (-1.0) --> less_than(EPS)   # increasing left  (=  pi   radians)
+            @fact cos(agphase[1,2*SZ]) -   1.0  --> less_than(EPS)   # increasing right (=   0   radians)
+            @fact sin(agphase[SZ,1])   -   1.0  --> less_than(EPS)   # increasing up    (=  pi/2 radians)
+            @fact sin(agphase[2*SZ,1]) - (-1.0) --> less_than(EPS)   # increasing down  (= -pi/2 radians)
 
             # Test that orientation is perpendicular to gradient
             aorient = orientation(agx, agy)
             @fact all((cos(agphase).*cos(aorient) .+ sin(agphase).*sin(aorient) .< EPS) |
-                      ((agphase .== 0.0) & (aorient .== 0.0))) => true
+                      ((agphase .== 0.0) & (aorient .== 0.0))) --> true
                       # this part is where both are zero because there is no gradient
 
             ## Checkerboard Image with row major order
@@ -64,22 +64,22 @@ facts("Edge") do
             (gx, gy) = imgradients(cb_image_xy, method)
             mag = magnitude(gx, gy)
             gphase = phase(gx, gy)
-            @fact (mag, gphase) => magnitude_phase(gx, gy)
+            @fact (mag, gphase) --> magnitude_phase(gx, gy)
 
-            @fact gx[SZ,1]   => less_than(0.0)      # white to black transition
-            @fact gx[2*SZ,1] => greater_than(0.0)   # black to white transition
-            @fact gy[1,SZ]   => less_than(0.0)      # white to black transition
-            @fact gy[1,2*SZ] => greater_than(0.0)   # black to white transition
+            @fact gx[SZ,1]   --> less_than(0.0)      # white to black transition
+            @fact gx[2*SZ,1] --> greater_than(0.0)   # black to white transition
+            @fact gy[1,SZ]   --> less_than(0.0)      # white to black transition
+            @fact gy[1,2*SZ] --> greater_than(0.0)   # black to white transition
 
-            @fact cos(gphase[SZ,1])   - (-1.0) => less_than(EPS)   # increasing left  (=  pi   radians)
-            @fact cos(gphase[2*SZ,1]) -   1.0  => less_than(EPS)   # increasing right (=   0   radians)
-            @fact sin(gphase[1,SZ])   -   1.0  => less_than(EPS)   # increasing up    (=  pi/2 radians)
-            @fact sin(gphase[1,2*SZ]) - (-1.0) => less_than(EPS)   # increasing down  (= -pi/2 radians)
+            @fact cos(gphase[SZ,1])   - (-1.0) --> less_than(EPS)   # increasing left  (=  pi   radians)
+            @fact cos(gphase[2*SZ,1]) -   1.0  --> less_than(EPS)   # increasing right (=   0   radians)
+            @fact sin(gphase[1,SZ])   -   1.0  --> less_than(EPS)   # increasing up    (=  pi/2 radians)
+            @fact sin(gphase[1,2*SZ]) - (-1.0) --> less_than(EPS)   # increasing down  (= -pi/2 radians)
 
             # Test that orientation is perpendicular to gradient
             orient = orientation(gx, gy)
             @fact all((cos(gphase).*cos(orient) .+ sin(gphase).*sin(orient) .< EPS) |
-                      ((gphase .== 0.0) & (orient .== 0.0))) => true
+                      ((gphase .== 0.0) & (orient .== 0.0))) --> true
                        # this part is where both are zero because there is no gradient
 
             ## Checkerboard Image with column-major order
@@ -87,23 +87,23 @@ facts("Edge") do
             (gx, gy) = imgradients(cb_image_yx, method)
             mag = magnitude(gx, gy)
             gphase = phase(gx, gy)
-            @fact (mag, gphase) => magnitude_phase(gx, gy)
+            @fact (mag, gphase) --> magnitude_phase(gx, gy)
 
-            @fact gx[1,SZ]   => less_than(0.0)      # white to black transition
-            @fact gx[1,2*SZ] => greater_than(0.0)   # black to white transition
-            @fact gy[SZ,1]   => less_than(0.0)      # white to black transition
-            @fact gy[2*SZ,1] => greater_than(0.0)   # black to white transition
+            @fact gx[1,SZ]   --> less_than(0.0)      # white to black transition
+            @fact gx[1,2*SZ] --> greater_than(0.0)   # black to white transition
+            @fact gy[SZ,1]   --> less_than(0.0)      # white to black transition
+            @fact gy[2*SZ,1] --> greater_than(0.0)   # black to white transition
 
             # Test direction of increasing gradient
-            @fact cos(gphase[1,SZ])   - (-1.0) => less_than(EPS)   # increasing left  (=  pi   radians)
-            @fact cos(gphase[1,2*SZ]) -   1.0  => less_than(EPS)   # increasing right (=   0   radians)
-            @fact sin(gphase[SZ,1])   -   1.0  => less_than(EPS)   # increasing up    (=  pi/2 radians)
-            @fact sin(gphase[2*SZ,1]) - (-1.0) => less_than(EPS)   # increasing down  (= -pi/2 radians)
+            @fact cos(gphase[1,SZ])   - (-1.0) --> less_than(EPS)   # increasing left  (=  pi   radians)
+            @fact cos(gphase[1,2*SZ]) -   1.0  --> less_than(EPS)   # increasing right (=   0   radians)
+            @fact sin(gphase[SZ,1])   -   1.0  --> less_than(EPS)   # increasing up    (=  pi/2 radians)
+            @fact sin(gphase[2*SZ,1]) - (-1.0) --> less_than(EPS)   # increasing down  (= -pi/2 radians)
 
             # Test that orientation is perpendicular to gradient
             orient = orientation(gx, gy)
             @fact all((cos(gphase).*cos(orient) .+ sin(gphase).*sin(orient) .< EPS) |
-                      ((gphase .== 0.0) & (orient .== 0.0))) => true
+                      ((gphase .== 0.0) & (orient .== 0.0))) --> true
                       # this part is where both are zero because there is no gradient
 
             ## Checkerboard Image with Gray pixels
@@ -111,22 +111,22 @@ facts("Edge") do
             (gxg, gyg) = imgradients(cb_image_gray, method)
             magg = magnitude(gxg, gyg)
             gphaseg = phase(gxg, gyg)
-            @fact (magg, gphaseg) => magnitude_phase(gxg, gyg)
+            @fact (magg, gphaseg) --> magnitude_phase(gxg, gyg)
 
-            @fact gxg[SZ,1]   => less_than(0.0)      # white to black transition
-            @fact gxg[2*SZ,1] => greater_than(0.0)   # black to white transition
-            @fact gyg[1,SZ]   => less_than(0.0)      # white to black transition
-            @fact gyg[1,2*SZ] => greater_than(0.0)   # black to white transition
+            @fact gxg[SZ,1]   --> less_than(0.0)      # white to black transition
+            @fact gxg[2*SZ,1] --> greater_than(0.0)   # black to white transition
+            @fact gyg[1,SZ]   --> less_than(0.0)      # white to black transition
+            @fact gyg[1,2*SZ] --> greater_than(0.0)   # black to white transition
 
-            @fact cos(gphaseg[SZ,1])   - (-1.0) => less_than(EPS)   # increasing left  (=  pi   radians)
-            @fact cos(gphaseg[2*SZ,1]) -   1.0  => less_than(EPS)   # increasing right (=   0   radians)
-            @fact sin(gphaseg[1,SZ])   -   1.0  => less_than(EPS)   # increasing up    (=  pi/2 radians)
-            @fact sin(gphaseg[1,2*SZ]) - (-1.0) => less_than(EPS)   # increasing down  (= -pi/2 radians)
+            @fact cos(gphaseg[SZ,1])   - (-1.0) --> less_than(EPS)   # increasing left  (=  pi   radians)
+            @fact cos(gphaseg[2*SZ,1]) -   1.0  --> less_than(EPS)   # increasing right (=   0   radians)
+            @fact sin(gphaseg[1,SZ])   -   1.0  --> less_than(EPS)   # increasing up    (=  pi/2 radians)
+            @fact sin(gphaseg[1,2*SZ]) - (-1.0) --> less_than(EPS)   # increasing down  (= -pi/2 radians)
 
             # Test that orientation is perpendicular to gradient
             orientg = orientation(gxg, gyg)
             @fact all((cos(gphaseg).*cos(orientg) .+ sin(gphaseg).*sin(orientg) .< EPS) |
-                      ((gphaseg .== 0.0) & (orientg .== 0.0))) => true
+                      ((gphaseg .== 0.0) & (orientg .== 0.0))) --> true
                       # this part is where both are zero because there is no gradient
 
             ## Checkerboard Image with RBG pixels
@@ -134,22 +134,22 @@ facts("Edge") do
             (gx_rgb, gy_rgb) = imgradients(cb_image_rgb, method)
             mag_rgb = magnitude(gx_rgb, gy_rgb)
             gphase_rgb = phase(gx_rgb, gy_rgb)
-            @fact (mag_rgb, gphase_rgb) => magnitude_phase(gx_rgb, gy_rgb)
+            @fact (mag_rgb, gphase_rgb) --> magnitude_phase(gx_rgb, gy_rgb)
 
-            @fact gx_rgb[1,SZ,1]   => less_than(0.0)      # white to black transition
-            @fact gx_rgb[1,2*SZ,1] => greater_than(0.0)   # black to white transition
-            @fact gy_rgb[1,1,SZ]   => less_than(0.0)      # white to black transition
-            @fact gy_rgb[1,1,2*SZ] => greater_than(0.0)   # black to white transition
+            @fact gx_rgb[1,SZ,1]   --> less_than(0.0)      # white to black transition
+            @fact gx_rgb[1,2*SZ,1] --> greater_than(0.0)   # black to white transition
+            @fact gy_rgb[1,1,SZ]   --> less_than(0.0)      # white to black transition
+            @fact gy_rgb[1,1,2*SZ] --> greater_than(0.0)   # black to white transition
 
-            @fact cos(gphase_rgb[1,SZ,1])   - (-1.0) => less_than(EPS)   # increasing left  (=  pi   radians)
-            @fact cos(gphase_rgb[1,2*SZ,1]) -   1.0  => less_than(EPS)   # increasing right (=   0   radians)
-            @fact sin(gphase_rgb[1,1,SZ])   -   1.0  => less_than(EPS)   # increasing up    (=  pi/2 radians)
-            @fact sin(gphase_rgb[1,1,2*SZ]) - (-1.0) => less_than(EPS)   # increasing down  (= -pi/2 radians)
+            @fact cos(gphase_rgb[1,SZ,1])   - (-1.0) --> less_than(EPS)   # increasing left  (=  pi   radians)
+            @fact cos(gphase_rgb[1,2*SZ,1]) -   1.0  --> less_than(EPS)   # increasing right (=   0   radians)
+            @fact sin(gphase_rgb[1,1,SZ])   -   1.0  --> less_than(EPS)   # increasing up    (=  pi/2 radians)
+            @fact sin(gphase_rgb[1,1,2*SZ]) - (-1.0) --> less_than(EPS)   # increasing down  (= -pi/2 radians)
 
             # Test that orientation is perpendicular to gradient
             orient_rgb = orientation(gx_rgb, gy_rgb)
             @fact all((cos(gphase_rgb).*cos(orient_rgb) .+ sin(gphase_rgb).*sin(orient_rgb) .< EPS) |
-                      ((gphase_rgb .== 0.0) & (orient_rgb .== 0.0))) => true
+                      ((gphase_rgb .== 0.0) & (orient_rgb .== 0.0))) --> true
                       # this part is where both are zero because there is no gradient
 
             ## Checkerboard Image with RBG{Float64} pixels
@@ -157,22 +157,22 @@ facts("Edge") do
             (gx_rgb, gy_rgb) = imgradients(cb_image_rgb2, method)
             mag_rgb = magnitude(gx_rgb, gy_rgb)
             gphase_rgb = phase(gx_rgb, gy_rgb)
-            @fact (mag_rgb, gphase_rgb) => magnitude_phase(gx_rgb, gy_rgb)
+            @fact (mag_rgb, gphase_rgb) --> magnitude_phase(gx_rgb, gy_rgb)
 
-            @fact gx_rgb[1,SZ,1]   => less_than(0.0)      # white to black transition
-            @fact gx_rgb[1,2*SZ,1] => greater_than(0.0)   # black to white transition
-            @fact gy_rgb[1,1,SZ]   => less_than(0.0)      # white to black transition
-            @fact gy_rgb[1,1,2*SZ] => greater_than(0.0)   # black to white transition
+            @fact gx_rgb[1,SZ,1]   --> less_than(0.0)      # white to black transition
+            @fact gx_rgb[1,2*SZ,1] --> greater_than(0.0)   # black to white transition
+            @fact gy_rgb[1,1,SZ]   --> less_than(0.0)      # white to black transition
+            @fact gy_rgb[1,1,2*SZ] --> greater_than(0.0)   # black to white transition
 
-            @fact cos(gphase_rgb[1,SZ,1])   - (-1.0) => less_than(EPS)   # increasing left  (=  pi   radians)
-            @fact cos(gphase_rgb[1,2*SZ,1]) -   1.0  => less_than(EPS)   # increasing right (=   0   radians)
-            @fact sin(gphase_rgb[1,1,SZ])   -   1.0  => less_than(EPS)   # increasing up    (=  pi/2 radians)
-            @fact sin(gphase_rgb[1,1,2*SZ]) - (-1.0) => less_than(EPS)   # increasing down  (= -pi/2 radians)
+            @fact cos(gphase_rgb[1,SZ,1])   - (-1.0) --> less_than(EPS)   # increasing left  (=  pi   radians)
+            @fact cos(gphase_rgb[1,2*SZ,1]) -   1.0  --> less_than(EPS)   # increasing right (=   0   radians)
+            @fact sin(gphase_rgb[1,1,SZ])   -   1.0  --> less_than(EPS)   # increasing up    (=  pi/2 radians)
+            @fact sin(gphase_rgb[1,1,2*SZ]) - (-1.0) --> less_than(EPS)   # increasing down  (= -pi/2 radians)
 
             # Test that orientation is perpendicular to gradient
             orient_rgb = orientation(gx_rgb, gy_rgb)
             @fact all((cos(gphase_rgb).*cos(orient_rgb) .+ sin(gphase_rgb).*sin(orient_rgb) .< EPS) |
-                      ((gphase_rgb .== 0.0) & (orient_rgb .== 0.0))) => true
+                      ((gphase_rgb .== 0.0) & (orient_rgb .== 0.0))) --> true
                       # this part is where both are zero because there is no gradient
         end
     end
@@ -192,21 +192,21 @@ facts("Edge") do
             (agx, agy) = imgradients(m, method)
             amag = magnitude(agx, agy)
             agphase = phase(agx, agy)
-            @fact (amag, agphase) => magnitude_phase(agx, agy)
+            @fact (amag, agphase) --> magnitude_phase(agx, agy)
 
-            @fact agx[7,9]  => less_than(0.0)      # white to black transition
-            @fact agx[10,8] => greater_than(0.0)   # black to white transition
-            @fact agy[10,8] => less_than(0.0)      # white to black transition
-            @fact agy[7,9]  => greater_than(0.0)   # black to white transition
+            @fact agx[7,9]  --> less_than(0.0)      # white to black transition
+            @fact agx[10,8] --> greater_than(0.0)   # black to white transition
+            @fact agy[10,8] --> less_than(0.0)      # white to black transition
+            @fact agy[7,9]  --> greater_than(0.0)   # black to white transition
 
             # Test direction of increasing gradient
-            @fact abs(agphase[10,8] -    pi/4 ) => less_than(EPS)   # lower edge (increasing up-right  =   pi/4 radians)
-            @fact abs(agphase[7,9]  - (-3pi/4)) => less_than(EPS)   # upper edge (increasing down-left = -3pi/4 radians)
+            @fact abs(agphase[10,8] -    pi/4 ) --> less_than(EPS)   # lower edge (increasing up-right  =   pi/4 radians)
+            @fact abs(agphase[7,9]  - (-3pi/4)) --> less_than(EPS)   # upper edge (increasing down-left = -3pi/4 radians)
 
             # Test that orientation is perpendicular to gradient
             aorient = orientation(agx, agy)
             @fact all((cos(agphase).*cos(aorient) .+ sin(agphase).*sin(aorient) .< EPS) |
-                      ((agphase .== 0.0) & (aorient .== 0.0))) => true
+                      ((agphase .== 0.0) & (aorient .== 0.0))) --> true
                       # this part is where both are zero because there is no gradient
 
             ## Diagonal Image, row-major order
@@ -214,21 +214,21 @@ facts("Edge") do
             (gx, gy) = imgradients(m_xy, method)
             mag = magnitude(gx, gy)
             gphase = phase(gx, gy)
-            @fact (mag, gphase) => magnitude_phase(gx, gy)
+            @fact (mag, gphase) --> magnitude_phase(gx, gy)
 
-            @fact gx[9,7]  => less_than(0.0)      # white to black transition
-            @fact gx[8,10] => greater_than(0.0)   # black to white transition
-            @fact gy[8,10] => less_than(0.0)      # white to black transition
-            @fact gy[9,7]  => greater_than(0.0)   # black to white transition
+            @fact gx[9,7]  --> less_than(0.0)      # white to black transition
+            @fact gx[8,10] --> greater_than(0.0)   # black to white transition
+            @fact gy[8,10] --> less_than(0.0)      # white to black transition
+            @fact gy[9,7]  --> greater_than(0.0)   # black to white transition
 
             # Test direction of increasing gradient
-            @fact abs(gphase[8,10] -    pi/4 ) => less_than(EPS)   # lower edge (increasing up-right  =   pi/4 radians)
-            @fact abs(gphase[9,7]  - (-3pi/4)) => less_than(EPS)   # upper edge (increasing down-left = -3pi/4 radians)
+            @fact abs(gphase[8,10] -    pi/4 ) --> less_than(EPS)   # lower edge (increasing up-right  =   pi/4 radians)
+            @fact abs(gphase[9,7]  - (-3pi/4)) --> less_than(EPS)   # upper edge (increasing down-left = -3pi/4 radians)
 
             # Test that orientation is perpendicular to gradient
             orient = orientation(gx, gy)
             @fact all((cos(gphase).*cos(orient) .+ sin(gphase).*sin(orient) .< EPS) |
-                      ((gphase .== 0.0) & (orient .== 0.0))) => true
+                      ((gphase .== 0.0) & (orient .== 0.0))) --> true
                       # this part is where both are zero because there is no gradient
 
             ## Diagonal Image, column-major order
@@ -236,21 +236,21 @@ facts("Edge") do
             (gx, gy) = imgradients(m_yx, method)
             mag = magnitude(gx, gy)
             gphase = phase(gx, gy)
-            @fact (mag, gphase) => magnitude_phase(gx, gy)
+            @fact (mag, gphase) --> magnitude_phase(gx, gy)
 
-            @fact gx[7,9]  => less_than(0.0)      # white to black transition
-            @fact gx[10,8] => greater_than(0.0)   # black to white transition
-            @fact gy[10,8] => less_than(0.0)      # white to black transition
-            @fact gy[7,9]  => greater_than(0.0)   # black to white transition
+            @fact gx[7,9]  --> less_than(0.0)      # white to black transition
+            @fact gx[10,8] --> greater_than(0.0)   # black to white transition
+            @fact gy[10,8] --> less_than(0.0)      # white to black transition
+            @fact gy[7,9]  --> greater_than(0.0)   # black to white transition
 
             # Test direction of increasing gradient
-            @fact abs(gphase[10,8] -    pi/4 ) => less_than(EPS)   # lower edge (increasing up-right  =   pi/4 radians)
-            @fact abs(gphase[7,9]  - (-3pi/4)) => less_than(EPS)   # upper edge (increasing down-left = -3pi/4 radians)
+            @fact abs(gphase[10,8] -    pi/4 ) --> less_than(EPS)   # lower edge (increasing up-right  =   pi/4 radians)
+            @fact abs(gphase[7,9]  - (-3pi/4)) --> less_than(EPS)   # upper edge (increasing down-left = -3pi/4 radians)
 
             # Test that orientation is perpendicular to gradient
             orient = orientation(gx, gy)
             @fact all((cos(gphase).*cos(orient) .+ sin(gphase).*sin(orient) .< EPS) |
-                      ((gphase .== 0.0) & (orient .== 0.0))) => true
+                      ((gphase .== 0.0) & (orient .== 0.0))) --> true
                       # this part is where both are zero because there is no gradient
         end
     end
@@ -285,7 +285,7 @@ facts("Edge") do
         b = a + c - v2
         r = -b/2a
 
-        @fact abs(r - 1/6) => less_than(EPS)
+        @fact abs(r - 1/6) --> less_than(EPS)
 
         # Location and value at peak
         peakloc = r*1.35 + 3
@@ -297,30 +297,30 @@ facts("Edge") do
         test_axis1 = transposed $ !horizontal
 
         if test_axis1
-            @fact all(t[:,[1,2,4,5]] .== 0) => true
-            @fact all(t[:,3]   .== peakval) => true
-            @fact all(s[:,[1,2,4,5]] .== zero(Graphics.Point)) => true
+            @fact all(t[:,[1,2,4,5]] .== 0) --> true
+            @fact all(t[:,3]   .== peakval) --> true
+            @fact all(s[:,[1,2,4,5]] .== zero(Graphics.Point)) --> true
         else
-            @fact all(t[[1,2,4,5],:] .== 0) => true
-            @fact all(t[3,:]   .== peakval) => true
-            @fact all(s[[1,2,4,5],:] .== zero(Graphics.Point)) => true
+            @fact all(t[[1,2,4,5],:] .== 0) --> true
+            @fact all(t[3,:]   .== peakval) --> true
+            @fact all(s[[1,2,4,5],:] .== zero(Graphics.Point)) --> true
         end
 
         if transposed
             if which == :horizontal
-                @fact     [pt.x for pt in s[:,3]]  => [1:5;]
-                @fact all([pt.y for pt in s[:,3]] .== peakloc) => true
+                @fact     [pt.x for pt in s[:,3]]  --> [1:5;]
+                @fact all([pt.y for pt in s[:,3]] .== peakloc) --> true
             else
-                @fact all([pt.x for pt in s[3,:]] .== peakloc) => true
-                @fact     [pt.y for pt in s[3,:]]  => [1:5;]
+                @fact all([pt.x for pt in s[3,:]] .== peakloc) --> true
+                @fact     [pt.y for pt in s[3,:]]  --> [1:5;]
             end
         else
             if which == :horizontal
-                @fact     [pt.x for pt in s[3,:]]  => [1:5;]
-                @fact all([pt.y for pt in s[3,:]] .== peakloc) => true
+                @fact     [pt.x for pt in s[3,:]]  --> [1:5;]
+                @fact all([pt.y for pt in s[3,:]] .== peakloc) --> true
             else
-                @fact all([pt.x for pt in s[:,3]] .== peakloc) => true
-                @fact     [pt.y for pt in s[:,3]]  => [1:5;]
+                @fact all([pt.x for pt in s[:,3]] .== peakloc) --> true
+                @fact     [pt.y for pt in s[:,3]]  --> [1:5;]
             end
         end
     end
@@ -384,7 +384,7 @@ function nms_test_diagonal(img)
     b = a + c - v2
     r = -b/2a
 
-    @fact (r - 1/6) => less_than(EPS)
+    @fact (r - 1/6) --> less_than(EPS)
 
     transposed = spatialorder(img)[1] == "x"
 
@@ -393,14 +393,14 @@ function nms_test_diagonal(img)
     x_peak_offset, y_peak_offset = r*fr, -r*fr
     peakval = a*r^2 + b*r + c
 
-    @fact all(diag(data(t))[2:4] .== peakval) => true  # Edge pixels aren't interpolated here
-    @fact all(t - diagm(diag(data(t))) .== 0) => true
+    @fact all(diag(data(t))[2:4] .== peakval) --> true  # Edge pixels aren't interpolated here
+    @fact all(t - diagm(diag(data(t))) .== 0) --> true
 
     diag_s = copyproperties(s, diagm(diag(data(s))))
-    @fact s => diag_s
+    @fact s --> diag_s
 
-    @fact all([pt.x for pt in diag(data(s))[2:4]] - ((2:4) + x_peak_offset) .< EPS) => true
-    @fact all([pt.y for pt in diag(data(s))[2:4]] - ((2:4) + y_peak_offset) .< EPS) => true
+    @fact all([pt.x for pt in diag(data(s))[2:4]] - ((2:4) + x_peak_offset) .< EPS) --> true
+    @fact all([pt.y for pt in diag(data(s))[2:4]] - ((2:4) + y_peak_offset) .< EPS) --> true
 
 end
 
