@@ -32,9 +32,9 @@ end
     magick_base = "http://www.imagemagick.org/download/binaries"
     binariesfn = download(magick_base)
     str = readall(binariesfn)
-    pattern = ">ImageMagick-6.9.*-Q16-$(OS_ARCH)-dll.exe"
+    pattern = "ImageMagick-6.9.*-Q16-$(OS_ARCH)-dll.exe"
     m = match(Regex(pattern), str)
-    magick_exe = convert(ASCIIString, m.match)[2:end]
+    magick_exe = convert(ASCIIString, m.match)
 
     magick_tmpdir = BinDeps.downloadsdir(libwand)
     magick_url = "$(magick_base)/$(magick_exe)"
