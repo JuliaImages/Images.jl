@@ -32,7 +32,7 @@ end
     magick_base = "http://www.imagemagick.org/download/binaries"
     binariesfn = download(magick_base)
     str = readall(binariesfn)
-    pattern = "ImageMagick-6.9.*-Q16-$(OS_ARCH)-dll.exe"
+    pattern = "ImageMagick-6.9.*?-Q16-$(OS_ARCH)-dll.exe"
     m = match(Regex(pattern), str)
     magick_exe = convert(ASCIIString, m.match)
 
