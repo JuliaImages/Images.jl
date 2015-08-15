@@ -477,11 +477,11 @@ type PPMBinary <: ImageFileType end
 type PGMBinary <: ImageFileType end
 type PBMBinary <: ImageFileType end
 
-add_image_file_format(".ppm", b"P6", PPMBinary)
+#add_image_file_format(".ppm", b"P6", PPMBinary)
 #add_image_file_format(".ppm", b"P3", PPMASCII)
-add_image_file_format(".pgm", b"P5", PGMBinary)
+#add_image_file_format(".pgm", b"P5", PGMBinary)
 #add_image_file_format(".pgm", b"P2", PGMASCII)
-add_image_file_format(".pbm", b"P4", PBMBinary)
+#add_image_file_format(".pbm", b"P4", PBMBinary)
 #add_image_file_format(".pbm", b"P1", PBMASCII)
 
 function parse_netpbm_size(stream::IO)
