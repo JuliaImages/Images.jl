@@ -35,7 +35,7 @@ facts("IO") do
         @fact Images.data(b) --> Ufixed8[0.6 0.2;
                                         1.0 0.8]
     end
-    
+
     context("Color") do
         fn = joinpath(workdir, "2by2.png")
         img = Images.colorim(rand(3,2,2))
@@ -45,7 +45,7 @@ facts("IO") do
         imgrgb8 = convert(Images.Image{RGB{Ufixed8}}, img)
         @fact Images.data(imgrgb8) --> Images.data(b)
     end
-    
+
     context("Writemime's use of restrict") do
         abig = Images.grayim(rand(Uint8, 1024, 1023))
         fn = joinpath(workdir, "big.png")
@@ -55,7 +55,7 @@ facts("IO") do
         b = Images.imread(fn)
         @fact Images.data(b) --> convert(Array{Ufixed8,2}, Images.data(Images.restrict(abig, (1,2))))
     end
-    
+
     context("More writemime tests") do
         a = Images.colorim(rand(Uint8, 3, 2, 2))
         fn = joinpath(workdir, "2by2.png")
@@ -95,6 +95,7 @@ facts("IO") do
         cmaprgb[129:end] = [(1-x)*w + x*r for x in f[2:end]]
         img = Images.ImageCmap(dataint, cmaprgb)
         Images.imwrite(img,joinpath(workdir,"cmap.jpg"))
+        Images.imwrite(img,joinpath(workdir,"cmap.pbm"))  # issue #336
     end
 
     context("Alpha") do
@@ -107,7 +108,7 @@ facts("IO") do
         D = Images.imread(fn)
         # @test D[1] == c[1]
     end
-    
+
     context("3D TIFF (issue #307)") do
         A = Images.grayim(rand(0x00:0xff, 2, 2, 4))
         fn = joinpath(workdir, "3d.tif")
@@ -115,7 +116,7 @@ facts("IO") do
         B = Images.imread(fn)
         @fact A --> B
     end
-    
+
     context("Clamping (issue #256)") do
         A = grayim(rand(2,2))
         A[1,1] = -0.4
@@ -126,7 +127,7 @@ facts("IO") do
         A[1,1] = 0
         @fact B --> map(Ufixed8, A)
     end
-    
+
     @unix_only context("Reading from a stream (issue #312)") do
         fn = joinpath(workdir, "2by2.png")
         io = open(fn)
