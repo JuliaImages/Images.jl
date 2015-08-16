@@ -204,12 +204,11 @@ mimewritable(::MIME"image/png", img::AbstractImage) = sdims(img) == 2 && timedim
 # See IJulia issue #229
 mimewritable{T<:ColorValue}(::MIME"image/svg+xml", ::AbstractMatrix{T}) = false
 
+writemime(stream::IO, ::MIME"image/png", img::AbstractImageIndexed; kwargs...) =
+    writemime(stream, MIME"image/png", convert(Image, img); kwargs...)
+
 function writemime(stream::IO, ::MIME"image/png", img::AbstractImage; mapi=mapinfo_writemime(img), minpixels=10^4, maxpixels=10^6)
     assert2d(img)
-    if isa(img, AbstractImageIndexed)
-        # For now, convert to direct
-        img = convert(Image, img)
-    end
     A = data(img)
     nc = ncolorelem(img)
     npix = length(A)/nc
@@ -328,16 +327,14 @@ end
 
 imread{C<:ColorType}(filename::String, ::Type{ImageMagick}, ::Type{C}) = convert(Image{C}, imread(filename, ImageMagick))
 
+imwrite(img::AbstractImageIndexed, filename::String, ::Type{ImageMagick}; kwargs...) = imwrite(convert(Image, img), filename, ImageMagick; kwargs...)
+
 function imwrite(img, filename::String, ::Type{ImageMagick}; mapi = mapinfo(ImageMagick, img), quality = nothing)
     wand = image2wand(img, mapi, quality)
     LibMagick.writeimage(wand, filename)
 end
 
 function image2wand(img, mapi, quality)
-    if isa(img, AbstractImageIndexed)
-        # For now, convert to direct
-        img = convert(Image, img)
-    end
     imgw = map(mapi, img)
     imgw = permutedims_horizontal(imgw)
     have_color = colordim(imgw)!=0
@@ -376,13 +373,12 @@ for ACV in (ColorValue, AbstractRGB,AbstractGray)
         (length(CV.parameters) == 1 && !(CV.abstract)) || continue
         CVnew = CV<:AbstractGray ? Gray : RGB
         @eval mapinfo{T<:Ufixed}(::Type{ImageMagick}, img::AbstractArray{$CV{T}}) = MapNone{$CVnew{T}}()
-        @eval mapinfo{T<:FloatingPoint}(::Type{ImageMagick}, img::AbstractArray{$CV{T}}) =
-            MapNone{$CVnew{Ufixed8}}()
+        @eval mapinfo{CV<:$CV}(::Type{ImageMagick}, img::AbstractArray{CV}) = MapNone{$CVnew{Ufixed8}}()
         CVnew = CV<:AbstractGray ? Gray : BGR
         for AC in subtypes(AbstractAlphaColorValue)
             (length(AC.parameters) == 2 && !(AC.abstract)) || continue
             @eval mapinfo{T<:Ufixed}(::Type{ImageMagick}, img::AbstractArray{$AC{$CV{T},T}}) = MapNone{$AC{$CVnew{T},T}}()
-            @eval mapinfo{T<:FloatingPoint}(::Type{ImageMagick}, img::AbstractArray{$AC{$CV{T},T}}) = MapNone{$AC{$CVnew{Ufixed8}, Ufixed8}}()
+            @eval mapinfo{CV<:$CV}(::Type{ImageMagick}, img::AbstractArray{$AC{CV}}) = MapNone{$AC{$CVnew{Ufixed8}, Ufixed8}}()
         end
     end
 end
