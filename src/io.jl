@@ -373,13 +373,12 @@ for ACV in (ColorValue, AbstractRGB,AbstractGray)
         (length(CV.parameters) == 1 && !(CV.abstract)) || continue
         CVnew = CV<:AbstractGray ? Gray : RGB
         @eval mapinfo{T<:Ufixed}(::Type{ImageMagick}, img::AbstractArray{$CV{T}}) = MapNone{$CVnew{T}}()
-        @eval mapinfo{T<:FloatingPoint}(::Type{ImageMagick}, img::AbstractArray{$CV{T}}) =
-            MapNone{$CVnew{Ufixed8}}()
+        @eval mapinfo{CV<:$CV}(::Type{ImageMagick}, img::AbstractArray{CV}) = MapNone{$CVnew{Ufixed8}}()
         CVnew = CV<:AbstractGray ? Gray : BGR
         for AC in subtypes(AbstractAlphaColorValue)
             (length(AC.parameters) == 2 && !(AC.abstract)) || continue
             @eval mapinfo{T<:Ufixed}(::Type{ImageMagick}, img::AbstractArray{$AC{$CV{T},T}}) = MapNone{$AC{$CVnew{T},T}}()
-            @eval mapinfo{T<:FloatingPoint}(::Type{ImageMagick}, img::AbstractArray{$AC{$CV{T},T}}) = MapNone{$AC{$CVnew{Ufixed8}, Ufixed8}}()
+            @eval mapinfo{CV<:$CV}(::Type{ImageMagick}, img::AbstractArray{$AC{CV}}) = MapNone{$AC{$CVnew{Ufixed8}, Ufixed8}}()
         end
     end
 end

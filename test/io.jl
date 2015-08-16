@@ -95,7 +95,11 @@ facts("IO") do
         cmaprgb[129:end] = [(1-x)*w + x*r for x in f[2:end]]
         img = Images.ImageCmap(dataint, cmaprgb)
         Images.imwrite(img,joinpath(workdir,"cmap.jpg"))
-        Images.imwrite(img,joinpath(workdir,"cmap.pbm"))  # issue #336
+        cmaprgb = Array(RGB, 255) # poorly-typed cmap, issue #336
+        cmaprgb[1:128] = [(1-x)*b + x*w for x in f]
+        cmaprgb[129:end] = [(1-x)*w + x*r for x in f[2:end]]
+        img = Images.ImageCmap(dataint, cmaprgb)
+        Images.imwrite(img,joinpath(workdir,"cmap.pbm"))
     end
 
     context("Alpha") do
