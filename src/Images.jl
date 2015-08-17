@@ -11,8 +11,10 @@ import Base: atan2, clamp, convert, copy, copy!, ctranspose, delete!, done, elty
              start, strides, sub, sum, write, writemime, zero
 # "deprecated imports" are below
 
-using Color, FixedPointNumbers, Compat
-import Color: Fractional
+using Colors, ColorVectorSpace, FixedPointNumbers, Compat
+import Colors: Fractional, red, green, blue
+typealias TransparentRGB{C<:AbstractRGB,T}   Transparent{C,T,4}
+typealias TransparentGray{C<:AbstractGray,T} Transparent{C,T,2}
 if VERSION < v"0.4.0-dev+3275"
     using Base.Graphics
     import Base.Graphics: width, height, Point
@@ -31,9 +33,6 @@ include("compatibility/forcartesian.jl")
 
 const is_little_endian = ENDIAN_BOM == 0x04030201
 immutable TypeConst{N} end  # for passing compile-time constants to functions
-
-include("colortypes.jl")
-using .ColorTypes
 
 include("core.jl")
 include("map.jl")
@@ -76,15 +75,6 @@ function precompile()
 end
 
 export # types
-    Gray,
-    GrayAlpha,
-    ARGB,
-    BGRA,
-    RGBA,
-    RGB1,
-    RGB4,
-    YIQ,
-
     AbstractImage,
     AbstractImageDirect,
     AbstractImageIndexed,
@@ -171,23 +161,12 @@ export # types
     parent,
 
     # color-related functions
-    alphaval,
-    blueval,
-    greenval,
-    redval,
-    red,
-    green,
-    blue,
-    hsi2rgb,
     imadjustintensity,
     indexedcolor,
     lut,
-    rgb2hsi,
-    rgb2ycbcr,
     separate,
     uint32color,
     uint32color!,
-    ycbcr2rgb,
 
     # Scaling of intensity
     sc,
@@ -279,15 +258,10 @@ import Base: scale, scale!  # delete when deprecations are removed
 @deprecate ClipMinMax   ClampMinMax
 @deprecate climdefault(img) zero(eltype(img)), one(eltype(img))
 @deprecate ScaleMinMax{T<:Real}(img::AbstractArray{T}, mn, mx) ScaleMinMax(Ufixed8, img, mn, mx)
-@deprecate ScaleMinMax{T<:ColorValue}(img::AbstractArray{T}, mn, mx) ScaleMinMax(RGB{Ufixed8}, img, mn, mx)
-@deprecate ntsc2rgb(A::AbstractArray)  convert(Array{RGB}, A)
-@deprecate ntsc2rgb(A::AbstractImage)  convert(Image{RGB}, A)
-@deprecate rgb2ntsc(A::AbstractArray)  convert(Array{YIQ}, A)
-@deprecate rgb2ntsc(A::AbstractImage)  convert(Image{YIQ}, A)
+@deprecate ScaleMinMax{T<:Color}(img::AbstractArray{T}, mn, mx) ScaleMinMax(RGB{Ufixed8}, img, mn, mx)
 @deprecate scaleinfo    mapinfo
 @deprecate scale(mapi::MapInfo, A) map(mapi, A)                # delete imports above when eliminated
 @deprecate scale!(dest, mapi::MapInfo, A) map!(mapi, dest, A)  #   "
-@deprecate rgb2gray(img::AbstractArray)  convert(Array{Gray}, img)
 @deprecate copy(A::AbstractArray, B::AbstractArray) copyproperties(A, B)
 @deprecate share(A::AbstractArray, B::AbstractArray) shareproperties(A, B)
 

@@ -1,4 +1,4 @@
-using Images, FactCheck, Base.Test, Color
+using Images, FactCheck, Base.Test, Colors
 
 facts("Edge") do
     EPS = 1e-14

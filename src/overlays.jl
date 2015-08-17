@@ -31,7 +31,7 @@ function Overlay(channels::(@compat Tuple{Vararg{AbstractArray}}), colors,
 end
 
 # Returns the overlay as an image, if possible
-function OverlayImage(channels::(@compat Tuple{Vararg{AbstractArray}}), colors::(@compat Tuple{Vararg{ColorType}}), arg)
+function OverlayImage(channels::(@compat Tuple{Vararg{AbstractArray}}), colors::(@compat Tuple{Vararg{Paint}}), arg)
     ovr = Overlay(channels, colors, arg)
     local prop
     haveprop = false

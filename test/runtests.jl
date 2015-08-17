@@ -1,6 +1,6 @@
 module ImagesTests
 
-using Compat, FactCheck, Base.Test, Images, Color, FixedPointNumbers
+using Compat, FactCheck, Base.Test, Images, Colors, FixedPointNumbers
 if VERSION < v"0.4.0-dev+3275"
     using Base.Graphics
 else
@@ -14,10 +14,9 @@ end
 
 FactCheck.setstyle(:compact)
 
-include("colortypes.jl")
 include("core.jl")
 include("map.jl")
-include("overlays.jl")  # This one can't handle precompiled Color yet
+include("overlays.jl")
 include("io.jl")
 if testing_units
      include("readnrrd.jl")

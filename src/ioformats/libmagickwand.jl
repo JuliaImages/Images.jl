@@ -1,6 +1,6 @@
 module LibMagick
 
-using Color, FixedPointNumbers, ..ColorTypes, Compat
+using Colors, FixedPointNumbers, ..ColorVectorSpace, Compat
 
 import Base: error, size
 
@@ -60,8 +60,7 @@ storagetype(::Type{Uint32}) = INTEGERPIXEL
 storagetype(::Type{Float32}) = FLOATPIXEL
 storagetype(::Type{Float64}) = DOUBLEPIXEL
 storagetype{T<:Ufixed}(::Type{T}) = storagetype(FixedPointNumbers.rawtype(T))
-storagetype{CV<:ColorValue}(::Type{CV}) = storagetype(eltype(CV))
-storagetype{CV<:AbstractAlphaColorValue}(::Type{CV}) = storagetype(eltype(CV))
+storagetype{CV<:Paint}(::Type{CV}) = storagetype(eltype(CV))
 
 # Channel types
 type ChannelType
@@ -162,12 +161,12 @@ function getsize(buffer, channelorder)
         return size(buffer, 2), size(buffer, 3), size(buffer, 4)
     end
 end
-getsize{C<:Union(ColorValue,AbstractAlphaColorValue)}(buffer::AbstractArray{C}, channelorder) = size(buffer, 1), size(buffer, 2), size(buffer, 3)
+getsize{C<:Union(Color,Transparent)}(buffer::AbstractArray{C}, channelorder) = size(buffer, 1), size(buffer, 2), size(buffer, 3)
 
 colorsize(buffer, channelorder) = channelorder == "I" ? 1 : size(buffer, 1)
-colorsize{C<:Union(ColorValue,AbstractAlphaColorValue)}(buffer::AbstractArray{C}, channelorder) = 1
+colorsize{C<:Union(Color,Transparent)}(buffer::AbstractArray{C}, channelorder) = 1
 
-bitdepth{C<:ColorType}(buffer::AbstractArray{C}) = 8*eltype(C)
+bitdepth{C<:Paint}(buffer::AbstractArray{C}) = 8*eltype(C)
 bitdepth{T}(buffer::AbstractArray{T}) = 8*sizeof(T)
 
 # colorspace is included for consistency with constituteimage, but it is not used

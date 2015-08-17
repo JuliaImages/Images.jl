@@ -15,7 +15,7 @@
 #   - implementation of map() for scalars
 #   - implementation of map() for AbstractArrays
 # map(mapi::MapInfo{T}, x) should return an object of type T (for x not an array)
-# map1(mapi::MapInfo{T}, x) is designed to allow T<:ColorValue to work on
+# map1(mapi::MapInfo{T}, x) is designed to allow T<:Color to work on
 #    scalars x::Fractional
 
 
@@ -37,15 +37,13 @@ MapNone{T}(A::AbstractArray{T}) = MapNone{T}()
 similar{T}(mapi::MapNone, ::Type{T}, ::Type) = MapNone{T}()
 
 # Implementation
-map{T<:Real}(mapi::MapNone{T}, val::Real) = convert(T, val)
-map{C<:ColorValue}(mapi::MapNone{C}, c::ColorValue) = convert(C, c)
-map{C<:ColorValue,T}(mapi::MapNone{AlphaColorValue{C,T}}, c::AlphaColorValue) = convert(AlphaColorValue{C,T}, c)
+map{T}(mapi::MapNone{T}, val::Union(Number,Paint)) = convert(T, val)
 map1(mapi::Union(MapNone{RGB24}, MapNone{ARGB32}), b::Bool) = ifelse(b, 0xffuf8, 0x00uf8)
 map1(mapi::Union(MapNone{RGB24},MapNone{ARGB32}), val::Fractional) = convert(Ufixed8, val)
-map1{CT<:ColorType}(mapi::MapNone{CT}, val::Fractional) = convert(eltype(CT), val)
+map1{CT<:Paint}(mapi::MapNone{CT}, val::Fractional) = convert(eltype(CT), val)
 
-map{T<:ColorType}(mapi::MapNone{T}, img::AbstractImageIndexed{T}) = convert(Image{T}, img)
-map{C<:ColorType}(mapi::MapNone{C}, img::AbstractImageDirect{C}) = img  # ambiguity resolution
+map{T<:Paint}(mapi::MapNone{T}, img::AbstractImageIndexed{T}) = convert(Image{T}, img)
+map{C<:Paint}(mapi::MapNone{C}, img::AbstractImageDirect{C}) = img  # ambiguity resolution
 map{T}(mapi::MapNone{T}, img::AbstractArray{T}) = img
 
 
@@ -66,7 +64,7 @@ map{T<:Real,N}(mapi::BitShift{T,N}, val::Real) = _map(T, BS{N}, val)
 map{T<:Real,N}(mapi::BitShift{Gray{T},N}, val::Gray) = Gray(_map(T, BS{N}, val.val))
 map1{N}(mapi::Union(BitShift{RGB24,N},BitShift{ARGB32,N}), val::Unsigned) = _map(Uint8, BS{N}, val)
 map1{N}(mapi::Union(BitShift{RGB24,N},BitShift{ARGB32,N}), val::Ufixed) = _map(Ufixed8, BS{N}, val)
-map1{CT<:ColorType,N}(mapi::BitShift{CT,N}, val::Ufixed) = _map(eltype(CT), BS{N}, val)
+map1{CT<:Paint,N}(mapi::BitShift{CT,N}, val::Ufixed) = _map(eltype(CT), BS{N}, val)
 
 
 ## Clamp types
@@ -114,45 +112,27 @@ map{T<:Fractional,F<:Fractional}(mapi::ClampMinMax{Gray{T},Gray{F}}, val::Gray{F
 map1{T<:Union(RGB24,ARGB32),F<:Fractional}(mapi::ClampMin{T,F}, val::F) = convert(Ufixed8, max(val, mapi.min))
 map1{T<:Union(RGB24,ARGB32),F<:Fractional}(mapi::ClampMax{T,F}, val::F) = convert(Ufixed8, min(val, mapi.max))
 map1{T<:Union(RGB24,ARGB32),F<:Fractional}(mapi::ClampMinMax{T,F}, val::F) = convert(Ufixed8,min(max(val, mapi.min), mapi.max))
-map1{CT<:ColorType,F<:Fractional}(mapi::ClampMin{CT,F}, val::F) = convert(eltype(CT), max(val, mapi.min))
-map1{CT<:ColorType,F<:Fractional}(mapi::ClampMax{CT,F}, val::F) = convert(eltype(CT), min(val, mapi.max))
-map1{CT<:ColorType,F<:Fractional}(mapi::ClampMinMax{CT,F}, val::F) = convert(eltype(CT), min(max(val, mapi.min), mapi.max))
+map1{CT<:Paint,F<:Fractional}(mapi::ClampMin{CT,F}, val::F) = convert(eltype(CT), max(val, mapi.min))
+map1{CT<:Paint,F<:Fractional}(mapi::ClampMax{CT,F}, val::F) = convert(eltype(CT), min(val, mapi.max))
+map1{CT<:Paint,F<:Fractional}(mapi::ClampMinMax{CT,F}, val::F) = convert(eltype(CT), min(max(val, mapi.min), mapi.max))
 
 map{To<:Real}(::Clamp{To}, val::Real) = clamp01(To, val)
 map{To<:Real}(::Clamp{Gray{To}}, val::AbstractGray) = Gray(clamp01(To, val.val))
 map{To<:Real}(::Clamp{Gray{To}}, val::Real) = Gray(clamp01(To, val))
 map1{CT<:AbstractRGB}(::Clamp{CT}, val::Real) = clamp01(eltype(CT), val)
-map1{CT<:AbstractRGB,T}(::Clamp{AlphaColor{CT,T}}, val::Real) = clamp01(T, val)
-map1{CT<:AbstractRGB,T}(::Clamp{AlphaColorValue{CT,T}}, val::Real) = clamp01(T, val)
+map1{P<:TransparentRGB}(::Clamp{P}, val::Real) = clamp01(eltype(P), val)
 
 # Also available as a stand-alone function
 clamp01{T}(::Type{T}, x::Real) = convert(T, min(max(x, zero(x)), one(x)))
 clamp01(x::Real) = clamp01(typeof(x), x)
-for CV in subtypes(AbstractRGB)
-    @eval begin
-        clamp01{T}(x::$CV{T}) = clamp01($CV{T}, x)
-        clamp01{To}(::Type{$CV{To}}, x::AbstractRGB) = $CV{To}(clamp01(To, x.r), clamp01(To, x.g), clamp01(To, x.b))
-        clamp01{T}(x::AlphaColor{$CV{T},T}) = clamp01(AlphaColor{$CV{T},T}, x)
-        clamp01{T}(x::AlphaColorValue{$CV{T},T}) = clamp01(AlphaColorValue{$CV{T},T}, x)
-        clamp01{To,CV2<:AbstractRGB}(::Type{AlphaColor{$CV{To},To}}, x::AlphaColor{CV2}) =
-            AlphaColor{$CV{To},To}(clamp01(To, x.c.r), clamp01(To, x.c.g), clamp01(To, x.c.b), clamp01(To, x.alpha))
-        clamp01{To,CV2<:AbstractRGB}(::Type{AlphaColorValue{$CV{To},To}}, x::AlphaColorValue{CV2}) =
-            AlphaColorValue{$CV{To},To}(clamp01(To, x.c.r), clamp01(To, x.c.g), clamp01(To, x.c.b), clamp01(To, x.alpha))
-        clamp01{To,CV2<:AbstractRGB}(::Type{AlphaColor{$CV{To},To}}, x::AlphaColorValue{CV2}) =
-            AlphaColor{$CV{To},To}(clamp01(To, x.c.r), clamp01(To, x.c.g), clamp01(To, x.c.b), clamp01(To, x.alpha))
-        clamp01{To,CV2<:AbstractRGB}(::Type{AlphaColorValue{$CV{To},To}}, x::AlphaColor{CV2}) =
-            AlphaColorValue{$CV{To},To}(clamp01(To, x.c.r), clamp01(To, x.c.g), clamp01(To, x.c.b), clamp01(To, x.alpha))
-    end
-end
+clamp01(x::Paint) = clamp01(typeof(x), x)
+clamp01{Cdest<:AbstractRGB   }(::Type{Cdest}, x::AbstractRGB)    = (To = eltype(Cdest);
+    Cdest(clamp01(To, red(x)), clamp01(To, green(x)), clamp01(To, blue(x))))
+clamp01{Pdest<:TransparentRGB}(::Type{Pdest}, x::TransparentRGB) = (To = eltype(Pdest);
+    Pdest(clamp01(To, red(x)), clamp01(To, green(x)), clamp01(To, blue(x)), clamp01(To, alpha(x))))
 
 # clamp is generic for any colorspace; this version does the right thing for any RGB type
-clamp(x::AbstractRGB) = clamp01(x)
-for CV in subtypes(AbstractRGB)
-    @eval begin
-        clamp{T}(x::AlphaColorValue{$CV{T},T}) = clamp01(x)
-        clamp{T}(x::AlphaColor{$CV{T},T}) = clamp01(x)
-    end
-end
+clamp(x::Union(AbstractRGB, TransparentRGB)) = clamp01(x)
 
 ## ScaleMinMax
 # This clamps, subtracts the min value, then scales
@@ -169,7 +149,7 @@ immutable ScaleMinMax{To,From,S<:FloatingPoint} <: MapInfo{To}
 end
 
 ScaleMinMax{To,From}(::Type{To}, min::From, max::From, s::FloatingPoint) = ScaleMinMax{To,From,typeof(s)}(min, max, s)
-ScaleMinMax{To<:Union(Fractional,ColorType),From}(::Type{To}, mn::From, mx::From) = ScaleMinMax(To, mn, mx, 1.0f0/(convert(Float32, mx)-convert(Float32, mn)))
+ScaleMinMax{To<:Union(Fractional,Paint),From}(::Type{To}, mn::From, mx::From) = ScaleMinMax(To, mn, mx, 1.0f0/(convert(Float32, mx)-convert(Float32, mn)))
 
 # ScaleMinMax constructors that take AbstractArray input
 ScaleMinMax{To,From<:Real}(::Type{To}, img::AbstractArray{From}, mn::Real, mx::Real) = ScaleMinMax(To, convert(From,mn), convert(From,mx), 1.0f0/(convert(Float32, convert(From, mx))-convert(Float32,convert(From, mn))))
@@ -186,21 +166,21 @@ function map{To<:Real,From<:Union(Real,Gray)}(mapi::ScaleMinMax{To,From}, val::F
     t = ifelse(val  < mapi.min, zero(From), ifelse(val  > mapi.max, mapi.max-mapi.min, val -mapi.min))
     convert(To, mapi.s*t)
 end
-function map{To<:Real,From<:Union(Real,Gray)}(mapi::ScaleMinMax{To,From}, val::Union(Real,ColorType))
+function map{To<:Real,From<:Union(Real,Gray)}(mapi::ScaleMinMax{To,From}, val::Union(Real,Paint))
     map(mapi, convert(From, val))
 end
 function map1{To<:Union(RGB24,ARGB32),From<:Real}(mapi::ScaleMinMax{To,From}, val::From)
     t = ifelse(val  < mapi.min, zero(From), ifelse(val  > mapi.max, mapi.max-mapi.min, val -mapi.min))
     convert(Ufixed8, mapi.s*t)
 end
-function map1{To<:ColorType,From<:Real}(mapi::ScaleMinMax{To,From}, val::From)
+function map1{To<:Paint,From<:Real}(mapi::ScaleMinMax{To,From}, val::From)
     t = ifelse(val  < mapi.min, zero(From), ifelse(val  > mapi.max, mapi.max-mapi.min, val -mapi.min))
     convert(eltype(To), mapi.s*t)
 end
-function map1{To<:Union(RGB24,ARGB32),From<:Real}(mapi::ScaleMinMax{To,From}, val::Union(Real,ColorType))
+function map1{To<:Union(RGB24,ARGB32),From<:Real}(mapi::ScaleMinMax{To,From}, val::Union(Real,Paint))
     map1(mapi, convert(From, val))
 end
-function map1{To<:ColorType,From<:Real}(mapi::ScaleMinMax{To,From}, val::Union(Real,ColorType))
+function map1{To<:Paint,From<:Real}(mapi::ScaleMinMax{To,From}, val::Union(Real,Paint))
     map1(mapi, convert(From, val))
 end
 
@@ -256,14 +236,14 @@ for SI in (MapInfo, AbstractClamp)
                     RGB24(0)
                 end
             end
-            map{T}(mapi::$ST{RGB24}, g::GrayAlpha{T}) = map(mapi, g.c.val)
+            map{G<:Gray}(mapi::$ST{RGB24}, g::Transparent{G}) = map(mapi, gray(g))
             map(mapi::$ST{ARGB32}, g::Gray) = map(mapi, g.val)
             function map(mapi::$ST{ARGB32}, g::Real)
                 x = map1(mapi, g)
                 convert(ARGB32, ARGB{Ufixed8}(x,x,x,0xffuf8))
             end
-            function map{T}(mapi::$ST{ARGB32}, g::GrayAlpha{T})
-                x = map1(mapi, g.c.val)
+            function map{G<:Gray}(mapi::$ST{ARGB32}, g::Transparent{G})
+                x = map1(mapi, gray(g))
                 convert(ARGB32, ARGB{Ufixed8}(x,x,x,map1(mapi, g.alpha)))
             end
         end
@@ -278,8 +258,8 @@ for SI in (MapInfo, AbstractClamp)
         end
         for OA in (:RGBA, :ARGB, :BGRA)
             exAlphaGray = ST == MapNone ? :nothing : quote
-                function map{T,S}(mapi::$ST{$OA{T}}, g::GrayAlpha{S})
-                    x = map1(mapi, g.c.val)
+                function map{T,G<:Gray}(mapi::$ST{$OA{T}}, g::Transparent{G})
+                    x = map1(mapi, gray(g))
                     $OA{T}(x,x,x,map1(mapi, g.alpha))
                 end  # avoids an ambiguity warning with MapNone definitions
             end
@@ -295,43 +275,43 @@ for SI in (MapInfo, AbstractClamp)
         @eval begin
             # AbstractRGB and abstract ARGB inputs
             map(mapi::$ST{RGB24}, rgb::AbstractRGB) =
-                convert(RGB24, RGB{Ufixed8}(map1(mapi, rgb.r), map1(mapi, rgb.g), map1(mapi, rgb.b)))
-            map{C<:AbstractRGB, TC}(mapi::$ST{RGB24}, argb::AbstractAlphaColorValue{C,TC}) =
-                convert(RGB24, RGB{Ufixed8}(map1(mapi, argb.c.r), map1(mapi, argb.c.g),
-                                            map1(mapi, argb.c.b)))
-            map{C<:AbstractRGB, TC}(mapi::$ST{ARGB32}, argb::AbstractAlphaColorValue{C,TC}) =
-                convert(ARGB32, ARGB{Ufixed8}(map1(mapi, argb.c.r), map1(mapi, argb.c.g),
-                                              map1(mapi, argb.c.b), map1(mapi, argb.alpha)))
+                convert(RGB24, RGB{Ufixed8}(map1(mapi, red(rgb)), map1(mapi, green(rgb)), map1(mapi, blue(rgb))))
+            map{C<:AbstractRGB, TC}(mapi::$ST{RGB24}, argb::Transparent{C,TC}) =
+                convert(RGB24, RGB{Ufixed8}(map1(mapi, red(argb)), map1(mapi, green(argb)),
+                                            map1(mapi, blue(argb))))
+            map{C<:AbstractRGB, TC}(mapi::$ST{ARGB32}, argb::Transparent{C,TC}) =
+                convert(ARGB32, ARGB{Ufixed8}(map1(mapi, red(argb)), map1(mapi, green(argb)),
+                                              map1(mapi, blue(argb)), map1(mapi, alpha(argb))))
             map(mapi::$ST{ARGB32}, rgb::AbstractRGB) =
-                convert(ARGB32, ARGB{Ufixed8}(map1(mapi, rgb.r), map1(mapi, rgb.g), map1(mapi, rgb.b)))
+                convert(ARGB32, ARGB{Ufixed8}(map1(mapi, red(rgb)), map1(mapi, green(rgb)), map1(mapi, blue(rgb))))
         end
         for O in (:RGB, :BGR)
             @eval begin
                 map{T}(mapi::$ST{$O{T}}, rgb::AbstractRGB) =
-                    $O{T}(map1(mapi, rgb.r), map1(mapi, rgb.g), map1(mapi, rgb.b))
-                map{T,C<:AbstractRGB, TC}(mapi::$ST{$O{T}}, argb::AbstractAlphaColorValue{C,TC}) =
-                    $O{T}(map1(mapi, argb.c.r), map1(mapi, argb.c.g), map1(mapi, argb.c.b))
+                    $O{T}(map1(mapi, red(rgb)), map1(mapi, green(rgb)), map1(mapi, blue(rgb)))
+                map{T,C<:AbstractRGB, TC}(mapi::$ST{$O{T}}, argb::Transparent{C,TC}) =
+                    $O{T}(map1(mapi, red(argb)), map1(mapi, green(argb)), map1(mapi, blue(argb)))
             end
         end
         for OA in (:RGBA, :ARGB, :BGRA)
             @eval begin
-                map{T, C<:AbstractRGB, TC}(mapi::$ST{$OA{T}}, argb::AbstractAlphaColorValue{C,TC}) =
-                    $OA{T}(map1(mapi, argb.c.r), map1(mapi, argb.c.g),
-                            map1(mapi, argb.c.b), map1(mapi, argb.alpha))
+                map{T, C<:AbstractRGB, TC}(mapi::$ST{$OA{T}}, argb::Transparent{C,TC}) =
+                    $OA{T}(map1(mapi, red(argb)), map1(mapi, green(argb)),
+                            map1(mapi, blue(argb)), map1(mapi, alpha(argb)))
                 map{T}(mapi::$ST{$OA{T}}, argb::ARGB32) = map(mapi, convert(RGBA{Ufixed8}, argb))
                 map{T}(mapi::$ST{$OA{T}}, rgb::AbstractRGB) =
-                    $OA{T}(map1(mapi, rgb.r), map1(mapi, rgb.g), map1(mapi, rgb.b))
+                    $OA{T}(map1(mapi, red(rgb)), map1(mapi, green(rgb)), map1(mapi, blue(rgb)))
                 map{T}(mapi::$ST{$OA{T}}, rgb::RGB24) = map(mapi, convert(RGB{Ufixed8}, argb))
             end
         end
     end
 end
 
-# # Apply to any ColorType
-# map(f::Callable, x::ColorValue) = f(x)
-# map(mapi, x::ColorValue) = map(mapi, convert(RGB, x))
-# map{C<:ColorValue, TC}(f::Callable, x::AbstractAlphaColorValue{C, TC}) = f(convert(ARGB, x))
-# map{C<:ColorValue, TC}(mapi, x::AbstractAlphaColorValue{C, TC}) = map(mapi, convert(ARGB, x))
+# # Apply to any Paint
+# map(f::Callable, x::Color) = f(x)
+# map(mapi, x::Color) = map(mapi, convert(RGB, x))
+# map{C<:Color, TC}(f::Callable, x::Transparent{C, TC}) = f(convert(ARGB, x))
+# map{C<:Color, TC}(mapi, x::Transparent{C, TC}) = map(mapi, convert(ARGB, x))
 
 ## Fallback definitions of map() for array types
 
@@ -340,9 +320,9 @@ function map{T}(mapi::MapInfo{T}, img::AbstractArray)
     map!(mapi, out, img)
 end
 
-map{C<:ColorType,R<:Real}(mapi::MapNone{C}, img::AbstractImageDirect{R}) = mapcd(mapi, img)  # ambiguity resolution
-map{C<:ColorType,R<:Real}(mapi::MapInfo{C}, img::AbstractImageDirect{R}) = mapcd(mapi, img)
-function mapcd{C<:ColorType,R<:Real}(mapi::MapInfo{C}, img::AbstractImageDirect{R})
+map{C<:Paint,R<:Real}(mapi::MapNone{C}, img::AbstractImageDirect{R}) = mapcd(mapi, img)  # ambiguity resolution
+map{C<:Paint,R<:Real}(mapi::MapInfo{C}, img::AbstractImageDirect{R}) = mapcd(mapi, img)
+function mapcd{C<:Paint,R<:Real}(mapi::MapInfo{C}, img::AbstractImageDirect{R})
     # For this case we have to check whether color is defined along an array axis
     cd = colordim(img)
     if cd > 0
@@ -356,7 +336,7 @@ function mapcd{C<:ColorType,R<:Real}(mapi::MapInfo{C}, img::AbstractImageDirect{
     out   # note this isn't type-stable
 end
 
-function map{T<:ColorType}(mapi::MapInfo{T}, img::AbstractImageIndexed)
+function map{T<:Paint}(mapi::MapInfo{T}, img::AbstractImageIndexed)
     out = Image(Array(T, size(img)), properties(img))
     map!(mapi, out, img)
 end
@@ -394,7 +374,7 @@ end
 # NC is the number of color channels
 # This is a very flexible implementation: color can be stored along any dimension, and it handles conversions to
 # many different colorspace representations.
-for (CT, NC) in ((Union(AbstractRGB,RGB24), 3), (Union(RGBA,ARGB,ARGB32), 4), (Union(GrayAlpha,AGray32), 2))
+for (CT, NC) in ((Union(AbstractRGB,RGB24), 3), (Union(RGBA,ARGB,ARGB32), 4), (Union(AGray,GrayA,AGray32), 2))
     for N = 1:4
         N1 = N+1
         @eval begin
@@ -425,18 +405,18 @@ const bitshiftto8 = ((Ufixed10, 2), (Ufixed12, 4), (Ufixed14, 6), (Ufixed16, 8))
 typealias GrayArray{T<:Fractional} Union(AbstractArray{T}, AbstractArray{Gray{T}})
 # note, though, that we need to override for AbstractImage in case the "colorspace" property is defined differently
 
-# mapinfo{T<:Union(Real,ColorType)}(::Type{T}, img::AbstractArray{T}) = MapNone(img)
+# mapinfo{T<:Union(Real,Paint)}(::Type{T}, img::AbstractArray{T}) = MapNone(img)
 mapinfo{T<:Ufixed}(::Type{T}, img::AbstractArray{T}) = MapNone(img)
 mapinfo{T<:FloatingPoint}(::Type{T}, img::AbstractArray{T}) = MapNone(img)
 
 # Grayscale methods
 mapinfo(::Type{Ufixed8}, img::GrayArray{Ufixed8}) = MapNone{Ufixed8}()
 mapinfo(::Type{Gray{Ufixed8}}, img::GrayArray{Ufixed8}) = MapNone{Gray{Ufixed8}}()
-mapinfo(::Type{GrayAlpha{Ufixed8}}, img::AbstractArray{GrayAlpha{Ufixed8}}) = MapNone{GrayAlpha{Ufixed8}}()
+mapinfo(::Type{GrayA{Ufixed8}}, img::AbstractArray{GrayA{Ufixed8}}) = MapNone{GrayA{Ufixed8}}()
 for (T,n) in bitshiftto8
     @eval mapinfo(::Type{Ufixed8}, img::GrayArray{$T}) = BitShift{Ufixed8,$n}()
     @eval mapinfo(::Type{Gray{Ufixed8}}, img::GrayArray{$T}) = BitShift{Gray{Ufixed8},$n}()
-    @eval mapinfo(::Type{GrayAlpha{Ufixed8}}, img::AbstractArray{GrayAlpha{$T}}) = BitShift{GrayAlpha{Ufixed8},$n}()
+    @eval mapinfo(::Type{GrayA{Ufixed8}}, img::AbstractArray{GrayA{$T}}) = BitShift{GrayA{Ufixed8},$n}()
 end
 mapinfo{T<:Ufixed,F<:FloatingPoint}(::Type{T}, img::GrayArray{F}) = ClampMinMax(T, zero(F), one(F))
 mapinfo{T<:Ufixed,F<:FloatingPoint}(::Type{Gray{T}}, img::GrayArray{F}) = ClampMinMax(Gray{T}, zero(F), one(F))
@@ -463,6 +443,7 @@ mapinfo{F<:Fractional}(::Type{RGBA{Ufixed8}}, img::AbstractArray{RGBA{F}}) = Cla
 mapinfo(::Type{RGB24}, img::AbstractArray{RGB24}) = MapNone{RGB24}()
 mapinfo(::Type{ARGB32}, img::AbstractArray{ARGB32}) = MapNone{ARGB32}()
 for C in tuple(subtypes(AbstractRGB)..., Gray)
+    C == RGB24 && continue
     @eval mapinfo(::Type{RGB24}, img::AbstractArray{$C{Ufixed8}}) = MapNone{RGB24}()
     @eval mapinfo(::Type{ARGB32}, img::AbstractArray{$C{Ufixed8}}) = MapNone{ARGB32}()
     for (T, n) in bitshiftto8
@@ -471,7 +452,7 @@ for C in tuple(subtypes(AbstractRGB)..., Gray)
     end
     @eval mapinfo{F<:FloatingPoint}(::Type{RGB24}, img::AbstractArray{$C{F}}) = ClampMinMax(RGB24, zero(F), one(F))
     @eval mapinfo{F<:FloatingPoint}(::Type{ARGB32}, img::AbstractArray{$C{F}}) = ClampMinMax(ARGB32, zero(F), one(F))
-    for AC in subtypes(AbstractAlphaColorValue)
+    for AC in subtypes(Transparent)
         length(AC.parameters) == 2 || continue
         @eval mapinfo(::Type{ARGB32}, img::AbstractArray{$AC{$C{Ufixed8},Ufixed8}}) = MapNone{ARGB32}()
         @eval mapinfo(::Type{RGB24}, img::AbstractArray{$AC{$C{Ufixed8},Ufixed8}}) = MapNone{RGB24}()
@@ -484,14 +465,14 @@ for C in tuple(subtypes(AbstractRGB)..., Gray)
     end
 end
 
-mapinfo{CT<:ColorType}(::Type{RGB24},  img::AbstractArray{CT}) = MapNone{RGB24}()
-mapinfo{CT<:ColorType}(::Type{ARGB32}, img::AbstractArray{CT}) = MapNone{ARGB32}()
+mapinfo{CT<:Paint}(::Type{RGB24},  img::AbstractArray{CT}) = MapNone{RGB24}()
+mapinfo{CT<:Paint}(::Type{ARGB32}, img::AbstractArray{CT}) = MapNone{ARGB32}()
 
 
 # Uint32 conversions will use ARGB32 for images that have an alpha channel,
 # and RGB24 when not
-mapinfo{CV<:Union(Fractional,ColorValue)}(::Type{Uint32}, img::AbstractArray{CV}) = mapinfo(RGB24, img)
-mapinfo{CV<:AbstractAlphaColorValue}(::Type{Uint32}, img::AbstractArray{CV}) = mapinfo(ARGB32, img)
+mapinfo{CV<:Union(Fractional,Color,AbstractGray)}(::Type{Uint32}, img::AbstractArray{CV}) = mapinfo(RGB24, img)
+mapinfo{CV<:Transparent}(::Type{Uint32}, img::AbstractArray{CV}) = mapinfo(ARGB32, img)
 mapinfo(::Type{Uint32}, img::Union(AbstractArray{Bool},BitArray)) = mapinfo(RGB24, img)
 mapinfo(::Type{Uint32}, img::AbstractArray{Uint32}) = MapNone{Uint32}()
 
@@ -519,11 +500,11 @@ for (fn,T) in ((:float32, Float32), (:float64, Float64), (:ufixed8, Ufixed8),
                (:ufixed10, Ufixed10), (:ufixed12, Ufixed12), (:ufixed14, Ufixed14),
                (:ufixed16, Ufixed16))
     @eval begin
-        function $fn{C<:ColorType}(A::AbstractArray{C})
+        function $fn{C<:Paint}(A::AbstractArray{C})
             newC = eval(C.name.name){$T}
             convert(Array{newC}, A)
         end
-        $fn{C<:ColorType}(img::AbstractImage{C}) = shareproperties(img, $fn(data(img)))
+        $fn{C<:Paint}(img::AbstractImage{C}) = shareproperties(img, $fn(data(img)))
     end
 end
 

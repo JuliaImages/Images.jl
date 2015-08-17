@@ -1,4 +1,4 @@
-using FactCheck, Images, Color, FixedPointNumbers
+using FactCheck, Images, Colors, FixedPointNumbers
 
 testing_units = Int == Int64
 if testing_units

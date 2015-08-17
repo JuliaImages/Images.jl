@@ -142,7 +142,7 @@ function imread(filename::String;extraprop="",extrapropertynames=false,mmap=:aut
     end
 end
 
-imread{C<:ColorValue}(filename::String, ::Type{C}) = imread(filename, ImageMagick, C)
+imread{C<:Color}(filename::String, ::Type{C}) = imread(filename, ImageMagick, C)
 
 # Identify via magic bytes
 function image_decode_magic{S<:IO}(stream::S, candidates::AbstractVector{Int})
@@ -202,7 +202,7 @@ end
 mimewritable(::MIME"image/png", img::AbstractImage) = sdims(img) == 2 && timedim(img) == 0
 # We have to disable Color's display via SVG, because both will get sent with unfortunate results.
 # See IJulia issue #229
-mimewritable{T<:ColorValue}(::MIME"image/svg+xml", ::AbstractMatrix{T}) = false
+mimewritable{T<:Color}(::MIME"image/svg+xml", ::AbstractMatrix{T}) = false
 
 writemime(stream::IO, ::MIME"image/png", img::AbstractImageIndexed; kwargs...) =
     writemime(stream, MIME"image/png", convert(Image, img); kwargs...)
@@ -234,15 +234,15 @@ function mapinfo_writemime(img; maxpixels=10^6)
     mapinfo_writemime_restricted(img)
 end
 mapinfo_writemime_{T}(img::AbstractImage{Gray{T}}) = mapinfo(Gray{Ufixed8},img)
-mapinfo_writemime_{C<:ColorValue}(img::AbstractImage{C}) = mapinfo(RGB{Ufixed8},img)
-mapinfo_writemime_{AC<:GrayAlpha}(img::AbstractImage{AC}) = mapinfo(GrayAlpha{Ufixed8},img)
-mapinfo_writemime_{AC<:AbstractAlphaColorValue}(img::AbstractImage{AC}) = mapinfo(RGBA{Ufixed8},img)
+mapinfo_writemime_{C<:Color}(img::AbstractImage{C}) = mapinfo(RGB{Ufixed8},img)
+mapinfo_writemime_{AC<:GrayA}(img::AbstractImage{AC}) = mapinfo(GrayA{Ufixed8},img)
+mapinfo_writemime_{AC<:Transparent}(img::AbstractImage{AC}) = mapinfo(RGBA{Ufixed8},img)
 mapinfo_writemime_(img::AbstractImage) = mapinfo(Ufixed8,img)
 
 mapinfo_writemime_restricted{T}(img::AbstractImage{Gray{T}}) = ClampMinMax(Gray{Ufixed8},0.0,1.0)
-mapinfo_writemime_restricted{C<:ColorValue}(img::AbstractImage{C}) = ClampMinMax(RGB{Ufixed8},0.0,1.0)
-mapinfo_writemime_restricted{AC<:GrayAlpha}(img::AbstractImage{AC}) = ClampMinMax(GrayAlpha{Ufixed8},0.0,1.0)
-mapinfo_writemime_restricted{AC<:AbstractAlphaColorValue}(img::AbstractImage{AC}) = ClampMinMax(RGBA{Ufixed8},0.0,1.0)
+mapinfo_writemime_restricted{C<:Color}(img::AbstractImage{C}) = ClampMinMax(RGB{Ufixed8},0.0,1.0)
+mapinfo_writemime_restricted{AC<:GrayA}(img::AbstractImage{AC}) = ClampMinMax(GrayA{Ufixed8},0.0,1.0)
+mapinfo_writemime_restricted{AC<:Transparent}(img::AbstractImage{AC}) = ClampMinMax(RGBA{Ufixed8},0.0,1.0)
 mapinfo_writemime_restricted(img::AbstractImage) = mapinfo(Ufixed8,img)
 
 
@@ -303,7 +303,7 @@ function imread(filename::Union(String,IO), ::Type{ImageMagick};extraprop="",ext
                 T, channelorder = ARGB{T}, "ARGB"
             end
         elseif channelorder == "Gray"
-            T, channelorder = GrayAlpha{T}, "IA"
+            T, channelorder = GrayA{T}, "IA"
         else
             error("Cannot parse colorspace $channelorder")
         end
@@ -325,7 +325,7 @@ function imread(filename::Union(String,IO), ::Type{ImageMagick};extraprop="",ext
     Image(buf, prop)
 end
 
-imread{C<:ColorType}(filename::String, ::Type{ImageMagick}, ::Type{C}) = convert(Image{C}, imread(filename, ImageMagick))
+imread{C<:Paint}(filename::String, ::Type{ImageMagick}, ::Type{C}) = convert(Image{C}, imread(filename, ImageMagick))
 
 imwrite(img::AbstractImageIndexed, filename::String, ::Type{ImageMagick}; kwargs...) = imwrite(convert(Image, img), filename, ImageMagick; kwargs...)
 
@@ -353,7 +353,7 @@ function image2wand(img, mapi, quality)
     channelorder = colorspace(imgw)
     if channelorder == "Gray"
         channelorder = "I"
-    elseif channelorder == "GrayAlpha"
+    elseif channelorder == "GrayA"
         channelorder = "IA"
     end
     tmp = to_explicit(to_contiguous(data(imgw)))
@@ -368,17 +368,20 @@ end
 # ImageMagick mapinfo client. Converts to RGB and uses Ufixed.
 mapinfo{T<:Ufixed}(::Type{ImageMagick}, img::AbstractArray{T}) = MapNone{T}()
 mapinfo{T<:FloatingPoint}(::Type{ImageMagick}, img::AbstractArray{T}) = MapNone{Ufixed8}()
-for ACV in (ColorValue, AbstractRGB,AbstractGray)
+for ACV in (Color, AbstractRGB,AbstractGray)
     for CV in subtypes(ACV)
         (length(CV.parameters) == 1 && !(CV.abstract)) || continue
         CVnew = CV<:AbstractGray ? Gray : RGB
         @eval mapinfo{T<:Ufixed}(::Type{ImageMagick}, img::AbstractArray{$CV{T}}) = MapNone{$CVnew{T}}()
         @eval mapinfo{CV<:$CV}(::Type{ImageMagick}, img::AbstractArray{CV}) = MapNone{$CVnew{Ufixed8}}()
         CVnew = CV<:AbstractGray ? Gray : BGR
-        for AC in subtypes(AbstractAlphaColorValue)
-            (length(AC.parameters) == 2 && !(AC.abstract)) || continue
-            @eval mapinfo{T<:Ufixed}(::Type{ImageMagick}, img::AbstractArray{$AC{$CV{T},T}}) = MapNone{$AC{$CVnew{T},T}}()
-            @eval mapinfo{CV<:$CV}(::Type{ImageMagick}, img::AbstractArray{$AC{CV}}) = MapNone{$AC{$CVnew{Ufixed8}, Ufixed8}}()
+        AC, CA       = alphacolor(CV), coloralpha(CV)
+        ACnew, CAnew = alphacolor(CVnew), coloralpha(CVnew)
+        @eval begin
+            mapinfo{T<:Ufixed}(::Type{ImageMagick}, img::AbstractArray{$AC{T}}) = MapNone{$ACnew{T}}()
+            mapinfo{P<:$AC}(::Type{ImageMagick}, img::AbstractArray{P}) = MapNone{$ACnew{Ufixed8}}()
+            mapinfo{T<:Ufixed}(::Type{ImageMagick}, img::AbstractArray{$CA{T}}) = MapNone{$CAnew{T}}()
+            mapinfo{P<:$CA}(::Type{ImageMagick}, img::AbstractArray{P}) = MapNone{$CAnew{Ufixed8}}()
         end
     end
 end
@@ -388,18 +391,20 @@ mapinfo(::Type{ImageMagick}, img::AbstractArray{ARGB32}) = MapNone{BGRA{Ufixed8}
 # Clamping mapinfo client. Converts to RGB and uses Ufixed, clamping floating-point values to [0,1].
 mapinfo{T<:Ufixed}(::Type{Clamp}, img::AbstractArray{T}) = MapNone{T}()
 mapinfo{T<:FloatingPoint}(::Type{Clamp}, img::AbstractArray{T}) = ClampMinMax(Ufixed8, zero(T), one(T))
-for ACV in (ColorValue, AbstractRGB,AbstractGray)
+for ACV in (Color, AbstractRGB,AbstractGray)
     for CV in subtypes(ACV)
         (length(CV.parameters) == 1 && !(CV.abstract)) || continue
         CVnew = CV<:AbstractGray ? Gray : RGB
         @eval mapinfo{T<:Ufixed}(::Type{Clamp}, img::AbstractArray{$CV{T}}) = MapNone{$CVnew{T}}()
-        @eval mapinfo{T<:FloatingPoint}(::Type{Clamp}, img::AbstractArray{$CV{T}}) =
-            Clamp{$CVnew{Ufixed8}}()
+        @eval mapinfo{CV<:$CV}(::Type{Clamp}, img::AbstractArray{CV}) = Clamp{$CVnew{Ufixed8}}()
         CVnew = CV<:AbstractGray ? Gray : BGR
-        for AC in subtypes(AbstractAlphaColorValue)
-            (length(AC.parameters) == 2 && !(AC.abstract)) || continue
-            @eval mapinfo{T<:Ufixed}(::Type{Clamp}, img::AbstractArray{$AC{$CV{T},T}}) = MapNone{$AC{$CVnew{T},T}}()
-            @eval mapinfo{T<:FloatingPoint}(::Type{Clamp}, img::AbstractArray{$AC{$CV{T},T}}) = Clamp{$AC{$CVnew{Ufixed8}, Ufixed8}}()
+        AC, CA       = alphacolor(CV), coloralpha(CV)
+        ACnew, CAnew = alphacolor(CVnew), coloralpha(CVnew)
+        @eval begin
+            mapinfo{T<:Ufixed}(::Type{Clamp}, img::AbstractArray{$AC{T}}) = MapNone{$ACnew{T}}()
+            mapinfo{P<:$AC}(::Type{Clamp}, img::AbstractArray{P}) = Clamp{$ACnew{Ufixed8}}()
+            mapinfo{T<:Ufixed}(::Type{Clamp}, img::AbstractArray{$CA{T}}) = MapNone{$CAnew{T}}()
+            mapinfo{P<:$CA}(::Type{Clamp}, img::AbstractArray{P}) = Clamp{$CAnew{Ufixed8}}()
         end
     end
 end
@@ -416,8 +421,8 @@ to_explicit{T<:Ufixed}(A::AbstractArray{RGB{T}}) = reinterpret(FixedPointNumbers
 to_explicit{T<:FloatingPoint}(A::AbstractArray{RGB{T}}) = to_explicit(map(ClipMinMax(RGB{Ufixed8}, zero(RGB{T}), one(RGB{T})), A))
 to_explicit{T<:Ufixed}(A::AbstractArray{Gray{T}}) = reinterpret(FixedPointNumbers.rawtype(T), A, size(A))
 to_explicit{T<:FloatingPoint}(A::AbstractArray{Gray{T}}) = to_explicit(map(ClipMinMax(Gray{Ufixed8}, zero(Gray{T}), one(Gray{T})), A))
-to_explicit{T<:Ufixed}(A::AbstractArray{GrayAlpha{T}}) = reinterpret(FixedPointNumbers.rawtype(T), A, tuple(2, size(A)...))
-to_explicit{T<:FloatingPoint}(A::AbstractArray{GrayAlpha{T}}) = to_explicit(map(ClipMinMax(GrayAlpha{Ufixed8}, zero(GrayAlpha{T}), one(GrayAlpha{T})), A))
+to_explicit{T<:Ufixed}(A::AbstractArray{GrayA{T}}) = reinterpret(FixedPointNumbers.rawtype(T), A, tuple(2, size(A)...))
+to_explicit{T<:FloatingPoint}(A::AbstractArray{GrayA{T}}) = to_explicit(map(ClipMinMax(GrayA{Ufixed8}, zero(GrayA{T}), one(GrayA{T})), A))
 to_explicit{T<:Ufixed}(A::AbstractArray{BGRA{T}}) = reinterpret(FixedPointNumbers.rawtype(T), A, tuple(4, size(A)...))
 to_explicit{T<:FloatingPoint}(A::AbstractArray{BGRA{T}}) = to_explicit(map(ClipMinMax(BGRA{Ufixed8}, zero(BGRA{T}), one(BGRA{T})), A))
 to_explicit{T<:Ufixed}(A::AbstractArray{RGBA{T}}) = reinterpret(FixedPointNumbers.rawtype(T), A, tuple(4, size(A)...))
@@ -577,7 +582,7 @@ pnmmax{T<:FloatingPoint}(::Type{T}) = 255
 pnmmax{T<:Ufixed}(::Type{T}) = reinterpret(FixedPointNumbers.rawtype(T), one(T))
 pnmmax{T<:Unsigned}(::Type{T}) = typemax(T)
 
-function imwrite{T<:ColorValue}(img::AbstractArray{T}, s::IO, ::Type{PPMBinary}, mapi = mapinfo(ImageMagick, img))
+function imwrite{T<:Color}(img::AbstractArray{T}, s::IO, ::Type{PPMBinary}, mapi = mapinfo(ImageMagick, img))
     w, h = widthheight(img)
     TE = eltype(T)
     mx = pnmmax(TE)

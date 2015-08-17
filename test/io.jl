@@ -1,4 +1,4 @@
-using FactCheck, Images, Color, FixedPointNumbers
+using FactCheck, Images, Colors, FixedPointNumbers
 
 facts("IO") do
     workdir = joinpath(tempdir(), "Images")

@@ -1,5 +1,5 @@
 addprocs(2)
-using Images, Base.Test, Color
+using Images, Base.Test, Colors
 # Normally "using Images" would suffice, but since Images has
 # already been loaded by the time this file runs, that yields
 # a no-op. So we have to force the workers to load it manually.

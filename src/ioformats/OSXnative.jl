@@ -1,7 +1,7 @@
 module LibOSXNative
 
 #import Base: error, size
-using Images, Color, Images.ColorTypes, FixedPointNumbers, Compat
+using Images, Color, Images.ColorVectorSpace, FixedPointNumbers, Compat
 
 export imread
 

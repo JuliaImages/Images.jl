@@ -1,15 +1,15 @@
-using FactCheck, Images, Color, FixedPointNumbers
+using FactCheck, Images, Colors, FixedPointNumbers
 
 facts("Overlay") do
     gray = linspace(0.0, 1.0, 5)
     context("One") do
         ovr = Images.Overlay((2gray, 2gray), (RGB(1, 0, 0), RGB(0, 0, 1)), (Clamp{Float64}(), Clamp{Float64}()))
         @fact ovr[1] --> RGB(0, 0, 0)
-        @fact ovr[2] --> RGB(0.5, 0, 0.5)
+        @fact ovr[2] --> RGB{U8}(0.5, 0, 0.5)
         @fact ovr[3] --> ovr[4]
         @fact ovr[4] --> ovr[5]
         @fact ovr[5] --> exactly(RGB(1, 0, 1))
-        @fact eltype(ovr) --> RGB{Float64}
+        @fact eltype(ovr) --> RGB{U8}
         @fact length(ovr) --> 5
         @fact size(ovr) --> (5,)
         @fact size(ovr, 1) --> 5
