@@ -79,12 +79,13 @@ end
     """ )
 end
 
-@BinDeps.install Dict([(:libwand, :libwand)])
+@BinDeps.install "Images" Dict([(:libwand, :libwand)])
 
 # Save the library version; by checking this now, we avoid a runtime dependency on libwand
 # See https://github.com/timholy/Images.jl/issues/184#issuecomment-55643225
 module CheckVersion
-include("deps.jl")
+using BinDeps
+include_deps("Images")
 if isdefined(:__init__)
     __init__()
 end
