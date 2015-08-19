@@ -161,44 +161,65 @@ for (funcname, fieldname) in ((:red, :r), (:green, :g), (:blue, :b))
     end
 end
 
+function minfinite{T}(A::AbstractArray{T})
+    ret = sentinel_min(T)
+    for a in A
+        ret = minfinite_scalar(a, ret)
+    end
+    ret
+end
+
+function maxfinite{T}(A::AbstractArray{T})
+    ret = sentinel_max(T)
+    for a in A
+        ret = maxfinite_scalar(a, ret)
+    end
+    ret
+end
+
+function maxabsfinite{T}(A::AbstractArray{T})
+    ret = sentinel_min(typeof(abs(A[1])))
+    for a in A
+        ret = maxfinite_scalar(abs(a), ret)
+    end
+    ret
+end
+
+# Issue #232. FIXME: really should return a Gray here?
 for f in (:minfinite, :maxfinite, :maxabsfinite)
     @eval $f{T}(A::AbstractArray{Gray{T}}) = $f(reinterpret(T, data(A)))
 end
 
-minfinite(A::AbstractArray) = minimum(A)
-function minfinite{T<:FloatingPoint}(A::AbstractArray{T})
-    ret = convert(T, NaN)
-    for a in A
-        ret = isfinite(a) ? (ret < a ? ret : a) : ret
-    end
-    ret
+minfinite_scalar{T}(a::T, b::T) = isfinite(a) ? (b < a ? b : a) : b
+maxfinite_scalar{T}(a::T, b::T) = isfinite(a) ? (b > a ? b : a) : b
+minfinite_scalar{T<:Union(Integer,FixedPoint)}(a::T, b::T) = b < a ? b : a
+maxfinite_scalar{T<:Union(Integer,FixedPoint)}(a::T, b::T) = b > a ? b : a
+minfinite_scalar(a, b) = minfinite_scalar(promote(a, b)...)
+maxfinite_scalar(a, b) = maxfinite_scalar(promote(a, b)...)
+
+function minfinite_scalar{C<:AbstractRGB}(c1::C, c2::C)
+    C(minfinite_scalar(c1.r, c2.r),
+      minfinite_scalar(c1.g, c2.g),
+      minfinite_scalar(c1.b, c2.b))
+end
+function maxfinite_scalar{C<:AbstractRGB}(c1::C, c2::C)
+    C(maxfinite_scalar(c1.r, c2.r),
+      maxfinite_scalar(c1.g, c2.g),
+      maxfinite_scalar(c1.b, c2.b))
 end
 
-maxfinite(A::AbstractArray) = maximum(A)
-function maxfinite{T<:FloatingPoint}(A::AbstractArray{T})
-    ret = convert(T, NaN)
-    for a in A
-        ret = isfinite(a) ? (ret > a ? ret : a) : ret
-    end
-    ret
-end
-
-function maxabsfinite(A::AbstractArray)
-    ret = abs(A[1])
-    for i = 2:length(A)
-        a = abs(A[i])
-        ret = a > ret ? a : ret
-    end
-    ret
-end
-function maxabsfinite{T<:FloatingPoint}(A::AbstractArray{T})
-    ret = convert(T, NaN)
-    for sa in A
-        a = abs(sa)
-        ret = isfinite(a) ? (ret > a ? ret : a) : ret
-    end
-    ret
-end
+sentinel_min{T<:Union(Integer,FixedPoint)}(::Type{T}) = typemax(T)
+sentinel_max{T<:Union(Integer,FixedPoint)}(::Type{T}) = typemin(T)
+sentinel_min{T<:FloatingPoint}(::Type{T}) = convert(T, NaN)
+sentinel_max{T<:FloatingPoint}(::Type{T}) = convert(T, NaN)
+sentinel_min{C<:AbstractRGB}(::Type{C}) = _sentinel_min(C, eltype(C))
+_sentinel_min{C<:AbstractRGB,T}(::Type{C},::Type{T}) = (s = sentinel_min(T); C(s,s,s))
+sentinel_max{C<:AbstractRGB}(::Type{C}) = _sentinel_max(C, eltype(C))
+_sentinel_max{C<:AbstractRGB,T}(::Type{C},::Type{T}) = (s = sentinel_max(T); C(s,s,s))
+sentinel_min{C<:AbstractGray}(::Type{C}) = _sentinel_min(C, eltype(C))
+_sentinel_min{C<:AbstractGray,T}(::Type{C},::Type{T}) = C(sentinel_min(T))
+sentinel_max{C<:AbstractGray}(::Type{C}) = _sentinel_max(C, eltype(C))
+_sentinel_max{C<:AbstractGray,T}(::Type{C},::Type{T}) = C(sentinel_max(T))
 
 
 # fft & ifft
