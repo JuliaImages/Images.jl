@@ -10,13 +10,14 @@ end
 libnames = ["libMagickWand", "CORE_RL_wand_"]
 suffixes = ["", "-Q16", "-6.Q16", "-Q8"]
 options = ["", "HDRI"]
-extensions = ["", ".so.4", ".so.5"]
+extensions = ["", ".so.2", ".so.4", ".so.5"]
 aliases = vec(libnames.*transpose(suffixes).*reshape(options,(1,1,length(options))).*reshape(extensions,(1,1,1,length(extensions))))
 libwand = library_dependency("libwand", aliases = aliases)
 
 @linux_only begin
     provides(AptGet, "libmagickwand4", libwand)
     provides(AptGet, "libmagickwand5", libwand)
+    provides(AptGet, "libmagickwand-6.q16-2", libwand)
     provides(Pacman, "imagemagick", libwand)
     provides(Yum, "ImageMagick", libwand)
 end
