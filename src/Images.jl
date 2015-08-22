@@ -13,8 +13,10 @@ import Base: atan2, clamp, convert, copy, copy!, ctranspose, delete!, done, elty
 
 using Colors, ColorVectorSpace, FixedPointNumbers, Compat
 import Colors: Fractional, red, green, blue
-typealias TransparentRGB{C<:AbstractRGB,T}   Transparent{C,T,4}
-typealias TransparentGray{C<:AbstractGray,T} Transparent{C,T,2}
+typealias AbstractGray{T} Color{T,1}
+typealias TransparentRGB{C<:AbstractRGB,T}   TransparentColor{C,T,4}
+typealias TransparentGray{C<:AbstractGray,T} TransparentColor{C,T,2}
+
 if VERSION < v"0.4.0-dev+3275"
     using Base.Graphics
     import Base.Graphics: width, height, Point

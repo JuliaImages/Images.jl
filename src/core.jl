@@ -15,7 +15,7 @@ Image(data::AbstractArray, props::Dict) = Image{eltype(data),ndims(data),typeof(
 Image(data::AbstractArray; kwargs...) = Image(data, kwargs2dict(kwargs))
 
 # Indexed image (colormap)
-type ImageCmap{T<:Paint,N,A<:AbstractArray} <: AbstractImageIndexed{T,N}
+type ImageCmap{T<:Colorant,N,A<:AbstractArray} <: AbstractImageIndexed{T,N}
     data::A
     cmap::Vector{T}
     properties::Dict{ASCIIString,Any}
@@ -126,12 +126,12 @@ end
 
 ## reinterpret: Color->T
 # Arrays
-reinterpret{CV1<:Paint,CV2<:Paint}(::Type{CV1}, A::Array{CV2,1}) = _reinterpret_cvarray(CV1, A)
-reinterpret{CV1<:Paint,CV2<:Paint}(::Type{CV1}, A::Array{CV2})   = _reinterpret_cvarray(CV1, A)
-reinterpret{T,CV<:Paint}(::Type{T}, A::Array{CV,1}) = _reinterpret_cvarray(T, A)
-reinterpret{T,CV<:Paint}(::Type{T}, A::Array{CV})   = _reinterpret_cvarray(T, A)
-reinterpret{T,CV<:Paint}(::Type{T}, A::StridedArray{CV})   = slice(_reinterpret_cvarray(T, A.parent), A.indexes...)
-function _reinterpret_cvarray{T,CV<:Paint}(::Type{T}, A::Array{CV})
+reinterpret{CV1<:Colorant,CV2<:Colorant}(::Type{CV1}, A::Array{CV2,1}) = _reinterpret_cvarray(CV1, A)
+reinterpret{CV1<:Colorant,CV2<:Colorant}(::Type{CV1}, A::Array{CV2})   = _reinterpret_cvarray(CV1, A)
+reinterpret{T,CV<:Colorant}(::Type{T}, A::Array{CV,1}) = _reinterpret_cvarray(T, A)
+reinterpret{T,CV<:Colorant}(::Type{T}, A::Array{CV})   = _reinterpret_cvarray(T, A)
+reinterpret{T,CV<:Colorant}(::Type{T}, A::StridedArray{CV})   = slice(_reinterpret_cvarray(T, A.parent), A.indexes...)
+function _reinterpret_cvarray{T,CV<:Colorant}(::Type{T}, A::Array{CV})
     if sizeof(T) == sizeof(CV)
         return reinterpret(T, A, size(A))
     elseif sizeof(T)*length(CV) == sizeof(CV)
@@ -139,19 +139,19 @@ function _reinterpret_cvarray{T,CV<:Paint}(::Type{T}, A::Array{CV})
     end
     error("result shape not specified")
 end
-reinterpret{CV<:Paint}(A::StridedArray{CV}) = reinterpret(eltype(CV), A)
+reinterpret{CV<:Colorant}(A::StridedArray{CV}) = reinterpret(eltype(CV), A)
 
 # Images
-reinterpret{CV1<:Paint,CV2<:Paint}(::Type{CV1}, img::AbstractImageDirect{CV2}) =
+reinterpret{CV1<:Colorant,CV2<:Colorant}(::Type{CV1}, img::AbstractImageDirect{CV2}) =
     shareproperties(img, reinterpret(CV1, data(img)))
-function reinterpret{CV<:Paint}(::Type{Uint32}, img::AbstractImageDirect{CV})
+function reinterpret{CV<:Colorant}(::Type{Uint32}, img::AbstractImageDirect{CV})
     CV <: Union(RGB24, ARGB32) || (CV <: AbstractRGB && sizeof(CV) == 4) || error("Can't convert $CV to Uint32")
     A = reinterpret(Uint32, data(img))
     props = copy(properties(img))
     props["colorspace"] = colorspace(img)
     Image(A, props)
 end
-function reinterpret{T,CV2<:Paint}(::Type{T}, img::AbstractImageDirect{CV2})
+function reinterpret{T,CV2<:Colorant}(::Type{T}, img::AbstractImageDirect{CV2})
     A = reinterpret(T, data(img))
     props = copy(properties(img))
     props["colorspace"] = colorspace(img)
@@ -166,13 +166,13 @@ end
 #   form 1: reinterpret(RGB, img)
 #   form 2: reinterpret(RGB{Ufixed8}, img)
 # Arrays
-reinterpret{T,CV<:Paint}(::Type{CV}, A::Array{T,1}) = _reinterpret(CV, eltype(CV), A)
-reinterpret{T,CV<:Paint}(::Type{CV}, A::Array{T})   = _reinterpret(CV, eltype(CV), A)
-_reinterpret{T,CV<:Paint}(::Type{CV}, ::Type{Any}, A::Array{T}) =
+reinterpret{T,CV<:Colorant}(::Type{CV}, A::Array{T,1}) = _reinterpret(CV, eltype(CV), A)
+reinterpret{T,CV<:Colorant}(::Type{CV}, A::Array{T})   = _reinterpret(CV, eltype(CV), A)
+_reinterpret{T,CV<:Colorant}(::Type{CV}, ::Type{Any}, A::Array{T}) =
     _reinterpret_array_cv(CV{T}, A)   # form 1 (turn into a form 2 call by filling in the element type of the array)
-_reinterpret{T,CV<:Paint}(::Type{CV}, TT::DataType, A::Array{T}) =
+_reinterpret{T,CV<:Colorant}(::Type{CV}, TT::DataType, A::Array{T}) =
     _reinterpret_array_cv(CV, A)    # form 2
-function _reinterpret_array_cv{T,CV<:Paint}(::Type{CV}, A::Array{T})
+function _reinterpret_array_cv{T,CV<:Colorant}(::Type{CV}, A::Array{T})
     if sizeof(T) == sizeof(CV)
         return reinterpret(CV, A, size(A))
     elseif sizeof(T)*size(A,1) == sizeof(CV)
@@ -181,11 +181,11 @@ function _reinterpret_array_cv{T,CV<:Paint}(::Type{CV}, A::Array{T})
     error("result shape not specified")
 end
 # This version is used by the deserializer to convert UInt8 buffers back to their original type. Fixes #287.
-_reinterpret_array_cv{CV<:Paint}(::Type{CV}, A::Vector{UInt8}) =
+_reinterpret_array_cv{CV<:Colorant}(::Type{CV}, A::Vector{UInt8}) =
     reinterpret(CV, A, (div(length(A), sizeof(CV)),))
 
 # Images
-function reinterpret{T,CV<:Paint}(::Type{CV}, img::AbstractImageDirect{T})
+function reinterpret{T,CV<:Colorant}(::Type{CV}, img::AbstractImageDirect{T})
     A = reinterpret(CV, data(img))
     props = copy(properties(img))
     haskey(props, "colorspace") && delete!(props, "colorspace")
@@ -228,7 +228,7 @@ end
 # We restrict this to 2d images because for plain arrays this convention exists only for 2d.
 # In other cases---or if you don't want the storage order altered---just use data(img)
 convert{T<:Real,N}(::Type{Array{T}}, img::AbstractImageDirect{T,N}) = convert(Array{T,N}, img)
-convert{T<:Paint,N}(::Type{Array{T}}, img::AbstractImageDirect{T,N}) = convert(Array{T,N}, img)
+convert{T<:Colorant,N}(::Type{Array{T}}, img::AbstractImageDirect{T,N}) = convert(Array{T,N}, img)
 convert{T}(::Type{Vector{T}}, img::AbstractImageDirect{T,1}) = convert(Vector{T}, data(img))
 function convert{T,N}(::Type{Array{T,N}}, img::AbstractImageDirect{T,N})
     assert2d(img)  # only well-defined in 2d
@@ -242,24 +242,24 @@ function convert{T,N}(::Type{Array{T,N}}, img::AbstractImageDirect{T,N})
 end
 convert(::Type{Array}, img::AbstractImage) = convert(Array{eltype(img)}, img)
 
-convert{C<:Paint}(::Type{Image{C}}, img::Image{C}) = img
+convert{C<:Colorant}(::Type{Image{C}}, img::Image{C}) = img
 if !(VERSION < v"0.4.0-dev")
-    convert{Cdest<:Paint,Csrc<:Paint}(::Type{Image{Cdest}}, img::Image{Csrc}) =
+    convert{Cdest<:Colorant,Csrc<:Colorant}(::Type{Image{Cdest}}, img::Image{Csrc}) =
         copyproperties(img, _convert(Array{Cdest}, data(img)))  # FIXME when Julia issue ?? is fixed
 end
-convert{Cdest<:Paint,Csrc<:Paint}(::Type{Image{Cdest}}, img::AbstractImageDirect{Csrc}) =
+convert{Cdest<:Colorant,Csrc<:Colorant}(::Type{Image{Cdest}}, img::AbstractImageDirect{Csrc}) =
     copyproperties(img, _convert(Array{Cdest}, data(img)))  # FIXME when Julia issue ?? is fixed
-_convert{Cdest<:Paint,Csrc<:Paint,N}(::Type{Array{Cdest}}, img::AbstractArray{Csrc,N}) =
+_convert{Cdest<:Colorant,Csrc<:Colorant,N}(::Type{Array{Cdest}}, img::AbstractArray{Csrc,N}) =
     _convert(Array{Cdest}, eltype(Cdest), img)     # FIXME when Julia issue ?? is fixed
-_convert{Cdest<:Paint,Csrc<:Paint}(::Type{Array{Cdest}}, ::Type{Any}, img::AbstractArray{Csrc}) =
+_convert{Cdest<:Colorant,Csrc<:Colorant}(::Type{Array{Cdest}}, ::Type{Any}, img::AbstractArray{Csrc}) =
     convert(Array{Cdest{eltype(Csrc)}}, img)
-_convert{Cdest<:Paint,Csrc<:Paint}(::Type{Array{Cdest}}, ::DataType, img::AbstractArray{Csrc}) =
+_convert{Cdest<:Colorant,Csrc<:Colorant}(::Type{Array{Cdest}}, ::DataType, img::AbstractArray{Csrc}) =
     convert(Array{Cdest}, img)
-convert{Cdest<:Paint,Csrc<:Paint,N}(::Type{Array{Cdest}}, img::AbstractImageDirect{Csrc,N}) =
+convert{Cdest<:Colorant,Csrc<:Colorant,N}(::Type{Array{Cdest}}, img::AbstractImageDirect{Csrc,N}) =
     _convert(Array{Cdest}, convert(Array{Csrc,N}, img))
 
-# Image{Paint} -> Image{Numbers}
-function separate{CV<:Paint}(img::AbstractImage{CV})
+# Image{Colorant} -> Image{Numbers}
+function separate{CV<:Colorant}(img::AbstractImage{CV})
     p = permutation_canonical(img)
     so = spatialorder(img)[p]
     T = eltype(CV)
@@ -274,20 +274,20 @@ function separate{CV<:Paint}(img::AbstractImage{CV})
     props["spatialorder"] = so
     Image(A, props)
 end
-function separate{CV<:Paint}(A::AbstractArray{CV})
+function separate{CV<:Colorant}(A::AbstractArray{CV})
     T = eltype(CV)
     permutedims(reinterpret(T, A, tuple(length(CV), size(A)...)), [2:ndims(A)+1;1])
 end
 separate(A::AbstractArray) = A
 
-# Image{Numbers} -> Image{Paint} (the opposite of separate)
-convert{C<:Paint,T<:Fractional}(::Type{Image{C}}, img::Union(AbstractArray{T},AbstractImageDirect{T})) =
+# Image{Numbers} -> Image{Colorant} (the opposite of separate)
+convert{C<:Colorant,T<:Fractional}(::Type{Image{C}}, img::Union(AbstractArray{T},AbstractImageDirect{T})) =
     _convert(Image{C}, eltype(C), img)
-_convert{C<:Paint,T<:Fractional}(::Type{Image{C}}, ::Type{Any}, img::Union(AbstractArray{T},AbstractImageDirect{T})) =
+_convert{C<:Colorant,T<:Fractional}(::Type{Image{C}}, ::Type{Any}, img::Union(AbstractArray{T},AbstractImageDirect{T})) =
     _convert(Image{C{T}}, img)
-_convert{C<:Paint,T<:Fractional}(::Type{Image{C}}, ::DataType, img::Union(AbstractArray{T},AbstractImageDirect{T})) =
+_convert{C<:Colorant,T<:Fractional}(::Type{Image{C}}, ::DataType, img::Union(AbstractArray{T},AbstractImageDirect{T})) =
     _convert(Image{C}, img)
-function _convert{C<:Paint,T<:Fractional}(::Type{Image{C}}, img::Union(AbstractArray{T},AbstractImageDirect{T}))
+function _convert{C<:Colorant,T<:Fractional}(::Type{Image{C}}, img::Union(AbstractArray{T},AbstractImageDirect{T}))
     cd = colordim(img)
     if cd > 0
         p = [cd; setdiff(1:ndims(img), cd)]
@@ -628,7 +628,7 @@ properties(A::AbstractArray) = @compat Dict(
     "timedim" => timedim(A),
     "pixelspacing" => pixelspacing(A),
     "spatialorder" => spatialorder(A))
-properties{C<:Paint}(A::AbstractArray{C}) = @compat Dict(
+properties{C<:Colorant}(A::AbstractArray{C}) = @compat Dict(
     "timedim" => timedim(A),
     "pixelspacing" => pixelspacing(A),
     "spatialorder" => spatialorder(A))
@@ -670,12 +670,12 @@ isdirect(img::AbstractArray) = true
 isdirect(img::AbstractImageDirect) = true
 isdirect(img::AbstractImageIndexed) = false
 
-colorspace{C<:Paint}(img::AbstractVector{C}) = ColorTypes.paint_string(C)
-colorspace{C<:Paint}(img::AbstractMatrix{C}) = ColorTypes.paint_string(C)
-colorspace{C<:Paint}(img::AbstractArray{C,3}) = ColorTypes.paint_string(C)
-colorspace{C<:Paint}(img::AbstractImage{C}) = ColorTypes.paint_string(C)
-colorspace{C<:Paint,T}(img::AbstractArray{Transparent{C,T},2}) = (S = ColorTypes.paint_string(C); S == "Gray" ? "GrayAlpha" : string(S, "A"))
-colorspace{C<:Paint,T}(img::AbstractImage{Transparent{C,T}}) = (S = ColorTypes.paint_string(C); S == "Gray" ? "GrayAlpha" : string(S, "A"))
+colorspace{C<:Colorant}(img::AbstractVector{C}) = ColorTypes.paint_string(C)
+colorspace{C<:Colorant}(img::AbstractMatrix{C}) = ColorTypes.paint_string(C)
+colorspace{C<:Colorant}(img::AbstractArray{C,3}) = ColorTypes.paint_string(C)
+colorspace{C<:Colorant}(img::AbstractImage{C}) = ColorTypes.paint_string(C)
+colorspace{C<:Colorant,T}(img::AbstractArray{TransparentColor{C,T},2}) = (S = ColorTypes.paint_string(C); S == "Gray" ? "GrayAlpha" : string(S, "A"))
+colorspace{C<:Colorant,T}(img::AbstractImage{TransparentColor{C,T}}) = (S = ColorTypes.paint_string(C); S == "Gray" ? "GrayAlpha" : string(S, "A"))
 colorspace(img::AbstractVector{Bool}) = "Binary"
 colorspace(img::AbstractMatrix{Bool}) = "Binary"
 colorspace(img::AbstractArray{Bool}) = "Binary"
@@ -688,12 +688,13 @@ colorspace(img::AbstractImage{Bool}) = "Binary"
 colorspace{T,N,A<:AbstractArray}(img::ImageCmap{T,N,A}) = string(T.name.name)
 colorspace(img::AbstractImageIndexed) = @get img "colorspace" csinfer(eltype(img.cmap))
 colorspace{T}(img::AbstractImageIndexed{T,2}) = @get img "colorspace" csinfer(eltype(img.cmap))
-csinfer{C<:Paint}(::Type{C}) = ColorTypes.paint_string(C)
+csinfer{C<:Colorant}(::Type{C}) = ColorTypes.paint_string(C)
 csinfer(C) = "Unknown"
 colorspace(img::AbstractImage) = get(img.properties, "colorspace", "Unknown")
 
 colorspacedict = Dict{ASCIIString,Any}()
-for ACV in (Color, AbstractRGB, AbstractGray)
+
+for ACV in (Color, AbstractRGB, Gray)
     for CV in subtypes(ACV)
         (length(CV.parameters) == 1 && !(CV.abstract)) || continue
         str = string(CV.name.name)
@@ -717,10 +718,10 @@ function getcolortype{T}(str::ASCIIString, ::Type{T})
     end
 end
 
-colordim{C<:Paint}(img::AbstractVector{C}) = 0
-colordim{C<:Paint}(img::AbstractMatrix{C}) = 0
-colordim{C<:Paint}(img::AbstractArray{C,3}) = 0
-colordim{C<:Paint}(img::AbstractImage{C}) = 0
+colordim{C<:Colorant}(img::AbstractVector{C}) = 0
+colordim{C<:Colorant}(img::AbstractMatrix{C}) = 0
+colordim{C<:Colorant}(img::AbstractArray{C,3}) = 0
+colordim{C<:Colorant}(img::AbstractImage{C}) = 0
 colordim(img::AbstractVector) = 0
 colordim(img::AbstractMatrix) = 0
 colordim{T}(img::AbstractImageDirect{T,3}) = get(img, "colordim", 0)::Int

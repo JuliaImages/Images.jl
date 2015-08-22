@@ -65,7 +65,7 @@ function sum(img::AbstractImageDirect, region::Union(AbstractVector,Tuple,Intege
 end
 
 meanfinite{T<:Real}(A::AbstractArray{T}, region) = _meanfinite(A, T, region)
-meanfinite{CT<:Paint}(A::AbstractArray{CT}, region) = _meanfinite(A, eltype(CT), region)
+meanfinite{CT<:Colorant}(A::AbstractArray{CT}, region) = _meanfinite(A, eltype(CT), region)
 function _meanfinite{T<:FloatingPoint}(A::AbstractArray, ::Type{T}, region)
     sz = Base.reduced_dims(A, region)
     K = zeros(Int, sz)
@@ -211,8 +211,8 @@ function fft(img::AbstractImageDirect, region, args...)
     props["region"] = region
     Image(F, props)
 end
-fft{CV<:Paint}(img::AbstractImageDirect{CV}) = fft(img, 1:ndims(img))
-function fft{CV<:Paint}(img::AbstractImageDirect{CV}, region, args...)
+fft{CV<:Colorant}(img::AbstractImageDirect{CV}) = fft(img, 1:ndims(img))
+function fft{CV<:Colorant}(img::AbstractImageDirect{CV}, region, args...)
     imgr = reinterpret(eltype(CV), img)
     if ndims(imgr) > ndims(img)
         newregion = ntuple(i->region[i]+1, length(region))
@@ -316,7 +316,7 @@ end
 difftype{T<:Integer}(::Type{T}) = Int
 difftype{T<:Real}(::Type{T}) = Float32
 difftype(::Type{Float64}) = Float64
-difftype{CV<:Paint}(::Type{CV}) = difftype(CV, eltype(CV))
+difftype{CV<:Colorant}(::Type{CV}) = difftype(CV, eltype(CV))
 difftype{CV<:AbstractGray,T<:Real}(::Type{CV}, ::Type{T}) = Gray{Float32}
 difftype{CV<:AbstractGray}(::Type{CV}, ::Type{Float64}) = Gray{Float64}
 difftype{CV<:AbstractRGB,T<:Real}(::Type{CV}, ::Type{T}) = RGB{Float32}
@@ -493,7 +493,7 @@ imfilter_fft(img, filter, border) = imfilter_fft(img, filter, border, 0)
 imfilter_fft_inseparable{T,K,N,M}(img::AbstractArray{T,N}, kern::AbstractArray{K,M}, border::String, value) =
     imfilter_fft_inseparable(img, prep_kernel(img, kern), border, value)
 
-function imfilter_fft_inseparable{T<:Paint,K,N,M}(img::AbstractArray{T,N}, kern::AbstractArray{K,M}, border::String, value)
+function imfilter_fft_inseparable{T<:Colorant,K,N,M}(img::AbstractArray{T,N}, kern::AbstractArray{K,M}, border::String, value)
     A = reinterpret(eltype(T), data(img))
     kernrs = reshape(kern, tuple(1, size(kern)...))
     B = imfilter_fft_inseparable(A, prep_kernel(A, kernrs), border, value)
@@ -573,7 +573,7 @@ realtype{R<:Real}(::Type{Complex{R}}) = R
 # Note these two papers use different sign conventions for the coefficients.
 
 # Note: astype is ignored for FloatingPoint input
-function imfilter_gaussian{CT<:Paint}(img::AbstractArray{CT}, sigma; emit_warning = true, astype::Type=Float64)
+function imfilter_gaussian{CT<:Colorant}(img::AbstractArray{CT}, sigma; emit_warning = true, astype::Type=Float64)
     A = reinterpret(eltype(CT), data(img))
     newsigma = ndims(A) > ndims(img) ? [0;sigma] : sigma
     ret = imfilter_gaussian(A, newsigma; emit_warning=emit_warning, astype=astype)
