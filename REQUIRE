@@ -1,6 +1,6 @@
 julia 0.3
 Compat 0.4
-Color 0.4.7
+Colors
 BinDeps
 @osx Homebrew
 SIUnits
