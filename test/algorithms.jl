@@ -56,10 +56,20 @@ facts("Algorithms") do
         @fact Images.minfinite(A) --> 1
         @fact Images.maxfinite(A) --> 6
         @fact Images.maxabsfinite(A) --> 6
+        A = rand(10:20, 5, 5)
+        @fact minfinite(A) --> minimum(A)
+        @fact maxfinite(A) --> maximum(A)
+        A = reinterpret(Ufixed8, rand(0x00:0xff, 5, 5))
+        @fact minfinite(A) --> minimum(A)
+        @fact maxfinite(A) --> maximum(A)
         A = rand(Float32,3,5,5)
         img = Images.colorim(A, "RGB")
         dc = Images.data(Images.meanfinite(img, 1))-reinterpret(RGB{Float32}, mean(A, 2), (1,5))
         @fact maximum(map(abs, dc)) --> less_than(1e-6)
+        dc = Images.minfinite(img)-RGB{Float32}(minimum(A, (2,3))...)
+        @fact abs(dc) --> less_than(1e-6)
+        dc = Images.maxfinite(img)-RGB{Float32}(maximum(A, (2,3))...)
+        @fact abs(dc) --> less_than(1e-6)
 
         a = convert(Array{Uint8}, [1, 1, 1])
         b = convert(Array{Uint8}, [134, 252, 4])
