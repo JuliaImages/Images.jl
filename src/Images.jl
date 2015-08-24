@@ -39,15 +39,11 @@ immutable TypeConst{N} end  # for passing compile-time constants to functions
 include("core.jl")
 include("map.jl")
 include("overlays.jl")
-const have_imagemagick = include("ioformats/libmagickwand.jl")
-@osx_only include("ioformats/OSXnative.jl")
-include("io.jl")
 include("labeledarrays.jl")
 include("algorithms.jl")
 include("connected.jl")
 include("edge.jl")
 
-__init__() = LibMagick.init()
 
 function precompile()
     for T in (Uint8, Uint16, Int, Float32, Float64)
