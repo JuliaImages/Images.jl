@@ -1,8 +1,7 @@
 # SIF.jl, adds an imread function for Andor .sif images
 # 2013 Ronald S. Rock, Jr.
 
-import Images.imread
-function imread{S<:IO}(stream::S, ::Type{Images.AndorSIF})
+function load(stream::Stream{format"AndorSIF"})
     # line 1
     seek(stream, 0)
     l = strip(readline(stream))
