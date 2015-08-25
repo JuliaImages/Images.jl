@@ -1,4 +1,4 @@
-using FactCheck, Base.Test, Images, Color, FixedPointNumbers
+using FactCheck, Base.Test, Images, Colors, FixedPointNumbers
 
 facts("Algorithms") do
     # Comparison of each element in arrays with a scalar

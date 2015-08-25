@@ -1,4 +1,4 @@
-using FactCheck, Images, Color, FixedPointNumbers, TestImages
+using FactCheck, Images, Colors, FixedPointNumbers, TestImages
 
 facts("OS X reader") do
     context("Autumn leaves") do

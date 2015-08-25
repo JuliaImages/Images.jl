@@ -1,4 +1,4 @@
-using FactCheck, Images, Color, FixedPointNumbers
+using FactCheck, Images, Colors, FixedPointNumbers
 @osx_only using TestImages
 
 facts("Read stream") do

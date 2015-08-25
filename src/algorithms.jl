@@ -52,6 +52,8 @@ sqrt(img::AbstractImageDirect) = shareproperties(img, sqrt(data(img)))
 atan2(img1::AbstractImageDirect, img2::AbstractImageDirect) = shareproperties(img1, atan2(data(img1),data(img2)))
 hypot(img1::AbstractImageDirect, img2::AbstractImageDirect) = shareproperties(img1, hypot(data(img1),data(img2)))
 
+@vectorize_2arg Gray atan2
+@vectorize_2arg Gray hypot
 
 function sum(img::AbstractImageDirect, region::Union(AbstractVector,Tuple,Integer))
     f = prod(size(img)[[region...]])
@@ -63,7 +65,7 @@ function sum(img::AbstractImageDirect, region::Union(AbstractVector,Tuple,Intege
 end
 
 meanfinite{T<:Real}(A::AbstractArray{T}, region) = _meanfinite(A, T, region)
-meanfinite{CT<:ColorType}(A::AbstractArray{CT}, region) = _meanfinite(A, eltype(CT), region)
+meanfinite{CT<:Colorant}(A::AbstractArray{CT}, region) = _meanfinite(A, eltype(CT), region)
 function _meanfinite{T<:FloatingPoint}(A::AbstractArray, ::Type{T}, region)
     sz = Base.reduced_dims(A, region)
     K = zeros(Int, sz)
@@ -144,7 +146,7 @@ end
 for (funcname, fieldname) in ((:red, :r), (:green, :g), (:blue, :b))
     fieldchar = string(fieldname)[1]
     @eval begin
-        function $funcname{CV<:ColorValue}(img::AbstractArray{CV})
+        function $funcname{CV<:Color}(img::AbstractArray{CV})
             T = eltype(CV)
             out = Array(T, size(img))
             for i = 1:length(img)
@@ -230,8 +232,8 @@ function fft(img::AbstractImageDirect, region, args...)
     props["region"] = region
     Image(F, props)
 end
-fft{CV<:ColorType}(img::AbstractImageDirect{CV}) = fft(img, 1:ndims(img))
-function fft{CV<:ColorType}(img::AbstractImageDirect{CV}, region, args...)
+fft{CV<:Colorant}(img::AbstractImageDirect{CV}) = fft(img, 1:ndims(img))
+function fft{CV<:Colorant}(img::AbstractImageDirect{CV}, region, args...)
     imgr = reinterpret(eltype(CV), img)
     if ndims(imgr) > ndims(img)
         newregion = ntuple(i->region[i]+1, length(region))
@@ -335,7 +337,7 @@ end
 difftype{T<:Integer}(::Type{T}) = Int
 difftype{T<:Real}(::Type{T}) = Float32
 difftype(::Type{Float64}) = Float64
-difftype{CV<:ColorType}(::Type{CV}) = difftype(CV, eltype(CV))
+difftype{CV<:Colorant}(::Type{CV}) = difftype(CV, eltype(CV))
 difftype{CV<:AbstractGray,T<:Real}(::Type{CV}, ::Type{T}) = Gray{Float32}
 difftype{CV<:AbstractGray}(::Type{CV}, ::Type{Float64}) = Gray{Float64}
 difftype{CV<:AbstractRGB,T<:Real}(::Type{CV}, ::Type{T}) = RGB{Float32}
@@ -512,11 +514,11 @@ imfilter_fft(img, filter, border) = imfilter_fft(img, filter, border, 0)
 imfilter_fft_inseparable{T,K,N,M}(img::AbstractArray{T,N}, kern::AbstractArray{K,M}, border::String, value) =
     imfilter_fft_inseparable(img, prep_kernel(img, kern), border, value)
 
-function imfilter_fft_inseparable{T<:ColorType,K,N,M}(img::AbstractArray{T,N}, kern::AbstractArray{K,M}, border::String, value)
+function imfilter_fft_inseparable{T<:Colorant,K,N,M}(img::AbstractArray{T,N}, kern::AbstractArray{K,M}, border::String, value)
     A = reinterpret(eltype(T), data(img))
     kernrs = reshape(kern, tuple(1, size(kern)...))
     B = imfilter_fft_inseparable(A, prep_kernel(A, kernrs), border, value)
-    reinterpret(noeltype(T), B)
+    reinterpret(base_colorant_type(T), B)
 end
 
 function imfilter_fft_inseparable{T<:Real,K,N}(img::AbstractArray{T,N}, kern::AbstractArray{K,N}, border::String, value)
@@ -592,11 +594,11 @@ realtype{R<:Real}(::Type{Complex{R}}) = R
 # Note these two papers use different sign conventions for the coefficients.
 
 # Note: astype is ignored for FloatingPoint input
-function imfilter_gaussian{CT<:ColorType}(img::AbstractArray{CT}, sigma; emit_warning = true, astype::Type=Float64)
+function imfilter_gaussian{CT<:Colorant}(img::AbstractArray{CT}, sigma; emit_warning = true, astype::Type=Float64)
     A = reinterpret(eltype(CT), data(img))
     newsigma = ndims(A) > ndims(img) ? [0;sigma] : sigma
     ret = imfilter_gaussian(A, newsigma; emit_warning=emit_warning, astype=astype)
-    shareproperties(img, reinterpret(noeltype(CT), ret))
+    shareproperties(img, reinterpret(base_colorant_type(CT), ret))
 end
 
 function imfilter_gaussian{T<:FloatingPoint}(img::AbstractArray{T}, sigma::Vector; emit_warning = true, astype::Type=Float64)
@@ -1187,8 +1189,8 @@ extr(order::ReverseOrdering, x::Real, y::Real, z::Real) = min(x,y,z)
 extr(order::Ordering, x::RGB, y::RGB) = RGB(extr(order, x.r, y.r), extr(order, x.g, y.g), extr(order, x.b, y.b))
 extr(order::Ordering, x::RGB, y::RGB, z::RGB) = RGB(extr(order, x.r, y.r, z.r), extr(order, x.g, y.g, z.g), extr(order, x.b, y.b, z.b))
 
-extr(order::Ordering, x::ColorValue, y::ColorValue) = extr(order, convert(RGB, x), convert(RGB, y))
-extr(order::Ordering, x::ColorValue, y::ColorValue, z::ColorValue) = extr(order, convert(RGB, x), convert(RGB, y), convert(RGB, z))
+extr(order::Ordering, x::Color, y::Color) = extr(order, convert(RGB, x), convert(RGB, y))
+extr(order::Ordering, x::Color, y::Color, z::Color) = extr(order, convert(RGB, x), convert(RGB, y), convert(RGB, z))
 
 
 # phantom images

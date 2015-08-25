@@ -1,4 +1,4 @@
-using FactCheck, Images, Color, FixedPointNumbers
+using FactCheck, Images, Colors, FixedPointNumbers
 
 facts("Read remote") do
     urlbase = "http://www.imagemagick.org/Usage/images/"
@@ -32,7 +32,7 @@ facts("Read remote") do
         @fact img.data --> imgc.data
         @fact reinterpret(Uint32, data(map(mapinfo(RGB24, img), img))) -->
             map(x->x&0x00ffffff, reinterpret(Uint32, data(map(mapinfo(ARGB32, img), img))))
-        @fact mapinfo(Uint32, img) --> mapinfo(RGB24, img)
+        @fact mapinfo(UInt32, img) --> mapinfo(RGB24, img)
         @fact data(convert(Image{Gray{Float32}}, img)) --> float32(data(img))
         mapi = mapinfo(RGB{Ufixed8}, img)
         imgrgb8 = map(mapi, img)
@@ -45,10 +45,10 @@ facts("Read remote") do
     context("Gray with alpha channel") do
         file = getfile("wmark_image.png")
         img = imread(file)
-        @fact colorspace(img) --> "GrayAlpha"
+        @fact colorspace(img) --> "GrayA"
         @fact ndims(img) --> 2
         @fact colordim(img) --> 0
-        @fact eltype(img) --> Images.ColorTypes.GrayAlpha{Ufixed8}
+        @fact eltype(img) --> Images.ColorTypes.GrayA{Ufixed8}
         @linux_only begin
             outname = joinpath(writedir, "wmark_image.png")
             imwrite(img, outname)
