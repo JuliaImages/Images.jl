@@ -518,7 +518,7 @@ function imfilter_fft_inseparable{T<:Colorant,K,N,M}(img::AbstractArray{T,N}, ke
     A = reinterpret(eltype(T), data(img))
     kernrs = reshape(kern, tuple(1, size(kern)...))
     B = imfilter_fft_inseparable(A, prep_kernel(A, kernrs), border, value)
-    reinterpret(basepainttype(T), B)
+    reinterpret(base_colorant_type(T), B)
 end
 
 function imfilter_fft_inseparable{T<:Real,K,N}(img::AbstractArray{T,N}, kern::AbstractArray{K,N}, border::String, value)
@@ -598,7 +598,7 @@ function imfilter_gaussian{CT<:Colorant}(img::AbstractArray{CT}, sigma; emit_war
     A = reinterpret(eltype(CT), data(img))
     newsigma = ndims(A) > ndims(img) ? [0;sigma] : sigma
     ret = imfilter_gaussian(A, newsigma; emit_warning=emit_warning, astype=astype)
-    shareproperties(img, reinterpret(basepainttype(CT), ret))
+    shareproperties(img, reinterpret(base_colorant_type(CT), ret))
 end
 
 function imfilter_gaussian{T<:FloatingPoint}(img::AbstractArray{T}, sigma::Vector; emit_warning = true, astype::Type=Float64)

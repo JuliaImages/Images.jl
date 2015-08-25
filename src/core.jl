@@ -670,12 +670,12 @@ isdirect(img::AbstractArray) = true
 isdirect(img::AbstractImageDirect) = true
 isdirect(img::AbstractImageIndexed) = false
 
-colorspace{C<:Colorant}(img::AbstractVector{C}) = ColorTypes.paint_string(C)
-colorspace{C<:Colorant}(img::AbstractMatrix{C}) = ColorTypes.paint_string(C)
-colorspace{C<:Colorant}(img::AbstractArray{C,3}) = ColorTypes.paint_string(C)
-colorspace{C<:Colorant}(img::AbstractImage{C}) = ColorTypes.paint_string(C)
-colorspace{C<:Colorant,T}(img::AbstractArray{TransparentColor{C,T},2}) = (S = ColorTypes.paint_string(C); S == "Gray" ? "GrayAlpha" : string(S, "A"))
-colorspace{C<:Colorant,T}(img::AbstractImage{TransparentColor{C,T}}) = (S = ColorTypes.paint_string(C); S == "Gray" ? "GrayAlpha" : string(S, "A"))
+colorspace{C<:Colorant}(img::AbstractVector{C}) = ColorTypes.colorant_string(C)
+colorspace{C<:Colorant}(img::AbstractMatrix{C}) = ColorTypes.colorant_string(C)
+colorspace{C<:Colorant}(img::AbstractArray{C,3}) = ColorTypes.colorant_string(C)
+colorspace{C<:Colorant}(img::AbstractImage{C}) = ColorTypes.colorant_string(C)
+colorspace{C<:Colorant,T}(img::AbstractArray{TransparentColor{C,T},2}) = (S = ColorTypes.colorant_string(C); S == "Gray" ? "GrayAlpha" : string(S, "A"))
+colorspace{C<:Colorant,T}(img::AbstractImage{TransparentColor{C,T}}) = (S = ColorTypes.colorant_string(C); S == "Gray" ? "GrayAlpha" : string(S, "A"))
 colorspace(img::AbstractVector{Bool}) = "Binary"
 colorspace(img::AbstractMatrix{Bool}) = "Binary"
 colorspace(img::AbstractArray{Bool}) = "Binary"
@@ -688,13 +688,12 @@ colorspace(img::AbstractImage{Bool}) = "Binary"
 colorspace{T,N,A<:AbstractArray}(img::ImageCmap{T,N,A}) = string(T.name.name)
 colorspace(img::AbstractImageIndexed) = @get img "colorspace" csinfer(eltype(img.cmap))
 colorspace{T}(img::AbstractImageIndexed{T,2}) = @get img "colorspace" csinfer(eltype(img.cmap))
-csinfer{C<:Colorant}(::Type{C}) = ColorTypes.paint_string(C)
+csinfer{C<:Colorant}(::Type{C}) = ColorTypes.colorant_string(C)
 csinfer(C) = "Unknown"
 colorspace(img::AbstractImage) = get(img.properties, "colorspace", "Unknown")
 
 colorspacedict = Dict{ASCIIString,Any}()
-
-for ACV in (Color, AbstractRGB, Gray)
+for ACV in (Color, AbstractRGB)
     for CV in subtypes(ACV)
         (length(CV.parameters) == 1 && !(CV.abstract)) || continue
         str = string(CV.name.name)

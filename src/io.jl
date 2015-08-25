@@ -236,13 +236,13 @@ end
 mapinfo_writemime_{T}(img::AbstractImage{Gray{T}}) = mapinfo(Gray{Ufixed8},img)
 mapinfo_writemime_{C<:Color}(img::AbstractImage{C}) = mapinfo(RGB{Ufixed8},img)
 mapinfo_writemime_{AC<:GrayA}(img::AbstractImage{AC}) = mapinfo(GrayA{Ufixed8},img)
-mapinfo_writemime_{AC<:Transparent}(img::AbstractImage{AC}) = mapinfo(RGBA{Ufixed8},img)
+mapinfo_writemime_{AC<:TransparentColor}(img::AbstractImage{AC}) = mapinfo(RGBA{Ufixed8},img)
 mapinfo_writemime_(img::AbstractImage) = mapinfo(Ufixed8,img)
 
 mapinfo_writemime_restricted{T}(img::AbstractImage{Gray{T}}) = ClampMinMax(Gray{Ufixed8},0.0,1.0)
 mapinfo_writemime_restricted{C<:Color}(img::AbstractImage{C}) = ClampMinMax(RGB{Ufixed8},0.0,1.0)
 mapinfo_writemime_restricted{AC<:GrayA}(img::AbstractImage{AC}) = ClampMinMax(GrayA{Ufixed8},0.0,1.0)
-mapinfo_writemime_restricted{AC<:Transparent}(img::AbstractImage{AC}) = ClampMinMax(RGBA{Ufixed8},0.0,1.0)
+mapinfo_writemime_restricted{AC<:TransparentColor}(img::AbstractImage{AC}) = ClampMinMax(RGBA{Ufixed8},0.0,1.0)
 mapinfo_writemime_restricted(img::AbstractImage) = mapinfo(Ufixed8,img)
 
 
@@ -325,7 +325,7 @@ function imread(filename::Union(String,IO), ::Type{ImageMagick};extraprop="",ext
     Image(buf, prop)
 end
 
-imread{C<:Paint}(filename::String, ::Type{ImageMagick}, ::Type{C}) = convert(Image{C}, imread(filename, ImageMagick))
+imread{C<:Colorant}(filename::String, ::Type{ImageMagick}, ::Type{C}) = convert(Image{C}, imread(filename, ImageMagick))
 
 imwrite(img::AbstractImageIndexed, filename::String, ::Type{ImageMagick}; kwargs...) = imwrite(convert(Image, img), filename, ImageMagick; kwargs...)
 
@@ -368,7 +368,7 @@ end
 # ImageMagick mapinfo client. Converts to RGB and uses Ufixed.
 mapinfo{T<:Ufixed}(::Type{ImageMagick}, img::AbstractArray{T}) = MapNone{T}()
 mapinfo{T<:FloatingPoint}(::Type{ImageMagick}, img::AbstractArray{T}) = MapNone{Ufixed8}()
-for ACV in (Color, AbstractRGB,AbstractGray)
+for ACV in (Color, AbstractRGB)
     for CV in subtypes(ACV)
         (length(CV.parameters) == 1 && !(CV.abstract)) || continue
         CVnew = CV<:AbstractGray ? Gray : RGB
@@ -391,7 +391,7 @@ mapinfo(::Type{ImageMagick}, img::AbstractArray{ARGB32}) = MapNone{BGRA{Ufixed8}
 # Clamping mapinfo client. Converts to RGB and uses Ufixed, clamping floating-point values to [0,1].
 mapinfo{T<:Ufixed}(::Type{Clamp}, img::AbstractArray{T}) = MapNone{T}()
 mapinfo{T<:FloatingPoint}(::Type{Clamp}, img::AbstractArray{T}) = ClampMinMax(Ufixed8, zero(T), one(T))
-for ACV in (Color, AbstractRGB,AbstractGray)
+for ACV in (Color, AbstractRGB)
     for CV in subtypes(ACV)
         (length(CV.parameters) == 1 && !(CV.abstract)) || continue
         CVnew = CV<:AbstractGray ? Gray : RGB
