@@ -232,7 +232,7 @@ RGB Image with:
 whereas `convert(Array, img)` and `separate(img)` create new arrays if the
 memory-layout needs alteration.
 
-You can go back to using ColorValues to encode your image this way:
+You can go back to using Colors to encode your image this way:
 
 ```{.julia execute="false"}
 julia> imcomb = convert(Image{RGB}, imsep)
