@@ -92,7 +92,7 @@ const DefaultChannels = ChannelType( (AllChannels.value | SyncChannels.value) &~
 const IMType = ["BilevelType", "GrayscaleType", "GrayscaleMatteType", "PaletteType", "PaletteMatteType", "TrueColorType", "TrueColorMatteType", "ColorSeparationType", "ColorSeparationMatteType", "OptimizeType", "PaletteBilevelMatteType"]
 const IMTypedict = Dict([(IMType[i], i) for i = 1:length(IMType)])
 
-const CStoIMTypedict = @compat Dict("Gray" => "GrayscaleType", "GrayAlpha" => "GrayscaleMatteType", "RGB" => "TrueColorType", "ARGB" => "TrueColorMatteType", "CMYK" => "ColorSeparationType")
+const CStoIMTypedict = @compat Dict("Gray" => "GrayscaleType", "GrayA" => "GrayscaleMatteType", "RGB" => "TrueColorType", "ARGB" => "TrueColorMatteType", "CMYK" => "ColorSeparationType")
 
 # Colorspace
 const IMColorspace = ["RGB", "Gray", "Transparent", "OHTA", "Lab", "XYZ", "YCbCr", "YCC", "YIQ", "YPbPr", "YUV", "CMYK", "sRGB"]
@@ -102,7 +102,7 @@ function nchannels(imtype::String, cs::String, havealpha = false)
     n = 3
     if startswith(imtype, "Grayscale") || startswith(imtype, "Bilevel")
         n = 1
-        cs = havealpha ? "GrayAlpha" : "Gray"
+        cs = havealpha ? "GrayA" : "Gray"
     elseif cs == "CMYK"
         n = 4
     else
@@ -111,7 +111,7 @@ function nchannels(imtype::String, cs::String, havealpha = false)
     n + havealpha, cs
 end
 
-# channelorder = ["Gray" => "I", "GrayAlpha" => "IA", "RGB" => "RGB", "ARGB" => "ARGB", "RGBA" => "RGBA", "CMYK" => "CMYK"]
+# channelorder = ["Gray" => "I", "GrayA" => "IA", "RGB" => "RGB", "ARGB" => "ARGB", "RGBA" => "RGBA", "CMYK" => "CMYK"]
 
 # Compression
 const NoCompression = 1

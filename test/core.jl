@@ -35,7 +35,7 @@ facts("Core") do
         @fact colordim(Bf) --> 0
         Bf = grayim(B)
         @fact eltype(Bf) --> Ufixed16
-        # colorspace encoded as a ColorValue (enables multiple dispatch)
+        # colorspace encoded as a Color (enables multiple dispatch)
         BfCV = reinterpret(Gray{Ufixed8}, round(UInt8, B))
         @fact colorspace(BfCV) --> "Gray"
         @fact colordim(BfCV) --> 0

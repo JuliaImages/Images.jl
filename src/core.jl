@@ -674,8 +674,6 @@ colorspace{C<:Colorant}(img::AbstractVector{C}) = ColorTypes.colorant_string(C)
 colorspace{C<:Colorant}(img::AbstractMatrix{C}) = ColorTypes.colorant_string(C)
 colorspace{C<:Colorant}(img::AbstractArray{C,3}) = ColorTypes.colorant_string(C)
 colorspace{C<:Colorant}(img::AbstractImage{C}) = ColorTypes.colorant_string(C)
-colorspace{C<:Colorant,T}(img::AbstractArray{TransparentColor{C,T},2}) = (S = ColorTypes.colorant_string(C); S == "Gray" ? "GrayAlpha" : string(S, "A"))
-colorspace{C<:Colorant,T}(img::AbstractImage{TransparentColor{C,T}}) = (S = ColorTypes.colorant_string(C); S == "Gray" ? "GrayAlpha" : string(S, "A"))
 colorspace(img::AbstractVector{Bool}) = "Binary"
 colorspace(img::AbstractMatrix{Bool}) = "Binary"
 colorspace(img::AbstractArray{Bool}) = "Binary"
