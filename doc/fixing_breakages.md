@@ -12,11 +12,11 @@ out-of-the-box with the new Images. Nevertheless, omissions are likely, and
 certain things cannot be deprecated.  Here are some tips on moving over to the
 new version of Images:
 
-- Images are returned as `ColorValue` arrays, meaning that a color,
+- Images are returned as `Color` arrays, meaning that a color,
   two-dimensional image will now have two dimensions. If your code needs a color
   dimension to the array, try `reinterpret` or `separate` as described in the
   [README](../README.html). That said, it's probably preferable to leave it in
-  ColorValue format, so you can leverage the power of the
+  Color format, so you can leverage the power of the
   [Color package](https://github.com/JuliaLang/Color.jl).
 
 - Many images will be returned in terms of a `Ufixed8` type, which acts like a

@@ -19,7 +19,7 @@ Image(data, prop1=val1, prop2=val2, ...)
 creates a new direct image. In contrast with `convert`, `grayim` and `colorim`,
 this does not permute the data array or attempt to guess any of the
 `properties`. If `data` encodes color information along one of the dimensions of
-the array (as opposed to using a `ColorValue` array, from the `Color.jl`
+the array (as opposed to using a `Color` array, from the `Color.jl`
 package), be sure to specify the `"colordim"` and `"colorspace"` in
 `properties`.
 
@@ -119,7 +119,7 @@ Overlay(channels, colors, mapi)
 ```
 
 Create an `Overlay` array from grayscale channels.  `channels = (channel1,
-channel2, ...)`, `colors` is a vector or tuple of `ColorValue`s, and `clim` is a
+channel2, ...)`, `colors` is a vector or tuple of `Color`s, and `clim` is a
 vector or tuple of min/max values, e.g., `clim = ((min1,max1),(min2,max2),...)`.
 Alternatively, you can supply a list of `MapInfo` objects
 
@@ -323,7 +323,7 @@ FloatingPoint image type for which `"limits"` has not been explicitly set.
 
 For example, if you're using a 14-bit camera and encoding the values with
 `Uint16`, you can set the limits property to `(0x0000, 0x3fff)` to indicate that
-not all 16 bits are meaningful. 
+not all 16 bits are meaningful.
 
 Note that there is no guarantee that the image values
 fall within the stated limits; this is intended as a "hint"
@@ -586,7 +586,7 @@ You could define additional implementations for custom clients.
 
 ## convert
 ```{.julia execute="false"}
-convert(Image{ColorValue}, img)
+convert(Image{Color}, img)
 ```
 
 as described above. Use `convert(Image{Gray}, img)` to calculate
@@ -684,7 +684,7 @@ maximum number of pixels used, respectively. Shrinking is performed by
 
 # Image algorithms
 
-You can perform arithmetic with `Image`s and `ColorValue`s. Algorithms also
+You can perform arithmetic with `Image`s and `Color`s. Algorithms also
 include the following functions:
 
 # Linear filtering and padding
@@ -1035,8 +1035,8 @@ opening(img, [region])
 closing(img, [region])
 ```
 
-perform the `opening` and `closing` morphology operations. `opening` does first 
-`erode` the image and then `dilate` the image. `opening` applies both operations 
+perform the `opening` and `closing` morphology operations. `opening` does first
+`erode` the image and then `dilate` the image. `opening` applies both operations
 in the oposite way. The region parameter is passed to `erode` and `dilate` and describes
 the kernel size over which these operations are performed.
 

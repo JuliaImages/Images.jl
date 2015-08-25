@@ -23,7 +23,7 @@ facts("Algorithms") do
         img3 = 2img .* img2
         img2 = img ./ A
         img2 = (2img).^2
-        # Same operations with ColorValue images
+        # Same operations with Color images
         img = Images.colorim(zeros(Float32,3,4,5))
         img2 = (img .+ RGB{Float32}(1,1,1))/2
         @fact all(img2 .== RGB{Float32}(1,1,1)/2) --> true
@@ -38,7 +38,7 @@ facts("Algorithms") do
         imgn = img/imgm
         @fact reinterpret(Float32, Images.data(imgn)) --> roughly(convert(Array{Float32}, A/mean(A)))
     end
-    
+
     context("Reductions") do
         A = rand(5,5,3)
         img = Images.colorim(A, "RGB")
@@ -98,7 +98,7 @@ facts("Algorithms") do
         img2 = ifft(imgfft)
         @fact img2 --> roughly(reinterpret(Float32, img))
     end
-    
+
     context("Array padding") do
         A = [1 2; 3 4]
         @fact Images.padindexes(A, 1, 0, 0, "replicate") --> [1,2]
@@ -226,7 +226,7 @@ facts("Algorithms") do
         @fact Images.imaverage([3,3]) --> fill(1/9, 3, 3)
         @fact_throws ErrorException Images.imaverage([5])
     end
-    
+
     context("Restriction") do
         imgcol = Images.colorim(rand(3,5,6))
         A = reshape([convert(UInt16, i) for i = 1:60], 4, 5, 3)
@@ -302,7 +302,7 @@ facts("Algorithms") do
         Ac = Images.closing(A)
         @fact Ac --> B
     end
-    
+
     context("Label components") do
         A = [true  true  false true;
              true  false true  true]
@@ -321,7 +321,7 @@ facts("Algorithms") do
                       1 0 1 1]
         @fact Images.label_components(A, connectivity) --> lbltarget2
     end
-    
+
     context("Phantoms") do
         P = [ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0;
               0.0  0.0  1.0  0.2  0.2  1.0  0.0  0.0;
@@ -344,7 +344,7 @@ facts("Algorithms") do
         Q = Images.shepp_logan(8, highContrast=false)
         @fact norm((P-Q)[:]) --> less_than(1e-10)
     end
-    
+
     context("Image resize") do
         img = convert(Images.Image, zeros(10,10))
         img2 = Images.imresize(img, (5,5))

@@ -201,7 +201,7 @@ RGB Image with:
 `convert(Array, img)` and `separate(img)` create new arrays if the memory-layout
 needs alteration.
 
-You can go back to using ColorValues to encode your image this way:
+You can go back to using Colors to encode your image this way:
 ```
 julia> imcomb = convert(Image{RGB}, imsep)
 RGB Image with:
@@ -309,6 +309,6 @@ Jeff Bezanson, Stefan Kroboth, Tim Holy, Mike Nolta, and Stefan Karpinski.
 This repository has been quite heavily reworked;
 the current package maintainer is Tim Holy, and
 important contributions have been made by Ron Rock,
-Kevin Squire, Lucas Beyer, Tony Kelman, Isaiah Norton, Elliot Saba, 
+Kevin Squire, Lucas Beyer, Tony Kelman, Isaiah Norton, Elliot Saba,
 Cody Greer, Daniel Perry, Waldir Pimenta, Tobias Knopp,
 Jason Merrill, Sean Garborg, romainFr, Dahua Lin, and several others.
