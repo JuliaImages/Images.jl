@@ -14,7 +14,10 @@ if isdefined(:UniformScaling)
     (-){Timg,TA<:Number}(img::AbstractImageDirect{Timg,2}, A::UniformScaling{TA}) = shareproperties(img, data(img)-A)
 end
 (+)(img::AbstractImageDirect, A::BitArray) = shareproperties(img, data(img)+A)
+(+)(img::AbstractImageDirect, A::AbstractImageDirect) = shareproperties(img, data(img)+data(A))
 (+)(img::AbstractImageDirect, A::AbstractArray) = shareproperties(img, data(img)+data(A))
+(+){S,T}(A::Range{S}, img::AbstractImageDirect{T}) = shareproperties(img, data(A)+data(img))
+(+)(A::AbstractArray, img::AbstractImageDirect) = shareproperties(img, data(A)+data(img))
 (.+)(img::AbstractImageDirect, A::BitArray) = shareproperties(img, data(img).+A)
 (.+)(img::AbstractImageDirect, A::AbstractArray) = shareproperties(img, data(img).+data(A))
 (-)(img::AbstractImageDirect{Bool}, n::Bool) = img .- n
@@ -28,7 +31,10 @@ end
 (-)(img::AbstractImageDirect, A::BitArray) = shareproperties(img, data(img)-A)
 (-){T}(img::AbstractImageDirect{T,2}, A::Diagonal) = shareproperties(img, data(img)-A) # fixes an ambiguity warning
 (-)(img::AbstractImageDirect, A::Range) = shareproperties(img, data(img)-A)
+(-)(img::AbstractImageDirect, A::AbstractImageDirect) = shareproperties(img, data(img)-data(A))
 (-)(img::AbstractImageDirect, A::AbstractArray) = shareproperties(img, data(img)-data(A))
+(-){S,T}(A::Range{S}, img::AbstractImageDirect{T}) = shareproperties(img, data(A)-data(img))
+(-)(A::AbstractArray, img::AbstractImageDirect) = shareproperties(img, data(A)-data(img))
 (-)(img::AbstractImageDirect) = shareproperties(img, -data(img))
 (.-)(img::AbstractImageDirect, A::BitArray) = shareproperties(img, data(img).-A)
 (.-)(img::AbstractImageDirect, A::AbstractArray) = shareproperties(img, data(img).-data(A))
