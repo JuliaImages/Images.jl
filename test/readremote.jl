@@ -41,7 +41,7 @@ facts("Read remote") do
             writemime(file, "image/png", img)
         end
     end
-    
+
     context("Gray with alpha channel") do
         file = getfile("wmark_image.png")
         img = imread(file)
@@ -147,7 +147,7 @@ facts("Read remote") do
             writemime(file, "image/png", img)
         end
     end
-    
+
     context("Indexed") do
         file = getfile("present.gif")
         img = imread(file)
@@ -196,18 +196,18 @@ facts("Read remote") do
             props = properties(img)
             for key in extraProps
                 @fact haskey(props, key) --> true
-                @fact props[key] --> anything
+                @fact props[key] --> not(nothing)
             end
             img = imread(file, extraprop=extraProps[1])
             props = properties(img)
             @fact haskey(props, extraProps[1]) --> true
-            @fact props[extraProps[1]] --> anything
-    
+            @fact props[extraProps[1]] --> not(nothing)
+
             println("The following \"Undefined property\" warning indicates normal operation")
             img = imread(file, extraprop="Non existing property")
             props = properties(img)
             @fact haskey(props, "Non existing property") --> true
-            @fact props["Non existing property"] --> not(anything)
+            @fact props["Non existing property"] --> nothing
         end
     end
 end
