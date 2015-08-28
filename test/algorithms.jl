@@ -256,7 +256,10 @@ facts("Algorithms") do
                      [10.1015625 23.71875 13.6171875;
                       14.09375   32.875   18.78125;
                       11.0390625 25.59375 14.5546875]) --> roughly(B)
-        Images.restrict(imgcol, (1,2))
+        imgcol["pixelspacing"] = [1,1]
+        imgr = Images.restrict(imgcol, (1,2))
+        @fact pixelspacing(imgr) --> [2,2]
+        @fact pixelspacing(imgcol) --> [1,1]  # issue #347
     end
 
     context("Erode/ dilate") do

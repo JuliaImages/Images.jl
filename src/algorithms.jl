@@ -909,7 +909,7 @@ function restrict(img::AbstractImageDirect, region::Union(Dims, Vector{Int})=coo
         A = _restrict(A, dim)
     end
     props = copy(properties(img))
-    ps = pixelspacing(img)
+    ps = copy(pixelspacing(img))
     ind = findin(coords_spatial(img), region)
     ps[ind] *= 2
     props["pixelspacing"] = ps
