@@ -1,7 +1,11 @@
-using FactCheck, Images, Colors, FixedPointNumbers
+using FactCheck, Images, Colors, FixedPointNumbers, Compat
 
 macro chk(a, b)
     :(@fact ($a == $b && typeof($a) == typeof($b)) --> true)
+end
+
+macro chk_approx(a, b)
+    :(@fact (abs($a - $b) < 2*(eps($a)+eps($b)) && typeof($a) == typeof($b)) --> true)
 end
 
 facts("Map") do
@@ -159,6 +163,12 @@ facts("Map") do
         A = [Gray{Float64}(0.2)]
         mapi = ScaleMinMax(RGB{Ufixed8}, A, 0.0, 0.2)
         @fact map(mapi, A) --> [RGB{Ufixed8}(1,1,1)]
+        mapi = ScaleMinMax(Gray{U8}, Gray{U8}(0.2), Gray{U8}(0.4))
+        @chk_approx map(mapi, Gray{U8}(0.3)) Gray{U8}(0.5)
+        @chk_approx map(mapi, 0.3) Gray{U8}(0.5)
+        mapi = ScaleMinMax(Gray{U8}, 0.2, 0.4)
+        @chk_approx map(mapi, Gray{U8}(0.3)) Gray{U8}(0.5)
+        @chk_approx map(mapi, 0.3) Gray{U8}(0.5)
     end
 
     context("ScaleSigned") do
