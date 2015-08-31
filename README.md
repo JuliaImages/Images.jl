@@ -53,12 +53,12 @@ commands with `testimage`.
 
 For these examples you'll need to install both `Images` and `ImageView`.
 Depending on your task, it's also very useful to have two other packages
-loaded, [Color](https://github.com/JuliaLang/Color.jl) and
+loaded, [Colors](https://github.com/JuliaGraphics/Colors.jl) and
 [FixedPointNumbers](https://github.com/JeffBezanson/FixedPointNumbers.jl).
 Load the code for all of these packages with
 
 ```julia
-using Images, Color, FixedPointNumbers, ImageView
+using Images, Colors, FixedPointNumbers, ImageView
 ```
 
 ### Loading your first image: how images are represented
@@ -95,7 +95,7 @@ julia> img[1,1]
 RGB{Ufixed8}(0.188,0.184,0.176)
 ```
 This extracts the first pixel, the one visually at the upper-left of the image. You can see that
-an `RGB` (which comes from the [Color](https://github.com/JuliaLang/Color.jl) package) is a triple of values.
+an `RGB` (which comes from the [Colors](https://github.com/JuliaGraphics/Colors.jl) package) is a triple of values.
 The `Ufixed8` number type (which comes from the
 [FixedPointNumbers](https://github.com/JeffBezanson/FixedPointNumbers.jl) package), and whose long
 name is `UfixedBase{Uint8,8}`)
@@ -105,7 +105,7 @@ image types, floating point-valued and integer-valued. In those libraries, "satu
 (the color white for an RGB image) would be
 represented by `1.0` for floating point-valued images, 255 for a `Uint8` image,
 and `0x0fff` for an image collected by a 12-bit camera.
-`Images.jl`, via Color and FixedPointNumbers, unifies these so that `1` always means saturated, no
+`Images.jl`, via Colors and FixedPointNumbers, unifies these so that `1` always means saturated, no
 matter whether the element type is `Float64`, `Ufixed8`, or `Ufixed12`.
 This makes it easier to write generic algorithms and visualization code,
 while still allowing one to use efficient (and C-compatible) raw representations.
@@ -221,7 +221,7 @@ HSV Image with:
     spatialorder:  x y
     pixelspacing:  1 1
 ```
-Many of the colorspaces supported by Color need a wider range of values than `[0,1]`,
+Many of the colorspaces supported by Colors (or rather, its base package ColorTypes) need a wider range of values than `[0,1]`,
 so it's necessary to convert to floating point.
 
 If you say `view(imhsv)`, you may be surprised to see something that looks
@@ -298,7 +298,6 @@ can be found in the `doc/` directory. Here are some of the topics available:
 - [I/O](doc/extendingIO.md) and custom image file formats
 - [Function reference](doc/function_reference.md)
 - [Overlays](doc/overlays.md), a type for combining multiple grayscale arrays into a single color array
-- [Changes](doc/fixing_breakages.md) describes some recent changes and how to fix likely breakages in old code
 
 # Credits
 
