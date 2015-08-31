@@ -18,7 +18,7 @@ O = Overlay((gray1,gray2,...), (color1,color2,...), (clim1,clim2,...))
 
 Here `gray1` and `gray2` are the arrays representing individual "channels" of
 information, each equivalent to a grayscale image.  `color1` and `color2` are
-the [Colors](https://github.com/JuliaLang/Color.jl) that will be used for the
+the [Colors](https://github.com/JuliaGraphics/Colors.jl) that will be used for the
 corresponding grayscale arrays; for example, to put `gray1` in the red channel,
 you'd use `color1 = RGB(1,0,0)`.  (You can choose any RGB value you want, it
 doesn't have to be a "pure" RGB channel.)  Finally, `clim1` and `clim2`

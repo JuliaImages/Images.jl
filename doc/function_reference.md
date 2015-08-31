@@ -19,7 +19,7 @@ Image(data, prop1=val1, prop2=val2, ...)
 creates a new direct image. In contrast with `convert`, `grayim` and `colorim`,
 this does not permute the data array or attempt to guess any of the
 `properties`. If `data` encodes color information along one of the dimensions of
-the array (as opposed to using a `Color` array, from the `Color.jl`
+the array (as opposed to using a `Color` array, from the `Colors.jl`
 package), be sure to specify the `"colordim"` and `"colorspace"` in
 `properties`.
 
