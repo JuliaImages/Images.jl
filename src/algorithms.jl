@@ -14,7 +14,10 @@ if isdefined(:UniformScaling)
     (-){Timg,TA<:Number}(img::AbstractImageDirect{Timg,2}, A::UniformScaling{TA}) = shareproperties(img, data(img)-A)
 end
 (+)(img::AbstractImageDirect, A::BitArray) = shareproperties(img, data(img)+A)
+(+)(img::AbstractImageDirect, A::AbstractImageDirect) = shareproperties(img, data(img)+data(A))
 (+)(img::AbstractImageDirect, A::AbstractArray) = shareproperties(img, data(img)+data(A))
+(+){S,T}(A::Range{S}, img::AbstractImageDirect{T}) = shareproperties(img, data(A)+data(img))
+(+)(A::AbstractArray, img::AbstractImageDirect) = shareproperties(img, data(A)+data(img))
 (.+)(img::AbstractImageDirect, A::BitArray) = shareproperties(img, data(img).+A)
 (.+)(img::AbstractImageDirect, A::AbstractArray) = shareproperties(img, data(img).+data(A))
 (-)(img::AbstractImageDirect{Bool}, n::Bool) = img .- n
@@ -28,7 +31,10 @@ end
 (-)(img::AbstractImageDirect, A::BitArray) = shareproperties(img, data(img)-A)
 (-){T}(img::AbstractImageDirect{T,2}, A::Diagonal) = shareproperties(img, data(img)-A) # fixes an ambiguity warning
 (-)(img::AbstractImageDirect, A::Range) = shareproperties(img, data(img)-A)
+(-)(img::AbstractImageDirect, A::AbstractImageDirect) = shareproperties(img, data(img)-data(A))
 (-)(img::AbstractImageDirect, A::AbstractArray) = shareproperties(img, data(img)-data(A))
+(-){S,T}(A::Range{S}, img::AbstractImageDirect{T}) = shareproperties(img, data(A)-data(img))
+(-)(A::AbstractArray, img::AbstractImageDirect) = shareproperties(img, data(A)-data(img))
 (-)(img::AbstractImageDirect) = shareproperties(img, -data(img))
 (.-)(img::AbstractImageDirect, A::BitArray) = shareproperties(img, data(img).-A)
 (.-)(img::AbstractImageDirect, A::AbstractArray) = shareproperties(img, data(img).-data(A))
@@ -518,7 +524,7 @@ function imfilter_fft_inseparable{T<:Colorant,K,N,M}(img::AbstractArray{T,N}, ke
     A = reinterpret(eltype(T), data(img))
     kernrs = reshape(kern, tuple(1, size(kern)...))
     B = imfilter_fft_inseparable(A, prep_kernel(A, kernrs), border, value)
-    reinterpret(basepainttype(T), B)
+    reinterpret(base_colorant_type(T), B)
 end
 
 function imfilter_fft_inseparable{T<:Real,K,N}(img::AbstractArray{T,N}, kern::AbstractArray{K,N}, border::String, value)
@@ -598,7 +604,7 @@ function imfilter_gaussian{CT<:Colorant}(img::AbstractArray{CT}, sigma; emit_war
     A = reinterpret(eltype(CT), data(img))
     newsigma = ndims(A) > ndims(img) ? [0;sigma] : sigma
     ret = imfilter_gaussian(A, newsigma; emit_warning=emit_warning, astype=astype)
-    shareproperties(img, reinterpret(basepainttype(CT), ret))
+    shareproperties(img, reinterpret(base_colorant_type(CT), ret))
 end
 
 function imfilter_gaussian{T<:FloatingPoint}(img::AbstractArray{T}, sigma::Vector; emit_warning = true, astype::Type=Float64)
@@ -903,7 +909,7 @@ function restrict(img::AbstractImageDirect, region::Union(Dims, Vector{Int})=coo
         A = _restrict(A, dim)
     end
     props = copy(properties(img))
-    ps = pixelspacing(img)
+    ps = copy(pixelspacing(img))
     ind = findin(coords_spatial(img), region)
     ps[ind] *= 2
     props["pixelspacing"] = ps

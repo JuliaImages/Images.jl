@@ -6,7 +6,7 @@ facts("OS X reader") do
         @fact colorspace(img) --> "RGBA"
         @fact ndims(img) --> 2
         @fact colordim(img) --> 0
-        @fact eltype(img) --> AlphaColorValue{RGB{Ufixed16}, Ufixed16}
+        @fact eltype(img) --> RGBA{Ufixed16}
     end
     context("Camerman") do
         img = testimage("cameraman")
@@ -31,17 +31,17 @@ facts("OS X reader") do
     end
     context("House") do
         img = testimage("house")
-        @fact colorspace(img) --> "GrayAlpha"
+        @fact colorspace(img) --> "GrayA"
         @fact ndims(img) --> 2
         @fact colordim(img) --> 0
-        @fact eltype(img) --> AlphaColorValue{Gray{Ufixed8}, Ufixed8}
+        @fact eltype(img) --> GrayA{Ufixed8}
     end
     context("Jetplane") do
         img = testimage("jetplane")
-        @fact colorspace(img) --> "GrayAlpha"
+        @fact colorspace(img) --> "GrayA"
         @fact ndims(img) --> 2
         @fact colordim(img) --> 0
-        @fact eltype(img) --> AlphaColorValue{Gray{Ufixed8}, Ufixed8}
+        @fact eltype(img) --> GrayA{Ufixed8}
     end
     context("Lighthouse") do
         img = testimage("lighthouse")

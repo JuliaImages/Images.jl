@@ -1,7 +1,7 @@
 module LibOSXNative
 
 #import Base: error, size
-using Images, Color, Images.ColorVectorSpace, FixedPointNumbers, Compat
+using Images, Colors, ColorVectorSpace, FixedPointNumbers, Compat
 
 export imread
 
@@ -73,11 +73,11 @@ function read_and_release_imgsrc(imgsrc)
         buf = Array(Gray{T}, sz)
         fillgray!(reinterpret(T, buf, tuple(sz...)), imgsrc)
     elseif colormodel == "Gray" && in(alphacode, [1, 3])
-        buf = Array(GrayAlpha{T}, sz)
+        buf = Array(GrayA{T}, sz)
         fillgrayalpha!(reinterpret(T, buf, tuple(2, sz...)), imgsrc)
     elseif colormodel == "Gray" && in(alphacode, [2, 4])
-        # Not sure these exist out in the wild
-        error("Unexpected GrayAlpha image layout: alpha is before intensity")
+        buf = Array(AGray{T}, sz)
+        fillgrayalpha!(reinterpret(T, buf, tuple(2, sz...)), imgsrc)
     elseif colormodel == "RGB" && in(alphacode, [1, 3])
         buf = Array(RGBA{T}, sz)
         fillcolor!(reinterpret(T, buf, tuple(4, sz...)), imgsrc, storagedepth)

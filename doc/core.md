@@ -17,7 +17,7 @@ of matrices and the desire to have a displayed image look like what one sees
 when a matrix is written out in text.
 
 If you're working with RGB color, your best approach is to encode color as a
-`ColorValue`, as defined in the `Color` package.  That package provides many
+`Color`, as defined in the `Color` package.  That package provides many
 utility functions for analyzing and manipulating colors.  Alternatively, you can
 use a third dimension of size 3, or encode your images as either `RGB24` or
 `ARGB32`, which use an internal `Uint32` representation of color.
@@ -154,14 +154,14 @@ represented as plain `Array`s don't have a `properties` dictionary; if we are to
 write generic code, we don't want to have to wonder whether this information is
 available. So for plain arrays, there are a number of defaults specified for the
 output of the `colorspace` function, depending on the element type and size of
-the array. Likewise, images stored as `ColorValue` arrays have no need of a
+the array. Likewise, images stored as `Color` arrays have no need of a
 `"colorspace"` property, because the colorspace is encoded in the type
 parameters.
 
 Here is a list of the properties supported in `core.jl`:
 
 - `colorspace`: "RGB", "RGBA", "Gray", "Binary", "24bit", "Lab", "HSV", etc.  If
-  your image is represented as a ColorValue array, you cannot override that
+  your image is represented as a Color array, you cannot override that
   choice by specifying a `colorspace` property.  (Use `reinterpret` if you want
   to change the interpretation without changing the raw values.)
 - `colordim`: the array dimension used to store color information, or 0 if there
