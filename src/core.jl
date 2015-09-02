@@ -25,12 +25,12 @@ ImageCmap(data::AbstractArray, cmap::AbstractVector; kwargs...) = ImageCmap(data
 
 # Convenience constructors
 grayim(A::AbstractImage) = A
-grayim(A::AbstractArray{Uint8,2})  = grayim(reinterpret(Ufixed8, A))
-grayim(A::AbstractArray{Uint16,2}) = grayim(reinterpret(Ufixed16, A))
-grayim(A::AbstractArray{Uint8,3})  = grayim(reinterpret(Ufixed8, A))
+grayim(A::AbstractArray{Uint8,2})  = grayim(reinterpret(Gray{Ufixed8}, A))
+grayim(A::AbstractArray{Uint16,2}) = grayim(reinterpret(Gray{Ufixed16}, A))
+grayim(A::AbstractArray{Uint8,3})  = grayim(reinterpret(Gray{Ufixed8}, A))
 grayim(A::AbstractArray{Uint16,3}) = grayim(reinterpret(Ufixed16, A))
-grayim{T}(A::AbstractArray{T,2}) = Image(A; colorspace="Gray", spatialorder=["x","y"])
-grayim{T}(A::AbstractArray{T,3}) = Image(A; colorspace="Gray", spatialorder=["x","y","z"])
+grayim{T, N}(A::AbstractArray{T,N}) = grayim(reinterpret(Gray{T}, A))
+grayim{T<:Gray, N}(A::AbstractArray{T,N}) = Image(A; colorspace="Gray", spatialorder=["x","y","z"][1:N])
 
 colorim(A::AbstractImage) = A
 function colorim{T}(A::AbstractArray{T,3})
@@ -134,8 +134,8 @@ reinterpret{T,CV<:Colorant}(::Type{T}, A::StridedArray{CV})   = slice(_reinterpr
 function _reinterpret_cvarray{T,CV<:Colorant}(::Type{T}, A::Array{CV})
     if sizeof(T) == sizeof(CV)
         return reinterpret(T, A, size(A))
-    elseif sizeof(T)*length(CV) == sizeof(CV)
-        return reinterpret(T, A, tuple(length(CV), size(A)...))
+    elseif sizeof(T)*n_elts(CV) == sizeof(CV)
+        return reinterpret(T, A, tuple(n_elts(CV), size(A)...))
     end
     error("result shape not specified")
 end
@@ -263,8 +263,8 @@ function separate{CV<:Colorant}(img::AbstractImage{CV})
     p = permutation_canonical(img)
     so = spatialorder(img)[p]
     T = eltype(CV)
-    if length(CV) > 1
-        A = permutedims(reinterpret(T, data(img), tuple(length(CV), size(img)...)), [p+1;1])
+    if n_elts(CV) > 1
+        A = permutedims(reinterpret(T, data(img), tuple(n_elts(CV), size(img)...)), [p+1;1])
     else
         A = permutedims(reinterpret(T, data(img), size(img)), p)
     end
@@ -276,7 +276,7 @@ function separate{CV<:Colorant}(img::AbstractImage{CV})
 end
 function separate{CV<:Colorant}(A::AbstractArray{CV})
     T = eltype(CV)
-    permutedims(reinterpret(T, A, tuple(length(CV), size(A)...)), [2:ndims(A)+1;1])
+    permutedims(reinterpret(T, A, tuple(n_elts(CV), size(A)...)), [2:ndims(A)+1;1])
 end
 separate(A::AbstractArray) = A
 
@@ -670,12 +670,10 @@ isdirect(img::AbstractArray) = true
 isdirect(img::AbstractImageDirect) = true
 isdirect(img::AbstractImageIndexed) = false
 
-colorspace{C<:Colorant}(img::AbstractVector{C}) = ColorTypes.paint_string(C)
-colorspace{C<:Colorant}(img::AbstractMatrix{C}) = ColorTypes.paint_string(C)
-colorspace{C<:Colorant}(img::AbstractArray{C,3}) = ColorTypes.paint_string(C)
-colorspace{C<:Colorant}(img::AbstractImage{C}) = ColorTypes.paint_string(C)
-colorspace{C<:Colorant,T}(img::AbstractArray{TransparentColor{C,T},2}) = (S = ColorTypes.paint_string(C); S == "Gray" ? "GrayAlpha" : string(S, "A"))
-colorspace{C<:Colorant,T}(img::AbstractImage{TransparentColor{C,T}}) = (S = ColorTypes.paint_string(C); S == "Gray" ? "GrayAlpha" : string(S, "A"))
+colorspace{C<:Colorant}(img::AbstractVector{C}) = ColorTypes.colorant_string(C)
+colorspace{C<:Colorant}(img::AbstractMatrix{C}) = ColorTypes.colorant_string(C)
+colorspace{C<:Colorant}(img::AbstractArray{C,3}) = ColorTypes.colorant_string(C)
+colorspace{C<:Colorant}(img::AbstractImage{C}) = ColorTypes.colorant_string(C)
 colorspace(img::AbstractVector{Bool}) = "Binary"
 colorspace(img::AbstractMatrix{Bool}) = "Binary"
 colorspace(img::AbstractArray{Bool}) = "Binary"
@@ -688,13 +686,12 @@ colorspace(img::AbstractImage{Bool}) = "Binary"
 colorspace{T,N,A<:AbstractArray}(img::ImageCmap{T,N,A}) = string(T.name.name)
 colorspace(img::AbstractImageIndexed) = @get img "colorspace" csinfer(eltype(img.cmap))
 colorspace{T}(img::AbstractImageIndexed{T,2}) = @get img "colorspace" csinfer(eltype(img.cmap))
-csinfer{C<:Colorant}(::Type{C}) = ColorTypes.paint_string(C)
+csinfer{C<:Colorant}(::Type{C}) = ColorTypes.colorant_string(C)
 csinfer(C) = "Unknown"
 colorspace(img::AbstractImage) = get(img.properties, "colorspace", "Unknown")
 
 colorspacedict = Dict{ASCIIString,Any}()
-
-for ACV in (Color, AbstractRGB, Gray)
+for ACV in (Color, AbstractRGB)
     for CV in subtypes(ACV)
         (length(CV.parameters) == 1 && !(CV.abstract)) || continue
         str = string(CV.name.name)
@@ -1082,3 +1079,5 @@ function kwargs2dict(kwargs)
     end
     return d
 end
+
+n_elts{C<:Colorant}(::Type{C}) = div(sizeof(C), sizeof(eltype(C)))
