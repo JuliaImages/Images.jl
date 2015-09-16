@@ -15,11 +15,12 @@ aliases = vec(libnames.*transpose(suffixes).*reshape(options,(1,1,length(options
 libwand = library_dependency("libwand", aliases = aliases)
 
 @linux_only begin
-    provides(AptGet, "libmagickwand4", libwand)
-    provides(AptGet, "libmagickwand5", libwand)
-    provides(AptGet, "libmagickwand-6.q16-2", libwand)
-    provides(Pacman, "imagemagick", libwand)
-    provides(Yum, "ImageMagick", libwand)
+    kwargs = Any[(:onload, "ccall((:MagickWandGenesis,libwand), Void, ())")]
+    provides(AptGet, "libmagickwand4", libwand; kwargs...)
+    provides(AptGet, "libmagickwand5", libwand; kwargs...)
+    provides(AptGet, "libmagickwand-6.q16-2", libwand; kwargs...)
+    provides(Pacman, "imagemagick", libwand; kwargs...)
+    provides(Yum, "ImageMagick", libwand; kwargs...)
 end
 
 # TODO: remove me when upstream is fixed
@@ -62,7 +63,8 @@ end
             """
             ENV["MAGICK_CONFIGURE_PATH"] = \"$(escape_string(magick_libdir))\"
             ENV["MAGICK_CODER_MODULE_PATH"] = \"$(escape_string(magick_libdir))\"
-            """)
+            """,
+        onload = "ccall((:MagickWandGenesis,libwand), Void, ())")
 end
 
 @osx_only begin
@@ -76,6 +78,7 @@ end
         ENV["MAGICK_CONFIGURE_PATH"] = joinpath("$(Homebrew.prefix("imagemagick"))","lib","ImageMagick","config-Q16")
         ENV["MAGICK_CODER_MODULE_PATH"] = joinpath("$(Homebrew.prefix("imagemagick"))", "lib","ImageMagick","modules-Q16","coders")
         ENV["PATH"] = joinpath("$(Homebrew.prefix("imagemagick"))", "bin") * ":" * ENV["PATH"]
+        ccall((:MagickWandGenesis,libwand), Void, ())
     end
     """ )
 end

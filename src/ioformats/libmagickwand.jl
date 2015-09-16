@@ -33,14 +33,12 @@ end
 if isfile(versionfile)
     include(versionfile)
 end
+
 const have_imagemagick = isdefined(:libwand)
 
 # Initialize the library
-function init()
-    global libwand
-    if have_imagemagick
-        eval(:(ccall((:MagickWandGenesis, $libwand), Void, ())))
-    else
+function __init__()
+    if !have_imagemagick
         warn("ImageMagick utilities not found. Install for more file format support.")
     end
 end

@@ -46,8 +46,6 @@ include("algorithms.jl")
 include("connected.jl")
 include("edge.jl")
 
-__init__() = LibMagick.init()
-
 function precompile()
     for T in (Uint8, Uint16, Int, Float32, Float64)
         Tdiv = typeof(one(T)/2)
