@@ -9,29 +9,29 @@ typedict = @compat Dict(
     "signed char" => Int8,
     "int8" => Int8,
     "int8_t" => Int8,
-    "uchar" => Uint8,
-    "unsigned char" => Uint8,
-    "uint8" => Uint8,
-    "uint8_t" => Uint8,
+    "uchar" => UInt8,
+    "unsigned char" => UInt8,
+    "uint8" => UInt8,
+    "uint8_t" => UInt8,
     "short" => Int16,
     "short int" => Int16,
     "signed short" => Int16,
     "signed short int" => Int16,
     "int16" => Int16,
     "int16_t" => Int16,
-    "ushort" => Uint16,
-    "unsigned short" => Uint16,
-    "unsigned short int" => Uint16,
-    "uint16" => Uint16,
-    "uint16_t" => Uint16,
+    "ushort" => UInt16,
+    "unsigned short" => UInt16,
+    "unsigned short int" => UInt16,
+    "uint16" => UInt16,
+    "uint16_t" => UInt16,
     "int" => Int32,
     "signed int" => Int32,
     "int32" => Int32,
     "int32_t" => Int32,
-    "uint" => Uint32,
-    "unsigned int" => Uint32,
-    "uint32" => Uint32,
-    "uint32_t" => Uint32,
+    "uint" => UInt32,
+    "unsigned int" => UInt32,
+    "uint32" => UInt32,
+    "uint32_t" => UInt32,
     "longlong" => Int64,
     "long long" => Int64,
     "long long int" => Int64,
@@ -39,11 +39,11 @@ typedict = @compat Dict(
     "signed long long int" => Int64,
     "int64" => Int64,
     "int64_t" => Int64,
-    "ulonglong" => Uint64,
-    "unsigned long long" => Uint64,
-    "unsigned long long int" => Uint64,
-    "uint64" => Uint64,
-    "uint64_t" => Uint64,
+    "ulonglong" => UInt64,
+    "unsigned long long" => UInt64,
+    "unsigned long long int" => UInt64,
+    "uint64" => UInt64,
+    "uint64_t" => UInt64,
     "float16" => Float16,
     "float" => Float32,
     "double" => Float64)
@@ -77,7 +77,7 @@ function myendian()
 end
 
 function imread{S<:IO}(stream::S, ::Type{Images.NRRDFile}; mmap=:auto)
-    version = ascii(read(stream, Uint8, 4))
+    version = ascii(read(stream, UInt8, 4))
     skipchars(stream,isspace)
     header = Dict{ASCIIString, UTF8String}()
     props = Dict{ASCIIString, Any}()
@@ -286,7 +286,7 @@ function imwrite(img, sheader::IO, ::Type{Images.NRRDFile}; props::Dict = Dict{A
     println(sheader, "NRRD0001")
     # Write the datatype
     T = get(props, "type", eltype(data(img)))
-    if T<:FloatingPoint
+    if T<:AbstractFloat
         println(sheader, "type: ", (T == Float32) ? "float" :
                                    (T == Float64) ? "double" :
                                    (T == Float16) ? "float16" :
@@ -372,7 +372,7 @@ function imwrite(img, sheader::IO, ::Type{Images.NRRDFile}; props::Dict = Dict{A
     sheader
 end
 
-function parse_vector_int(s::String)
+function parse_vector_int(s::AbstractString)
     ss = split_nokeep(s, r"[ ,;]")
     v = Array(Int, length(ss))
     for i = 1:length(ss)
@@ -381,7 +381,7 @@ function parse_vector_int(s::String)
     return v
 end
 
-function parse_vector_float(s::String)
+function parse_vector_float(s::AbstractString)
     ss = split_nokeep(s, r"[ ,;]")
     v = Array(Float64, length(ss))
     for i = 1:length(ss)
@@ -390,8 +390,8 @@ function parse_vector_float(s::String)
     return v
 end
 
-function parse_vector_strings(s::String)
-    (first(s) == '"' && last(s) == '"') || error("Strings must be delimited with quotes")
+function parse_vector_strings(s::AbstractString)
+    (first(s) == '"' && last(s) == '"') || error("AbstractStrings must be delimited with quotes")
     split(s[2:end-1], "\" \"")
 end
 
@@ -410,17 +410,17 @@ function stream2name(s::IO)
 end
 
 _unit_string_dict = @compat Dict("um" => Micro*Meter, "mm" => Milli*Meter, "s" => Second)
-function parse_quantity(s::String, strict::Bool = true)
+function parse_quantity(s::AbstractString, strict::Bool = true)
     # Find the last character of the numeric component
     m = match(r"[0-9\.\+-](?![0-9\.\+-])", s)
     if m == nothing
-        error("String does not have a 'value unit' structure")
+        error("AbstractString does not have a 'value unit' structure")
     end
     val = float64(s[1:m.offset])
     ustr = strip(s[m.offset+1:end])
     if isempty(ustr)
         if strict
-            error("String does not have a 'value unit' structure")
+            error("AbstractString does not have a 'value unit' structure")
         else
             return val
         end

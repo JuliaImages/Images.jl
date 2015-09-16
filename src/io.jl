@@ -14,10 +14,10 @@ abstract ImageFileType
 # it's the set of magic bytes in the file that determine the file
 # format.
 fileext = Dict{ByteString, Vector{Int}}()
-filemagic = Array(Vector{Uint8}, 0)
+filemagic = Array(Vector{UInt8}, 0)
 filetype = Array(Any, 0)
 filesrcloaded = Array(Bool, 0)
-filesrc = Array(String, 0)
+filesrc = Array(AbstractString, 0)
 filemmap = Array(Bool,0)  # if it supports memory-mapped operation
 
 function _loadformat(index::Int)
@@ -42,7 +42,7 @@ end
 
 # if supportmmap == true, then imread() should take a mmap keyword argument that is either
 #   :auto, true or false.
-function add_image_file_format{ImageType<:ImageFileType}(ext::ByteString, magic::Vector{Uint8},
+function add_image_file_format{ImageType<:ImageFileType}(ext::ByteString, magic::Vector{UInt8},
                         ::Type{ImageType}, filecode::ASCIIString; supportsmmap::Bool=false)
     # Check to see whether these magic bytes are already in the database
     for i in 1:length(filemagic)
@@ -65,7 +65,7 @@ function add_image_file_format{ImageType<:ImageFileType}(ext::ByteString, magic:
     push!(filesrc, filecode)
     push!(filemmap, supportsmmap)
 end
-add_image_file_format{ImageType<:ImageFileType}(ext::ByteString, magic::Vector{Uint8}, ::Type{ImageType}; supportsmmap::Bool=false) =
+add_image_file_format{ImageType<:ImageFileType}(ext::ByteString, magic::Vector{UInt8}, ::Type{ImageType}; supportsmmap::Bool=false) =
     add_image_file_format(ext, magic, ImageType, "", supportsmmap=supportsmmap)
 add_image_file_format{ImageType<:ImageFileType}(ext::ByteString, ::Type{ImageType}, filecode::ASCIIString; supportsmmap::Bool=false) =
     add_image_file_format(ext, b"", ImageType, filecode, supportsmmap=supportsmmap)
@@ -75,7 +75,7 @@ add_image_file_format{ImageType<:ImageFileType}(ext::ByteString, ::Type{ImageTyp
 type ImageMagick <: ImageFileType end
 type OSXNative <: ImageFileType end
 
-function imread(filename::String;extraprop="",extrapropertynames=false,mmap=:auto)
+function imread(filename::AbstractString;extraprop="",extrapropertynames=false,mmap=:auto)
 
     if (mmap != :auto) && (mmap != true) && (mmap != false)
         error("Argument mmap must be either true, false or :auto")
@@ -142,7 +142,7 @@ function imread(filename::String;extraprop="",extrapropertynames=false,mmap=:aut
     end
 end
 
-imread{C<:Color}(filename::String, ::Type{C}) = imread(filename, ImageMagick, C)
+imread{C<:Color}(filename::AbstractString, ::Type{C}) = imread(filename, ImageMagick, C)
 
 # Identify via magic bytes
 function image_decode_magic{S<:IO}(stream::S, candidates::AbstractVector{Int})
@@ -156,16 +156,16 @@ function image_decode_magic{S<:IO}(stream::S, candidates::AbstractVector{Int})
         return candidates[1]
     end
 
-    magicbuf = zeros(Uint8, maxlen)
+    magicbuf = zeros(UInt8, maxlen)
     for i=1:maxlen
         if eof(stream) break end
-        magicbuf[i] = read(stream, Uint8)
+        magicbuf[i] = read(stream, UInt8)
     end
     for i in candidates
         if length(filemagic[i]) == 0
             continue
         end
-        ret = ccall(:memcmp, Int32, (Ptr{Uint8}, Ptr{Uint8}, Int), magicbuf, filemagic[i], min(length(filemagic[i]), length(magicbuf)))
+        ret = ccall(:memcmp, Int32, (Ptr{UInt8}, Ptr{UInt8}, Int), magicbuf, filemagic[i], min(length(filemagic[i]), length(magicbuf)))
         if ret == 0
             return i
         end
@@ -173,7 +173,7 @@ function image_decode_magic{S<:IO}(stream::S, candidates::AbstractVector{Int})
     return -1
 end
 
-function imwrite(img, filename::String; kwargs...)
+function imwrite(img, filename::AbstractString; kwargs...)
     _, ext = splitext(filename)
     ext = lowercase(ext)
     if haskey(fileext, ext)
@@ -192,7 +192,7 @@ function imwrite(img, filename::String; kwargs...)
     end
 end
 
-function imwrite{T<:ImageFileType}(img, filename::String, ::Type{T}; kwargs...)
+function imwrite{T<:ImageFileType}(img, filename::AbstractString, ::Type{T}; kwargs...)
     open(filename, "w") do s
         imwrite(img, s, T; kwargs...)
     end
@@ -257,7 +257,7 @@ imread(source, ::Type{OSXNative}) = LibOSXNative.imread(source)
 # fixed type for depths > 8
 const ufixedtype = @compat Dict(10=>Ufixed10, 12=>Ufixed12, 14=>Ufixed14, 16=>Ufixed16)
 
-function imread(filename::Union(String,IO), ::Type{ImageMagick};extraprop="",extrapropertynames=false)
+function imread(filename::Union(AbstractString,IO), ::Type{ImageMagick};extraprop="",extrapropertynames=false)
     wand = LibMagick.MagickWand()
     LibMagick.readimage(wand, filename)
     LibMagick.resetiterator(wand)
@@ -325,11 +325,11 @@ function imread(filename::Union(String,IO), ::Type{ImageMagick};extraprop="",ext
     Image(buf, prop)
 end
 
-imread{C<:Colorant}(filename::String, ::Type{ImageMagick}, ::Type{C}) = convert(Image{C}, imread(filename, ImageMagick))
+imread{C<:Colorant}(filename::AbstractString, ::Type{ImageMagick}, ::Type{C}) = convert(Image{C}, imread(filename, ImageMagick))
 
-imwrite(img::AbstractImageIndexed, filename::String, ::Type{ImageMagick}; kwargs...) = imwrite(convert(Image, img), filename, ImageMagick; kwargs...)
+imwrite(img::AbstractImageIndexed, filename::AbstractString, ::Type{ImageMagick}; kwargs...) = imwrite(convert(Image, img), filename, ImageMagick; kwargs...)
 
-function imwrite(img, filename::String, ::Type{ImageMagick}; mapi = mapinfo(ImageMagick, img), quality = nothing)
+function imwrite(img, filename::AbstractString, ::Type{ImageMagick}; mapi = mapinfo(ImageMagick, img), quality = nothing)
     wand = image2wand(img, mapi, quality)
     LibMagick.writeimage(wand, filename)
 end
@@ -367,7 +367,7 @@ end
 
 # ImageMagick mapinfo client. Converts to RGB and uses Ufixed.
 mapinfo{T<:Ufixed}(::Type{ImageMagick}, img::AbstractArray{T}) = MapNone{T}()
-mapinfo{T<:FloatingPoint}(::Type{ImageMagick}, img::AbstractArray{T}) = MapNone{Ufixed8}()
+mapinfo{T<:AbstractFloat}(::Type{ImageMagick}, img::AbstractArray{T}) = MapNone{Ufixed8}()
 for ACV in (Color, AbstractRGB)
     for CV in subtypes(ACV)
         (length(CV.parameters) == 1 && !(CV.abstract)) || continue
@@ -390,7 +390,7 @@ mapinfo(::Type{ImageMagick}, img::AbstractArray{ARGB32}) = MapNone{BGRA{Ufixed8}
 
 # Clamping mapinfo client. Converts to RGB and uses Ufixed, clamping floating-point values to [0,1].
 mapinfo{T<:Ufixed}(::Type{Clamp}, img::AbstractArray{T}) = MapNone{T}()
-mapinfo{T<:FloatingPoint}(::Type{Clamp}, img::AbstractArray{T}) = ClampMinMax(Ufixed8, zero(T), one(T))
+mapinfo{T<:AbstractFloat}(::Type{Clamp}, img::AbstractArray{T}) = ClampMinMax(Ufixed8, zero(T), one(T))
 for ACV in (Color, AbstractRGB)
     for CV in subtypes(ACV)
         (length(CV.parameters) == 1 && !(CV.abstract)) || continue
@@ -418,15 +418,15 @@ to_contiguous(A::SubArray) = copy(A)
 to_explicit(A::AbstractArray) = A
 to_explicit{T<:Ufixed}(A::AbstractArray{T}) = reinterpret(FixedPointNumbers.rawtype(T), A)
 to_explicit{T<:Ufixed}(A::AbstractArray{RGB{T}}) = reinterpret(FixedPointNumbers.rawtype(T), A, tuple(3, size(A)...))
-to_explicit{T<:FloatingPoint}(A::AbstractArray{RGB{T}}) = to_explicit(map(ClipMinMax(RGB{Ufixed8}, zero(RGB{T}), one(RGB{T})), A))
+to_explicit{T<:AbstractFloat}(A::AbstractArray{RGB{T}}) = to_explicit(map(ClipMinMax(RGB{Ufixed8}, zero(RGB{T}), one(RGB{T})), A))
 to_explicit{T<:Ufixed}(A::AbstractArray{Gray{T}}) = reinterpret(FixedPointNumbers.rawtype(T), A, size(A))
-to_explicit{T<:FloatingPoint}(A::AbstractArray{Gray{T}}) = to_explicit(map(ClipMinMax(Gray{Ufixed8}, zero(Gray{T}), one(Gray{T})), A))
+to_explicit{T<:AbstractFloat}(A::AbstractArray{Gray{T}}) = to_explicit(map(ClipMinMax(Gray{Ufixed8}, zero(Gray{T}), one(Gray{T})), A))
 to_explicit{T<:Ufixed}(A::AbstractArray{GrayA{T}}) = reinterpret(FixedPointNumbers.rawtype(T), A, tuple(2, size(A)...))
-to_explicit{T<:FloatingPoint}(A::AbstractArray{GrayA{T}}) = to_explicit(map(ClipMinMax(GrayA{Ufixed8}, zero(GrayA{T}), one(GrayA{T})), A))
+to_explicit{T<:AbstractFloat}(A::AbstractArray{GrayA{T}}) = to_explicit(map(ClipMinMax(GrayA{Ufixed8}, zero(GrayA{T}), one(GrayA{T})), A))
 to_explicit{T<:Ufixed}(A::AbstractArray{BGRA{T}}) = reinterpret(FixedPointNumbers.rawtype(T), A, tuple(4, size(A)...))
-to_explicit{T<:FloatingPoint}(A::AbstractArray{BGRA{T}}) = to_explicit(map(ClipMinMax(BGRA{Ufixed8}, zero(BGRA{T}), one(BGRA{T})), A))
+to_explicit{T<:AbstractFloat}(A::AbstractArray{BGRA{T}}) = to_explicit(map(ClipMinMax(BGRA{Ufixed8}, zero(BGRA{T}), one(BGRA{T})), A))
 to_explicit{T<:Ufixed}(A::AbstractArray{RGBA{T}}) = reinterpret(FixedPointNumbers.rawtype(T), A, tuple(4, size(A)...))
-to_explicit{T<:FloatingPoint}(A::AbstractArray{RGBA{T}}) = to_explicit(map(ClipMinMax(RGBA{Ufixed8}, zero(RGBA{T}), one(RGBA{T})), A))
+to_explicit{T<:AbstractFloat}(A::AbstractArray{RGBA{T}}) = to_explicit(map(ClipMinMax(RGBA{Ufixed8}, zero(RGBA{T}), one(RGBA{T})), A))
 
 # Write values in permuted order
 let method_cache = Dict()
@@ -506,17 +506,17 @@ function imread{S<:IO}(stream::S, ::Type{PPMBinary})
     if maxval <= 255
         datraw = read(stream, Ufixed8, 3, w, h)
         dat = reinterpret(RGB{Ufixed8}, datraw, (w, h))
-    elseif maxval <= typemax(Uint16)
-        # read first as Uint16 so the loop is type-stable, then convert to Ufixed
-        datraw = Array(Uint16, 3, w, h)
+    elseif maxval <= typemax(UInt16)
+        # read first as UInt16 so the loop is type-stable, then convert to Ufixed
+        datraw = Array(UInt16, 3, w, h)
         # there is no endian standard, but netpbm is big-endian
         if !is_little_endian
             for indx = 1:3*w*h
-                datraw[indx] = read(stream, Uint16)
+                datraw[indx] = read(stream, UInt16)
             end
         else
             for indx = 1:3*w*h
-                datraw[indx] = bswap(read(stream, Uint16))
+                datraw[indx] = bswap(read(stream, UInt16))
             end
         end
         # Determine the appropriate Ufixed type
@@ -535,15 +535,15 @@ function imread{S<:IO}(stream::S, ::Type{PGMBinary})
     local dat
     if maxval <= 255
         dat = read(stream, Ufixed8, w, h)
-    elseif maxval <= typemax(Uint16)
-        datraw = Array(Uint16, w, h)
+    elseif maxval <= typemax(UInt16)
+        datraw = Array(UInt16, w, h)
         if !is_little_endian
             for indx = 1:w*h
-                datraw[indx] = read(stream, Uint16)
+                datraw[indx] = read(stream, UInt16)
             end
         else
             for indx = 1:w*h
-                datraw[indx] = bswap(read(stream, Uint16))
+                datraw[indx] = bswap(read(stream, UInt16))
             end
         end
         # Determine the appropriate Ufixed type
@@ -561,7 +561,7 @@ function imread{S<:IO}(stream::S, ::Type{PBMBinary})
     dat = BitArray(w, h)
     nbytes_per_row = ceil(Int, w/8)
     for irow = 1:h, j = 1:nbytes_per_row
-        tmp = read(stream, Uint8)
+        tmp = read(stream, UInt8)
         offset = (j-1)*8
         for k = 1:min(8, w-offset)
             dat[offset+k, irow] = (tmp>>>(8-k))&0x01
@@ -570,7 +570,7 @@ function imread{S<:IO}(stream::S, ::Type{PBMBinary})
     Image(dat, @compat Dict("spatialorder" => ["x", "y"], "pixelspacing" => [1,1]))
 end
 
-function imwrite(img, filename::String, ::Type{PPMBinary})
+function imwrite(img, filename::AbstractString, ::Type{PPMBinary})
     open(filename, "w") do stream
         write(stream, "P6\n")
         write(stream, "# ppm file written by Julia\n")
@@ -578,7 +578,7 @@ function imwrite(img, filename::String, ::Type{PPMBinary})
     end
 end
 
-pnmmax{T<:FloatingPoint}(::Type{T}) = 255
+pnmmax{T<:AbstractFloat}(::Type{T}) = 255
 pnmmax{T<:Ufixed}(::Type{T}) = reinterpret(FixedPointNumbers.rawtype(T), one(T))
 pnmmax{T<:Unsigned}(::Type{T}) = typemax(T)
 

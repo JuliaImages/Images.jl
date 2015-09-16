@@ -7,7 +7,7 @@ export imread
 
 imread(io::IOStream) = imread(readbytes(io))
 
-function imread(b::Array{Uint8,1})
+function imread(b::Array{UInt8,1})
   data = CFDataCreate(b)
   imgsrc = CGImageSourceCreateWithData(data)
   CFRelease(data)
@@ -148,18 +148,18 @@ function fillgray!{T}(buffer::AbstractArray{T, 3}, imgsrc)
     end
 end
 
-function fillgrayalpha!(buffer::AbstractArray{Uint8, 3}, imgsrc)
+function fillgrayalpha!(buffer::AbstractArray{UInt8, 3}, imgsrc)
     imwidth, imheight = size(buffer, 2), size(buffer, 3)
     CGimg = CGImageSourceCreateImageAtIndex(imgsrc, 0)
     imagepixels = CopyImagePixels(CGimg)
-    pixelptr = CFDataGetBytePtr(imagepixels, Uint16)
+    pixelptr = CFDataGetBytePtr(imagepixels, UInt16)
     imbuffer = pointer_to_array(pixelptr, (imwidth, imheight), false)
     buffer[1, :, :] = imbuffer & 0xff
     buffer[2, :, :] = div(imbuffer & 0xff00, 256)
     CFRelease(imagepixels)
     CGImageRelease(CGimg)
 end
-fillgrayalpha!(buffer::AbstractArray{Ufixed8, 3}, imgsrc) = fillgrayalpha!(reinterpret(Uint8, buffer), imgsrc)
+fillgrayalpha!(buffer::AbstractArray{Ufixed8, 3}, imgsrc) = fillgrayalpha!(reinterpret(UInt8, buffer), imgsrc)
 
 function fillcolor!{T}(buffer::AbstractArray{T, 3}, imgsrc, nc)
     imwidth, imheight = size(buffer, 2), size(buffer, 3)
@@ -214,19 +214,19 @@ oms{T}(id, uid, ::Type{T}=Ptr{Void}) =
     ccall(:objc_msgSend, T, (Ptr{Void}, Ptr{Void}), id, selector(uid))
 
 ogc{T}(id, ::Type{T}=Ptr{Void}) =
-    ccall((:objc_getClass, "Cocoa.framework/Cocoa"), Ptr{Void}, (Ptr{Uint8}, ), id)
+    ccall((:objc_getClass, "Cocoa.framework/Cocoa"), Ptr{Void}, (Ptr{UInt8}, ), id)
 
-selector(sel::String) = ccall(:sel_getUid, Ptr{Void}, (Ptr{Uint8}, ), sel)
+selector(sel::AbstractString) = ccall(:sel_getUid, Ptr{Void}, (Ptr{UInt8}, ), sel)
 
-NSString(init::String) = ccall(:objc_msgSend, Ptr{Void},
-                               (Ptr{Void}, Ptr{Void}, Ptr{Uint8}, Uint64),
+NSString(init::AbstractString) = ccall(:objc_msgSend, Ptr{Void},
+                               (Ptr{Void}, Ptr{Void}, Ptr{UInt8}, UInt64),
                                oms(ogc("NSString"), "alloc"),
                                selector("initWithCString:encoding:"), init, 1)
 
-NSLog(str::String, obj) = ccall((:NSLog, foundation), Ptr{Void},
+NSLog(str::AbstractString, obj) = ccall((:NSLog, foundation), Ptr{Void},
                                 (Ptr{Void}, Ptr{Void}), NSString(str), obj)
 
-NSLog(str::String) = ccall((:NSLog, foundation), Ptr{Void},
+NSLog(str::AbstractString) = ccall((:NSLog, foundation), Ptr{Void},
                            (Ptr{Void}, ), NSString(str))
 
 NSLog(obj::Ptr) = ccall((:NSLog, foundation), Ptr{Void}, (Ptr{Void}, ), obj)
@@ -264,7 +264,7 @@ CFURLCreateWithString(filename) =
     ccall(:CFURLCreateWithString, Ptr{Void},
           (Ptr{Void}, Ptr{Void}, Ptr{Void}), C_NULL, NSString(filename), C_NULL)
 
-CFURLCreateWithFileSystemPath(filename::String) =
+CFURLCreateWithFileSystemPath(filename::AbstractString) =
     ccall(:CFURLCreateWithFileSystemPath, Ptr{Void},
           (Ptr{Void}, Ptr{Void}, Cint, Bool), C_NULL, NSString(filename), 0, false)
 
@@ -280,7 +280,7 @@ function CFDictionaryGetValue(CFDictionaryRef::Ptr{Void}, key)
           (Ptr{Void}, Ptr{Void}), CFDictionaryRef, key)
 end
 
-CFDictionaryGetValue(CFDictionaryRef::Ptr{Void}, key::String) =
+CFDictionaryGetValue(CFDictionaryRef::Ptr{Void}, key::AbstractString) =
     CFDictionaryGetValue(CFDictionaryRef::Ptr{Void}, NSString(key))
 
 # CFNumber
@@ -309,7 +309,7 @@ CFNumberGetValue(CFNum::Ptr{Void}, ::Type{Float32}) =
 CFNumberGetValue(CFNum::Ptr{Void}, ::Type{Float64}) =
     CFNumberGetValue(CFNum, kCFNumberFloat64Type)
 
-CFNumberGetValue(CFNum::Ptr{Void}, ::Type{Uint8}) =
+CFNumberGetValue(CFNum::Ptr{Void}, ::Type{UInt8}) =
     CFNumberGetValue(CFNum, kCFNumberCharType)
 
 #CFBoolean
@@ -320,8 +320,8 @@ CFBooleanGetValue(CFBoolean::Ptr{Void}) =
 # CFString
 function CFStringGetCString(CFStringRef::Ptr{Void})
     CFStringRef == C_NULL && return ""
-    buffer = Array(Uint8, 1024)  # does this need to be bigger for Open Microscopy TIFFs?
-    res = ccall(:CFStringGetCString, Bool, (Ptr{Void}, Ptr{Uint8}, Uint, Uint16),
+    buffer = Array(UInt8, 1024)  # does this need to be bigger for Open Microscopy TIFFs?
+    res = ccall(:CFStringGetCString, Bool, (Ptr{Void}, Ptr{UInt8}, UInt, UInt16),
                 CFStringRef, buffer, length(buffer), 0x0600)
     res == C_NULL && return ""
     return bytestring(pointer(buffer))
@@ -330,7 +330,7 @@ end
 # These were unsafe, can return null pointers at random times.
 # See Apple Developer Docs
 #CFStringGetCStringPtr(CFStringRef::Ptr{Void}) =
-#    ccall(:CFStringGetCStringPtr, Ptr{Uint8}, (Ptr{Void}, Uint16), CFStringRef, 0x0600)
+#    ccall(:CFStringGetCStringPtr, Ptr{UInt8}, (Ptr{Void}, UInt16), CFStringRef, 0x0600)
 #
 #getCFString(CFStr::Ptr{Void}) = CFStringGetCStringPtr(CFStr) != C_NULL ?
 #    bytestring(CFStringGetCStringPtr(CFStr)) : ""
@@ -347,7 +347,7 @@ CGImageSourceGetType(CGImageSourceRef::Ptr{Void}) =
     ccall(:CGImageSourceGetType, Ptr{Void}, (Ptr{Void}, ), CGImageSourceRef)
 
 CGImageSourceGetStatus(CGImageSourceRef::Ptr{Void}) =
-    ccall(:CGImageSourceGetStatus, Uint32, (Ptr{Void}, ), CGImageSourceRef)
+    ccall(:CGImageSourceGetStatus, UInt32, (Ptr{Void}, ), CGImageSourceRef)
 
 CGImageSourceGetStatusAtIndex(CGImageSourceRef::Ptr{Void}, n) =
     ccall(:CGImageSourceGetStatusAtIndex, Int32,
@@ -366,15 +366,15 @@ CGImageSourceGetCount(CGImageSourceRef::Ptr{Void}) =
 
 CGImageSourceCreateImageAtIndex(CGImageSourceRef::Ptr{Void}, i) =
     ccall(:CGImageSourceCreateImageAtIndex, Ptr{Void},
-          (Ptr{Void}, Uint64, Ptr{Void}), CGImageSourceRef, i, C_NULL)
+          (Ptr{Void}, UInt64, Ptr{Void}), CGImageSourceRef, i, C_NULL)
 
 
 # CGImageGet
 CGImageGetAlphaInfo(CGImageRef::Ptr{Void}) =
-    ccall(:CGImageGetAlphaInfo, Uint32, (Ptr{Void}, ), CGImageRef)
+    ccall(:CGImageGetAlphaInfo, UInt32, (Ptr{Void}, ), CGImageRef)
 
 CGImageGetBitmapInfo(CGImageRef::Ptr{Void}) =
-    ccall(:CGImageGetBitmapInfo, Uint32, (Ptr{Void}, ), CGImageRef)
+    ccall(:CGImageGetBitmapInfo, UInt32, (Ptr{Void}, ), CGImageRef)
 
 CGImageGetBitsPerComponent(CGImageRef::Ptr{Void}) =
     ccall(:CGImageGetBitsPerComponent, Csize_t, (Ptr{Void}, ), CGImageRef)
@@ -386,7 +386,7 @@ CGImageGetBytesPerRow(CGImageRef::Ptr{Void}) =
     ccall(:CGImageGetBytesPerRow, Csize_t, (Ptr{Void}, ), CGImageRef)
 
 CGImageGetColorSpace(CGImageRef::Ptr{Void}) =
-    ccall(:CGImageGetColorSpace, Uint32, (Ptr{Void}, ), CGImageRef)
+    ccall(:CGImageGetColorSpace, UInt32, (Ptr{Void}, ), CGImageRef)
 
 CGImageGetDecode(CGImageRef::Ptr{Void}) =
     ccall(:CGImageGetDecode, Ptr{Float64}, (Ptr{Void}, ), CGImageRef)
@@ -395,7 +395,7 @@ CGImageGetHeight(CGImageRef::Ptr{Void}) =
     ccall(:CGImageGetHeight, Csize_t, (Ptr{Void}, ), CGImageRef)
 
 CGImageGetRenderingIntent(CGImageRef::Ptr{Void}) =
-    ccall(:CGImageGetRenderingIntent, Uint32, (Ptr{Void}, ), CGImageRef)
+    ccall(:CGImageGetRenderingIntent, UInt32, (Ptr{Void}, ), CGImageRef)
 
 CGImageGetShouldInterpolate(CGImageRef::Ptr{Void}) =
     ccall(:CGImageGetShouldInterpolate, Bool, (Ptr{Void}, ), CGImageRef)
@@ -426,7 +426,7 @@ CFDataGetBytePtr{T}(CFDataRef::Ptr{Void}, ::Type{T}) =
 CFDataGetLength(CFDataRef::Ptr{Void}) =
     ccall(:CFDataGetLength, Ptr{Int64}, (Ptr{Void}, ), CFDataRef)
 
-CFDataCreate(bytes::Array{Uint8,1}) =
-  ccall(:CFDataCreate,Ptr{Void},(Ptr{Void},Ptr{Uint8},Csize_t),C_NULL,bytes,length(bytes))
+CFDataCreate(bytes::Array{UInt8,1}) =
+  ccall(:CFDataCreate,Ptr{Void},(Ptr{Void},Ptr{UInt8},Csize_t),C_NULL,bytes,length(bytes))
 
 end # Module

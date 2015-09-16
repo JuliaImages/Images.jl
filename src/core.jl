@@ -25,10 +25,10 @@ ImageCmap(data::AbstractArray, cmap::AbstractVector; kwargs...) = ImageCmap(data
 
 # Convenience constructors
 grayim(A::AbstractImage) = A
-grayim(A::AbstractArray{Uint8,2})  = grayim(reinterpret(Ufixed8, A))
-grayim(A::AbstractArray{Uint16,2}) = grayim(reinterpret(Ufixed16, A))
-grayim(A::AbstractArray{Uint8,3})  = grayim(reinterpret(Ufixed8, A))
-grayim(A::AbstractArray{Uint16,3}) = grayim(reinterpret(Ufixed16, A))
+grayim(A::AbstractArray{UInt8,2})  = grayim(reinterpret(Ufixed8, A))
+grayim(A::AbstractArray{UInt16,2}) = grayim(reinterpret(Ufixed16, A))
+grayim(A::AbstractArray{UInt8,3})  = grayim(reinterpret(Ufixed8, A))
+grayim(A::AbstractArray{UInt16,3}) = grayim(reinterpret(Ufixed16, A))
 grayim{T}(A::AbstractArray{T,2}) = Image(A; colorspace="Gray", spatialorder=["x","y"])
 grayim{T}(A::AbstractArray{T,3}) = Image(A; colorspace="Gray", spatialorder=["x","y","z"])
 
@@ -58,10 +58,10 @@ function colorim{T}(A::AbstractArray{T,3}, colorspace)
     end
 end
 
-colorim(A::AbstractArray{Uint8,3})  = colorim(reinterpret(Ufixed8, A))
-colorim(A::AbstractArray{Uint16,3}) = colorim(reinterpret(Ufixed16, A))
-colorim(A::AbstractArray{Uint8,3},  colorspace) = colorim(reinterpret(Ufixed8, A), colorspace)
-colorim(A::AbstractArray{Uint16,3}, colorspace) = colorim(reinterpret(Ufixed16, A), colorspace)
+colorim(A::AbstractArray{UInt8,3})  = colorim(reinterpret(Ufixed8, A))
+colorim(A::AbstractArray{UInt16,3}) = colorim(reinterpret(Ufixed16, A))
+colorim(A::AbstractArray{UInt8,3},  colorspace) = colorim(reinterpret(Ufixed8, A), colorspace)
+colorim(A::AbstractArray{UInt16,3}, colorspace) = colorim(reinterpret(Ufixed16, A), colorspace)
 
 
 #### Core operations ####
@@ -70,7 +70,7 @@ eltype{T}(img::AbstractImage{T}) = T
 
 size(img::AbstractImage) = size(img.data)
 size(img::AbstractImage, i::Integer) = size(img.data, i)
-size(img::AbstractImage, dimname::String) = size(img.data, dimindex(img, dimname))
+size(img::AbstractImage, dimname::AbstractString) = size(img.data, dimindex(img, dimname))
 
 ndims(img::AbstractImage) = ndims(img.data)
 
@@ -144,9 +144,9 @@ reinterpret{CV<:Colorant}(A::StridedArray{CV}) = reinterpret(eltype(CV), A)
 # Images
 reinterpret{CV1<:Colorant,CV2<:Colorant}(::Type{CV1}, img::AbstractImageDirect{CV2}) =
     shareproperties(img, reinterpret(CV1, data(img)))
-function reinterpret{CV<:Colorant}(::Type{Uint32}, img::AbstractImageDirect{CV})
-    CV <: Union(RGB24, ARGB32) || (CV <: AbstractRGB && sizeof(CV) == 4) || error("Can't convert $CV to Uint32")
-    A = reinterpret(Uint32, data(img))
+function reinterpret{CV<:Colorant}(::Type{UInt32}, img::AbstractImageDirect{CV})
+    CV <: Union(RGB24, ARGB32) || (CV <: AbstractRGB && sizeof(CV) == 4) || error("Can't convert $CV to UInt32")
+    A = reinterpret(UInt32, data(img))
     props = copy(properties(img))
     props["colorspace"] = colorspace(img)
     Image(A, props)
@@ -318,13 +318,13 @@ setindex!(img::AbstractImage, X, I::RealIndex, J::RealIndex, K::RealIndex) = set
 setindex!(img::AbstractImage, X, I::RealIndex, J::RealIndex,
                    K::RealIndex, L::RealIndex) = setindex!(img.data, X, I, J, K, L)
 setindex!(img::AbstractImage, X, I::RealIndex...) = setindex!(img.data, X, I...)
-setindex!(img::AbstractImage, X, dimname::String, ind::RealIndex, nameind...) = setindex!(img.data, X, coords(img, dimname, ind, nameind...)...)
+setindex!(img::AbstractImage, X, dimname::AbstractString, ind::RealIndex, nameind...) = setindex!(img.data, X, coords(img, dimname, ind, nameind...)...)
 
 # Adding a new property via setindex!
-setindex!(img::AbstractImage, X, propname::String) = setindex!(img.properties, X, propname)
+setindex!(img::AbstractImage, X, propname::AbstractString) = setindex!(img.properties, X, propname)
 
 # Delete a property!
-delete!(img::AbstractImage, propname::String) = delete!(img.properties, propname)
+delete!(img::AbstractImage, propname::AbstractString) = delete!(img.properties, propname)
 
 
 # getindex, sub, and slice return a value or AbstractArray, not an Image
@@ -336,7 +336,7 @@ getindex(img::AbstractImage, I::RealIndex, J::RealIndex,
             K::RealIndex, L::RealIndex) = getindex(img.data, I, J, K, L)
 getindex(img::AbstractImage, I::RealIndex...) = getindex(img.data, I...)
 
-# getindex(img::AbstractImage, dimname::String, ind::RealIndex, nameind...) = getindex(img.data, coords(img, dimname, ind, nameind...)...)
+# getindex(img::AbstractImage, dimname::AbstractString, ind::RealIndex, nameind...) = getindex(img.data, coords(img, dimname, ind, nameind...)...)
 getindex(img::AbstractImage, dimname::ASCIIString, ind, nameind...) = getindex(img.data, coords(img, dimname, ind, nameind...)...)
 
 getindex(img::AbstractImage, propname::ASCIIString) = getindex(img.properties, propname)
@@ -427,9 +427,9 @@ function _sliceim{IT}(img::AbstractImage, I::IT)
     ret
 end
 
-sliceim(img::AbstractImage, dimname::String, ind::RangeIndex, nameind...) = subim(img, coords(img, dimname, ind, nameind...)...)
+sliceim(img::AbstractImage, dimname::AbstractString, ind::RangeIndex, nameind...) = subim(img, coords(img, dimname, ind, nameind...)...)
 
-sliceim(img::AbstractImage, dimname::String, ind::RangeIndex, nameind...) = sliceim(img, coords(img, dimname, ind, nameind...)...)
+sliceim(img::AbstractImage, dimname::AbstractString, ind::RangeIndex, nameind...) = sliceim(img, coords(img, dimname, ind, nameind...)...)
 
 subim(img::AbstractImage, I::AbstractVector...) = error("Indexes must be integers or ranges")
 sliceim(img::AbstractImage, I::AbstractVector...) = error("Indexes must be integers or ranges")
@@ -468,7 +468,7 @@ type SliceData
     end
 end
 
-SliceData(img::AbstractImage, dimname::String, dimnames::String...) = SliceData(img, dimindexes(img, dimname, dimnames...)...)
+SliceData(img::AbstractImage, dimname::AbstractString, dimnames::AbstractString...) = SliceData(img, dimindexes(img, dimname, dimnames...)...)
 
 function _slice(A::AbstractArray, sd::SliceData, I::Int...)
     if length(I) != length(sd.slicedims)
@@ -613,7 +613,7 @@ end
 #   colordim: the array dimension used to store color information, or 0 if there
 #     is no dimension corresponding to color
 #   timedim: the array dimension used for time (i.e., sequence), or 0 for single images
-#   limits: (minvalue,maxvalue) for this type of image (e.g., (0,255) for Uint8
+#   limits: (minvalue,maxvalue) for this type of image (e.g., (0,255) for UInt8
 #     images, even if pixels do not reach these values)
 #   pixelspacing: the spacing between adjacent pixels along spatial dimensions
 #   spacedirections: the direction of each array axis in physical space (a vector-of-vectors, one per dimension)
@@ -634,11 +634,11 @@ properties{C<:Colorant}(A::AbstractArray{C}) = @compat Dict(
     "spatialorder" => spatialorder(A))
 properties(img::AbstractImage) = img.properties
 
-haskey(a::AbstractArray, k::String) = false
-haskey(img::AbstractImage, k::String) = haskey(img.properties, k)
+haskey(a::AbstractArray, k::AbstractString) = false
+haskey(img::AbstractImage, k::AbstractString) = haskey(img.properties, k)
 
-get(img::AbstractArray, k::String, default) = default
-get(img::AbstractImage, k::String, default) = get(img.properties, k, default)
+get(img::AbstractArray, k::AbstractString, default) = default
+get(img::AbstractImage, k::AbstractString, default) = get(img.properties, k, default)
 
 # So that defaults don't have to be evaluated unless they are needed, we also define a @get macro (thanks Toivo Hennington):
 macro get(img, k, default)
@@ -678,7 +678,7 @@ colorspace(img::AbstractVector{Bool}) = "Binary"
 colorspace(img::AbstractMatrix{Bool}) = "Binary"
 colorspace(img::AbstractArray{Bool}) = "Binary"
 colorspace(img::AbstractArray{Bool,3}) = "Binary"
-colorspace(img::AbstractMatrix{Uint32}) = "RGB24"
+colorspace(img::AbstractMatrix{UInt32}) = "RGB24"
 colorspace(img::AbstractVector) = "Gray"
 colorspace(img::AbstractMatrix) = "Gray"
 colorspace{T}(img::AbstractArray{T,3}) = (size(img, defaultarraycolordim) == 3) ? "RGB" : error("Cannot infer colorspace of Array, use an AbstractImage type")
@@ -730,7 +730,7 @@ timedim(img) = get(img, "timedim", 0)::Int
 
 limits(img::AbstractArray{Bool}) = 0,1
 # limits{T<:Integer}(img::AbstractArray{T}) = typemin(T), typemax(T)  # best not to use Integers...
-limits{T<:FloatingPoint}(img::AbstractArray{T}) = zero(T), one(T)
+limits{T<:AbstractFloat}(img::AbstractArray{T}) = zero(T), one(T)
 limits(img::AbstractImage{Bool}) = 0,1
 limits{T}(img::AbstractImageDirect{T}) = get(img, "limits", (zero(T), one(T)))
 limits(img::AbstractImageIndexed) = @get img "limits" (minimum(img.cmap), maximum(img.cmap))
@@ -927,7 +927,7 @@ function permutedims(img::AbstractImage, p::Union(Vector{Int}, (@compat Tuple{Va
     ret
 end
 
-permutedims{S<:String}(img::AbstractImage, pstr::Union(Vector{S}, (@compat Tuple{Vararg{S}})), spatialprops::Vector = spatialproperties(img)) = permutedims(img, dimindexes(img, pstr...), spatialprops)
+permutedims{S<:AbstractString}(img::AbstractImage, pstr::Union(Vector{S}, (@compat Tuple{Vararg{S}})), spatialprops::Vector = spatialproperties(img)) = permutedims(img, dimindexes(img, pstr...), spatialprops)
 
 function permutation_canonical(img)
     assert2d(img)
@@ -1066,7 +1066,7 @@ end
 
 require_dimindex(img::AbstractImage, dimname, so) = (di = dimindex(img, dimname, so); di > 0 || error("No dimension called ", dimname); di)
 
-dimindexes(img::AbstractImage, dimnames::String...) = Int[dimindex(img, nam, spatialorder(img)) for nam in dimnames]
+dimindexes(img::AbstractImage, dimnames::AbstractString...) = Int[dimindex(img, nam, spatialorder(img)) for nam in dimnames]
 
 to_vector(v::AbstractVector) = v
 to_vector(v::(@compat Tuple)) = [v...]

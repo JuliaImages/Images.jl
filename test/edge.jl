@@ -21,7 +21,7 @@ facts("Edge") do
         cb
     end
 
-    checkerboard(sq_width::Integer, count::Integer) = checkerboard(Uint8, sq_width, count)
+    checkerboard(sq_width::Integer, count::Integer) = checkerboard(UInt8, sq_width, count)
 
     SZ=5
     cb_array    = checkerboard(SZ,3)
@@ -179,7 +179,7 @@ facts("Edge") do
 
     context("Diagonals") do
         # Create an image with white along diagonals -2:2 and black elsewhere
-        m = zeros(Uint8, 20,20)
+        m = zeros(UInt8, 20,20)
         for i = -2:2; m[diagind(m,i)] = 0xff; end
 
         m_xy = grayim(m')

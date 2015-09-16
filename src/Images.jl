@@ -47,7 +47,7 @@ include("connected.jl")
 include("edge.jl")
 
 function precompile()
-    for T in (Uint8, Uint16, Int, Float32, Float64)
+    for T in (UInt8, UInt16, Int, Float32, Float64)
         Tdiv = typeof(one(T)/2)
         for N = 2:3
             precompile(restrict!, (Array{Tdiv, N}, Array{T,N}, Int))

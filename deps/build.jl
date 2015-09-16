@@ -92,7 +92,7 @@ include("deps.jl")
 if isdefined(:__init__)
     __init__()
 end
-p = ccall((:MagickQueryConfigureOption, libwand), Ptr{Uint8}, (Ptr{Uint8},), "LIB_VERSION_NUMBER")
+p = ccall((:MagickQueryConfigureOption, libwand), Ptr{UInt8}, (Ptr{UInt8},), "LIB_VERSION_NUMBER")
 vstr = string("v\"", join(split(bytestring(p), ',')[1:3], '.'), "\"")
 open(joinpath(dirname(@__FILE__),"versioninfo.jl"), "w") do file
     write(file, "const libversion = $vstr\n")

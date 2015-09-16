@@ -32,7 +32,7 @@ facts("Algorithms") do
         A = fill(2, 4, 5)
         @fact all(A.*img2 .== fill(RGB{Float32}(1,1,1), 4, 5)) --> true
         img2 = img2 .- RGB{Float32}(1,1,1)/2
-        A = rand(Uint8,3,4)
+        A = rand(UInt8,3,4)
         img = reinterpret(Images.Gray{Ufixed8}, Images.grayim(A))
         imgm = mean(img)
         imgn = img/imgm
@@ -71,8 +71,8 @@ facts("Algorithms") do
         dc = Images.maxfinite(img)-RGB{Float32}(maximum(A, (2,3))...)
         @fact abs(dc) --> less_than(1e-6)
 
-        a = convert(Array{Uint8}, [1, 1, 1])
-        b = convert(Array{Uint8}, [134, 252, 4])
+        a = convert(Array{UInt8}, [1, 1, 1])
+        b = convert(Array{UInt8}, [134, 252, 4])
         @fact Images.sad(a, b) --> 387
         @fact Images.ssd(a, b) --> 80699
         af = reinterpret(Ufixed8, a)

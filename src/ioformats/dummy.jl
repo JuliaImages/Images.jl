@@ -5,7 +5,7 @@ function imread{S<:IO}(stream::S, ::Type{Images.Dummy})
     Image(pixels, Compat.@compat Dict("colorspace" => "Gray", "spatialorder" => "xy"))
 end
 
-function imwrite(img, filename::String, ::Type{Images.Dummy})
+function imwrite(img, filename::AbstractString, ::Type{Images.Dummy})
     open(filename, "w") do stream
         println(stream, "Dummy Image")
     end
