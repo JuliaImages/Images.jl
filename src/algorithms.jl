@@ -14,7 +14,10 @@ if isdefined(:UniformScaling)
     (-){Timg,TA<:Number}(img::AbstractImageDirect{Timg,2}, A::UniformScaling{TA}) = shareproperties(img, data(img)-A)
 end
 (+)(img::AbstractImageDirect, A::BitArray) = shareproperties(img, data(img)+A)
+(+)(img::AbstractImageDirect, A::AbstractImageDirect) = shareproperties(img, data(img)+data(A))
 (+)(img::AbstractImageDirect, A::AbstractArray) = shareproperties(img, data(img)+data(A))
+(+){S,T}(A::Range{S}, img::AbstractImageDirect{T}) = shareproperties(img, data(A)+data(img))
+(+)(A::AbstractArray, img::AbstractImageDirect) = shareproperties(img, data(A)+data(img))
 (.+)(img::AbstractImageDirect, A::BitArray) = shareproperties(img, data(img).+A)
 (.+)(img::AbstractImageDirect, A::AbstractArray) = shareproperties(img, data(img).+data(A))
 (-)(img::AbstractImageDirect{Bool}, n::Bool) = img .- n
@@ -28,7 +31,10 @@ end
 (-)(img::AbstractImageDirect, A::BitArray) = shareproperties(img, data(img)-A)
 (-){T}(img::AbstractImageDirect{T,2}, A::Diagonal) = shareproperties(img, data(img)-A) # fixes an ambiguity warning
 (-)(img::AbstractImageDirect, A::Range) = shareproperties(img, data(img)-A)
+(-)(img::AbstractImageDirect, A::AbstractImageDirect) = shareproperties(img, data(img)-data(A))
 (-)(img::AbstractImageDirect, A::AbstractArray) = shareproperties(img, data(img)-data(A))
+(-){S,T}(A::Range{S}, img::AbstractImageDirect{T}) = shareproperties(img, data(A)-data(img))
+(-)(A::AbstractArray, img::AbstractImageDirect) = shareproperties(img, data(A)-data(img))
 (-)(img::AbstractImageDirect) = shareproperties(img, -data(img))
 (.-)(img::AbstractImageDirect, A::BitArray) = shareproperties(img, data(img).-A)
 (.-)(img::AbstractImageDirect, A::AbstractArray) = shareproperties(img, data(img).-data(A))
@@ -52,6 +58,8 @@ sqrt(img::AbstractImageDirect) = shareproperties(img, sqrt(data(img)))
 atan2(img1::AbstractImageDirect, img2::AbstractImageDirect) = shareproperties(img1, atan2(data(img1),data(img2)))
 hypot(img1::AbstractImageDirect, img2::AbstractImageDirect) = shareproperties(img1, hypot(data(img1),data(img2)))
 
+@vectorize_2arg Gray atan2
+@vectorize_2arg Gray hypot
 
 function sum(img::AbstractImageDirect, region::Union(AbstractVector,Tuple,Integer))
     f = prod(size(img)[[region...]])
@@ -63,7 +71,7 @@ function sum(img::AbstractImageDirect, region::Union(AbstractVector,Tuple,Intege
 end
 
 meanfinite{T<:Real}(A::AbstractArray{T}, region) = _meanfinite(A, T, region)
-meanfinite{CT<:ColorType}(A::AbstractArray{CT}, region) = _meanfinite(A, eltype(CT), region)
+meanfinite{CT<:Colorant}(A::AbstractArray{CT}, region) = _meanfinite(A, eltype(CT), region)
 function _meanfinite{T<:FloatingPoint}(A::AbstractArray, ::Type{T}, region)
     sz = Base.reduced_dims(A, region)
     K = zeros(Int, sz)
@@ -144,7 +152,7 @@ end
 for (funcname, fieldname) in ((:red, :r), (:green, :g), (:blue, :b))
     fieldchar = string(fieldname)[1]
     @eval begin
-        function $funcname{CV<:ColorValue}(img::AbstractArray{CV})
+        function $funcname{CV<:Color}(img::AbstractArray{CV})
             T = eltype(CV)
             out = Array(T, size(img))
             for i = 1:length(img)
@@ -161,44 +169,65 @@ for (funcname, fieldname) in ((:red, :r), (:green, :g), (:blue, :b))
     end
 end
 
+function minfinite{T}(A::AbstractArray{T})
+    ret = sentinel_min(T)
+    for a in A
+        ret = minfinite_scalar(a, ret)
+    end
+    ret
+end
+
+function maxfinite{T}(A::AbstractArray{T})
+    ret = sentinel_max(T)
+    for a in A
+        ret = maxfinite_scalar(a, ret)
+    end
+    ret
+end
+
+function maxabsfinite{T}(A::AbstractArray{T})
+    ret = sentinel_min(typeof(abs(A[1])))
+    for a in A
+        ret = maxfinite_scalar(abs(a), ret)
+    end
+    ret
+end
+
+# Issue #232. FIXME: really should return a Gray here?
 for f in (:minfinite, :maxfinite, :maxabsfinite)
     @eval $f{T}(A::AbstractArray{Gray{T}}) = $f(reinterpret(T, data(A)))
 end
 
-minfinite(A::AbstractArray) = minimum(A)
-function minfinite{T<:FloatingPoint}(A::AbstractArray{T})
-    ret = convert(T, NaN)
-    for a in A
-        ret = isfinite(a) ? (ret < a ? ret : a) : ret
-    end
-    ret
+minfinite_scalar{T}(a::T, b::T) = isfinite(a) ? (b < a ? b : a) : b
+maxfinite_scalar{T}(a::T, b::T) = isfinite(a) ? (b > a ? b : a) : b
+minfinite_scalar{T<:Union(Integer,FixedPoint)}(a::T, b::T) = b < a ? b : a
+maxfinite_scalar{T<:Union(Integer,FixedPoint)}(a::T, b::T) = b > a ? b : a
+minfinite_scalar(a, b) = minfinite_scalar(promote(a, b)...)
+maxfinite_scalar(a, b) = maxfinite_scalar(promote(a, b)...)
+
+function minfinite_scalar{C<:AbstractRGB}(c1::C, c2::C)
+    C(minfinite_scalar(c1.r, c2.r),
+      minfinite_scalar(c1.g, c2.g),
+      minfinite_scalar(c1.b, c2.b))
+end
+function maxfinite_scalar{C<:AbstractRGB}(c1::C, c2::C)
+    C(maxfinite_scalar(c1.r, c2.r),
+      maxfinite_scalar(c1.g, c2.g),
+      maxfinite_scalar(c1.b, c2.b))
 end
 
-maxfinite(A::AbstractArray) = maximum(A)
-function maxfinite{T<:FloatingPoint}(A::AbstractArray{T})
-    ret = convert(T, NaN)
-    for a in A
-        ret = isfinite(a) ? (ret > a ? ret : a) : ret
-    end
-    ret
-end
-
-function maxabsfinite(A::AbstractArray)
-    ret = abs(A[1])
-    for i = 2:length(A)
-        a = abs(A[i])
-        ret = a > ret ? a : ret
-    end
-    ret
-end
-function maxabsfinite{T<:FloatingPoint}(A::AbstractArray{T})
-    ret = convert(T, NaN)
-    for sa in A
-        a = abs(sa)
-        ret = isfinite(a) ? (ret > a ? ret : a) : ret
-    end
-    ret
-end
+sentinel_min{T<:Union(Integer,FixedPoint)}(::Type{T}) = typemax(T)
+sentinel_max{T<:Union(Integer,FixedPoint)}(::Type{T}) = typemin(T)
+sentinel_min{T<:FloatingPoint}(::Type{T}) = convert(T, NaN)
+sentinel_max{T<:FloatingPoint}(::Type{T}) = convert(T, NaN)
+sentinel_min{C<:AbstractRGB}(::Type{C}) = _sentinel_min(C, eltype(C))
+_sentinel_min{C<:AbstractRGB,T}(::Type{C},::Type{T}) = (s = sentinel_min(T); C(s,s,s))
+sentinel_max{C<:AbstractRGB}(::Type{C}) = _sentinel_max(C, eltype(C))
+_sentinel_max{C<:AbstractRGB,T}(::Type{C},::Type{T}) = (s = sentinel_max(T); C(s,s,s))
+sentinel_min{C<:AbstractGray}(::Type{C}) = _sentinel_min(C, eltype(C))
+_sentinel_min{C<:AbstractGray,T}(::Type{C},::Type{T}) = C(sentinel_min(T))
+sentinel_max{C<:AbstractGray}(::Type{C}) = _sentinel_max(C, eltype(C))
+_sentinel_max{C<:AbstractGray,T}(::Type{C},::Type{T}) = C(sentinel_max(T))
 
 
 # fft & ifft
@@ -209,8 +238,8 @@ function fft(img::AbstractImageDirect, region, args...)
     props["region"] = region
     Image(F, props)
 end
-fft{CV<:ColorType}(img::AbstractImageDirect{CV}) = fft(img, 1:ndims(img))
-function fft{CV<:ColorType}(img::AbstractImageDirect{CV}, region, args...)
+fft{CV<:Colorant}(img::AbstractImageDirect{CV}) = fft(img, 1:ndims(img))
+function fft{CV<:Colorant}(img::AbstractImageDirect{CV}, region, args...)
     imgr = reinterpret(eltype(CV), img)
     if ndims(imgr) > ndims(img)
         newregion = ntuple(i->region[i]+1, length(region))
@@ -314,13 +343,14 @@ end
 difftype{T<:Integer}(::Type{T}) = Int
 difftype{T<:Real}(::Type{T}) = Float32
 difftype(::Type{Float64}) = Float64
-difftype{CV<:ColorType}(::Type{CV}) = difftype(CV, eltype(CV))
+difftype{CV<:Colorant}(::Type{CV}) = difftype(CV, eltype(CV))
 difftype{CV<:AbstractGray,T<:Real}(::Type{CV}, ::Type{T}) = Gray{Float32}
 difftype{CV<:AbstractGray}(::Type{CV}, ::Type{Float64}) = Gray{Float64}
 difftype{CV<:AbstractRGB,T<:Real}(::Type{CV}, ::Type{T}) = RGB{Float32}
 difftype{CV<:AbstractRGB}(::Type{CV}, ::Type{Float64}) = RGB{Float64}
 
 accum{T<:Integer}(::Type{T}) = Int
+accum(::Type{Float32})    = Float32
 accum{T<:Real}(::Type{T}) = Float64
 
 # normalized by Array size
@@ -490,11 +520,11 @@ imfilter_fft(img, filter, border) = imfilter_fft(img, filter, border, 0)
 imfilter_fft_inseparable{T,K,N,M}(img::AbstractArray{T,N}, kern::AbstractArray{K,M}, border::String, value) =
     imfilter_fft_inseparable(img, prep_kernel(img, kern), border, value)
 
-function imfilter_fft_inseparable{T<:ColorType,K,N,M}(img::AbstractArray{T,N}, kern::AbstractArray{K,M}, border::String, value)
+function imfilter_fft_inseparable{T<:Colorant,K,N,M}(img::AbstractArray{T,N}, kern::AbstractArray{K,M}, border::String, value)
     A = reinterpret(eltype(T), data(img))
     kernrs = reshape(kern, tuple(1, size(kern)...))
     B = imfilter_fft_inseparable(A, prep_kernel(A, kernrs), border, value)
-    reinterpret(noeltype(T), B)
+    reinterpret(base_colorant_type(T), B)
 end
 
 function imfilter_fft_inseparable{T<:Real,K,N}(img::AbstractArray{T,N}, kern::AbstractArray{K,N}, border::String, value)
@@ -570,11 +600,11 @@ realtype{R<:Real}(::Type{Complex{R}}) = R
 # Note these two papers use different sign conventions for the coefficients.
 
 # Note: astype is ignored for FloatingPoint input
-function imfilter_gaussian{CT<:ColorType}(img::AbstractArray{CT}, sigma; emit_warning = true, astype::Type=Float64)
+function imfilter_gaussian{CT<:Colorant}(img::AbstractArray{CT}, sigma; emit_warning = true, astype::Type=Float64)
     A = reinterpret(eltype(CT), data(img))
     newsigma = ndims(A) > ndims(img) ? [0;sigma] : sigma
     ret = imfilter_gaussian(A, newsigma; emit_warning=emit_warning, astype=astype)
-    shareproperties(img, reinterpret(noeltype(CT), ret))
+    shareproperties(img, reinterpret(base_colorant_type(CT), ret))
 end
 
 function imfilter_gaussian{T<:FloatingPoint}(img::AbstractArray{T}, sigma::Vector; emit_warning = true, astype::Type=Float64)
@@ -879,7 +909,7 @@ function restrict(img::AbstractImageDirect, region::Union(Dims, Vector{Int})=coo
         A = _restrict(A, dim)
     end
     props = copy(properties(img))
-    ps = pixelspacing(img)
+    ps = copy(pixelspacing(img))
     ind = findin(coords_spatial(img), region)
     ps[ind] *= 2
     props["pixelspacing"] = ps
@@ -1165,8 +1195,8 @@ extr(order::ReverseOrdering, x::Real, y::Real, z::Real) = min(x,y,z)
 extr(order::Ordering, x::RGB, y::RGB) = RGB(extr(order, x.r, y.r), extr(order, x.g, y.g), extr(order, x.b, y.b))
 extr(order::Ordering, x::RGB, y::RGB, z::RGB) = RGB(extr(order, x.r, y.r, z.r), extr(order, x.g, y.g, z.g), extr(order, x.b, y.b, z.b))
 
-extr(order::Ordering, x::ColorValue, y::ColorValue) = extr(order, convert(RGB, x), convert(RGB, y))
-extr(order::Ordering, x::ColorValue, y::ColorValue, z::ColorValue) = extr(order, convert(RGB, x), convert(RGB, y), convert(RGB, z))
+extr(order::Ordering, x::Color, y::Color) = extr(order, convert(RGB, x), convert(RGB, y))
+extr(order::Ordering, x::Color, y::Color, z::Color) = extr(order, convert(RGB, x), convert(RGB, y), convert(RGB, z))
 
 
 # phantom images

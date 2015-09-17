@@ -91,8 +91,8 @@ function imgradients(img::AbstractArray, method::String="ando3", border::String=
     return grad_x, grad_y
 end
 
-function imgradients{T<:ColorValue}(img::AbstractArray{T}, method::String="ando3", border::String="replicate")
-    # Remove ColorValue information
+function imgradients{T<:Color}(img::AbstractArray{T}, method::String="ando3", border::String="replicate")
+    # Remove Color information
     imgradients(reinterpret(eltype(eltype(img)), img), method, border)
 end
 
