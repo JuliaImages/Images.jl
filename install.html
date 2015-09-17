@@ -18,9 +18,9 @@
     <div class="container">
       <div class="row">
         <ul>
-          <li><div id="pkgname">Images 0.4.38+</div></li>
-          <li><a href="http://github.com/timholy/Images.jl">Code</a></li>
-          <li><a href="http://github.com/timholy/Images.jl/issues">Issues</a></li>
+          <li><div id="pkgname">Images 0.4.47+</div></li>
+          <li><a href="http:&#x2F;&#x2F;github.com&#x2F;timholy&#x2F;Images.jl">Code</a></li>
+          <li><a href="http:&#x2F;&#x2F;github.com&#x2F;timholy&#x2F;Images.jl/issues">Issues</a></li>
         </ul>
       </div>
     </div>
@@ -30,27 +30,26 @@
     <div class="row">
       <div class="col-sm-7">
       <div id="body-content">
-<h1>
-Installation Notes
-</h1>
+      <h1>Installation Notes</h1>
 <h1 id="manual-installation-on-windows">Manual installation on Windows</h1>
-<p>Modern versions of Images should install ImageMagick automatically even on Windows. However, if this fails, get the current version from http://www.imagemagick.org/script/binary-releases.php#windows (e.g. ImageMagick-6.8.8-7-Q16-x86-dll.exe) and make sure that the &quot;Install development headers and libraries for C and C++&quot; checkbox is selected. You may choose to let the installer add the installation directory to the system path or provide it separately. In the later case you may add it to your <code>.juliarc.jl</code> file as (for example) <code>push!(Base.DL_LOAD_PATH, &quot;C:/programs/ImageMagick-6.8.8&quot;</code>)</p>
+<p>Modern versions of Images should install ImageMagick automatically even on Windows.  However, if this fails, get the current version from http://www.imagemagick.org/script/binary-releases.php#windows &#40;e.g. ImageMagick-6.8.8-7-Q16-x86-dll.exe&#41; and make sure that the &quot;Install development headers and libraries for C and C&#43;&#43;&quot; checkbox is selected.  You may choose to let the installer add the installation directory to the system path or provide it separately.  In the later case you may add it to your <code>.juliarc.jl</code> file as &#40;for example&#41; <code>push&#33;&#40;Base.DL_LOAD_PATH, &quot;C:/programs/ImageMagick-6.8.8&quot;</code>&#41;</p>
 <p><strong>When manual intervention is necessary, you need to restart Julia for the necessary changes to take effect.</strong></p>
 <h1 id="fixing-broken-installations-on-macs">Fixing broken installations on Macs</h1>
 <p>Before asking for help, please try the following sequence:</p>
-<div class="sourceCode" execute="false"><pre class="sourceCode julia julia"><code class="sourceCode julia">using Homebrew
-Homebrew.rm(<span class="st">&quot;imagemagick&quot;</span>)
-Homebrew.update()
-Homebrew.add(<span class="st">&quot;imagemagick&quot;</span>)
-Pkg.build(<span class="st">&quot;Images&quot;</span>)</code></pre></div>
+<pre><code class="language-&#123;.julia execute&#61;&quot;false&quot;&#125;">using Homebrew
+Homebrew.rm&#40;&quot;imagemagick&quot;&#41;
+Homebrew.update&#40;&#41;
+Homebrew.add&#40;&quot;imagemagick&quot;&#41;
+Pkg.build&#40;&quot;Images&quot;&#41;</code></pre>
 <h1 id="reading-images-on-macs">Reading images on Macs</h1>
-<p>On Macs, there is now support for reading images using the built-in OS X frameworks. For many common image types, this reader will be tried before ImageMagick. This reader is now enabled by default on Macs; if you need to disable it in favor of ImageMagick, just comment out the line of <code>src/io.jl</code> which reads <code>img = imread(filename, OSXNative)</code>.</p>
+<p>On Macs, there is now support for reading images using the built-in OS X frameworks.  For many common image types, this reader will be tried before ImageMagick.  This reader is now enabled by default on Macs; if you need to disable it in favor of ImageMagick, just comment out the line of <code>src/io.jl</code> which reads <code>img &#61; imread&#40;filename, OSXNative&#41;</code>.</p>
 <h1 id="debugging-installation-problems">Debugging installation problems</h1>
-<p>Images depends on ImageMagick, and this dependency is the main source of trouble installing Images. If this fails, try the following steps: - <code>Pkg.status()</code>: does it report that Images is &quot;dirty&quot;? If so, you have made changes that are likely preventing you from installing the latest version of Images. You might want to <code>git stash</code> your changes or, if there's nothing you want to keep, just delete the entire Images package folder and <code>Pkg.add(&quot;Images&quot;)</code> freshly. - Try <code>Pkg.update()</code> to see if your problem has already been fixed. - Try <code>Pkg.build()</code> to force a new build even if you're running the latest version.</p>
-<p>If these don't work for you, please report the problem to the Images issue tracker.</p>
-<p>You can also try <a href="http://www.imagemagick.org/download/binaries/">manual installation</a>. Depending on where it installs, you may need to set the <code>MAGICK_HOME</code> environment variable to help Julia find the library (or set your <code>DL_LOAD_PATH</code>).</p>
-<p>Note that on older RedHat-based distributions, the packaged version of the library may be too old. If that is the case, a newer library may be <a href="http://dl.nux.ro/rpm/nux-imagemagick.repo">required</a>. You may need to edit the <code>releasever</code> parameter to match your installation.</p>
-        <hr>
+<p>Images depends on ImageMagick, and this dependency is the main source of trouble installing Images.  If this fails, try the following steps: - <code>Pkg.status&#40;&#41;</code>: does it report that Images is &quot;dirty&quot;? If so, you have made   changes that are likely preventing you from installing the latest version of   Images. You might want to <code>git stash</code> your changes or, if there&#39;s nothing you   want to keep, just delete the entire Images package folder and   <code>Pkg.add&#40;&quot;Images&quot;&#41;</code> freshly. - Try <code>Pkg.update&#40;&#41;</code> to see if your problem has already been fixed. - Try <code>Pkg.build&#40;&#41;</code> to force a new build even if you&#39;re running the latest   version.</p>
+<p>If these don&#39;t work for you, please report the problem to the Images issue tracker.</p>
+<p>You can also try <a href="http://www.imagemagick.org/download/binaries/">manual installation</a>.  Depending on where it installs, you may need to set the <code>MAGICK_HOME</code> environment variable to help Julia find the library &#40;or set your <code>DL_LOAD_PATH</code>&#41;.</p>
+<p>Note that on older RedHat-based distributions, the packaged version of the library may be too old.  If that is the case, a newer library may be <a href="http://dl.nux.ro/rpm/nux-imagemagick.repo">required</a>.  You may need to edit the <code>releasever</code> parameter to match your installation.</p>
+
+      <hr>
       </div>
       </div>
 
@@ -59,45 +58,42 @@ Pkg.build(<span class="st">&quot;Images&quot;</span>)</code></pre></div>
           <div id="table-of-contents-content">
             <input class="search" placeholder="SEARCH" />
             <ul class="toc list nav"><li>
-                <a class="toc-item" href="index.html">Introduction</a>
-            </li>
-            <li>
-                <a class="toc-item" href="aims.html">Aims</a>
-            </li>
-            <li>
-                <a class="toc-item toc-current-doc" href="install.html">Installation</a>
-            </li>
-            <li>
-                <a style="margin-left: 0.5em" class="toc-item" href="#manual-installation-on-windows">Manual installation on Windows</a>
-            </li>
-            <li>
-                <a style="margin-left: 0.5em" class="toc-item" href="#fixing-broken-installations-on-macs">Fixing broken installations on Macs</a>
-            </li>
-            <li>
-                <a style="margin-left: 0.5em" class="toc-item" href="#reading-images-on-macs">Reading images on Macs</a>
-            </li>
-            <li>
-                <a style="margin-left: 0.5em" class="toc-item" href="#debugging-installation-problems">Debugging installation problems</a>
-            </li>
-            <li>
-                <a class="toc-item" href="core.html">Core Concepts</a>
-            </li>
-            <li>
-                <a class="toc-item" href="function_reference.html">Function Reference</a>
-            </li>
-            <li>
-                <a class="toc-item" href="overlays.html">Overlays</a>
-            </li>
-            <li>
-                <a class="toc-item" href="extendingIO.html">Extending IO</a>
-            </li>
-            <li>
-                <a class="toc-item" href="fixing_breakages.html">Troubleshooting</a>
-            </li>
-            <li>
-                <a class="toc-item" href="status.html">Development Status</a>
-            </li>
-            </ul>
+    <a class="toc-item" href="index.html">Introduction</a>
+</li>
+<li>
+    <a class="toc-item" href="aims.html">Aims</a>
+</li>
+<li>
+    <a class="toc-item toc-current-doc" href="install.html">Installation</a>
+</li>
+<li>
+    <a style="margin-left: 0.5em" class="toc-item" href="#manual-installation-on-windows">Manual installation on Windows</a>
+</li>
+<li>
+    <a style="margin-left: 0.5em" class="toc-item" href="#fixing-broken-installations-on-macs">Fixing broken installations on Macs</a>
+</li>
+<li>
+    <a style="margin-left: 0.5em" class="toc-item" href="#reading-images-on-macs">Reading images on Macs</a>
+</li>
+<li>
+    <a style="margin-left: 0.5em" class="toc-item" href="#debugging-installation-problems">Debugging installation problems</a>
+</li>
+<li>
+    <a class="toc-item" href="core.html">Core Concepts</a>
+</li>
+<li>
+    <a class="toc-item" href="function_reference.html">Function Reference</a>
+</li>
+<li>
+    <a class="toc-item" href="overlays.html">Overlays</a>
+</li>
+<li>
+    <a class="toc-item" href="extendingIO.html">Extending IO</a>
+</li>
+<li>
+    <a class="toc-item" href="status.html">Development Status</a>
+</li>
+</ul>
 
             <script>
                 var toclist = new List("table-of-contents",
@@ -117,7 +113,7 @@ Pkg.build(<span class="st">&quot;Images&quot;</span>)</code></pre></div>
     </div>
 
   <footer class="col-sm-8">
-    <p class="muted">Last modified by Tim Holy on Fri Jul 10 13:11:21 CDT 2015. Generated with
+    <p class="muted">Last modified by Tim Holy on . Generated with
     <a href="https://github.com/dcjones/Judo.jl">Judo</a>.</p>
   </footer>
 
