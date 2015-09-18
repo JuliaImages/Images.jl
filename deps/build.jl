@@ -1,4 +1,4 @@
-using BinDeps
+using BinDeps, Compat
 
 @BinDeps.setup
 
@@ -88,6 +88,7 @@ end
 # Save the library version; by checking this now, we avoid a runtime dependency on libwand
 # See https://github.com/timholy/Images.jl/issues/184#issuecomment-55643225
 module CheckVersion
+using Compat
 include("deps.jl")
 if isdefined(:__init__)
     __init__()
