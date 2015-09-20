@@ -37,9 +37,9 @@ MapNone{T}(A::AbstractArray{T}) = MapNone{T}()
 similar{T}(mapi::MapNone, ::Type{T}, ::Type) = MapNone{T}()
 
 # Implementation
-map{T}(mapi::MapNone{T}, val::Union(Number,Colorant)) = convert(T, val)
-map1(mapi::Union(MapNone{RGB24}, MapNone{ARGB32}), b::Bool) = ifelse(b, 0xffuf8, 0x00uf8)
-map1(mapi::Union(MapNone{RGB24},MapNone{ARGB32}), val::Fractional) = convert(Ufixed8, val)
+@compat map{T}(mapi::MapNone{T}, val::Union{Number,Colorant}) = convert(T, val)
+@compat map1(mapi::Union{MapNone{RGB24}, MapNone{ARGB32}}, b::Bool) = ifelse(b, 0xffuf8, 0x00uf8)
+@compat map1(mapi::Union{MapNone{RGB24},MapNone{ARGB32}}, val::Fractional) = convert(Ufixed8, val)
 map1{CT<:Colorant}(mapi::MapNone{CT}, val::Fractional) = convert(eltype(CT), val)
 
 map{T<:Colorant}(mapi::MapNone{T}, img::AbstractImageIndexed{T}) = convert(Image{T}, img)
@@ -62,8 +62,8 @@ _map{T<:Unsigned,N}(::Type{T}, ::Type{BS{N}}, val::Unsigned) = (v = val>>>N; tm 
 _map{T<:Ufixed,N}(::Type{T}, ::Type{BS{N}}, val::Ufixed) = reinterpret(T, _map(FixedPointNumbers.rawtype(T), BS{N}, reinterpret(val)))
 map{T<:Real,N}(mapi::BitShift{T,N}, val::Real) = _map(T, BS{N}, val)
 map{T<:Real,N}(mapi::BitShift{Gray{T},N}, val::Gray) = Gray(_map(T, BS{N}, val.val))
-map1{N}(mapi::Union(BitShift{RGB24,N},BitShift{ARGB32,N}), val::Unsigned) = _map(UInt8, BS{N}, val)
-map1{N}(mapi::Union(BitShift{RGB24,N},BitShift{ARGB32,N}), val::Ufixed) = _map(Ufixed8, BS{N}, val)
+@compat map1{N}(mapi::Union{BitShift{RGB24,N},BitShift{ARGB32,N}}, val::Unsigned) = _map(UInt8, BS{N}, val)
+@compat map1{N}(mapi::Union{BitShift{RGB24,N},BitShift{ARGB32,N}}, val::Ufixed) = _map(Ufixed8, BS{N}, val)
 map1{CT<:Colorant,N}(mapi::BitShift{CT,N}, val::Ufixed) = _map(eltype(CT), BS{N}, val)
 
 
@@ -109,9 +109,9 @@ map{T<:Fractional,F<:Fractional}(mapi::ClampMinMax{Gray{T},F}, val::Gray{F}) = c
 map{T<:Fractional,F<:Fractional}(mapi::ClampMin{Gray{T},Gray{F}}, val::Gray{F}) = convert(Gray{T}, max(val, mapi.min))
 map{T<:Fractional,F<:Fractional}(mapi::ClampMax{Gray{T},Gray{F}}, val::Gray{F}) = convert(Gray{T}, min(val, mapi.max))
 map{T<:Fractional,F<:Fractional}(mapi::ClampMinMax{Gray{T},Gray{F}}, val::Gray{F}) = convert(Gray{T},min(max(val, mapi.min), mapi.max))
-map1{T<:Union(RGB24,ARGB32),F<:Fractional}(mapi::ClampMin{T,F}, val::F) = convert(Ufixed8, max(val, mapi.min))
-map1{T<:Union(RGB24,ARGB32),F<:Fractional}(mapi::ClampMax{T,F}, val::F) = convert(Ufixed8, min(val, mapi.max))
-map1{T<:Union(RGB24,ARGB32),F<:Fractional}(mapi::ClampMinMax{T,F}, val::F) = convert(Ufixed8,min(max(val, mapi.min), mapi.max))
+@compat map1{T<:Union{RGB24,ARGB32},F<:Fractional}(mapi::ClampMin{T,F}, val::F) = convert(Ufixed8, max(val, mapi.min))
+@compat map1{T<:Union{RGB24,ARGB32},F<:Fractional}(mapi::ClampMax{T,F}, val::F) = convert(Ufixed8, min(val, mapi.max))
+@compat map1{T<:Union{RGB24,ARGB32},F<:Fractional}(mapi::ClampMinMax{T,F}, val::F) = convert(Ufixed8,min(max(val, mapi.min), mapi.max))
 map1{CT<:Colorant,F<:Fractional}(mapi::ClampMin{CT,F}, val::F) = convert(eltype(CT), max(val, mapi.min))
 map1{CT<:Colorant,F<:Fractional}(mapi::ClampMax{CT,F}, val::F) = convert(eltype(CT), min(val, mapi.max))
 map1{CT<:Colorant,F<:Fractional}(mapi::ClampMinMax{CT,F}, val::F) = convert(eltype(CT), min(max(val, mapi.min), mapi.max))
@@ -132,7 +132,7 @@ clamp01{Pdest<:TransparentRGB}(::Type{Pdest}, x::TransparentRGB) = (To = eltype(
     Pdest(clamp01(To, red(x)), clamp01(To, green(x)), clamp01(To, blue(x)), clamp01(To, alpha(x))))
 
 # clamp is generic for any colorspace; this version does the right thing for any RGB type
-clamp(x::Union(AbstractRGB, TransparentRGB)) = clamp01(x)
+@compat clamp(x::Union{AbstractRGB, TransparentRGB}) = clamp01(x)
 
 ## ScaleMinMax
 # This clamps, subtracts the min value, then scales
@@ -149,7 +149,7 @@ immutable ScaleMinMax{To,From,S<:AbstractFloat} <: MapInfo{To}
 end
 
 ScaleMinMax{To,From}(::Type{To}, min::From, max::From, s::AbstractFloat) = ScaleMinMax{To,From,typeof(s)}(min, max, s)
-ScaleMinMax{To<:Union(Fractional,Colorant),From}(::Type{To}, mn::From, mx::From) = ScaleMinMax(To, mn, mx, 1.0f0/(convert(Float32, mx)-convert(Float32, mn)))
+@compat ScaleMinMax{To<:Union{Fractional,Colorant},From}(::Type{To}, mn::From, mx::From) = ScaleMinMax(To, mn, mx, 1.0f0/(convert(Float32, mx)-convert(Float32, mn)))
 
 # ScaleMinMax constructors that take AbstractArray input
 ScaleMinMax{To,From<:Real}(::Type{To}, img::AbstractArray{From}, mn::Real, mx::Real) = ScaleMinMax(To, convert(From,mn), convert(From,mx), 1.0f0/(convert(Float32, convert(From, mx))-convert(Float32,convert(From, mn))))
@@ -162,15 +162,15 @@ ScaleMinMax{To,CV<:AbstractRGB}(::Type{To}, img::AbstractArray{CV}) = (imgr = re
 similar{T,F,To,From,S}(mapi::ScaleMinMax{To,From,S}, ::Type{T}, ::Type{F}) = ScaleMinMax{T,F,S}(convert(F,mapi.min), convert(F.mapi.max), mapi.s)
 
 # Implementation
-function map{To<:Union(Real,AbstractGray),From<:Union(Real,AbstractGray)}(mapi::ScaleMinMax{To,From}, val::From)
+@compat function map{To<:Union{Real,AbstractGray},From<:Union{Real,AbstractGray}}(mapi::ScaleMinMax{To,From}, val::From)
     g = gray(val)
     t = ifelse(g  < mapi.min, zero(From), ifelse(g  > mapi.max, mapi.max-mapi.min, g-mapi.min))
     convert(To, mapi.s*t)
 end
-function map{To<:Union(Real,AbstractGray),From<:Union(Real,AbstractGray)}(mapi::ScaleMinMax{To,From}, val::Union(Real,Colorant))
+@compat function map{To<:Union{Real,AbstractGray},From<:Union{Real,AbstractGray}}(mapi::ScaleMinMax{To,From}, val::Union{Real,Colorant})
     map(mapi, convert(From, val))
 end
-function map1{To<:Union(RGB24,ARGB32),From<:Real}(mapi::ScaleMinMax{To,From}, val::From)
+@compat function map1{To<:Union{RGB24,ARGB32},From<:Real}(mapi::ScaleMinMax{To,From}, val::From)
     t = ifelse(val  < mapi.min, zero(From), ifelse(val  > mapi.max, mapi.max-mapi.min, val -mapi.min))
     convert(Ufixed8, mapi.s*t)
 end
@@ -178,10 +178,10 @@ function map1{To<:Colorant,From<:Real}(mapi::ScaleMinMax{To,From}, val::From)
     t = ifelse(val  < mapi.min, zero(From), ifelse(val  > mapi.max, mapi.max-mapi.min, val -mapi.min))
     convert(eltype(To), mapi.s*t)
 end
-function map1{To<:Union(RGB24,ARGB32),From<:Real}(mapi::ScaleMinMax{To,From}, val::Union(Real,Colorant))
+@compat function map1{To<:Union{RGB24,ARGB32},From<:Real}(mapi::ScaleMinMax{To,From}, val::Union{Real,Colorant})
     map1(mapi, convert(From, val))
 end
-function map1{To<:Colorant,From<:Real}(mapi::ScaleMinMax{To,From}, val::Union(Real,Colorant))
+@compat function map1{To<:Colorant,From<:Real}(mapi::ScaleMinMax{To,From}, val::Union{Real,Colorant})
     map1(mapi, convert(From, val))
 end
 
@@ -200,7 +200,7 @@ ScaleSigned(img::AbstractArray) = ScaleSigned(Float32, img)
 similar{T,To,S}(mapi::ScaleSigned{To,S}, ::Type{T}, ::Type) = ScaleSigned{T,S}(mapi.s)
 
 map{T}(mapi::ScaleSigned{T}, val::Real) = convert(T, clamppm(mapi.s*val))
-function map{C<:Union(RGB24, RGB{Ufixed8})}(mapi::ScaleSigned{C}, val::Real)
+@compat function map{C<:Union{RGB24, RGB{Ufixed8}}}(mapi::ScaleSigned{C}, val::Real)
     x = clamppm(mapi.s*val)
     g = Ufixed8(abs(x))
     ifelse(x >= 0, C(g, zero(Ufixed8), g), C(zero(Ufixed8), g, zero(Ufixed8)))
@@ -375,7 +375,7 @@ end
 # NC is the number of color channels
 # This is a very flexible implementation: color can be stored along any dimension, and it handles conversions to
 # many different colorspace representations.
-for (CT, NC) in ((Union(AbstractRGB,RGB24), 3), (Union(RGBA,ARGB,ARGB32), 4), (Union(AGray,GrayA,AGray32), 2))
+@compat for (CT, NC) in ((Union{AbstractRGB,RGB24}, 3), (Union{RGBA,ARGB,ARGB32}, 4), (Union{AGray,GrayA,AGray32}, 2))
     for N = 1:4
         N1 = N+1
         @eval begin
@@ -402,11 +402,11 @@ end
 
 const bitshiftto8 = ((Ufixed10, 2), (Ufixed12, 4), (Ufixed14, 6), (Ufixed16, 8))
 
-# typealias GrayType{T<:Fractional} Union(T, Gray{T})
-typealias GrayArray{T<:Fractional} Union(AbstractArray{T}, AbstractArray{Gray{T}})
+# typealias GrayType{T<:Fractional} Union{T, Gray{T}}
+@compat typealias GrayArray{T<:Fractional} Union{AbstractArray{T}, AbstractArray{Gray{T}}}
 # note, though, that we need to override for AbstractImage in case the "colorspace" property is defined differently
 
-# mapinfo{T<:Union(Real,Colorant)}(::Type{T}, img::AbstractArray{T}) = MapNone(img)
+# mapinfo{T<:Union{Real,Colorant}}(::Type{T}, img::AbstractArray{T}) = MapNone(img)
 mapinfo{T<:Ufixed}(::Type{T}, img::AbstractArray{T}) = MapNone(img)
 mapinfo{T<:AbstractFloat}(::Type{T}, img::AbstractArray{T}) = MapNone(img)
 
@@ -423,8 +423,8 @@ mapinfo{T<:Ufixed,F<:AbstractFloat}(::Type{T}, img::GrayArray{F}) = ClampMinMax(
 mapinfo{T<:Ufixed,F<:AbstractFloat}(::Type{Gray{T}}, img::GrayArray{F}) = ClampMinMax(Gray{T}, zero(F), one(F))
 mapinfo{T<:AbstractFloat, R<:Real}(::Type{T}, img::AbstractArray{R}) = MapNone(T)
 
-mapinfo(::Type{RGB24}, img::Union(AbstractArray{Bool}, BitArray)) = MapNone{RGB24}()
-mapinfo(::Type{ARGB32}, img::Union(AbstractArray{Bool}, BitArray)) = MapNone{ARGB32}()
+@compat mapinfo(::Type{RGB24}, img::Union{AbstractArray{Bool}, BitArray}) = MapNone{RGB24}()
+@compat mapinfo(::Type{ARGB32}, img::Union{AbstractArray{Bool}, BitArray}) = MapNone{ARGB32}()
 mapinfo{F<:Fractional}(::Type{RGB24}, img::GrayArray{F}) = ClampMinMax(RGB24, zero(F), one(F))
 mapinfo{F<:Fractional}(::Type{ARGB32}, img::AbstractArray{F}) = ClampMinMax(ARGB32, zero(F), one(F))
 
@@ -472,9 +472,9 @@ mapinfo{CT<:Colorant}(::Type{ARGB32}, img::AbstractArray{CT}) = MapNone{ARGB32}(
 
 # UInt32 conversions will use ARGB32 for images that have an alpha channel,
 # and RGB24 when not
-mapinfo{CV<:Union(Fractional,Color,AbstractGray)}(::Type{UInt32}, img::AbstractArray{CV}) = mapinfo(RGB24, img)
+@compat mapinfo{CV<:Union{Fractional,Color,AbstractGray}}(::Type{UInt32}, img::AbstractArray{CV}) = mapinfo(RGB24, img)
 mapinfo{CV<:TransparentColor}(::Type{UInt32}, img::AbstractArray{CV}) = mapinfo(ARGB32, img)
-mapinfo(::Type{UInt32}, img::Union(AbstractArray{Bool},BitArray)) = mapinfo(RGB24, img)
+@compat mapinfo(::Type{UInt32}, img::Union{AbstractArray{Bool},BitArray}) = mapinfo(RGB24, img)
 mapinfo(::Type{UInt32}, img::AbstractArray{UInt32}) = MapNone{UInt32}()
 
 

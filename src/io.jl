@@ -257,7 +257,7 @@ imread(source, ::Type{OSXNative}) = LibOSXNative.imread(source)
 # fixed type for depths > 8
 const ufixedtype = @compat Dict(10=>Ufixed10, 12=>Ufixed12, 14=>Ufixed14, 16=>Ufixed16)
 
-function imread(filename::Union(AbstractString,IO), ::Type{ImageMagick};extraprop="",extrapropertynames=false)
+@compat function imread(filename::Union{AbstractString,IO}, ::Type{ImageMagick};extraprop="",extrapropertynames=false)
     wand = LibMagick.MagickWand()
     LibMagick.readimage(wand, filename)
     LibMagick.resetiterator(wand)
@@ -274,7 +274,7 @@ function imread(filename::Union(AbstractString,IO), ::Type{ImageMagick};extrapro
         sz = tuple(sz..., n)
     end
     havealpha = LibMagick.getimagealphachannel(wand)
-    prop = @compat Dict("spatialorder" => ["x", "y"], "pixelspacing" => [1,1])
+    prop = Dict("spatialorder" => ["x", "y"], "pixelspacing" => [1,1])
     cs = LibMagick.getimagecolorspace(wand)
     if imtype == "GrayscaleType" || imtype == "GrayscaleMatteType"
         cs = "Gray"

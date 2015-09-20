@@ -6,7 +6,7 @@ label_components(A, connectivity = 1:ndims(A), bkg = 0) = label_components!(zero
 # But in fact you can choose which dimensions are connected
 let _label_components_cache = Dict{Tuple{Int, Vector{Int}}, Function}()
 global label_components!
-function label_components!(Albl::AbstractArray{Int}, A::Array, region::Union(Dims, AbstractVector{Int}), bkg = 0)
+@compat function label_components!(Albl::AbstractArray{Int}, A::Array, region::Union{Dims, AbstractVector{Int}}, bkg = 0)
     uregion = unique(region)
     if isempty(uregion)
         # Each pixel is its own component
@@ -74,7 +74,7 @@ function label_components!(Albl::AbstractArray{Int}, A::Array, region::Union(Dim
     Albl
 end
 end # let
-label_components!(Albl::AbstractArray{Int}, A::BitArray, region::Union(Dims, AbstractVector{Int}), bkg = 0) = label_components!(Albl, convert(Array{Bool}, A), region, bkg)
+@compat label_components!(Albl::AbstractArray{Int}, A::BitArray, region::Union{Dims, AbstractVector{Int}}, bkg = 0) = label_components!(Albl, convert(Array{Bool}, A), region, bkg)
 
 #### Arbitrary connectivity
 for N = 1:4
