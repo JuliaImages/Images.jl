@@ -47,7 +47,7 @@ facts("IO") do
     end
 
     context("Writemime's use of restrict") do
-        abig = Images.grayim(rand(Uint8, 1024, 1023))
+        abig = Images.grayim(rand(UInt8, 1024, 1023))
         fn = joinpath(workdir, "big.png")
         open(fn, "w") do file
             writemime(file, MIME("image/png"), abig, maxpixels=10^6)
@@ -57,7 +57,7 @@ facts("IO") do
     end
 
     context("More writemime tests") do
-        a = Images.colorim(rand(Uint8, 3, 2, 2))
+        a = Images.colorim(rand(UInt8, 3, 2, 2))
         fn = joinpath(workdir, "2by2.png")
         open(fn, "w") do file
             writemime(file, MIME("image/png"), a, minpixels=0)
@@ -65,7 +65,7 @@ facts("IO") do
         b = Images.imread(fn)
         @fact Images.data(b) --> Images.data(a)
 
-        abig = Images.colorim(rand(Uint8, 3, 1021, 1026))
+        abig = Images.colorim(rand(UInt8, 3, 1021, 1026))
         fn = joinpath(workdir, "big.png")
         open(fn, "w") do file
             writemime(file, MIME("image/png"), abig, maxpixels=10^6)
@@ -74,7 +74,7 @@ facts("IO") do
         @fact Images.data(b) --> convert(Array{RGB{Ufixed8},2}, Images.data(Images.restrict(abig, (1,2))))
 
         # Issue #269
-        abig = Images.colorim(rand(Uint16, 3, 1024, 1023))
+        abig = Images.colorim(rand(UInt16, 3, 1024, 1023))
         open(fn, "w") do file
             writemime(file, MIME("image/png"), abig, maxpixels=10^6)
         end
@@ -84,7 +84,7 @@ facts("IO") do
 
     context("Colormap usage") do
         datafloat = reshape(linspace(0.5, 1.5, 6), 2, 3)
-        dataint = round(Uint8, 254*(datafloat .- 0.5) .+ 1)  # ranges from 1 to 255
+        dataint = round(UInt8, 254*(datafloat .- 0.5) .+ 1)  # ranges from 1 to 255
         # build our colormap
         b = RGB(0,0,1)
         w = RGB(1,1,1)

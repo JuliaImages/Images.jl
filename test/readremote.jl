@@ -30,8 +30,8 @@ facts("Read remote") do
         imwrite(img, outname)
         imgc = imread(outname)
         @fact img.data --> imgc.data
-        @fact reinterpret(Uint32, data(map(mapinfo(RGB24, img), img))) -->
-            map(x->x&0x00ffffff, reinterpret(Uint32, data(map(mapinfo(ARGB32, img), img))))
+        @fact reinterpret(UInt32, data(map(mapinfo(RGB24, img), img))) -->
+            map(x->x&0x00ffffff, reinterpret(UInt32, data(map(mapinfo(ARGB32, img), img))))
         @fact mapinfo(UInt32, img) --> mapinfo(RGB24, img)
         @fact data(convert(Image{Gray{Float32}}, img)) --> float32(data(img))
         mapi = mapinfo(RGB{Ufixed8}, img)
@@ -59,9 +59,9 @@ facts("Read remote") do
                 writemime(file, "image/png", img)
             end
         end
-        @fact reinterpret(Uint32, data(map(mapinfo(RGB24, img), img))) -->
-            map(x->x&0x00ffffff, reinterpret(Uint32, data(map(mapinfo(ARGB32, img), img))))
-        @fact mapinfo(Uint32, img) --> mapinfo(ARGB32, img)
+        @fact reinterpret(UInt32, data(map(mapinfo(RGB24, img), img))) -->
+            map(x->x&0x00ffffff, reinterpret(UInt32, data(map(mapinfo(ARGB32, img), img))))
+        @fact mapinfo(UInt32, img) --> mapinfo(ARGB32, img)
     end
 
     context("RGB") do
@@ -85,9 +85,9 @@ facts("Read remote") do
         @fact typeof(lim[2]) --> T  # issue #62
         # Why does this one fail on OSX??
         @osx? nothing : @fact img.data --> imgc.data
-        @fact reinterpret(Uint32, data(map(mapinfo(RGB24, img), img))) -->
-            map(x->x&0x00ffffff, reinterpret(Uint32, data(map(mapinfo(ARGB32, img), img))))
-        @fact mapinfo(Uint32, img) --> mapinfo(RGB24, img)
+        @fact reinterpret(UInt32, data(map(mapinfo(RGB24, img), img))) -->
+            map(x->x&0x00ffffff, reinterpret(UInt32, data(map(mapinfo(ARGB32, img), img))))
+        @fact mapinfo(UInt32, img) --> mapinfo(RGB24, img)
         mapi = mapinfo(RGB{Ufixed8}, img)
         imgrgb8 = map(mapi, img)
         @fact data(imgrgb8) --> data(img)
@@ -98,8 +98,8 @@ facts("Read remote") do
         imgs = separate(img)
         @fact permutedims(convert(Image{Gray}, imgs), [2,1]) --> convert(Image{Gray}, img)
         # Make sure that all the operations in README will work:
-        buf = Array(Uint32, size(img))
-        buft = Array(Uint32, reverse(size(img)))
+        buf = Array(UInt32, size(img))
+        buft = Array(UInt32, reverse(size(img)))
         uint32color(img)
         uint32color!(buf, img)
         imA = convert(Array, img)
@@ -139,9 +139,9 @@ facts("Read remote") do
             sleep(0.2)
             imgc = imread(outname)
             @fact img.data --> imgc.data
-            @fact reinterpret(Uint32, data(map(mapinfo(RGB24, img), img))) -->
-                map(x->x&0x00ffffff, reinterpret(Uint32, data(map(mapinfo(ARGB32, img), img))))
-            @fact mapinfo(Uint32, img) --> mapinfo(ARGB32, img)
+            @fact reinterpret(UInt32, data(map(mapinfo(RGB24, img), img))) -->
+                map(x->x&0x00ffffff, reinterpret(UInt32, data(map(mapinfo(ARGB32, img), img))))
+            @fact mapinfo(UInt32, img) --> mapinfo(ARGB32, img)
         end
         open(outname, "w") do file
             writemime(file, "image/png", img)
@@ -152,9 +152,9 @@ facts("Read remote") do
         file = getfile("present.gif")
         img = imread(file)
         @fact nimages(img) --> 1
-        @fact reinterpret(Uint32, data(map(mapinfo(RGB24, img), img))) -->
-            map(x->x&0x00ffffff, reinterpret(Uint32, data(map(mapinfo(ARGB32, img), img))))
-        @fact mapinfo(Uint32, img) --> mapinfo(RGB24, img)
+        @fact reinterpret(UInt32, data(map(mapinfo(RGB24, img), img))) -->
+            map(x->x&0x00ffffff, reinterpret(UInt32, data(map(mapinfo(ARGB32, img), img))))
+        @fact mapinfo(UInt32, img) --> mapinfo(RGB24, img)
         outname = joinpath(writedir, "present.png")
         open(outname, "w") do file
             writemime(file, "image/png", img)
@@ -182,8 +182,8 @@ facts("Read remote") do
         s = sliceim(img, :, :, 5)
         @fact timedim(s) --> 0
         imgt = sliceim(img, "t", 1)
-        @fact reinterpret(Uint32, data(map(mapinfo(RGB24, imgt), imgt))) -->
-            map(x->x&0x00ffffff, reinterpret(Uint32, data(map(mapinfo(ARGB32, imgt), imgt))))
+        @fact reinterpret(UInt32, data(map(mapinfo(RGB24, imgt), imgt))) -->
+            map(x->x&0x00ffffff, reinterpret(UInt32, data(map(mapinfo(ARGB32, imgt), imgt))))
     end
 
     context("Extra properties") do

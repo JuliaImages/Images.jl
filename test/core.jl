@@ -48,33 +48,33 @@ facts("Core") do
     end
 
     context("Colorim") do
-        C = colorim(rand(Uint8, 3, 5, 5))
+        C = colorim(rand(UInt8, 3, 5, 5))
         @fact eltype(C) --> RGB{Ufixed8}
         @fact colordim(C) --> 0
         @fact colorim(C) --> C
-        C = colorim(rand(Uint16, 4, 5, 5), "ARGB")
+        C = colorim(rand(UInt16, 4, 5, 5), "ARGB")
         @fact eltype(C) --> ARGB{Ufixed16}
         C = colorim(rand(1:20, 3, 5, 5))
         @fact eltype(C) --> Int
         @fact colordim(C) --> 1
         @fact colorspace(C) --> "RGB"
-        @fact eltype(colorim(rand(Uint16, 3, 5, 5))) --> RGB{Ufixed16}
+        @fact eltype(colorim(rand(UInt16, 3, 5, 5))) --> RGB{Ufixed16}
         @fact eltype(colorim(rand(3, 5, 5))) --> RGB{Float64}
-        @fact colordim(colorim(rand(Uint8, 5, 5, 3))) --> 3
-        @fact spatialorder(colorim(rand(Uint8, 3, 5, 5))) --> ["x", "y"]
-        @fact spatialorder(colorim(rand(Uint8, 5, 5, 3))) --> ["y", "x"]
-        @fact eltype(colorim(rand(Uint8, 4, 5, 5), "RGBA")) --> RGBA{Ufixed8}
-        @fact eltype(colorim(rand(Uint8, 4, 5, 5), "ARGB")) --> ARGB{Ufixed8}
-        @fact colordim(colorim(rand(Uint8, 5, 5, 4), "RGBA")) --> 3
-        @fact colordim(colorim(rand(Uint8, 5, 5, 4), "ARGB")) --> 3
-        @fact spatialorder(colorim(rand(Uint8, 4, 5, 5), "ARGB")) --> ["x", "y"]
-        @fact spatialorder(colorim(rand(Uint8, 5, 5, 4), "ARGB")) --> ["y", "x"]
-        @fact_throws ErrorException colorim(rand(Uint8, 3, 5, 3))
-        @fact_throws ErrorException colorim(rand(Uint8, 4, 5, 5))
-        @fact_throws ErrorException colorim(rand(Uint8, 5, 5, 4))
-        @fact_throws ErrorException colorim(rand(Uint8, 4, 5, 4), "ARGB")
-        @fact_throws ErrorException colorim(rand(Uint8, 5, 5, 5), "foo")
-        @fact_throws ErrorException colorim(rand(Uint8, 2, 2, 2), "bar")
+        @fact colordim(colorim(rand(UInt8, 5, 5, 3))) --> 3
+        @fact spatialorder(colorim(rand(UInt8, 3, 5, 5))) --> ["x", "y"]
+        @fact spatialorder(colorim(rand(UInt8, 5, 5, 3))) --> ["y", "x"]
+        @fact eltype(colorim(rand(UInt8, 4, 5, 5), "RGBA")) --> RGBA{Ufixed8}
+        @fact eltype(colorim(rand(UInt8, 4, 5, 5), "ARGB")) --> ARGB{Ufixed8}
+        @fact colordim(colorim(rand(UInt8, 5, 5, 4), "RGBA")) --> 3
+        @fact colordim(colorim(rand(UInt8, 5, 5, 4), "ARGB")) --> 3
+        @fact spatialorder(colorim(rand(UInt8, 4, 5, 5), "ARGB")) --> ["x", "y"]
+        @fact spatialorder(colorim(rand(UInt8, 5, 5, 4), "ARGB")) --> ["y", "x"]
+        @fact_throws ErrorException colorim(rand(UInt8, 3, 5, 3))
+        @fact_throws ErrorException colorim(rand(UInt8, 4, 5, 5))
+        @fact_throws ErrorException colorim(rand(UInt8, 5, 5, 4))
+        @fact_throws ErrorException colorim(rand(UInt8, 4, 5, 4), "ARGB")
+        @fact_throws ErrorException colorim(rand(UInt8, 5, 5, 5), "foo")
+        @fact_throws ErrorException colorim(rand(UInt8, 2, 2, 2), "bar")
     end
 
     context("Indexed color") do
@@ -376,7 +376,7 @@ facts("Core") do
         rawrgb8 = reinterpret(RGB, A8)
         @fact eltype(rawrgb8) --> RGB{Ufixed8}
         @fact reinterpret(Ufixed8, rawrgb8) --> A8
-        @fact reinterpret(Uint8, rawrgb8) --> Au8
+        @fact reinterpret(UInt8, rawrgb8) --> Au8
         rawrgb32 = convert(Array{RGB{Float32}}, rawrgb8)
         @fact eltype(rawrgb32) --> RGB{Float32}
         @fact ufixed8(rawrgb32) --> rawrgb8
@@ -388,7 +388,7 @@ facts("Core") do
         im8 = reinterpret(Ufixed8, imrgb8)
         @fact data(im8) --> A8
         @fact permutedims(reinterpret(Ufixed8, separate(imrgb8)), (3, 1, 2)) --> im8
-        @fact reinterpret(Uint8, imrgb8) --> Au8
+        @fact reinterpret(UInt8, imrgb8) --> Au8
         @fact reinterpret(RGB, im8) --> imrgb8
         ims8 = separate(imrgb8)
         @fact colordim(ims8) --> 3
@@ -399,22 +399,22 @@ facts("Core") do
         imrgb8_2 = convert(Image{RGB}, ims8)
         @fact isa(imrgb8_2, Image{RGB{Ufixed8}}) --> true
         @fact imrgb8_2 --> imrgb8
-        A = reinterpret(Ufixed8, Uint8[1 2; 3 4])
+        A = reinterpret(Ufixed8, UInt8[1 2; 3 4])
         imgray = convert(Image{Gray{Ufixed8}}, A)
         @fact spatialorder(imgray) --> Images.yx
         @fact data(imgray) --> reinterpret(Gray{Ufixed8}, [0x01 0x02; 0x03 0x04])
         @fact eltype(convert(Image{HSV{Float32}}, imrgb8)) --> HSV{Float32}
         @fact eltype(convert(Image{HSV}, float32(imrgb8))) --> HSV{Float32}
         # Issue 232
-        local img = Image(reinterpret(Gray{Ufixed16}, rand(Uint16, 5, 5)))
+        local img = Image(reinterpret(Gray{Ufixed16}, rand(UInt16, 5, 5)))
         imgs = subim(img, :, :)
         @fact isa(minfinite(imgs), Ufixed16) --> true
         # Raw
-        imgdata = rand(Uint16, 5, 5)
+        imgdata = rand(UInt16, 5, 5)
         img = Image(reinterpret(Gray{Ufixed16}, imgdata))
         @fact all(raw(img) .== imgdata) --> true
-        @fact typeof(raw(img)) --> Array{Uint16,2}
-        @fact typeof(raw(Image(rawrgb8))) --> Array{Uint8,3}  # check color images
+        @fact typeof(raw(img)) --> Array{UInt16,2}
+        @fact typeof(raw(Image(rawrgb8))) --> Array{UInt8,3}  # check color images
         @fact size(raw(Image(rawrgb8))) --> (3,5,4)
         @fact typeof(raw(imgdata)) --> typeof(imgdata)  # check array fallback
         @fact all(raw(imgdata) .== imgdata) --> true

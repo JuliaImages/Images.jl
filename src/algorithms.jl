@@ -61,7 +61,7 @@ hypot(img1::AbstractImageDirect, img2::AbstractImageDirect) = shareproperties(im
 @vectorize_2arg Gray atan2
 @vectorize_2arg Gray hypot
 
-function sum(img::AbstractImageDirect, region::Union(AbstractVector,Tuple,Integer))
+@compat function sum(img::AbstractImageDirect, region::Union{AbstractVector,Tuple,Integer})
     f = prod(size(img)[[region...]])
     out = copyproperties(img, sum(data(img), region))
     if in(colordim(img), region)
@@ -72,7 +72,7 @@ end
 
 meanfinite{T<:Real}(A::AbstractArray{T}, region) = _meanfinite(A, T, region)
 meanfinite{CT<:Colorant}(A::AbstractArray{CT}, region) = _meanfinite(A, eltype(CT), region)
-function _meanfinite{T<:FloatingPoint}(A::AbstractArray, ::Type{T}, region)
+function _meanfinite{T<:AbstractFloat}(A::AbstractArray, ::Type{T}, region)
     sz = Base.reduced_dims(A, region)
     K = zeros(Int, sz)
     S = zeros(eltype(A), sz)
@@ -81,7 +81,7 @@ function _meanfinite{T<:FloatingPoint}(A::AbstractArray, ::Type{T}, region)
 end
 _meanfinite(A::AbstractArray, ::Type, region) = mean(A, region)  # non floating-point
 
-function meanfinite{T<:FloatingPoint}(img::AbstractImageDirect{T}, region)
+function meanfinite{T<:AbstractFloat}(img::AbstractImageDirect{T}, region)
     r = meanfinite(data(img), region)
     out = copyproperties(img, r)
     if in(colordim(img), region)
@@ -200,8 +200,8 @@ end
 
 minfinite_scalar{T}(a::T, b::T) = isfinite(a) ? (b < a ? b : a) : b
 maxfinite_scalar{T}(a::T, b::T) = isfinite(a) ? (b > a ? b : a) : b
-minfinite_scalar{T<:Union(Integer,FixedPoint)}(a::T, b::T) = b < a ? b : a
-maxfinite_scalar{T<:Union(Integer,FixedPoint)}(a::T, b::T) = b > a ? b : a
+@compat minfinite_scalar{T<:Union{Integer,FixedPoint}}(a::T, b::T) = b < a ? b : a
+@compat maxfinite_scalar{T<:Union{Integer,FixedPoint}}(a::T, b::T) = b > a ? b : a
 minfinite_scalar(a, b) = minfinite_scalar(promote(a, b)...)
 maxfinite_scalar(a, b) = maxfinite_scalar(promote(a, b)...)
 
@@ -216,10 +216,10 @@ function maxfinite_scalar{C<:AbstractRGB}(c1::C, c2::C)
       maxfinite_scalar(c1.b, c2.b))
 end
 
-sentinel_min{T<:Union(Integer,FixedPoint)}(::Type{T}) = typemax(T)
-sentinel_max{T<:Union(Integer,FixedPoint)}(::Type{T}) = typemin(T)
-sentinel_min{T<:FloatingPoint}(::Type{T}) = convert(T, NaN)
-sentinel_max{T<:FloatingPoint}(::Type{T}) = convert(T, NaN)
+@compat sentinel_min{T<:Union{Integer,FixedPoint}}(::Type{T}) = typemax(T)
+@compat sentinel_max{T<:Union{Integer,FixedPoint}}(::Type{T}) = typemin(T)
+sentinel_min{T<:AbstractFloat}(::Type{T}) = convert(T, NaN)
+sentinel_max{T<:AbstractFloat}(::Type{T}) = convert(T, NaN)
 sentinel_min{C<:AbstractRGB}(::Type{C}) = _sentinel_min(C, eltype(C))
 _sentinel_min{C<:AbstractRGB,T}(::Type{C},::Type{T}) = (s = sentinel_min(T); C(s,s,s))
 sentinel_max{C<:AbstractRGB}(::Type{C}) = _sentinel_max(C, eltype(C))
@@ -274,7 +274,7 @@ function imaverage(filter_size=[3,3])
 end
 
 # laplacian filter kernel
-function imlaplacian(diagonals::String="nodiagonals")
+function imlaplacian(diagonals::AbstractString="nodiagonals")
     if diagonals == "diagonals"
         return [1.0 1.0 1.0; 1.0 -8.0 1.0; 1.0 1.0 1.0]
     elseif diagonals == "nodiagonals"
@@ -367,7 +367,7 @@ function ncc{T}(A::AbstractArray{T}, B::AbstractArray{T})
 end
 
 # Array padding
-function padindexes{T,n}(img::AbstractArray{T,n}, prepad::Union(Vector{Int},Dims), postpad::Union(Vector{Int},Dims), border::String)
+@compat function padindexes{T,n}(img::AbstractArray{T,n}, prepad::Union{Vector{Int},Dims}, postpad::Union{Vector{Int},Dims}, border::AbstractString)
     I = Array(Vector{Int}, n)
     for d = 1:n
         I[d] = padindexes(img, d, prepad[d], postpad[d], border)
@@ -375,17 +375,17 @@ function padindexes{T,n}(img::AbstractArray{T,n}, prepad::Union(Vector{Int},Dims
     I
 end
 
-function padarray{T,n}(img::AbstractArray{T,n}, prepad::Union(Vector{Int},Dims), postpad::Union(Vector{Int},Dims), border::String)
+@compat function padarray{T,n}(img::AbstractArray{T,n}, prepad::Union{Vector{Int},Dims}, postpad::Union{Vector{Int},Dims}, border::AbstractString)
     img[padindexes(img, prepad, postpad, border)...]::Array{T,n}
 end
-function padarray{n}(img::BitArray{n}, prepad::Union(Vector{Int},Dims), postpad::Union(Vector{Int},Dims), border::String)
+@compat function padarray{n}(img::BitArray{n}, prepad::Union{Vector{Int},Dims}, postpad::Union{Vector{Int},Dims}, border::AbstractString)
     img[padindexes(img, prepad, postpad, border)...]::BitArray{n}
 end
-function padarray{n,A<:BitArray}(img::Image{Bool,n,A}, prepad::Union(Vector{Int},Dims), postpad::Union(Vector{Int},Dims), border::String)
+@compat function padarray{n,A<:BitArray}(img::Image{Bool,n,A}, prepad::Union{Vector{Int},Dims}, postpad::Union{Vector{Int},Dims}, border::AbstractString)
     img[padindexes(img, prepad, postpad, border)...]::BitArray{n}
 end
 
-function padarray{T,n}(img::AbstractArray{T,n}, prepad::Union(Vector{Int},Dims), postpad::Union(Vector{Int},Dims), border::String, value)
+@compat function padarray{T,n}(img::AbstractArray{T,n}, prepad::Union{Vector{Int},Dims}, postpad::Union{Vector{Int},Dims}, border::AbstractString, value)
     if border != "value"
         return padarray(img, prepad, postpad, border)
     end
@@ -396,11 +396,11 @@ function padarray{T,n}(img::AbstractArray{T,n}, prepad::Union(Vector{Int},Dims),
     A::Array{T,n}
 end
 
-padarray{T,n}(img::AbstractArray{T,n}, padding::Union(Vector{Int},Dims), border::String = "replicate") = padarray(img, padding, padding, border)
-# Restrict the following to Number to avoid trouble when img is an Array{String}
-padarray{T<:Number,n}(img::AbstractArray{T,n}, padding::Union(Vector{Int},Dims), value::T) = padarray(img, padding, padding, "value", value)
+@compat padarray{T,n}(img::AbstractArray{T,n}, padding::Union{Vector{Int},Dims}, border::AbstractString = "replicate") = padarray(img, padding, padding, border)
+# Restrict the following to Number to avoid trouble when img is an Array{AbstractString}
+@compat padarray{T<:Number,n}(img::AbstractArray{T,n}, padding::Union{Vector{Int},Dims}, value::T) = padarray(img, padding, padding, "value", value)
 
-function padarray{T,n}(img::AbstractArray{T,n}, padding::Union(Vector{Int},Dims), border::String, direction::String)
+@compat function padarray{T,n}(img::AbstractArray{T,n}, padding::Union{Vector{Int},Dims}, border::AbstractString, direction::AbstractString)
     if direction == "both"
         return padarray(img, padding, padding, border)
     elseif direction == "pre"
@@ -410,7 +410,7 @@ function padarray{T,n}(img::AbstractArray{T,n}, padding::Union(Vector{Int},Dims)
     end
 end
 
-function padarray{T<:Number,n}(img::AbstractArray{T,n}, padding::Vector{Int}, value::T, direction::String)
+function padarray{T<:Number,n}(img::AbstractArray{T,n}, padding::Vector{Int}, value::T, direction::AbstractString)
     if direction == "both"
         return padarray(img, padding, padding, "value", value)
     elseif direction == "pre"
@@ -443,10 +443,10 @@ imfilter(img, kern, border, value) = imfilter_inseparable(img, kern, border, val
 imfilter(img, filter) = imfilter(img, filter, "replicate", zero(eltype(img)))
 imfilter(img, filter, border) = imfilter(img, filter, border, zero(eltype(img)))
 
-imfilter_inseparable{T,K,N,M}(img::AbstractArray{T,N}, kern::AbstractArray{K,M}, border::String, value) =
+imfilter_inseparable{T,K,N,M}(img::AbstractArray{T,N}, kern::AbstractArray{K,M}, border::AbstractString, value) =
     imfilter_inseparable(img, prep_kernel(img, kern), border, value)
 
-function imfilter_inseparable{T,K,N}(img::AbstractArray{T,N}, kern::AbstractArray{K,N}, border::String, value)
+function imfilter_inseparable{T,K,N}(img::AbstractArray{T,N}, kern::AbstractArray{K,N}, border::AbstractString, value)
     if border == "inner"
         result = Array(typeof(one(T)*one(K)), ntuple(d->max(0, size(img,d)-size(kern,d)+1), N))
         imfilter!(result, img, kern)
@@ -460,7 +460,7 @@ function imfilter_inseparable{T,K,N}(img::AbstractArray{T,N}, kern::AbstractArra
 end
 
 # Special case for 2d kernels: check for separability
-function imfilter{T}(img::AbstractArray{T}, kern::AbstractMatrix, border::String, value)
+function imfilter{T}(img::AbstractArray{T}, kern::AbstractMatrix, border::AbstractString, value)
     sc = coords_spatial(img)
     if length(sc) < 2
         imfilter_inseparable(img, kern, border, value)
@@ -517,17 +517,17 @@ imfilter_fft(img, kern, border, value) = copyproperties(img, imfilter_fft_insepa
 imfilter_fft(img, filter) = imfilter_fft(img, filter, "replicate", 0)
 imfilter_fft(img, filter, border) = imfilter_fft(img, filter, border, 0)
 
-imfilter_fft_inseparable{T,K,N,M}(img::AbstractArray{T,N}, kern::AbstractArray{K,M}, border::String, value) =
+imfilter_fft_inseparable{T,K,N,M}(img::AbstractArray{T,N}, kern::AbstractArray{K,M}, border::AbstractString, value) =
     imfilter_fft_inseparable(img, prep_kernel(img, kern), border, value)
 
-function imfilter_fft_inseparable{T<:Colorant,K,N,M}(img::AbstractArray{T,N}, kern::AbstractArray{K,M}, border::String, value)
+function imfilter_fft_inseparable{T<:Colorant,K,N,M}(img::AbstractArray{T,N}, kern::AbstractArray{K,M}, border::AbstractString, value)
     A = reinterpret(eltype(T), data(img))
     kernrs = reshape(kern, tuple(1, size(kern)...))
     B = imfilter_fft_inseparable(A, prep_kernel(A, kernrs), border, value)
     reinterpret(base_colorant_type(T), B)
 end
 
-function imfilter_fft_inseparable{T<:Real,K,N}(img::AbstractArray{T,N}, kern::AbstractArray{K,N}, border::String, value)
+function imfilter_fft_inseparable{T<:Real,K,N}(img::AbstractArray{T,N}, kern::AbstractArray{K,N}, border::AbstractString, value)
     if border != "inner"
         prepad  = [div(size(kern,i)-1, 2) for i = 1:N]
         postpad = [div(size(kern,i),   2) for i = 1:N]
@@ -599,7 +599,7 @@ realtype{R<:Real}(::Type{Complex{R}}) = R
 # (in Triggs & Sdika notation) to zero.
 # Note these two papers use different sign conventions for the coefficients.
 
-# Note: astype is ignored for FloatingPoint input
+# Note: astype is ignored for AbstractFloat input
 function imfilter_gaussian{CT<:Colorant}(img::AbstractArray{CT}, sigma; emit_warning = true, astype::Type=Float64)
     A = reinterpret(eltype(CT), data(img))
     newsigma = ndims(A) > ndims(img) ? [0;sigma] : sigma
@@ -607,7 +607,7 @@ function imfilter_gaussian{CT<:Colorant}(img::AbstractArray{CT}, sigma; emit_war
     shareproperties(img, reinterpret(base_colorant_type(CT), ret))
 end
 
-function imfilter_gaussian{T<:FloatingPoint}(img::AbstractArray{T}, sigma::Vector; emit_warning = true, astype::Type=Float64)
+function imfilter_gaussian{T<:AbstractFloat}(img::AbstractArray{T}, sigma::Vector; emit_warning = true, astype::Type=Float64)
     if all(sigma .== 0)
         return img
     end
@@ -626,7 +626,7 @@ function imfilter_gaussian{T<:FloatingPoint}(img::AbstractArray{T}, sigma::Vecto
 end
 
 # For these types, you can't have NaNs
-function imfilter_gaussian{T<:Union(Integer,Ufixed),TF<:FloatingPoint}(img::AbstractArray{T}, sigma::Vector; emit_warning = true, astype::Type{TF}=Float64)
+@compat function imfilter_gaussian{T<:Union{Integer,Ufixed},TF<:AbstractFloat}(img::AbstractArray{T}, sigma::Vector; emit_warning = true, astype::Type{TF}=Float64)
     A = convert(Array{TF}, data(img))
     if all(sigma .== 0)
         return shareproperties(img, A)
@@ -637,7 +637,7 @@ end
 
 # This version is in-place, and destructive
 # Any NaNs have to already be removed from data (and marked in validpixels)
-function imfilter_gaussian!{T<:FloatingPoint}(data::Array{T}, validpixels::Array{T}, sigma::Vector; emit_warning = true)
+function imfilter_gaussian!{T<:AbstractFloat}(data::Array{T}, validpixels::Array{T}, sigma::Vector; emit_warning = true)
     nd = ndims(data)
     if length(sigma) != nd
         error("Dimensionality mismatch")
@@ -652,7 +652,7 @@ end
 
 # When there are no NaNs, the normalization is separable and hence can be computed far more efficiently
 # This speeds the algorithm by approximately twofold
-function imfilter_gaussian_no_nans!{T<:FloatingPoint}(data::Array{T}, sigma::Vector; emit_warning = true)
+function imfilter_gaussian_no_nans!{T<:AbstractFloat}(data::Array{T}, sigma::Vector; emit_warning = true)
     nd = ndims(data)
     if length(sigma) != nd
         error("Dimensionality mismatch")
@@ -705,7 +705,7 @@ function iir_gaussian_coefficients(T::Type, sigma::Number; emit_warning::Bool = 
     return a, B, M
 end
 
-function _imfilter_gaussian!{T<:FloatingPoint}(A::Array{T}, sigma::Vector; emit_warning::Bool = true)
+function _imfilter_gaussian!{T<:AbstractFloat}(A::Array{T}, sigma::Vector; emit_warning::Bool = true)
     nd = ndims(A)
     szA = [size(A,i) for i = 1:nd]
     strdsA = [stride(A,i) for i = 1:nd]
@@ -874,7 +874,7 @@ end
 imfilter_LoG{T}(img::AbstractArray{T,2}, σ::Real, border="replicate") =
     imfilter_LoG(img::AbstractArray{T,2}, [σ, σ], border)
 
-function padindexes{T,n}(img::AbstractArray{T,n}, dim, prepad, postpad, border::String)
+function padindexes{T,n}(img::AbstractArray{T,n}, dim, prepad, postpad, border::AbstractString)
     M = size(img, dim)
     I = Array(Int, M + prepad + postpad)
     I = [(1 - prepad):(M + postpad);]
@@ -903,7 +903,7 @@ end
 
 restrict(img::AbstractImageDirect, ::(@compat Tuple{})) = img
 
-function restrict(img::AbstractImageDirect, region::Union(Dims, Vector{Int})=coords_spatial(img))
+@compat function restrict(img::AbstractImageDirect, region::Union{Dims, Vector{Int}}=coords_spatial(img))
     A = data(img)
     for dim in region
         A = _restrict(A, dim)
@@ -915,14 +915,14 @@ function restrict(img::AbstractImageDirect, region::Union(Dims, Vector{Int})=coo
     props["pixelspacing"] = ps
     Image(A, props)
 end
-function restrict(A::AbstractArray, region::Union(Dims, Vector{Int})=coords_spatial(A))
+@compat function restrict(A::AbstractArray, region::Union{Dims, Vector{Int}}=coords_spatial(A))
     for dim in region
         A = _restrict(A, dim)
     end
     A
 end
 
-function restrict{S<:ByteString}(img::AbstractImageDirect, region::Union((@compat Tuple{Vararg{ByteString}}), Vector{S}))
+@compat function restrict{S<:ByteString}(img::AbstractImageDirect, region::Union{Tuple{Vararg{ByteString}}, Vector{S}})
     so = spatialorder(img)
     regioni = Int[]
     for i = 1:length(region)
@@ -1067,13 +1067,13 @@ end
 
 imresize(original, new_size) = imresize!(similar(original, new_size), original)
 
-convertsafely{T<:FloatingPoint}(::Type{T}, val) = convert(T, val)
+convertsafely{T<:AbstractFloat}(::Type{T}, val) = convert(T, val)
 convertsafely{T<:Integer}(::Type{T}, val::Integer) = convert(T, val)
-convertsafely{T<:Integer}(::Type{T}, val::FloatingPoint) = trunc(T, val+oftype(val, 0.5))
+convertsafely{T<:Integer}(::Type{T}, val::AbstractFloat) = trunc(T, val+oftype(val, 0.5))
 convertsafely{T}(::Type{T}, val) = convert(T, val)
 
 
-function imlineardiffusion{T}(img::Array{T,2}, dt::FloatingPoint, iterations::Integer)
+function imlineardiffusion{T}(img::Array{T,2}, dt::AbstractFloat, iterations::Integer)
     u = img
     f = imlaplacian()
     for i = dt:dt:dt*iterations

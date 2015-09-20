@@ -37,9 +37,9 @@ function imread{S<:IO}(s::S, ::Type{Images.ImagineFile})
             warn("Size of image file is different from expected value")
             n_stacks = ifloor(fsz / sizeof(T) / prod(sz[1:end-1]))
         end
-        if sizeof(T)*prod(map(Int64,sz[1:end-1]))*n_stacks > typemax(Uint)
+        if sizeof(T)*prod(map(Int64,sz[1:end-1]))*n_stacks > typemax(UInt)
             warn("File size is too big to mmap on 32bit")
-            n_stacks = ifloor(fsz / sizeof(T) / typemax(Uint))
+            n_stacks = ifloor(fsz / sizeof(T) / typemax(UInt))
         end
         if n_stacks < sz[end]
             println("Truncating to ", n_stacks, length(sz) == 4 ? " stacks" : " frames")
@@ -76,7 +76,7 @@ const endian_dict = @compat Dict("l"=>LittleEndian, "b"=>BigEndian)
 const nrrd_endian_dict = @compat Dict(LittleEndian=>"little",BigEndian=>"big")
 parse_endian(s::ASCIIString) = endian_dict[lowercase(s)]
 
-function parse_vector_int(s::String)
+function parse_vector_int(s::AbstractString)
     ss = @compat split(s, r"[ ,;]", keep=false)
     v = Array(Int, length(ss))
     for i = 1:length(ss)
@@ -87,13 +87,13 @@ end
 
 const bitname_dict = @compat Dict(
   "int8"      => Int8,
-  "uint8"     => Uint8,
+  "uint8"     => UInt8,
   "int16"     => Int16,
-  "uint16"    => Uint16,
+  "uint16"    => UInt16,
   "int32"     => Int32,
-  "uint32"    => Uint32,
+  "uint32"    => UInt32,
   "int64"     => Int64,
-  "uint64"    => Uint64,
+  "uint64"    => UInt64,
   "float16"   => Float16,
   "float32"   => Float32,
   "single"    => Float32,
@@ -119,17 +119,17 @@ function parse_quantity_or_empty(s::ASCIIString)
 end
 
 _unit_string_dict = @compat Dict("um" => Micro*Meter, "s" => Second, "us" => Micro*Second, "MHz" => Mega*Hertz)
-function parse_quantity(s::String, strict::Bool = true)
+function parse_quantity(s::AbstractString, strict::Bool = true)
     # Find the last character of the numeric component
     m = match(r"[0-9\.\+-](?![0-9\.\+-])", s)
     if m == nothing
-        error("String does not have a 'value unit' structure")
+        error("AbstractString does not have a 'value unit' structure")
     end
     val = parse(Float64, s[1:m.offset])
     ustr = strip(s[m.offset+1:end])
     if isempty(ustr)
         if strict
-            error("String does not have a 'value unit' structure")
+            error("AbstractString does not have a 'value unit' structure")
         else
             return val
         end
@@ -139,7 +139,7 @@ end
 
 # Read and parse a *.imagine file (an Imagine header file)
 const compound_fields = Any["piezo", "binning"]
-const field_key_dict = @compat Dict{String,Function}(
+const field_key_dict = @compat Dict{AbstractString,Function}(
     "header version"               => x->parse(Float64,x),
     "app version"                  => identity,
     "date and time"                => identity,
@@ -236,7 +236,7 @@ end
 function imagine2nrrd(sheader::IO, h::Dict{ASCIIString, Any}, datafilename = nothing)
     println(sheader, "NRRD0001")
     T = h["pixel data type"]
-    if T<:FloatingPoint
+    if T<:AbstractFloat
         println(sheader, "type: ", (T == Float32) ? "float" : "double")
     else
         println(sheader, "type: ", lowercase(string(T)))
@@ -259,13 +259,13 @@ function imagine2nrrd(sheader::IO, h::Dict{ASCIIString, Any}, datafilename = not
     print(sheader, "\n")
     println(sheader, "encoding: raw")
     println(sheader, "endian: ", nrrd_endian_dict[h["byte order"]])
-    if isa(datafilename, String)
+    if isa(datafilename, AbstractString)
         println(sheader, "data file: ", datafilename)
     end
     sheader
 end
 
-function imagine2nrrd(nrrdname::String, h::Dict{ASCIIString, Any}, datafilename = nothing)
+function imagine2nrrd(nrrdname::AbstractString, h::Dict{ASCIIString, Any}, datafilename = nothing)
     sheader = open(nrrdname, "w")
     imagine2nrrd(sheader, h, datafilename)
     close(sheader)

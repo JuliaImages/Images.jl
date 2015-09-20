@@ -19,10 +19,10 @@ for N = 1:4
     @eval begin
         # All but the last of these are inside the @eval loop simply to avoid ambiguity warnings.
         # These first two are additional ones needed to avoid ambiguity warnings.
-        _uint32color_gray!{T}(buf::Array{Uint32}, A::LabeledArray{T,$N}, mapi::ScaleSigned) = error("Cannot use ScaleSigned with a labeled array")
-        _uint32color_gray!{T,L<:LabeledArray}(buf::Array{Uint32}, A::SubArray{T,$N,L}, mapi::ScaleSigned) = error("Cannot use ScaleSigned with a labeled array")
+        _uint32color_gray!{T}(buf::Array{UInt32}, A::LabeledArray{T,$N}, mapi::ScaleSigned) = error("Cannot use ScaleSigned with a labeled array")
+        _uint32color_gray!{T,L<:LabeledArray}(buf::Array{UInt32}, A::SubArray{T,$N,L}, mapi::ScaleSigned) = error("Cannot use ScaleSigned with a labeled array")
 
-        function _uint32color_gray!{T}(buf::Array{Uint32}, A::LabeledArray{T,$N}, mapi::MapInfo = mapinfo(Uint8, A))
+        function _uint32color_gray!{T}(buf::Array{UInt32}, A::LabeledArray{T,$N}, mapi::MapInfo = mapinfo(UInt8, A))
             if size(buf) != size(A)
                 error("Size mismatch")
             end
@@ -43,7 +43,7 @@ for N = 1:4
 
         # For SubArrays, we can't efficiently use linear indexing, and in any event
         # we want to broadcast label where necessary
-        function _uint32color_gray!{T,A<:LabeledArray}(buf::Array{Uint32}, S::SubArray{T,$N,A}, mapi::MapInfo = mapinfo(Uint8, A))
+        function _uint32color_gray!{T,A<:LabeledArray}(buf::Array{UInt32}, S::SubArray{T,$N,A}, mapi::MapInfo = mapinfo(UInt8, A))
             if size(buf) != size(S)
                 error("Size mismatch")
             end

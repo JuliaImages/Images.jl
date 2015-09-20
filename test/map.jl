@@ -40,10 +40,10 @@ facts("Map") do
     end
 
     context("BitShift") do
-        mapi = BitShift{Uint8,7}()
+        mapi = BitShift{UInt8,7}()
         @chk map(mapi, 0xff) 0x01
         @chk map(mapi, 0xf0ff) 0xff
-        @chk map(mapi, [0xff]) Uint8[0x01]
+        @chk map(mapi, [0xff]) UInt8[0x01]
         mapi = BitShift{Ufixed8,7}()
         @chk map(mapi, 0xffuf8) 0x01uf8
         @chk map(mapi, 0xf0ffuf16) 0xffuf8
@@ -143,7 +143,7 @@ facts("Map") do
         @chk map(mapi, 550) Ufixed8(0.5)
         mapinew = ScaleMinMax(Ufixed8, [100,500,1000])
         @fact mapinew --> mapi
-        mapinew = ScaleMinMax(Ufixed8, [0,500,2000], convert(Uint16, 100), convert(Uint16, 1000))
+        mapinew = ScaleMinMax(Ufixed8, [0,500,2000], convert(UInt16, 100), convert(UInt16, 1000))
         @fact mapinew --> mapi
         mapi = ScaleMinMax(ARGB32, 100, 1000)
         @chk map(mapi, 100) ARGB32(0,0,0,1)
@@ -199,7 +199,7 @@ facts("Map") do
     end
 
     context("Scaling and ssd") do
-        img = Images.grayim(fill(typemax(Uint16), 3, 3))
+        img = Images.grayim(fill(typemax(UInt16), 3, 3))
         mapi = Images.mapinfo(Ufixed8, img)
         img8 = map(mapi, img)
         @fact all(img8 .== typemax(Ufixed8)) --> true
@@ -223,8 +223,8 @@ facts("Map") do
         A = reshape(1:9, 3, 3)
         B = map(Images.ClampMin(Float32, 3), A)
         @fact (eltype(B) == Float32 && B == [3 4 7; 3 5 8; 3 6 9]) --> true
-        B = map(Images.ClampMax(Uint8, 7), A)
-        @fact (eltype(B) == Uint8 && B == [1 4 7; 2 5 7; 3 6 7]) --> true
+        B = map(Images.ClampMax(UInt8, 7), A)
+        @fact (eltype(B) == UInt8 && B == [1 4 7; 2 5 7; 3 6 7]) --> true
 
         A = reinterpret(Ufixed8, [convert(UInt8,1):convert(UInt8,24);], (3, 2, 4))
         img = reinterpret(RGB{Ufixed8}, A, (2,4))
@@ -240,28 +240,28 @@ facts("Map") do
 
     context("Color conversion") do
         gray = collect(linspace(0.0,1.0,5)) # a 1-dimensional image
-        gray8 = round(Uint8, 255*gray)
-        gray32 = Uint32[convert(UInt32, g)<<16 | convert(UInt32, g)<<8 | convert(UInt32, g) for g in gray8]
+        gray8 = round(UInt8, 255*gray)
+        gray32 = UInt32[convert(UInt32, g)<<16 | convert(UInt32, g)<<8 | convert(UInt32, g) for g in gray8]
         imgray = Images.Image(gray, Dict{ASCIIString,Any}([("colordim",0), ("colorspace","Gray")]))
-        buf = map(Images.mapinfo(Uint32, imgray), imgray) # Images.uint32color(imgray)
+        buf = map(Images.mapinfo(UInt32, imgray), imgray) # Images.uint32color(imgray)
         @fact buf --> gray32
         rgb = RGB{Float64}[RGB(g, g, g) for g in gray]
-        buf = map(Images.mapinfo(Uint32, rgb), rgb) # Images.uint32color(rgb)
+        buf = map(Images.mapinfo(UInt32, rgb), rgb) # Images.uint32color(rgb)
         @fact buf --> gray32
         r = red(rgb)
         @fact r --> gray
         img = Images.Image(reinterpret(RGB24, gray32)) # , ["colordim"-->0, "colorspace"=>"RGB24"])
-        buf = map(Images.mapinfo(Uint32, img), img) # Images.uint32color(img)
+        buf = map(Images.mapinfo(UInt32, img), img) # Images.uint32color(img)
         @fact buf --> gray32
         rgb = repeat(gray, outer=[1,3])
         img = Images.Image(rgb, Dict{ASCIIString,Any}([("colordim",2), ("colorspace","RGB"), ("spatialorder",["x"])]))
-        buf = map(Images.mapinfo(Uint32, img), img) # Images.uint32color(img)
+        buf = map(Images.mapinfo(UInt32, img), img) # Images.uint32color(img)
         @fact buf --> gray32
         g = green(img)
         @fact g --> gray
         rgb = repeat(gray', outer=[3,1])
         img = Images.Image(rgb, Dict{ASCIIString,Any}([("colordim",1), ("colorspace","RGB"), ("spatialorder",["x"])]))
-        buf = map(Images.mapinfo(Uint32, img), img) # Images.uint32color(img)
+        buf = map(Images.mapinfo(UInt32, img), img) # Images.uint32color(img)
         @fact buf --> gray32
         b = blue(img)
         @fact b --> gray

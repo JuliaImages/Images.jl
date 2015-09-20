@@ -74,7 +74,7 @@ function ando5_sep()
 end
 
 # Image gradients in the X and Y direction
-function imgradients(img::AbstractArray, method::String="ando3", border::String="replicate")
+function imgradients(img::AbstractArray, method::AbstractString="ando3", border::AbstractString="replicate")
     sx,sy = spatialorder(img)[1] == "x" ? (1,2) : (2,1)
     s = (method == "sobel"     ? sobel() :
          method == "prewitt"   ? prewitt() :
@@ -91,7 +91,7 @@ function imgradients(img::AbstractArray, method::String="ando3", border::String=
     return grad_x, grad_y
 end
 
-function imgradients{T<:Color}(img::AbstractArray{T}, method::String="ando3", border::String="replicate")
+function imgradients{T<:Color}(img::AbstractArray{T}, method::AbstractString="ando3", border::AbstractString="replicate")
     # Remove Color information
     imgradients(reinterpret(eltype(eltype(img)), img), method, border)
 end
@@ -135,13 +135,13 @@ end
 magnitude_phase(grad_x::AbstractArray, grad_y::AbstractArray) = (magnitude(grad_x,grad_y), phase(grad_x,grad_y))
 
 # Return the magnituded and phase of the gradients in an image
-function magnitude_phase(img::AbstractArray, method::String="ando3", border::String="replicate")
+function magnitude_phase(img::AbstractArray, method::AbstractString="ando3", border::AbstractString="replicate")
     grad_x, grad_y = imgradients(img, method, border)
     return magnitude_phase(grad_x, grad_y)
 end
 
 # Return the x-y gradients and magnitude and phase of gradients in an image
-function imedge(img::AbstractArray, method::String="ando3", border::String="replicate")
+function imedge(img::AbstractArray, method::AbstractString="ando3", border::AbstractString="replicate")
     grad_x, grad_y = imgradients(img, method, border)
     mag = magnitude(grad_x, grad_y)
     orient = orientation(grad_x, grad_y)
@@ -149,9 +149,9 @@ function imedge(img::AbstractArray, method::String="ando3", border::String="repl
 end
 
 # Thin edges
-thin_edges{T}(img::AbstractArray{T,2}, gradientangles::AbstractArray, border::String="replicate") =
+thin_edges{T}(img::AbstractArray{T,2}, gradientangles::AbstractArray, border::AbstractString="replicate") =
     thin_edges_nonmaxsup(img, gradientangles, border)
-thin_edges_subpix{T}(img::AbstractArray{T,2}, gradientangles::AbstractArray, border::String="replicate") =
+thin_edges_subpix{T}(img::AbstractArray{T,2}, gradientangles::AbstractArray, border::AbstractString="replicate") =
     thin_edges_nonmaxsup_subpix(img, gradientangles, border)
 
 # Code below is related to non-maximal suppression, and was ported to Julia from
@@ -252,7 +252,7 @@ function _calc_discrete_offsets(θ, radius, transposed)
     return θ, xoffs, yoffs
 end
 
-_discretize_angle(angle::FloatingPoint, invθ) =
+_discretize_angle(angle::AbstractFloat, invθ) =
     angle < 0 ? round(Int, (angle + 2π)*invθ)+1 : round(Int, angle*invθ)+1
 
 # Interpolate the value of an offset from a particular pixel
@@ -332,7 +332,7 @@ function thin_edges_nonmaxsup_core!{T}(out::AbstractArray{T,2}, location::Abstra
                     location[y,x] = transposed ? Point(y + r*yoffs[or], x + r*xoffs[or]) :
                                                  Point(x + r*xoffs[or], y + r*yoffs[or])
 
-                    if T<:FloatingPoint
+                    if T<:AbstractFloat
                         # Store the interpolated value
                         out[y,x] = a*r^2 + b*r + c
                     else
@@ -350,14 +350,14 @@ end
 
 
 # Main function call when subpixel location of edges is not needed
-function thin_edges_nonmaxsup!{A<:AbstractArray,B<:AbstractArray}(out::A, img::A, gradientangles::B, border::String="replicate";
+function thin_edges_nonmaxsup!{A<:AbstractArray,B<:AbstractArray}(out::A, img::A, gradientangles::B, border::AbstractString="replicate";
                                                                   radius::Float64=1.35, theta=pi/180)
     properties(out) != properties(img) && error("Input and output arrays must have the same properties")
     thin_edges_nonmaxsup_core!(data(out), Array(Point,(0,0)), img, gradientangles, radius, border, theta)
     out
 end
 
-function thin_edges_nonmaxsup{T}(img::AbstractArray{T,2}, gradientangles::AbstractArray, border::String="replicate";
+function thin_edges_nonmaxsup{T}(img::AbstractArray{T,2}, gradientangles::AbstractArray, border::AbstractString="replicate";
                                  radius::Float64=1.35, theta=pi/180)
     (height,width) = size(img)
     out = zeros(T, height, width)
@@ -367,7 +367,7 @@ end
 
 # Main function call when subpixel location of edges is desired
 function thin_edges_nonmaxsup_subpix!{A<:AbstractArray, B<:AbstractArray, C<:AbstractArray}(out::A, location::B, img::A, gradientangles::C,
-                                     border::String="replicate"; radius::Float64=1.35, theta=pi/180)
+                                     border::AbstractString="replicate"; radius::Float64=1.35, theta=pi/180)
     properties(out) != properties(img) && error("Input and output arrays must have the same properties")
     eltype(location) != Point && error("Preallocated subpixel location array/image must have element type Graphics.Point")
 
@@ -376,7 +376,7 @@ function thin_edges_nonmaxsup_subpix!{A<:AbstractArray, B<:AbstractArray, C<:Abs
 end
 
 function thin_edges_nonmaxsup_subpix{T}(img::AbstractArray{T}, gradientangles::AbstractArray,
-                                        border::String="replicate"; radius::Float64=1.35, theta=pi/180)
+                                        border::AbstractString="replicate"; radius::Float64=1.35, theta=pi/180)
     (height,width) = size(img)
     out = zeros(T, height, width)
     location = zeros(Point, height, width)
