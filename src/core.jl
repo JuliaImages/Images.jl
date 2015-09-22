@@ -25,10 +25,7 @@ ImageCmap(data::AbstractArray, cmap::AbstractVector; kwargs...) = ImageCmap(data
 
 # Convenience constructors
 grayim(A::AbstractImage) = A
-<<<<<<< HEAD
 
-=======
->>>>>>> 91aea6c... included latest changes from master and fixed up grayim - maybe
 grayim(A::AbstractArray{Uint8,2})  = grayim(reinterpret(Gray{Ufixed8}, A))
 grayim(A::AbstractArray{Uint16,2}) = grayim(reinterpret(Gray{Ufixed16}, A))
 grayim(A::AbstractArray{Uint8,3})  = grayim(reinterpret(Gray{Ufixed8}, A))
