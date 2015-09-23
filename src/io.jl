@@ -257,7 +257,7 @@ imread(source, ::Type{OSXNative}) = LibOSXNative.imread(source)
 # fixed type for depths > 8
 const ufixedtype = @compat Dict(10=>Ufixed10, 12=>Ufixed12, 14=>Ufixed14, 16=>Ufixed16)
 
-@compat function imread(filename::Union{AbstractString,IO}, ::Type{ImageMagick};extraprop="",extrapropertynames=false)
+@compat function imread(filename::Union{AbstractString,IO,Array}, ::Type{ImageMagick};extraprop="",extrapropertynames=false)
     wand = LibMagick.MagickWand()
     LibMagick.readimage(wand, filename)
     LibMagick.resetiterator(wand)
