@@ -231,7 +231,7 @@ function readimage(wand::MagickWand, stream::IO)
     nothing
 end
 
-function readimage(wand::MagickWand, stream::Array)
+function readimage(wand::MagickWand, stream::Vector{UInt8})
     status = ccall((:MagickReadImageBlob, libwand), Cint, (Ptr{Void}, Ptr{Void}, Cint), wand.ptr, stream, length(stream)*sizeof(eltype(stream)))
     status == 0 && error(wand)
     nothing
