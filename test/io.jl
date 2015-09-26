@@ -139,4 +139,13 @@ facts("IO") do
         close(io)
         @fact isa(img, Images.Image) --> true
     end
+
+    @unix_only context("Reading from a byte array (issue #279)") do
+        fn = joinpath(workdir, "2by2.png")
+        io = open(fn)
+        arr = readbytes(io)
+        close(io)
+        img = Images.imread(arr, Images.ImageMagick)
+        @fact isa(img, Images.Image) --> true
+    end
 end
