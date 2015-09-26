@@ -94,6 +94,9 @@ export # types
     ScaleSigned,
     SliceData,
 
+    # macros
+    @test_approx_eq_sigma_eps,
+
     # constants
     palette_fire,
     palette_gray32,

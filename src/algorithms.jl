@@ -366,6 +366,23 @@ function ncc{T}(A::AbstractArray{T}, B::AbstractArray{T})
     return dot(Am,Bm)/(norm(Am)*norm(Bm))
 end
 
+# Simple image difference testing
+macro test_approx_eq_sigma_eps(A, B, sigma, eps)
+    quote
+        if size($(esc(A))) != size($(esc(B)))
+            error("Sizes ", size($(esc(A))), " and ",
+                  size($(esc(B))), " do not match")
+        end
+        Af = imfilter_gaussian($(esc(A)), $(esc(sigma)))
+        Bf = imfilter_gaussian($(esc(B)), $(esc(sigma)))
+        diffscale = max(maxabsfinite($(esc(A))), maxabsfinite($(esc(B))))
+        d = sad(Af, Bf)
+        if d > length(Af)*diffscale*($(esc(eps)))
+            error("Arrays A and B differ")
+        end
+    end
+end
+
 # Array padding
 @compat function padindexes{T,n}(img::AbstractArray{T,n}, prepad::Union{Vector{Int},Dims}, postpad::Union{Vector{Int},Dims}, border::AbstractString)
     I = Array(Vector{Int}, n)

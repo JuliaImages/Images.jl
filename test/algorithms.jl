@@ -87,6 +87,16 @@ facts("Algorithms") do
         bg = reinterpret(RGB{Ufixed8}, b)
         @fact Images.sad(ag, bg) --> roughly(387f0/255)
         @fact Images.ssd(ag, bg) --> roughly(80699f0/255^2)
+
+        a = rand(5,5)
+        @fact_throws ErrorException (Images.@test_approx_eq_sigma_eps a rand(3,5) [1,1] 0.1)
+        @fact_throws ErrorException (Images.@test_approx_eq_sigma_eps a rand(5,5) [1,1] 0.1)
+        @fact (Images.@test_approx_eq_sigma_eps a a [1,1] 0.1) --> nothing
+        @fact (Images.@test_approx_eq_sigma_eps a a+0.01*rand(size(a)) [1,1] 0.1) --> nothing
+        @fact_throws ErrorException (Images.@test_approx_eq_sigma_eps a a+0.5*rand(size(a)) [1,1] 0.1)
+        a = colorim(rand(3,5,5))
+        @fact (Images.@test_approx_eq_sigma_eps a a [1,1] 0.1) --> nothing
+        @fact_throws ErrorException (Images.@test_approx_eq_sigma_eps a colorim(rand(3,5,5)) [1,1] 0.1)
     end
 
     context("fft and ifft") do
