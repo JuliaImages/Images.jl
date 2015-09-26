@@ -26,32 +26,13 @@ ImageCmap(data::AbstractArray, cmap::AbstractVector; kwargs...) = ImageCmap(data
 # Convenience constructors
 # Convenience constructors
 grayim(A::AbstractImage) = A
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-
-=======
->>>>>>> 91aea6c... included latest changes from master and fixed up grayim - maybe
->>>>>>> fcfa483... started rewriting SIF
-=======
-
->>>>>>> 0611ac0... Revert "started rewriting SIF"
 grayim(A::AbstractArray{Uint8,2})  = grayim(reinterpret(Gray{Ufixed8}, A))
 grayim(A::AbstractArray{Uint16,2}) = grayim(reinterpret(Gray{Ufixed16}, A))
 grayim(A::AbstractArray{Uint8,3})  = grayim(reinterpret(Gray{Ufixed8}, A))
 grayim(A::AbstractArray{Uint16,3}) = grayim(reinterpret(Ufixed16, A))
 grayim{T, N}(A::AbstractArray{T,N}) = grayim(reinterpret(Gray{T}, A))
 grayim{T<:Gray, N}(A::AbstractArray{T,N}) = Image(A; colorspace="Gray", spatialorder=["x","y","z"][1:N])
-=======
-grayim(A::AbstractArray{UInt8,2})  = grayim(reinterpret(Ufixed8, A))
-grayim(A::AbstractArray{UInt16,2}) = grayim(reinterpret(Ufixed16, A))
-grayim(A::AbstractArray{UInt8,3})  = grayim(reinterpret(Ufixed8, A))
-grayim(A::AbstractArray{UInt16,3}) = grayim(reinterpret(Ufixed16, A))
-grayim{T}(A::AbstractArray{T,2}) = Image(A; colorspace="Gray", spatialorder=["x","y"])
-grayim{T}(A::AbstractArray{T,3}) = Image(A; colorspace="Gray", spatialorder=["x","y","z"])
->>>>>>> 8a08bcb... removed more IO
+
 
 colorim(A::AbstractImage) = A
 function colorim{T}(A::AbstractArray{T,3})
