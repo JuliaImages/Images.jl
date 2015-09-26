@@ -76,8 +76,8 @@ ndims(img::AbstractImage) = ndims(img.data)
 
 strides(img::AbstractImage) = strides(img.data)
 
-copy(img::Image) = Image(copy(img.data), deepcopy(img.properties))
-copy(img::ImageCmap) = ImageCmap(copy(img.data), copy(img.cmap), deepcopy(img.properties))
+copy(img::Image) = Image(copy(img.data), deepcopy(img.properties)::typeof(img.properties))  # see issue #356
+copy(img::ImageCmap) = ImageCmap(copy(img.data), copy(img.cmap), deepcopy(img.properties)::typeof(img.properties))
 
 # Create a new "Image" (could be just an Array) copying the properties but replacing the data
 copyproperties(img::AbstractArray, data::AbstractArray) = data
