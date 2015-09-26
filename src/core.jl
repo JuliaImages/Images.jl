@@ -24,13 +24,15 @@ ImageCmap(data::AbstractArray, cmap::AbstractVector, props::Dict) = ImageCmap{el
 ImageCmap(data::AbstractArray, cmap::AbstractVector; kwargs...) = ImageCmap(data, cmap, kwargs2dict(kwargs))
 
 # Convenience constructors
+# Convenience constructors
 grayim(A::AbstractImage) = A
-grayim(A::AbstractArray{UInt8,2})  = grayim(reinterpret(Ufixed8, A))
-grayim(A::AbstractArray{UInt16,2}) = grayim(reinterpret(Ufixed16, A))
-grayim(A::AbstractArray{UInt8,3})  = grayim(reinterpret(Ufixed8, A))
-grayim(A::AbstractArray{UInt16,3}) = grayim(reinterpret(Ufixed16, A))
-grayim{T}(A::AbstractArray{T,2}) = Image(A; colorspace="Gray", spatialorder=["x","y"])
-grayim{T}(A::AbstractArray{T,3}) = Image(A; colorspace="Gray", spatialorder=["x","y","z"])
+grayim(A::AbstractArray{Uint8,2})  = grayim(reinterpret(Gray{Ufixed8}, A))
+grayim(A::AbstractArray{Uint16,2}) = grayim(reinterpret(Gray{Ufixed16}, A))
+grayim(A::AbstractArray{Uint8,3})  = grayim(reinterpret(Gray{Ufixed8}, A))
+grayim(A::AbstractArray{Uint16,3}) = grayim(reinterpret(Ufixed16, A))
+grayim{T, N}(A::AbstractArray{T,N}) = grayim(reinterpret(Gray{T}, A))
+grayim{T<:Gray, N}(A::AbstractArray{T,N}) = Image(A; colorspace="Gray", spatialorder=["x","y","z"][1:N])
+
 
 colorim(A::AbstractImage) = A
 function colorim{T}(A::AbstractArray{T,3})

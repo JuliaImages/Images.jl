@@ -33,12 +33,29 @@ end
 if isfile(versionfile)
     include(versionfile)
 end
+<<<<<<< HEAD
+<<<<<<< HEAD
 
 const have_imagemagick = isdefined(:libwand)
 
 # Initialize the library
 if !have_imagemagick
     function __init__()
+=======
+=======
+>>>>>>> 0611ac0... Revert "started rewriting SIF"
+const have_imagemagick = isdefined(:libwand)
+
+# Initialize the library
+function init()
+    global libwand
+    if have_imagemagick
+        eval(:(ccall((:MagickWandGenesis, $libwand), Void, ())))
+    else
+<<<<<<< HEAD
+>>>>>>> adcbb46... started removing files that go into FileIO
+=======
+>>>>>>> 0611ac0... Revert "started rewriting SIF"
         warn("ImageMagick utilities not found. Install for more file format support.")
     end
 end
@@ -51,10 +68,23 @@ const DOUBLEPIXEL = 2
 const FLOATPIXEL = 3
 const INTEGERPIXEL = 4
 const SHORTPIXEL = 7
+<<<<<<< HEAD
+<<<<<<< HEAD
 @compat IMStorageTypes = Union{UInt8, UInt16, UInt32, Float32, Float64}
 storagetype(::Type{UInt8}) = CHARPIXEL
 storagetype(::Type{UInt16}) = SHORTPIXEL
 storagetype(::Type{UInt32}) = INTEGERPIXEL
+=======
+=======
+>>>>>>> 0611ac0... Revert "started rewriting SIF"
+IMStorageTypes = Union(Uint8, Uint16, Uint32, Float32, Float64)
+storagetype(::Type{Uint8}) = CHARPIXEL
+storagetype(::Type{Uint16}) = SHORTPIXEL
+storagetype(::Type{Uint32}) = INTEGERPIXEL
+<<<<<<< HEAD
+>>>>>>> adcbb46... started removing files that go into FileIO
+=======
+>>>>>>> 0611ac0... Revert "started rewriting SIF"
 storagetype(::Type{Float32}) = FLOATPIXEL
 storagetype(::Type{Float64}) = DOUBLEPIXEL
 storagetype{T<:Ufixed}(::Type{T}) = storagetype(FixedPointNumbers.rawtype(T))
@@ -62,7 +92,15 @@ storagetype{CV<:Colorant}(::Type{CV}) = storagetype(eltype(CV))
 
 # Channel types
 type ChannelType
+<<<<<<< HEAD
+<<<<<<< HEAD
     value::UInt32
+=======
+    value::Uint32
+>>>>>>> adcbb46... started removing files that go into FileIO
+=======
+    value::Uint32
+>>>>>>> 0611ac0... Revert "started rewriting SIF"
 end
 const UndefinedChannel = ChannelType(0x00000000)
 const RedChannel = ChannelType(0x00000001)
@@ -90,17 +128,39 @@ const DefaultChannels = ChannelType( (AllChannels.value | SyncChannels.value) &~
 const IMType = ["BilevelType", "GrayscaleType", "GrayscaleMatteType", "PaletteType", "PaletteMatteType", "TrueColorType", "TrueColorMatteType", "ColorSeparationType", "ColorSeparationMatteType", "OptimizeType", "PaletteBilevelMatteType"]
 const IMTypedict = Dict([(IMType[i], i) for i = 1:length(IMType)])
 
+<<<<<<< HEAD
+<<<<<<< HEAD
 const CStoIMTypedict = @compat Dict("Gray" => "GrayscaleType", "GrayA" => "GrayscaleMatteType", "RGB" => "TrueColorType", "ARGB" => "TrueColorMatteType", "CMYK" => "ColorSeparationType")
+=======
+const CStoIMTypedict = @compat Dict("Gray" => "GrayscaleType", "GrayAlpha" => "GrayscaleMatteType", "RGB" => "TrueColorType", "ARGB" => "TrueColorMatteType", "CMYK" => "ColorSeparationType")
+>>>>>>> adcbb46... started removing files that go into FileIO
+=======
+const CStoIMTypedict = @compat Dict("Gray" => "GrayscaleType", "GrayAlpha" => "GrayscaleMatteType", "RGB" => "TrueColorType", "ARGB" => "TrueColorMatteType", "CMYK" => "ColorSeparationType")
+>>>>>>> 0611ac0... Revert "started rewriting SIF"
 
 # Colorspace
 const IMColorspace = ["RGB", "Gray", "Transparent", "OHTA", "Lab", "XYZ", "YCbCr", "YCC", "YIQ", "YPbPr", "YUV", "CMYK", "sRGB"]
 const IMColordict = Dict([(IMColorspace[i], i) for i = 1:length(IMColorspace)])
 
+<<<<<<< HEAD
+<<<<<<< HEAD
 function nchannels(imtype::AbstractString, cs::AbstractString, havealpha = false)
     n = 3
     if startswith(imtype, "Grayscale") || startswith(imtype, "Bilevel")
         n = 1
         cs = havealpha ? "GrayA" : "Gray"
+=======
+=======
+>>>>>>> 0611ac0... Revert "started rewriting SIF"
+function nchannels(imtype::String, cs::String, havealpha = false)
+    n = 3
+    if startswith(imtype, "Grayscale") || startswith(imtype, "Bilevel")
+        n = 1
+        cs = havealpha ? "GrayAlpha" : "Gray"
+<<<<<<< HEAD
+>>>>>>> adcbb46... started removing files that go into FileIO
+=======
+>>>>>>> 0611ac0... Revert "started rewriting SIF"
     elseif cs == "CMYK"
         n = 4
     else
@@ -109,7 +169,15 @@ function nchannels(imtype::AbstractString, cs::AbstractString, havealpha = false
     n + havealpha, cs
 end
 
+<<<<<<< HEAD
+<<<<<<< HEAD
 # channelorder = ["Gray" => "I", "GrayA" => "IA", "RGB" => "RGB", "ARGB" => "ARGB", "RGBA" => "RGBA", "CMYK" => "CMYK"]
+=======
+# channelorder = ["Gray" => "I", "GrayAlpha" => "IA", "RGB" => "RGB", "ARGB" => "ARGB", "RGBA" => "RGBA", "CMYK" => "CMYK"]
+>>>>>>> adcbb46... started removing files that go into FileIO
+=======
+# channelorder = ["Gray" => "I", "GrayAlpha" => "IA", "RGB" => "RGB", "ARGB" => "ARGB", "RGBA" => "RGBA", "CMYK" => "CMYK"]
+>>>>>>> 0611ac0... Revert "started rewriting SIF"
 
 # Compression
 const NoCompression = 1
@@ -140,13 +208,29 @@ destroypixelwand(wand::PixelWand) = ccall((:DestroyPixelWand, libwand), Ptr{Void
 
 const IMExceptionType = Array(Cint, 1)
 function error(wand::MagickWand)
+<<<<<<< HEAD
+<<<<<<< HEAD
     pMsg = ccall((:MagickGetException, libwand), Ptr{UInt8}, (Ptr{Void}, Ptr{Cint}), wand.ptr, IMExceptionType)
+=======
+    pMsg = ccall((:MagickGetException, libwand), Ptr{Uint8}, (Ptr{Void}, Ptr{Cint}), wand.ptr, IMExceptionType)
+>>>>>>> adcbb46... started removing files that go into FileIO
+=======
+    pMsg = ccall((:MagickGetException, libwand), Ptr{Uint8}, (Ptr{Void}, Ptr{Cint}), wand.ptr, IMExceptionType)
+>>>>>>> 0611ac0... Revert "started rewriting SIF"
     msg = bytestring(pMsg)
     relinquishmemory(pMsg)
     error(msg)
 end
 function error(wand::PixelWand)
+<<<<<<< HEAD
+<<<<<<< HEAD
     pMsg = ccall((:PixelGetException, libwand), Ptr{UInt8}, (Ptr{Void}, Ptr{Cint}), wand.ptr, IMExceptionType)
+=======
+    pMsg = ccall((:PixelGetException, libwand), Ptr{Uint8}, (Ptr{Void}, Ptr{Cint}), wand.ptr, IMExceptionType)
+>>>>>>> adcbb46... started removing files that go into FileIO
+=======
+    pMsg = ccall((:PixelGetException, libwand), Ptr{Uint8}, (Ptr{Void}, Ptr{Cint}), wand.ptr, IMExceptionType)
+>>>>>>> 0611ac0... Revert "started rewriting SIF"
     msg = bytestring(pMsg)
     relinquishmemory(pMsg)
     error(msg)
@@ -159,10 +243,29 @@ function getsize(buffer, channelorder)
         return size(buffer, 2), size(buffer, 3), size(buffer, 4)
     end
 end
+<<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
 getsize{C<:Colorant}(buffer::AbstractArray{C}, channelorder) = size(buffer, 1), size(buffer, 2), size(buffer, 3)
 
 colorsize(buffer, channelorder) = channelorder == "I" ? 1 : size(buffer, 1)
 colorsize{C<:Colorant}(buffer::AbstractArray{C}, channelorder) = 1
+=======
+=======
+>>>>>>> adcbb46... started removing files that go into FileIO
+=======
+>>>>>>> 0611ac0... Revert "started rewriting SIF"
+getsize{C<:Union(Color,TransparentColor)}(buffer::AbstractArray{C}, channelorder) = size(buffer, 1), size(buffer, 2), size(buffer, 3)
+
+colorsize(buffer, channelorder) = channelorder == "I" ? 1 : size(buffer, 1)
+colorsize{C<:Union(Color,TransparentColor)}(buffer::AbstractArray{C}, channelorder) = 1
+<<<<<<< HEAD
+<<<<<<< HEAD
+>>>>>>> 49bdda1... started removing files that go into FileIO
+=======
+>>>>>>> adcbb46... started removing files that go into FileIO
+=======
+>>>>>>> 0611ac0... Revert "started rewriting SIF"
 
 bitdepth{C<:Colorant}(buffer::AbstractArray{C}) = 8*eltype(C)
 bitdepth{T}(buffer::AbstractArray{T}) = 8*sizeof(T)
@@ -174,7 +277,15 @@ function exportimagepixels!{T}(buffer::AbstractArray{T}, wand::MagickWand,  colo
     p = pointer(buffer)
     for i = 1:nimages
         nextimage(wand)
+<<<<<<< HEAD
+<<<<<<< HEAD
         status = ccall((:MagickExportImagePixels, libwand), Cint, (Ptr{Void}, Cssize_t, Cssize_t, Csize_t, Csize_t, Ptr{UInt8}, Cint, Ptr{Void}), wand.ptr, x, y, cols, rows, channelorder, storagetype(T), p)
+=======
+        status = ccall((:MagickExportImagePixels, libwand), Cint, (Ptr{Void}, Cssize_t, Cssize_t, Csize_t, Csize_t, Ptr{Uint8}, Cint, Ptr{Void}), wand.ptr, x, y, cols, rows, channelorder, storagetype(T), p)
+>>>>>>> adcbb46... started removing files that go into FileIO
+=======
+        status = ccall((:MagickExportImagePixels, libwand), Cint, (Ptr{Void}, Cssize_t, Cssize_t, Csize_t, Csize_t, Ptr{Uint8}, Cint, Ptr{Void}), wand.ptr, x, y, cols, rows, channelorder, storagetype(T), p)
+>>>>>>> 0611ac0... Revert "started rewriting SIF"
         status == 0 && error(wand)
         p += sizeof(T)*cols*rows*ncolors
     end
@@ -183,7 +294,15 @@ end
 
 # function importimagepixels{T}(buffer::AbstractArray{T}, wand::MagickWand, colorspace::ASCIIString; x = 0, y = 0)
 #     cols, rows = getsize(buffer, colorspace)
+<<<<<<< HEAD
+<<<<<<< HEAD
 #     status = ccall((:MagickImportImagePixels, libwand), Cint, (Ptr{Void}, Cssize_t, Cssize_t, Csize_t, Csize_t, Ptr{UInt8}, Cint, Ptr{Void}), wand.ptr, x, y, cols, rows, channelorder[colorspace], storagetype(T), buffer)
+=======
+#     status = ccall((:MagickImportImagePixels, libwand), Cint, (Ptr{Void}, Cssize_t, Cssize_t, Csize_t, Csize_t, Ptr{Uint8}, Cint, Ptr{Void}), wand.ptr, x, y, cols, rows, channelorder[colorspace], storagetype(T), buffer)
+>>>>>>> adcbb46... started removing files that go into FileIO
+=======
+#     status = ccall((:MagickImportImagePixels, libwand), Cint, (Ptr{Void}, Cssize_t, Cssize_t, Csize_t, Csize_t, Ptr{Uint8}, Cint, Ptr{Void}), wand.ptr, x, y, cols, rows, channelorder[colorspace], storagetype(T), buffer)
+>>>>>>> 0611ac0... Revert "started rewriting SIF"
 #     status == 0 && error(wand)
 #     nothing
 # end
@@ -194,7 +313,15 @@ function constituteimage{T<:Unsigned}(buffer::AbstractArray{T}, wand::MagickWand
     p = pointer(buffer)
     depth = bitdepth(buffer)
     for i = 1:nimages
+<<<<<<< HEAD
+<<<<<<< HEAD
         status = ccall((:MagickConstituteImage, libwand), Cint, (Ptr{Void}, Cssize_t, Cssize_t, Ptr{UInt8}, Cint, Ptr{Void}), wand.ptr, cols, rows, channelorder, storagetype(T), p)
+=======
+        status = ccall((:MagickConstituteImage, libwand), Cint, (Ptr{Void}, Cssize_t, Cssize_t, Ptr{Uint8}, Cint, Ptr{Void}), wand.ptr, cols, rows, channelorder, storagetype(T), p)
+>>>>>>> adcbb46... started removing files that go into FileIO
+=======
+        status = ccall((:MagickConstituteImage, libwand), Cint, (Ptr{Void}, Cssize_t, Cssize_t, Ptr{Uint8}, Cint, Ptr{Void}), wand.ptr, cols, rows, channelorder, storagetype(T), p)
+>>>>>>> 0611ac0... Revert "started rewriting SIF"
         status == 0 && error(wand)
         setimagecolorspace(wand, colorspace)
         status = ccall((:MagickSetImageDepth, libwand), Cint, (Ptr{Void}, Csize_t), wand.ptr, depth)
@@ -204,23 +331,56 @@ function constituteimage{T<:Unsigned}(buffer::AbstractArray{T}, wand::MagickWand
     nothing
 end
 
+<<<<<<< HEAD
+<<<<<<< HEAD
 function getblob(wand::MagickWand, format::AbstractString)
     setimageformat(wand, format)
     len = Array(Csize_t, 1)
     ptr = ccall((:MagickGetImagesBlob, libwand), Ptr{UInt8}, (Ptr{Void}, Ptr{Csize_t}), wand.ptr, len)
+=======
+=======
+>>>>>>> 0611ac0... Revert "started rewriting SIF"
+function getblob(wand::MagickWand, format::String)
+    setimageformat(wand, format)
+    len = Array(Csize_t, 1)
+    ptr = ccall((:MagickGetImagesBlob, libwand), Ptr{Uint8}, (Ptr{Void}, Ptr{Csize_t}), wand.ptr, len)
+<<<<<<< HEAD
+>>>>>>> adcbb46... started removing files that go into FileIO
+=======
+>>>>>>> 0611ac0... Revert "started rewriting SIF"
     blob = pointer_to_array(ptr, convert(Int, len[1]))
     finalizer(blob, relinquishmemory)
     blob
 end
 
+<<<<<<< HEAD
+<<<<<<< HEAD
 function pingimage(wand::MagickWand, filename::AbstractString)
     status = ccall((:MagickPingImage, libwand), Cint, (Ptr{Void}, Ptr{UInt8}), wand.ptr, filename)
+=======
+function pingimage(wand::MagickWand, filename::String)
+    status = ccall((:MagickPingImage, libwand), Cint, (Ptr{Void}, Ptr{Uint8}), wand.ptr, filename)
+>>>>>>> adcbb46... started removing files that go into FileIO
+=======
+function pingimage(wand::MagickWand, filename::String)
+    status = ccall((:MagickPingImage, libwand), Cint, (Ptr{Void}, Ptr{Uint8}), wand.ptr, filename)
+>>>>>>> 0611ac0... Revert "started rewriting SIF"
     status == 0 && error(wand)
     nothing
 end
 
+<<<<<<< HEAD
+<<<<<<< HEAD
 function readimage(wand::MagickWand, filename::AbstractString)
     status = ccall((:MagickReadImage, libwand), Cint, (Ptr{Void}, Ptr{UInt8}), wand.ptr, filename)
+=======
+function readimage(wand::MagickWand, filename::String)
+    status = ccall((:MagickReadImage, libwand), Cint, (Ptr{Void}, Ptr{Uint8}), wand.ptr, filename)
+>>>>>>> adcbb46... started removing files that go into FileIO
+=======
+function readimage(wand::MagickWand, filename::String)
+    status = ccall((:MagickReadImage, libwand), Cint, (Ptr{Void}, Ptr{Uint8}), wand.ptr, filename)
+>>>>>>> 0611ac0... Revert "started rewriting SIF"
     status == 0 && error(wand)
     nothing
 end
@@ -231,8 +391,18 @@ function readimage(wand::MagickWand, stream::IO)
     nothing
 end
 
+<<<<<<< HEAD
+<<<<<<< HEAD
 function writeimage(wand::MagickWand, filename::AbstractString)
     status = ccall((:MagickWriteImages, libwand), Cint, (Ptr{Void}, Ptr{UInt8}, Cint), wand.ptr, filename, true)
+=======
+function writeimage(wand::MagickWand, filename::String)
+    status = ccall((:MagickWriteImages, libwand), Cint, (Ptr{Void}, Ptr{Uint8}, Cint), wand.ptr, filename, true)
+>>>>>>> adcbb46... started removing files that go into FileIO
+=======
+function writeimage(wand::MagickWand, filename::String)
+    status = ccall((:MagickWriteImages, libwand), Cint, (Ptr{Void}, Ptr{Uint8}, Cint), wand.ptr, filename, true)
+>>>>>>> 0611ac0... Revert "started rewriting SIF"
     status == 0 && error(wand)
     nothing
 end
@@ -255,9 +425,21 @@ newimage(wand::MagickWand, cols::Integer, rows::Integer, pw::PixelWand) = ccall(
 getimagealphachannel(wand::MagickWand) = ccall((:MagickGetImageAlphaChannel, libwand), Cint, (Ptr{Void},), wand.ptr) == 1
 
 
+<<<<<<< HEAD
+<<<<<<< HEAD
 function getimageproperties(wand::MagickWand,patt::AbstractString)
     numbProp = Csize_t[0]
     p = ccall((:MagickGetImageProperties, libwand),Ptr{Ptr{UInt8}},(Ptr{Void},Ptr{UInt8},Ptr{Csize_t}),wand.ptr,patt,numbProp)
+=======
+function getimageproperties(wand::MagickWand,patt::String)
+    numbProp = Csize_t[0]
+    p = ccall((:MagickGetImageProperties, libwand),Ptr{Ptr{Uint8}},(Ptr{Void},Ptr{Uint8},Ptr{Csize_t}),wand.ptr,patt,numbProp)
+>>>>>>> adcbb46... started removing files that go into FileIO
+=======
+function getimageproperties(wand::MagickWand,patt::String)
+    numbProp = Csize_t[0]
+    p = ccall((:MagickGetImageProperties, libwand),Ptr{Ptr{Uint8}},(Ptr{Void},Ptr{Uint8},Ptr{Csize_t}),wand.ptr,patt,numbProp)
+>>>>>>> 0611ac0... Revert "started rewriting SIF"
     if p == C_NULL
         error("Pattern not in property names")
     else
@@ -271,9 +453,21 @@ function getimageproperties(wand::MagickWand,patt::AbstractString)
     end
 end
 
+<<<<<<< HEAD
+<<<<<<< HEAD
 function getimageproperty(wand::MagickWand,prop::AbstractString)
     p = ccall((:MagickGetImageProperty, libwand),Ptr{UInt8},(Ptr{Void},Ptr{UInt8}),wand.ptr,prop)
     if p == convert(Ptr{UInt8}, C_NULL)
+=======
+function getimageproperty(wand::MagickWand,prop::String)
+    p = ccall((:MagickGetImageProperty, libwand),Ptr{Uint8},(Ptr{Void},Ptr{Uint8}),wand.ptr,prop)
+    if p == C_NULL
+>>>>>>> adcbb46... started removing files that go into FileIO
+=======
+function getimageproperty(wand::MagickWand,prop::String)
+    p = ccall((:MagickGetImageProperty, libwand),Ptr{Uint8},(Ptr{Void},Ptr{Uint8}),wand.ptr,prop)
+    if p == C_NULL
+>>>>>>> 0611ac0... Revert "started rewriting SIF"
         possib = getimageproperties(wand,"*")
         warn("Undefined property, possible names are \"$(join(possib,"\",\""))\"")
         nothing
@@ -324,7 +518,15 @@ end
 
 # set the image format
 function setimageformat(wand::MagickWand, format::ASCIIString)
+<<<<<<< HEAD
+<<<<<<< HEAD
     status = ccall((:MagickSetImageFormat, libwand), Cint, (Ptr{Void}, Ptr{UInt8}), wand.ptr, format)
+=======
+    status = ccall((:MagickSetImageFormat, libwand), Cint, (Ptr{Void}, Ptr{Uint8}), wand.ptr, format)
+>>>>>>> adcbb46... started removing files that go into FileIO
+=======
+    status = ccall((:MagickSetImageFormat, libwand), Cint, (Ptr{Void}, Ptr{Uint8}), wand.ptr, format)
+>>>>>>> 0611ac0... Revert "started rewriting SIF"
     status == 0 && error(wand)
     nothing
 end
@@ -333,6 +535,8 @@ end
 getimagedepth(wand::MagickWand) = convert(Int, ccall((:MagickGetImageDepth, libwand), Csize_t, (Ptr{Void},), wand.ptr))
 
 # pixel depth for given channel type
+<<<<<<< HEAD
+<<<<<<< HEAD
 getimagechanneldepth(wand::MagickWand, channelType::ChannelType) = convert(Int, ccall((:MagickGetImageChannelDepth, libwand), Csize_t, (Ptr{Void},UInt32), wand.ptr, channelType.value ))
 
 pixelsetcolor(wand::PixelWand, colorstr::ByteString) = ccall((:PixelSetColor, libwand), Csize_t, (Ptr{Void},Ptr{UInt8}), wand.ptr, colorstr) == 0 && error(wand)
@@ -344,6 +548,24 @@ relinquishmemory(p) = ccall((:MagickRelinquishMemory, libwand), Ptr{UInt8}, (Ptr
 function queryoptions(pattern::AbstractString)
     nops = Cint[0]
     pops = ccall((:MagickQueryConfigureOptions, libwand), Ptr{Ptr{UInt8}}, (Ptr{UInt8}, Ptr{Cint}), pattern, nops)
+=======
+=======
+>>>>>>> 0611ac0... Revert "started rewriting SIF"
+getimagechanneldepth(wand::MagickWand, channelType::ChannelType) = convert(Int, ccall((:MagickGetImageChannelDepth, libwand), Csize_t, (Ptr{Void},Uint32), wand.ptr, channelType.value ))
+
+pixelsetcolor(wand::PixelWand, colorstr::ByteString) = ccall((:PixelSetColor, libwand), Csize_t, (Ptr{Void},Ptr{Uint8}), wand.ptr, colorstr) == 0 && error(wand)
+
+relinquishmemory(p) = ccall((:MagickRelinquishMemory, libwand), Ptr{Uint8}, (Ptr{Uint8},), p)
+
+# get library information
+# If you pass in "*", you get the full list of options
+function queryoptions(pattern::String)
+    nops = Cint[0]
+    pops = ccall((:MagickQueryConfigureOptions, libwand), Ptr{Ptr{Uint8}}, (Ptr{Uint8}, Ptr{Cint}), pattern, nops)
+<<<<<<< HEAD
+>>>>>>> adcbb46... started removing files that go into FileIO
+=======
+>>>>>>> 0611ac0... Revert "started rewriting SIF"
     ret = Array(ASCIIString, nops[1])
     for i = 1:nops[1]
         ret[i] = bytestring(unsafe_load(pops, i))
@@ -352,8 +574,18 @@ function queryoptions(pattern::AbstractString)
 end
 
 # queries the value of a particular option
+<<<<<<< HEAD
+<<<<<<< HEAD
 function queryoption(option::AbstractString)
     p = ccall((:MagickQueryConfigureOption, libwand), Ptr{UInt8}, (Ptr{UInt8},), option)
+=======
+function queryoption(option::String)
+    p = ccall((:MagickQueryConfigureOption, libwand), Ptr{Uint8}, (Ptr{Uint8},), option)
+>>>>>>> adcbb46... started removing files that go into FileIO
+=======
+function queryoption(option::String)
+    p = ccall((:MagickQueryConfigureOption, libwand), Ptr{Uint8}, (Ptr{Uint8},), option)
+>>>>>>> 0611ac0... Revert "started rewriting SIF"
     bytestring(p)
 end
 
