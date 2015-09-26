@@ -14,8 +14,12 @@ extensions = ["", ".so.2", ".so.4", ".so.5"]
 aliases = vec(libnames.*transpose(suffixes).*reshape(options,(1,1,length(options))).*reshape(extensions,(1,1,1,length(extensions))))
 libwand = library_dependency("libwand", aliases = aliases)
 
+initfun = """
+__init__() = ccall((:MagickWandGenesis,libwand), Void, ())
+"""
+
 @linux_only begin
-    kwargs = Any[(:onload, "ccall((:MagickWandGenesis,libwand), Void, ())")]
+    kwargs = Any[(:onload, initfun)]
     provides(AptGet, "libmagickwand4", libwand; kwargs...)
     provides(AptGet, "libmagickwand5", libwand; kwargs...)
     provides(AptGet, "libmagickwand-6.q16-2", libwand; kwargs...)
@@ -64,7 +68,7 @@ end
             ENV["MAGICK_CONFIGURE_PATH"] = \"$(escape_string(magick_libdir))\"
             ENV["MAGICK_CODER_MODULE_PATH"] = \"$(escape_string(magick_libdir))\"
             """,
-        onload = "ccall((:MagickWandGenesis,libwand), Void, ())")
+        onload = initfun)
 end
 
 @osx_only begin
