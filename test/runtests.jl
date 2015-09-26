@@ -12,18 +12,10 @@ if testing_units
     using SIUnits, SIUnits.ShortUnits
 end
 
-FactCheck.setstyle(:compact)
 
 include("core.jl")
 include("map.jl")
 include("overlays.jl")
-include("io.jl")
-if testing_units
-     include("readnrrd.jl")
-end
-include("readremote.jl")
-include("readstream.jl")
-@osx_only include("readOSX.jl")
 include("algorithms.jl")
 include("edge.jl")
 
