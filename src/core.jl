@@ -20,7 +20,7 @@ type ImageCmap{T<:Colorant,N,A<:AbstractArray} <: AbstractImageIndexed{T,N}
     cmap::Vector{T}
     properties::Dict{ASCIIString,Any}
 end
-ImageCmap(data::AbstractArray, cmap::AbstractVector, props::Dict) = ImageCmap{eltype(cmap),ndims(data),typeof(data)}(data, cmap, props)
+ImageCmap{_,N}(data::AbstractArray{_,N}, cmap::AbstractVector, props::Dict) = ImageCmap{eltype(cmap),N,typeof(data)}(data, cmap, props)
 ImageCmap(data::AbstractArray, cmap::AbstractVector; kwargs...) = ImageCmap(data, cmap, kwargs2dict(kwargs))
 
 # Convenience constructors
