@@ -11,7 +11,7 @@ type Image{T,N,A<:AbstractArray} <: AbstractImageDirect{T,N}
     data::A
     properties::Dict{ASCIIString,Any}
 end
-Image{T,N}(data::AbstractArray{T,N}, props::Dict) = Image{eltype(data),N,typeof(data)}(data,props)
+Image(data::AbstractArray, props::Dict) = Image{eltype(data),ndims(data),typeof(data)}(data,props)
 Image(data::AbstractArray; kwargs...) = Image(data, kwargs2dict(kwargs))
 
 # Indexed image (colormap)
