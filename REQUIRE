@@ -2,8 +2,6 @@ julia 0.3
 Compat 0.4
 Colors
 ColorVectorSpace
-BinDeps
-@osx Homebrew
 SIUnits
 Zlib
 Graphics 0.1
