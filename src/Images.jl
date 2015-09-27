@@ -42,7 +42,6 @@ include("labeledarrays.jl")
 include("algorithms.jl")
 include("connected.jl")
 include("edge.jl")
-include(joinpath("ioformats", "SIF.jl"))
 
 function precompile()
     for T in (UInt8, UInt16, Int, Float32, Float64)
