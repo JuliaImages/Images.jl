@@ -1,19 +1,16 @@
 # SIF.jl, adds an imread function for Andor .sif images
 # 2013 Ronald S. Rock, Jr.
-
-import Images.imread
-function imread{S<:IO}(stream::S, ::Type{Images.AndorSIF})
+import FileIO: skipmagic, stream, @format_str, Stream
+function load(fs::Stream{format"AndorSIF"})
     # line 1
-    seek(stream, 0)
-    l = strip(readline(stream))
-    l == "Andor Technology Multi-Channel File" || error("Not an Andor file: " * l)
-
+    skipmagic(fs, 0)
+    io = stream(fs)
     # line 2
-    l = strip(readline(stream))
+    l = strip(readline(io))
     l == "65538 1" || error("Unknown Andor version number at line 2: " * l)
 
     # line 3: TInstaImage thru "Head model"
-    l = strip(readline(stream))
+    l = strip(readline(io))
     fields = split(l)
     fields[1] == "65547" || fields[1] == "65558" ||
         error("Unknown TInstaImage version number at line 3: " * fields[1])
@@ -80,54 +77,54 @@ function imread{S<:IO}(stream::S, ::Type{Images.AndorSIF})
     ixon["sw_vers4"] = round(Int,fields[58])
 
     # line 4
-    ixon["camera_model"] = strip(readline(stream))
+    ixon["camera_model"] = strip(readline(io))
 
     # line 5, something like camera dimensions??
-    _ = readline(stream)
+    _ = readline(io)
 
     # line 6
-    ixon["original_filename"] = strip(readline(stream))
+    ixon["original_filename"] = strip(readline(io))
 
     # line 7
-    l = strip(readline(stream))
+    l = strip(readline(io))
     fields = split(l)
     fields[1] == "65538" || error("Unknown TUserText version number in line 7: $fields[1]")
     usertextlen = round(Int,fields[2]) # don't need?
 
     # line 8
-    usertext = strip(readline(stream))
+    usertext = strip(readline(io))
     # ixon["usertext"] = usertext # Not useful
 
     # line 9 TShutter
-    l = strip(readline(stream)) # Weird!
+    l = strip(readline(io)) # Weird!
 
     # line 10 TCalibImage
-    l = strip(readline(stream))
+    l = strip(readline(io))
 
     # lines 11-22
-    _ = strip(readline(stream))
-    _ = strip(readline(stream))
-    _ = strip(readline(stream))
-    _ = strip(readline(stream))
-    _ = strip(readline(stream))
-    _ = strip(readline(stream))
-    _ = strip(readline(stream))
-    _ = strip(readline(stream))
-    _ = strip(readline(stream))
-    _ = strip(readline(stream))
-    _ = strip(readline(stream))
+    _ = strip(readline(io))
+    _ = strip(readline(io))
+    _ = strip(readline(io))
+    _ = strip(readline(io))
+    _ = strip(readline(io))
+    _ = strip(readline(io))
+    _ = strip(readline(io))
+    _ = strip(readline(io))
+    _ = strip(readline(io))
+    _ = strip(readline(io))
+    _ = strip(readline(io))
 
     # what a bizarre file format here
     # length of the next string is in this line
-    next_str_len = round(Int,strip(readline(stream)))
+    next_str_len = round(Int,strip(readline(io)))
     # and here is the next string, followed by the length
     # of the following string, with no delimeter in between!
-    l = strip(readline(stream))
+    l = strip(readline(io))
     next_str_len = round(Int,l[(next_str_len + 1):end])
     # lather, rinse, repeat...
-    l = strip(readline(stream))
+    l = strip(readline(io))
     next_str_len = round(Int,l[(next_str_len + 1):end])
-    l = strip(readline(stream))
+    l = strip(readline(io))
     l = l[(next_str_len + 1):end]
     fields = split(l)
     fields[1] == "65538" || error("Unknown version number at image dims record")
@@ -142,7 +139,7 @@ function imread{S<:IO}(stream::S, ::Type{Images.AndorSIF})
     ixon["single_frame_length"] = round(Int,fields[9])
 
     # Now at the first (and only) subimage
-    l = strip(readline(stream))
+    l = strip(readline(io))
     fields = split(l)
     fields[1] == "65538" || error("unknown TSubImage version number: " * fields[1])
     left = round(Int,fields[2])
@@ -172,11 +169,11 @@ function imread{S<:IO}(stream::S, ::Type{Images.AndorSIF})
     # rest of the header is a timestamp for each frame
     # (actually, just a bunch of zeros). Skip
     for i = 1:frames
-        _ = readline(stream)
+        _ = readline(io)
     end
-    offset = position(stream) # start of the actual pixel data, 32-bit float, little-endian
+    offset = position(io) # start of the actual pixel data, 32-bit float, little-endian
 
-    pixels = read(stream, Float32, width, height, frames)
+    pixels = read(io, Float32, width, height, frames)
     prop = Compat.@compat Dict(
         "colorspace" => "Gray",
         "spatialorder" => ["y", "x"],

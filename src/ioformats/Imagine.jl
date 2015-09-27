@@ -2,16 +2,14 @@ module Imagine
 
 using Images
 using SIUnits, SIUnits.ShortUnits, Compat
-
-import Images.imread
-import Base.convert
+import FileIO: skipmagic, stream, @format_str, Stream
 
 export imagine2nrrd, Micron
 
 Micron = SIUnits.NonSIUnit{typeof(Meter),:µm}()
 convert(::Type{SIUnits.SIQuantity},::typeof(Micron)) = Micro*Meter
 
-function imread{S<:IO}(s::S, ::Type{Images.ImagineFile})
+function load(s::Stream{format"Imagine"})
     h = parse_header(s, Images.ImagineFile)
     filename = s.name[7:end-1]
     basename, ext = splitext(filename)
@@ -189,7 +187,7 @@ const field_key_dict = @compat Dict{AbstractString,Function}(
     "vend"                         => x->parse(Int,x),
     "angle from horizontal (deg)"  => float64_or_empty)
 
-function parse_header(s::IOStream, ::Type{Images.ImagineFile})
+function parse_header(s::IOStream)
     headerdict = Dict{ASCIIString, Any}()
     for this_line = eachline(s)
         this_line = strip(this_line)
