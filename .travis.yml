@@ -10,6 +10,7 @@ notifications:
     email: false
 script:
     - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
+    - julia -e 'Pkg.clone("https://github.com/JuliaIO/FileIO.jl.git")'
     - julia -e 'Pkg.clone(pwd()); Pkg.build("Images")'
     - julia -e 'Pkg.test("Images", coverage=true)'
 after_success:

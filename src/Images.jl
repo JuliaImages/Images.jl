@@ -1,4 +1,4 @@
-VERSION >= v"0.4.0-dev+6521" && __precompile__(@unix? true : false)
+VERSION >= v"0.4.0-dev+6521" && __precompile__(true)
 
 module Images
 
@@ -38,13 +38,12 @@ immutable TypeConst{N} end  # for passing compile-time constants to functions
 include("core.jl")
 include("map.jl")
 include("overlays.jl")
-const have_imagemagick = include("ioformats/libmagickwand.jl")
-@osx_only include("ioformats/OSXnative.jl")
-include("io.jl")
 include("labeledarrays.jl")
 include("algorithms.jl")
 include("connected.jl")
 include("edge.jl")
+include(joinpath("ioformats", "SIF.jl"))
+include(joinpath("ioformats", "Imagine.jl"))
 
 function precompile()
     for T in (UInt8, UInt16, Int, Float32, Float64)
@@ -147,12 +146,6 @@ export # types
     width,
     widthheight,
     raw,
-
-    # io functions
-    add_image_file_format,
-    imread,
-    imwrite,
-    loadformat,
 
     # iterator functions
     first_index,
