@@ -1,7 +1,7 @@
 # SIF.jl, adds an imread function for Andor .sif images
 # 2013 Ronald S. Rock, Jr.
-import FileIO: skipmagic, stream, @format_str, Stream
-function load(fs::Stream{format"AndorSIF"})
+using FileIO: skipmagic, stream, @format_str, Stream
+function FileIO.load(fs::Stream{format"AndorSIF"})
     # line 1
     skipmagic(fs, 0)
     io = stream(fs)

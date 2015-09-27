@@ -1,15 +1,15 @@
 module Imagine
 
-using Images
+using Images, FileIO
 using SIUnits, SIUnits.ShortUnits, Compat
-import FileIO: skipmagic, stream, @format_str, Stream
+using FileIO: skipmagic, stream, @format_str, Stream
 
 export imagine2nrrd, Micron
 
 Micron = SIUnits.NonSIUnit{typeof(Meter),:µm}()
 convert(::Type{SIUnits.SIQuantity},::typeof(Micron)) = Micro*Meter
 
-function load(s::Stream{format"Imagine"})
+function FileIO.load(s::Stream{format"Imagine"})
     h = parse_header(s, Images.ImagineFile)
     filename = s.name[7:end-1]
     basename, ext = splitext(filename)

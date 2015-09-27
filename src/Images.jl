@@ -11,7 +11,7 @@ import Base: atan2, clamp, convert, copy, copy!, ctranspose, delete!, done, elty
              start, strides, sub, sum, write, writemime, zero
 # "deprecated imports" are below
 
-using Colors, ColorVectorSpace, FixedPointNumbers, Compat
+using Colors, ColorVectorSpace, FixedPointNumbers, Compat, FileIO
 import Colors: Fractional, red, green, blue
 typealias AbstractGray{T}                    Color{T,1}
 typealias TransparentRGB{C<:AbstractRGB,T}   TransparentColor{C,T,4}
@@ -238,6 +238,10 @@ export # Deprecated exports
     scalesigned
 
 
+import FileIO: load, save
+@deprecate imread load
+@deprecate imwrite save
+export load, save
 import Base: scale, scale!  # delete when deprecations are removed
 @deprecate scaleminmax  ScaleMinMax
 @deprecate scaleminmax(img::AbstractArray, min::Real, max::Real)  ScaleMinMax(RGB24, img, min, max)
