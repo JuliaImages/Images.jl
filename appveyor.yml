@@ -32,8 +32,8 @@ install:
 build_script:
 # Need to convert from shallow to complete for Pkg.clone to work
   - IF EXIST .git\shallow (git fetch --unshallow)
-  - C:\projects\julia\bin\julia -F -e "versioninfo();
-      Pkg.clone(pwd(), \"Images\"); Pkg.build(\"Images\")"
+  - C:\projects\julia\bin\julia -F -e "versioninfo(); Pkg.clone(\"https://github.com/JuliaIO/FileIO.jl.git\", \"FileIO\")"
+  - C:\projects\julia\bin\julia -F -e "Pkg.clone(pwd(), \"Images\"); Pkg.build(\"Images\")"
 
 test_script:
   - C:\projects\julia\bin\julia --check-bounds=yes -e "Pkg.test(\"Images\")"
