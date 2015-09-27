@@ -52,8 +52,8 @@ facts("Overlay") do
         @fact ovr[2] --> RGB{Float32}(0.5, 0.25, 0.5)
         a = rand(Float32, 3, 2)
         b = rand(Float32, 3, 2)
-        ovr = Images.OverlayImage((a, b), (RGB{Float32}(1, 0, 1), RGB{Float32}(0, 1, 0)), ((0, 1), (0, 1)))
-        @fact isa(ovr, Images.Image) --> true
-        @fact abs(ovr[1, 2] - RGB{Float32}(a[1, 2], b[1, 2], a[1, 2])) --> roughly(0, atol=1e-5)
+        #ovr = Images.OverlayImage((a, b), (RGB{Float32}(1, 0, 1), RGB{Float32}(0, 1, 0)), ((0, 1), (0, 1)))
+        #@fact isa(ovr, Images.Image) --> true
+        #@fact abs(ovr[1, 2] - RGB{Float32}(a[1, 2], b[1, 2], a[1, 2])) --> roughly(0, atol=1e-5)
     end
 end
