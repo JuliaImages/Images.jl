@@ -240,6 +240,17 @@ import FileIO: load, save
 @deprecate imread load
 @deprecate imwrite save
 export load, save
+
+# only mime writeable to PNG if 2D (used by IJulia for example)
+mimewritable(::MIME"image/png", img::AbstractImage) = sdims(img) == 2 && timedim(img) == 0
+# We have to disable Color's display via SVG, because both will get
+# sent with unfortunate results.  See IJulia issue #229
+mimewritable{T<:Color}(::MIME"image/svg+xml", ::AbstractMatrix{T}) = false
+
+function __init__()
+    add_mime(MIME("image/png"), AbstractImage, :ImageMagick)
+end
+
 import Base: scale, scale!  # delete when deprecations are removed
 @deprecate scaleminmax  ScaleMinMax
 @deprecate scaleminmax(img::AbstractArray, min::Real, max::Real)  ScaleMinMax(RGB24, img, min, max)
@@ -258,7 +269,6 @@ import Base: scale, scale!  # delete when deprecations are removed
 @deprecate scale!(dest, mapi::MapInfo, A) map!(mapi, dest, A)  #   "
 @deprecate copy(A::AbstractArray, B::AbstractArray) copyproperties(A, B)
 @deprecate share(A::AbstractArray, B::AbstractArray) shareproperties(A, B)
-
 
 const ScaleInfo = MapInfo  # can't deprecate types?
 
