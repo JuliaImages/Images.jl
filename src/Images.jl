@@ -237,8 +237,8 @@ export # Deprecated exports
 
 
 import FileIO: load, save
-@deprecate imread load
-@deprecate imwrite save
+@deprecate imread(filename; kwargs...) load(filename; kwargs...)
+@deprecate imwrite(img, filename; kwargs...) save(filename, img; kwargs...)
 export load, save
 
 # only mime writeable to PNG if 2D (used by IJulia for example)
