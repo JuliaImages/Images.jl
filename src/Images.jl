@@ -1,4 +1,4 @@
-VERSION >= v"0.4.0-dev+6521" && __precompile__(@unix? true : false)
+VERSION >= v"0.4.0-dev+6521" && __precompile__(true)
 
 module Images
 
@@ -11,7 +11,7 @@ import Base: atan2, clamp, convert, copy, copy!, ctranspose, delete!, done, elty
              start, strides, sub, sum, write, writemime, zero
 # "deprecated imports" are below
 
-using Colors, ColorVectorSpace, FixedPointNumbers, Compat
+using Colors, ColorVectorSpace, FixedPointNumbers, Compat, FileIO
 import Colors: Fractional, red, green, blue
 typealias AbstractGray{T}                    Color{T,1}
 typealias TransparentRGB{C<:AbstractRGB,T}   TransparentColor{C,T,4}
@@ -38,9 +38,6 @@ immutable TypeConst{N} end  # for passing compile-time constants to functions
 include("core.jl")
 include("map.jl")
 include("overlays.jl")
-const have_imagemagick = include("ioformats/libmagickwand.jl")
-@osx_only include("ioformats/OSXnative.jl")
-include("io.jl")
 include("labeledarrays.jl")
 include("algorithms.jl")
 include("connected.jl")
@@ -148,12 +145,6 @@ export # types
     widthheight,
     raw,
 
-    # io functions
-    add_image_file_format,
-    imread,
-    imwrite,
-    loadformat,
-
     # iterator functions
     first_index,
     iterate_spatial,
@@ -245,6 +236,21 @@ export # Deprecated exports
     scalesigned
 
 
+import FileIO: load, save
+@deprecate imread(filename; kwargs...) load(filename; kwargs...)
+@deprecate imwrite(img, filename; kwargs...) save(filename, img; kwargs...)
+export load, save
+
+# only mime writeable to PNG if 2D (used by IJulia for example)
+mimewritable(::MIME"image/png", img::AbstractImage) = sdims(img) == 2 && timedim(img) == 0
+# We have to disable Color's display via SVG, because both will get
+# sent with unfortunate results.  See IJulia issue #229
+mimewritable{T<:Color}(::MIME"image/svg+xml", ::AbstractMatrix{T}) = false
+
+function __init__()
+    add_mime(MIME("image/png"), AbstractImage, :ImageMagick)
+end
+
 import Base: scale, scale!  # delete when deprecations are removed
 @deprecate scaleminmax  ScaleMinMax
 @deprecate scaleminmax(img::AbstractArray, min::Real, max::Real)  ScaleMinMax(RGB24, img, min, max)
@@ -263,7 +269,6 @@ import Base: scale, scale!  # delete when deprecations are removed
 @deprecate scale!(dest, mapi::MapInfo, A) map!(mapi, dest, A)  #   "
 @deprecate copy(A::AbstractArray, B::AbstractArray) copyproperties(A, B)
 @deprecate share(A::AbstractArray, B::AbstractArray) shareproperties(A, B)
-
 
 const ScaleInfo = MapInfo  # can't deprecate types?
 

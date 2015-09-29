@@ -478,7 +478,30 @@ mapinfo{CV<:TransparentColor}(::Type{UInt32}, img::AbstractArray{CV}) = mapinfo(
 mapinfo(::Type{UInt32}, img::AbstractArray{UInt32}) = MapNone{UInt32}()
 
 
-# ImageMagick client is defined in io.jl
+# Clamping mapinfo client. Converts to RGB and uses Ufixed, clamping
+# floating-point values to [0,1].
+mapinfo{T<:Ufixed}(::Type{Clamp}, img::AbstractArray{T}) = MapNone{T}()
+mapinfo{T<:AbstractFloat}(::Type{Clamp}, img::AbstractArray{T}) = ClampMinMax(Ufixed8, zero(T), one(T))
+for ACV in (Color, AbstractRGB)
+    for CV in subtypes(ACV)
+        (length(CV.parameters) == 1 && !(CV.abstract)) || continue
+        CVnew = CV<:AbstractGray ? Gray : RGB
+        @eval mapinfo{T<:Ufixed}(::Type{Clamp}, img::AbstractArray{$CV{T}}) = MapNone{$CVnew{T}}()
+        @eval mapinfo{CV<:$CV}(::Type{Clamp}, img::AbstractArray{CV}) = Clamp{$CVnew{Ufixed8}}()
+        CVnew = CV<:AbstractGray ? Gray : BGR
+        AC, CA       = alphacolor(CV), coloralpha(CV)
+        ACnew, CAnew = alphacolor(CVnew), coloralpha(CVnew)
+        @eval begin
+            mapinfo{T<:Ufixed}(::Type{Clamp}, img::AbstractArray{$AC{T}}) = MapNone{$ACnew{T}}()
+            mapinfo{P<:$AC}(::Type{Clamp}, img::AbstractArray{P}) = Clamp{$ACnew{Ufixed8}}()
+            mapinfo{T<:Ufixed}(::Type{Clamp}, img::AbstractArray{$CA{T}}) = MapNone{$CAnew{T}}()
+            mapinfo{P<:$CA}(::Type{Clamp}, img::AbstractArray{P}) = Clamp{$CAnew{Ufixed8}}()
+        end
+    end
+end
+mapinfo(::Type{Clamp}, img::AbstractArray{RGB24}) = MapNone{RGB{Ufixed8}}()
+mapinfo(::Type{Clamp}, img::AbstractArray{ARGB32}) = MapNone{BGRA{Ufixed8}}()
+
 
 # Backwards-compatibility
 uint32color(img) = map(mapinfo(UInt32, img), img)

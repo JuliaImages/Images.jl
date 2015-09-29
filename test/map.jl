@@ -192,10 +192,16 @@ facts("Map") do
         @chk map(mapi, A) RGB24[0x00000000, 0x00808080, 0x00ffffff]
 
         # Issue #304
-        imgr = colorim(rand(UInt16, 3, 2, 2))
-        mi = ScaleAutoMinMax(RGB{Ufixed16})
-        res = map(mi, imgr)
-        @fact raw(res) --> raw(map(ScaleAutoMinMax(Ufixed16), raw(imgr)))
+        A = rand(UInt16, 3, 2, 2)
+        imgr = colorim(A)
+        mi1 = ScaleAutoMinMax(RGB{Ufixed16})
+        res1 = raw(map(mi1, imgr))
+        mi2 = ScaleAutoMinMax(Ufixed16)
+        res2 = raw(map(mi2, raw(imgr)))
+        if res1 != res2
+            @show A
+        end
+        @fact res1 --> res2
     end
 
     context("Scaling and ssd") do
