@@ -6,3 +6,5 @@ SIUnits
 Zlib
 Graphics 0.1
 FileIO
+ImageMagick
+@osx QuartzImageIO
