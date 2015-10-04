@@ -42,6 +42,7 @@ include("labeledarrays.jl")
 include("algorithms.jl")
 include("connected.jl")
 include("edge.jl")
+include("writemime.jl")
 
 function precompile()
     for T in (UInt8, UInt16, Int, Float32, Float64)
@@ -241,15 +242,7 @@ import FileIO: load, save
 @deprecate imwrite(img, filename; kwargs...) save(filename, img; kwargs...)
 export load, save
 
-# only mime writeable to PNG if 2D (used by IJulia for example)
-mimewritable(::MIME"image/png", img::AbstractImage) = sdims(img) == 2 && timedim(img) == 0
-# We have to disable Color's display via SVG, because both will get
-# sent with unfortunate results.  See IJulia issue #229
-mimewritable{T<:Color}(::MIME"image/svg+xml", ::AbstractMatrix{T}) = false
 
-function __init__()
-    add_mime(MIME("image/png"), AbstractImage, :ImageMagick)
-end
 
 import Base: scale, scale!  # delete when deprecations are removed
 @deprecate scaleminmax  ScaleMinMax
