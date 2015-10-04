@@ -200,12 +200,17 @@ end
 
 # only mime writeable to PNG if 2D (used by IJulia for example)
 mimewritable(::MIME"image/png", img::AbstractImage) = sdims(img) == 2 && timedim(img) == 0
+mimewritable{C<:Colorant}(::MIME"image/png", img::AbstractArray{C}) = sdims(img) == 2 && timedim(img) == 0
+
 # We have to disable Color's display via SVG, because both will get sent with unfortunate results.
 # See IJulia issue #229
 mimewritable{T<:Color}(::MIME"image/svg+xml", ::AbstractMatrix{T}) = false
 
-writemime(stream::IO, ::MIME"image/png", img::AbstractImageIndexed; kwargs...) =
-    writemime(stream, MIME"image/png", convert(Image, img); kwargs...)
+writemime{C<:Colorant}(stream::IO, mime::MIME"image/png", img::AbstractArray{C}; kwargs...) =
+    writemime(stream, mime, Image(img, spatialorder=["x","y"]); kwargs...)
+
+writemime(stream::IO, mime::MIME"image/png", img::AbstractImageIndexed; kwargs...) =
+    writemime(stream, mime, convert(Image, img); kwargs...)
 
 function writemime(stream::IO, ::MIME"image/png", img::AbstractImage; mapi=mapinfo_writemime(img), minpixels=10^4, maxpixels=10^6)
     assert2d(img)
