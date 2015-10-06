@@ -5,14 +5,8 @@
 mimewritable(::MIME"image/png", img::AbstractImage) 				= sdims(img) == 2 && timedim(img) == 0
 mimewritable{C<:Colorant}(::MIME"image/png", img::AbstractArray{C}) = sdims(img) == 2 && timedim(img) == 0
 
-function load_imagemagick()
-	isdefined(Main, :ImageMagick) && isa(Main.(:ImageMagick), Module) && return Main.(:ImageMagick)
-	eval(Main, Expr(:import, :ImageMagick))
-	Main.(:ImageMagick)
-end
 
-function writemime(io::IO, ::MIME"image/png", img::AbstractImage; mapi=mapinfo_writemime(img), minpixels=10^4, maxpixels=10^6)
-	libmagick = load_imagemagick()
+function writemime(io::IO, mime::MIME"image/png", img::AbstractImage; mapi=mapinfo_writemime(img), minpixels=10^4, maxpixels=10^6)
     assert2d(img)
     A = data(img)
     nc = ncolorelem(img)
@@ -27,9 +21,14 @@ function writemime(io::IO, ::MIME"image/png", img::AbstractImage; mapi=mapinfo_w
         r[coords_spatial(img)] = fac
         A = repeat(A, inner=r)
     end
-    wand = libmagick.image2wand(shareproperties(img, A), mapi, nothing)
-    blob = libmagick.getblob(wand, "png")
-    write(io, blob)
+    imgcopy = shareproperties(img, A)
+    if isdefined(:writemime_) && applicable(Main.writemime_, io, mime, imgcopy)
+        return Main.writemime_(io, mime, imgcopy)
+    else
+        error("No IO library loaded for writemime $mime with $(typeof(img)). 
+            Please consider putting \"using ImageMagick\" in your script"
+        )
+    end
 end
 
 writemime(stream::IO, mime::MIME"image/png", img::AbstractImageIndexed; kwargs...) = (println(kwargs);
