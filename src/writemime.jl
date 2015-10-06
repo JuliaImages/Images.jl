@@ -2,6 +2,7 @@
 ### writemime
 ###
 # only mime writeable to PNG if 2D (used by IJulia for example)
+mimewritable(::MIME"image/svg+xml", img::AbstractImage)             = false
 mimewritable(::MIME"image/png", img::AbstractImage) 				= sdims(img) == 2 && timedim(img) == 0
 mimewritable{C<:Colorant}(::MIME"image/png", img::AbstractArray{C}) = sdims(img) == 2 && timedim(img) == 0
 
