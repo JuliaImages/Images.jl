@@ -19,6 +19,7 @@ include("map.jl")
 include("overlays.jl")
 include("algorithms.jl")
 include("edge.jl")
+include("writemime.jl")
 
 isinteractive() || FactCheck.exitstatus()
 

@@ -23,8 +23,9 @@ function writemime(io::IO, mime::MIME"image/png", img::AbstractImage; mapi=mapin
         A = repeat(A, inner=r)
     end
     imgcopy = shareproperties(img, A)
-    if isdefined(:writemime_) && applicable(Main.writemime_, io, mime, imgcopy)
-        return Main.writemime_(io, mime, imgcopy)
+    CurrentMod = current_module()
+    if isdefined(:writemime_) && applicable(CurrentMod.writemime_, io, mime, imgcopy)
+        return CurrentMod.writemime_(io, mime, imgcopy)
     else
         error("No IO library loaded for writemime $mime with $(typeof(img)). 
             Please consider putting \"using ImageMagick\" in your script"
@@ -49,6 +50,7 @@ to_native_color{T<:Color}(::Type{T})            = RGB{Ufixed8}
 to_native_color{T<:TransparentColor}(::Type{T}) = RGBA{Ufixed8}
 
 mapinfo_writemime_{T <:Colorant}(img::AbstractImage{T})          = Images.mapinfo(to_native_color(T), img)
+mapinfo_writemime_(img::AbstractImage)                           = Images.mapinfo(Ufixed8,img)
 
 mapinfo_writemime_restricted{T<:Colorant}(img::AbstractImage{T}) = ClampMinMax(to_native_color(T), 0.0, 1.0)
 mapinfo_writemime_restricted(img::AbstractImage)                 = Images.mapinfo(Ufixed8, img)
