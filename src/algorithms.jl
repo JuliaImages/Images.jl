@@ -626,7 +626,7 @@ function imfilter_gaussian{T<:AbstractFloat}(img::AbstractArray{T}, sigma::Vecto
 end
 
 # For these types, you can't have NaNs
-@compat function imfilter_gaussian{T<:Union{Integer,Ufixed},TF<:AbstractFloat}(img::AbstractArray{T}, sigma::Vector; emit_warning = true, astype::Type{TF}=Float64)
+@compat function imfilter_gaussian{T<:Union{Integer,UFixed},TF<:AbstractFloat}(img::AbstractArray{T}, sigma::Vector; emit_warning = true, astype::Type{TF}=Float64)
     A = convert(Array{TF}, data(img))
     if all(sigma .== 0)
         return shareproperties(img, A)
