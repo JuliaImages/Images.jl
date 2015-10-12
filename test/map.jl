@@ -164,11 +164,11 @@ facts("Map") do
         mapi = ScaleMinMax(RGB{UFixed8}, A, 0.0, 0.2)
         @fact map(mapi, A) --> [RGB{UFixed8}(1,1,1)]
         mapi = ScaleMinMax(Gray{U8}, Gray{U8}(0.2), Gray{U8}(0.4))
-        @chk_approx map(mapi, Gray{U8}(0.3)) Gray{U8}(0.5)
-        @chk_approx map(mapi, 0.3) Gray{U8}(0.5)
+        @fact Gray{U8}(0.49) <= map(mapi, Gray{U8}(0.3)) <= Gray{U8}(0.5) --> true
+        @fact Gray{U8}(0.49) <= map(mapi, 0.3) <= Gray{U8}(0.5) --> true
         mapi = ScaleMinMax(Gray{U8}, 0.2, 0.4)
-        @chk_approx map(mapi, Gray{U8}(0.3)) Gray{U8}(0.5)
-        @chk_approx map(mapi, 0.3) Gray{U8}(0.5)
+        @fact Gray{U8}(0.49) <= map(mapi, Gray{U8}(0.3)) <= Gray{U8}(0.5) --> true
+        @fact Gray{U8}(0.49) <= map(mapi, 0.3) <= Gray{U8}(0.5) --> true
     end
 
     context("ScaleSigned") do
