@@ -20,7 +20,7 @@ type ImageCmap{T<:Colorant,N,A<:AbstractArray} <: AbstractImageIndexed{T,N}
     cmap::Vector{T}
     properties::Dict{ASCIIString,Any}
 end
-ImageCmap(data::AbstractArray, cmap::AbstractVector, props::Dict) = ImageCmap{eltype(cmap),ndims(data),typeof(data)}(data, cmap, props)
+ImageCmap{_,N}(data::AbstractArray{_,N}, cmap::AbstractVector, props::Dict) = ImageCmap{eltype(cmap),N,typeof(data)}(data, cmap, props)
 ImageCmap(data::AbstractArray, cmap::AbstractVector; kwargs...) = ImageCmap(data, cmap, kwargs2dict(kwargs))
 
 # Convenience constructors
@@ -76,8 +76,14 @@ ndims(img::AbstractImage) = ndims(img.data)
 
 strides(img::AbstractImage) = strides(img.data)
 
-copy(img::Image) = Image(copy(img.data), deepcopy(img.properties))
-copy(img::ImageCmap) = ImageCmap(copy(img.data), copy(img.cmap), deepcopy(img.properties))
+copy(img::Image) = Image(copy(img.data), dictcopy(img.properties))
+copy(img::ImageCmap) = ImageCmap(copy(img.data), copy(img.cmap), dictcopy(img.properties))
+
+function dictcopy(dct)
+    newkeys = [copy(key) for key in keys(dct)]
+    newvals = [copy(val) for val in values(dct)]
+    Dict{ASCIIString,Any}(zip(newkeys,newvals))
+end
 
 # Create a new "Image" (could be just an Array) copying the properties but replacing the data
 copyproperties(img::AbstractArray, data::AbstractArray) = data

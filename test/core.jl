@@ -6,6 +6,9 @@ if testing_units
 end
 
 facts("Core") do
+    a = rand(3,3)
+    @inferred(Image(a))
+
     # support integer-valued types, but these are NOT recommended (use Ufixed)
     B = rand(convert(UInt16, 1):convert(UInt16, 20), 3, 5)
     # img, imgd, and imgds will be used in many more tests
@@ -127,7 +130,7 @@ facts("Core") do
 
     context("Copy / similar") do
         A = randn(3,5,3)
-        imgc = copy(img)
+        imgc = @inferred(copy(img))
         @fact imgc.data --> img.data
         imgc = copyproperties(imgd, A)
         @fact imgc.data --> A
