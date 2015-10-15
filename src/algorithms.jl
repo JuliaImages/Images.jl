@@ -325,7 +325,7 @@ function imlog(sigma::Number=0.5)
 end
 
 # Sum of squared differences and sum of absolute differences
-for (f, op) in ((:ssd, :(sumsq(x))), (:sad, :(abs(x))))
+for (f, op) in ((:ssd, :(abs2(x))), (:sad, :(abs(x))))
     @eval begin
         function ($f)(A::AbstractArray, B::AbstractArray)
             size(A) == size(B) || throw(DimensionMismatch("A and B must have the same size"))
