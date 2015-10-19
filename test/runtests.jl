@@ -12,7 +12,6 @@ if testing_units
     using SIUnits, SIUnits.ShortUnits
 end
 
-FactCheck.setstyle(:compact)
 
 include("core.jl")
 include("map.jl")
