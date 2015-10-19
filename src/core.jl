@@ -25,10 +25,10 @@ ImageCmap(data::AbstractArray, cmap::AbstractVector; kwargs...) = ImageCmap(data
 
 # Convenience constructors
 grayim(A::AbstractImage) = A
-grayim(A::AbstractArray{UInt8,2})  = grayim(reinterpret(Ufixed8, A))
-grayim(A::AbstractArray{UInt16,2}) = grayim(reinterpret(Ufixed16, A))
-grayim(A::AbstractArray{UInt8,3})  = grayim(reinterpret(Ufixed8, A))
-grayim(A::AbstractArray{UInt16,3}) = grayim(reinterpret(Ufixed16, A))
+grayim(A::AbstractArray{UInt8,2})  = grayim(reinterpret(UFixed8, A))
+grayim(A::AbstractArray{UInt16,2}) = grayim(reinterpret(UFixed16, A))
+grayim(A::AbstractArray{UInt8,3})  = grayim(reinterpret(UFixed8, A))
+grayim(A::AbstractArray{UInt16,3}) = grayim(reinterpret(UFixed16, A))
 grayim{T}(A::AbstractArray{T,2}) = Image(A; colorspace="Gray", spatialorder=["x","y"])
 grayim{T}(A::AbstractArray{T,3}) = Image(A; colorspace="Gray", spatialorder=["x","y","z"])
 
@@ -58,10 +58,10 @@ function colorim{T}(A::AbstractArray{T,3}, colorspace)
     end
 end
 
-colorim(A::AbstractArray{UInt8,3})  = colorim(reinterpret(Ufixed8, A))
-colorim(A::AbstractArray{UInt16,3}) = colorim(reinterpret(Ufixed16, A))
-colorim(A::AbstractArray{UInt8,3},  colorspace) = colorim(reinterpret(Ufixed8, A), colorspace)
-colorim(A::AbstractArray{UInt16,3}, colorspace) = colorim(reinterpret(Ufixed16, A), colorspace)
+colorim(A::AbstractArray{UInt8,3})  = colorim(reinterpret(UFixed8, A))
+colorim(A::AbstractArray{UInt16,3}) = colorim(reinterpret(UFixed16, A))
+colorim(A::AbstractArray{UInt8,3},  colorspace) = colorim(reinterpret(UFixed8, A), colorspace)
+colorim(A::AbstractArray{UInt16,3}, colorspace) = colorim(reinterpret(UFixed16, A), colorspace)
 
 
 #### Core operations ####
@@ -170,7 +170,7 @@ end
 ## reinterpret: T->Color
 # We have to distinguish two forms of call:
 #   form 1: reinterpret(RGB, img)
-#   form 2: reinterpret(RGB{Ufixed8}, img)
+#   form 2: reinterpret(RGB{UFixed8}, img)
 # Arrays
 reinterpret{T,CV<:Colorant}(::Type{CV}, A::Array{T,1}) = _reinterpret(CV, eltype(CV), A)
 reinterpret{T,CV<:Colorant}(::Type{CV}, A::Array{T})   = _reinterpret(CV, eltype(CV), A)
@@ -207,13 +207,13 @@ function reinterpret{T,S}(::Type{T}, img::AbstractImageDirect{S})
     shareproperties(img, reinterpret(T, data(img)))
 end
 
-## To get data in raw format, and unwrap UfixedBase if present
+## To get data in raw format, and unwrap UFixed if present
 function raw(img::AbstractArray)
     elemType = eltype(eltype(data(img)))
 
     @compat if (elemType <: Union{})  # weird fallback case
         data(img)
-    elseif eltype(eltype(data(img))) <: FixedPointNumbers.UfixedBase
+    elseif eltype(eltype(data(img))) <: FixedPointNumbers.UFixed
         reinterpret( FixedPointNumbers.rawtype(eltype(eltype(img))), data(img) )
     else
         data(img)

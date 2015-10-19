@@ -45,12 +45,12 @@ function mapinfo_writemime(img; maxpixels=10^6)
     mapinfo_writemime_restricted(img)
 end
 
-to_native_color{T<:Colorant}(::Type{T}) = base_color_type(T){Ufixed8}
-to_native_color{T<:Color}(::Type{T}) = RGB{Ufixed8}
-to_native_color{T<:TransparentColor}(::Type{T}) = RGBA{Ufixed8}
+to_native_color{T<:Colorant}(::Type{T}) = base_color_type(T){UFixed8}
+to_native_color{T<:Color}(::Type{T}) = RGB{UFixed8}
+to_native_color{T<:TransparentColor}(::Type{T}) = RGBA{UFixed8}
 
 mapinfo_writemime_{T <:Colorant}(img::AbstractImage{T}) = Images.mapinfo(to_native_color(T), img)
-mapinfo_writemime_(img::AbstractImage) = Images.mapinfo(Ufixed8,img)
+mapinfo_writemime_(img::AbstractImage) = Images.mapinfo(UFixed8,img)
 
 mapinfo_writemime_restricted{T<:Colorant}(img::AbstractImage{T}) = ClampMinMax(to_native_color(T), 0.0, 1.0)
-mapinfo_writemime_restricted(img::AbstractImage) = Images.mapinfo(Ufixed8, img)
+mapinfo_writemime_restricted(img::AbstractImage) = Images.mapinfo(UFixed8, img)
