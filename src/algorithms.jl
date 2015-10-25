@@ -344,6 +344,7 @@ difftype{T<:Integer}(::Type{T}) = Int
 difftype{T<:Real}(::Type{T}) = Float32
 difftype(::Type{Float64}) = Float64
 difftype{CV<:Colorant}(::Type{CV}) = difftype(CV, eltype(CV))
+difftype{CV<:Colorant, T<:Real}(::Type{CV}, ::Type{T}) = RGBA{T}
 difftype{CV<:AbstractGray,T<:Real}(::Type{CV}, ::Type{T}) = Gray{Float32}
 difftype{CV<:AbstractGray}(::Type{CV}, ::Type{Float64}) = Gray{Float64}
 difftype{CV<:AbstractRGB,T<:Real}(::Type{CV}, ::Type{T}) = RGB{Float32}
@@ -381,6 +382,31 @@ macro test_approx_eq_sigma_eps(A, B, sigma, eps)
             error("Arrays A and B differ")
         end
     end
+end
+
+# image difference testing (@tbreloff's, based on the macro)
+#   A/B: images/arrays to compare
+#   sigma: tuple of ints... how many pixels to blur
+#   eps: error allowance
+# returns: percentage difference on match, error otherwise
+function test_approx_eq_sigma_eps(A::AbstractMatrix, B::AbstractMatrix,
+                                  sigma::AbstractVector{Int} = [1,1],
+                                  eps::@compat(AbstractFloat) = 1e-2)
+    if size(A) != size(B)
+        error("Arrays differ: size(A): $(size(A)) size(B): $(size(B))")
+    end
+    if length(sigma) != 2
+        error("Invalid sigma in test_approx_eq_sigma_eps. Should be 2-length vector of the number of pixels to blur.  Got: $sigma")
+    end
+    Af = imfilter_gaussian(A, sigma)
+    Bf = imfilter_gaussian(B, sigma)
+    diffscale = max(maxabsfinite(A), maxabsfinite(B))
+    d = sad(Af, Bf)
+    diffpct = d / (length(Af) * diffscale)
+    if diffpct > eps
+        error("Arrays differ.  Difference: $diffpct  eps: $eps")
+    end
+    diffpct
 end
 
 # Array padding
