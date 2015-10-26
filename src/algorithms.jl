@@ -389,14 +389,14 @@ end
 #   sigma: tuple of ints... how many pixels to blur
 #   eps: error allowance
 # returns: percentage difference on match, error otherwise
-function test_approx_eq_sigma_eps(A::AbstractMatrix, B::AbstractMatrix,
-                                  sigma::AbstractVector{Int} = [1,1],
+function test_approx_eq_sigma_eps{T<:Real}(A::AbstractArray, B::AbstractArray,
+                                  sigma::AbstractVector{T} = ones(ndims(A)),
                                   eps::@compat(AbstractFloat) = 1e-2)
     if size(A) != size(B)
         error("Arrays differ: size(A): $(size(A)) size(B): $(size(B))")
     end
-    if length(sigma) != 2
-        error("Invalid sigma in test_approx_eq_sigma_eps. Should be 2-length vector of the number of pixels to blur.  Got: $sigma")
+    if length(sigma) != ndims(A)
+        error("Invalid sigma in test_approx_eq_sigma_eps. Should be ndims(A)-length vector of the number of pixels to blur.  Got: $sigma")
     end
     Af = imfilter_gaussian(A, sigma)
     Bf = imfilter_gaussian(B, sigma)
