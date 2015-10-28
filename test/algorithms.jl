@@ -33,7 +33,7 @@ facts("Algorithms") do
         @fact all(A.*img2 .== fill(RGB{Float32}(1,1,1), 4, 5)) --> true
         img2 = img2 .- RGB{Float32}(1,1,1)/2
         A = rand(UInt8,3,4)
-        img = reinterpret(Images.Gray{UFixed8}, Images.grayim(A))
+        img = reinterpret(Gray{UFixed8}, Images.grayim(A))
         imgm = mean(img)
         imgn = img/imgm
         @fact reinterpret(Float64, Images.data(imgn)) --> roughly(convert(Array{Float64}, A/mean(A)))

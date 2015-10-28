@@ -74,6 +74,8 @@ size(img::AbstractImage, dimname::AbstractString) = size(img.data, dimindex(img,
 
 ndims(img::AbstractImage) = ndims(img.data)
 
+linearindexing(img::Image) = linearindexing(img.data)
+
 strides(img::AbstractImage) = strides(img.data)
 
 copy(img::Image) = Image(copy(img.data), dictcopy(img.properties))
