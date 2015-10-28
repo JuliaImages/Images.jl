@@ -217,6 +217,34 @@ ScaleAutoMinMax() = ScaleAutoMinMax{UFixed8}()
 
 similar{T}(mapi::ScaleAutoMinMax, ::Type{T}, ::Type) = ScaleAutoMinMax{T}()
 
+## NaN-ignoring mapping
+immutable ScaleMinMaxNaN{To,From,S} <: MapInfo{To}
+    smm::ScaleMinMax{To,From,S}
+end
+
+immutable Clamp01NaN{T} <: MapInfo{T} end
+
+# Implementation
+similar{T,F,To,From,S}(mapi::ScaleMinMaxNaN{To,From,S}, ::Type{T}, ::Type{F}) = ScaleMinMaxNaN{T,F,S}(similar(mapi.smm, T, F))
+similar{T}(mapi::Clamp01NaN, ::Type{T}, ::Type) = Clamp01NaN{T}()
+
+Base.map{To}(smmn::ScaleMinMaxNaN{To}, g::Number) = isnan(g) ? zero(To) : map(smmn.smm, g)
+Base.map{To}(smmn::ScaleMinMaxNaN{To}, g::Gray) = isnan(g) ? zero(To) : map(smmn.smm, g)
+
+function Base.map{T<:RGB}(::Clamp01NaN{T}, c::AbstractRGB)
+    r, g, b = red(c), green(c), blue(c)
+    if isnan(r) || isnan(g) || isnan(b)
+        return T(0,0,0)
+    end
+    T(clamp(r, 0, 1), clamp(g, 0, 1), clamp(b, 0, 1))
+end
+function Base.map{T<:Union{Fractional,Gray}}(::Clamp01NaN{T}, c::Union{Fractional,AbstractGray})
+    g = gray(c)
+    if isnan(g)
+        return T(0)
+    end
+    T(clamp(g, 0, 1))
+end
 
 # Conversions to RGB{T}, RGBA{T}, RGB24, ARGB32,
 # for grayscale, AbstractRGB, and abstract ARGB inputs.

@@ -36,7 +36,7 @@ facts("Algorithms") do
         img = reinterpret(Images.Gray{UFixed8}, Images.grayim(A))
         imgm = mean(img)
         imgn = img/imgm
-        @fact reinterpret(Float32, Images.data(imgn)) --> roughly(convert(Array{Float32}, A/mean(A)))
+        @fact reinterpret(Float64, Images.data(imgn)) --> roughly(convert(Array{Float64}, A/mean(A)))
     end
 
     context("Reductions") do
