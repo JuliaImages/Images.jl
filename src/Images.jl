@@ -169,6 +169,8 @@ export # types
     uint8sc,
     uint16sc,
     uint32sc,
+    ufixed8sc,
+    ufixedsc,
 
     # algorithms
     ando3,
