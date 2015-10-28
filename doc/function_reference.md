@@ -153,7 +153,7 @@ access is desired. For example
 
 ```{.julia execute="false"}
 img = imread("someimage.tif")
-typeof( data(img) )  # returns array with element type UfixedBase{Uint8,8}
+typeof( data(img) )  # returns array with element type UFixed{Uint8,8}
 typeof( raw(img) )   # returns array with element type Uint8
 
 ```
@@ -549,7 +549,7 @@ Here is how to directly construct the major concrete `MapInfo` types:
 
 - `ScaleSigned(T, scalefactor)` multiplies the image by the scalefactor, then
   clamps to the range `[-1,1]`. If `T` is a floating-point type, it stays in
-  this representation.  If `T` is `RGB24` or `RGB{Ufixed8}`, then it is encoded
+  this representation.  If `T` is `RGB24` or `RGB{UFixed8}`, then it is encoded
   as a magenta (positive)/green (negative) image.
 
 There are also convenience functions:

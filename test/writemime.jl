@@ -13,7 +13,7 @@ facts("Writemime") do
         b = open(fn, "r") do io 
         	deserialize(io)
         end
-        abigui = convert(Array{Ufixed8,2}, data(restrict(abig, (1,2))))
-        @fact data(b) --> convert(Array{Ufixed8,2}, data(restrict(abig, (1,2))))
+        abigui = convert(Array{UFixed8,2}, data(restrict(abig, (1,2))))
+        @fact data(b) --> convert(Array{UFixed8,2}, data(restrict(abig, (1,2))))
     end
 end
