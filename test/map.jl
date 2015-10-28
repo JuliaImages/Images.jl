@@ -1,4 +1,4 @@
-using FactCheck, Images, Colors, FixedPointNumbers, Compat
+using FactCheck, Images, Colors, FixedPointNumbers
 
 macro chk(a, b)
     :(@fact ($a == $b && typeof($a) == typeof($b)) --> true)

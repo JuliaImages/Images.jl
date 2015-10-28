@@ -1,4 +1,4 @@
-VERSION >= v"0.4.0-dev+6521" && __precompile__(true)
+__precompile__(true)
 
 module Images
 
@@ -12,18 +12,13 @@ import Base: atan2, clamp, convert, copy, copy!, ctranspose, delete!, done,
              start, strides, sub, sum, write, writemime, zero
 # "deprecated imports" are below
 
-using Colors, ColorVectorSpace, FixedPointNumbers, Compat, FileIO
+using Colors, ColorVectorSpace, FixedPointNumbers, FileIO
 import Colors: Fractional, red, green, blue
 typealias AbstractGray{T}                    Color{T,1}
 typealias TransparentRGB{C<:AbstractRGB,T}   TransparentColor{C,T,4}
 typealias TransparentGray{C<:AbstractGray,T} TransparentColor{C,T,2}
-if VERSION < v"0.4.0-dev+3275"
-    using Base.Graphics
-    import Base.Graphics: width, height, Point
-else
-    using Graphics
-    import Graphics: width, height, Point
-end
+using Graphics
+import Graphics: width, height, Point
 import FixedPointNumbers: ufixed8, ufixed10, ufixed12, ufixed14, ufixed16
 
 using Base.Cartesian

@@ -1,11 +1,7 @@
 module ImagesTests
 
-using Compat, FactCheck, Base.Test, Images, Colors, FixedPointNumbers
-if VERSION < v"0.4.0-dev+3275"
-    using Base.Graphics
-else
-    using Graphics
-end
+using FactCheck, Base.Test, Images, Colors, FixedPointNumbers
+using Graphics
 
 testing_units = Int == Int64
 if testing_units
