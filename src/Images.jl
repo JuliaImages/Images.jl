@@ -1,28 +1,24 @@
-VERSION >= v"0.4.0-dev+6521" && __precompile__(true)
+__precompile__(true)
 
 module Images
 
 import Base.Order: Ordering, ForwardOrdering, ReverseOrdering
 import Base: ==, .==, +, -, *, /, .+, .-, .*, ./, .^, .<, .>
-import Base: atan2, clamp, convert, copy, copy!, ctranspose, delete!, done, eltype,
-             fft, float32, float64, get, getindex, haskey, hypot, ifft, length, map, map!,
-             maximum, mimewritable, minimum, next, ndims, one, parent, permutedims, reinterpret,
+import Base: atan2, clamp, convert, copy, copy!, ctranspose, delete!, done,
+             eltype, fft, float32, float64, get, getindex, haskey, hypot,
+             ifft, length, linearindexing, map, map!, maximum, mimewritable,
+             minimum, next, ndims, one, parent, permutedims, reinterpret,
              setindex!, show, showcompact, similar, size, slice, sqrt, squeeze,
              start, strides, sub, sum, write, writemime, zero
 # "deprecated imports" are below
 
-using Colors, ColorVectorSpace, FixedPointNumbers, Compat, FileIO
+using Colors, ColorVectorSpace, FixedPointNumbers, FileIO
 import Colors: Fractional, red, green, blue
 typealias AbstractGray{T}                    Color{T,1}
 typealias TransparentRGB{C<:AbstractRGB,T}   TransparentColor{C,T,4}
 typealias TransparentGray{C<:AbstractGray,T} TransparentColor{C,T,2}
-if VERSION < v"0.4.0-dev+3275"
-    using Base.Graphics
-    import Base.Graphics: width, height, Point
-else
-    using Graphics
-    import Graphics: width, height, Point
-end
+using Graphics
+import Graphics: width, height, Point
 import FixedPointNumbers: ufixed8, ufixed10, ufixed12, ufixed14, ufixed16
 
 using Base.Cartesian
@@ -255,13 +251,13 @@ import Base: scale, scale!  # delete when deprecations are removed
 @deprecate float32sc    float32
 @deprecate float64sc    float64
 @deprecate uint8sc      ufixed8sc
-@deprecate uint16sc(img)  ufixedsc(Ufixed16, img)
+@deprecate uint16sc(img)  ufixedsc(UFixed16, img)
 @deprecate ClipMin      ClampMin
 @deprecate ClipMax      ClampMax
 @deprecate ClipMinMax   ClampMinMax
 @deprecate climdefault(img) zero(eltype(img)), one(eltype(img))
-@deprecate ScaleMinMax{T<:Real}(img::AbstractArray{T}, mn, mx) ScaleMinMax(Ufixed8, img, mn, mx)
-@deprecate ScaleMinMax{T<:Color}(img::AbstractArray{T}, mn, mx) ScaleMinMax(RGB{Ufixed8}, img, mn, mx)
+@deprecate ScaleMinMax{T<:Real}(img::AbstractArray{T}, mn, mx) ScaleMinMax(UFixed8, img, mn, mx)
+@deprecate ScaleMinMax{T<:Color}(img::AbstractArray{T}, mn, mx) ScaleMinMax(RGB{UFixed8}, img, mn, mx)
 @deprecate scaleinfo    mapinfo
 @deprecate scale(mapi::MapInfo, A) map(mapi, A)                # delete imports above when eliminated
 @deprecate scale!(dest, mapi::MapInfo, A) map!(mapi, dest, A)  #   "

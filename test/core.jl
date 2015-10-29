@@ -8,12 +8,11 @@ end
 facts("Core") do
     a = rand(3,3)
     @inferred(Image(a))
-
-    # support integer-valued types, but these are NOT recommended (use Ufixed)
+    # support integer-valued types, but these are NOT recommended (use UFixed)
     B = rand(convert(UInt16, 1):convert(UInt16, 20), 3, 5)
     # img, imgd, and imgds will be used in many more tests
     # Thus, these must be defined as local if reassigned in any context() blocks
-    cmap = reinterpret(RGB, repmat(reinterpret(Ufixed8, round(UInt8, linspace(12, 255, 20)))', 3, 1))
+    cmap = reinterpret(RGB, repmat(reinterpret(UFixed8, round(UInt8, linspace(12, 255, 20)))', 3, 1))
     img = ImageCmap(copy(B), cmap, Dict{ASCIIString, Any}([("pixelspacing", [2.0, 3.0]), ("spatialorder", Images.yx)]))
     imgd = convert(Image, img)
     if testing_units
@@ -31,43 +30,43 @@ facts("Core") do
         @fact colorspace(img) --> "Gray"
         @fact colordim(B) --> 0
         @fact grayim(img) --> img
-        # this is recommended for "integer-valued" images (or even better, directly as a Ufixed type)
+        # this is recommended for "integer-valued" images (or even better, directly as a UFixed type)
         Bf = grayim(round(UInt8, B))
-        @fact eltype(Bf) --> Ufixed8
+        @fact eltype(Bf) --> UFixed8
         @fact colorspace(Bf) --> "Gray"
         @fact colordim(Bf) --> 0
         Bf = grayim(B)
-        @fact eltype(Bf) --> Ufixed16
+        @fact eltype(Bf) --> UFixed16
         # colorspace encoded as a Color (enables multiple dispatch)
-        BfCV = reinterpret(Gray{Ufixed8}, round(UInt8, B))
+        BfCV = reinterpret(Gray{UFixed8}, round(UInt8, B))
         @fact colorspace(BfCV) --> "Gray"
         @fact colordim(BfCV) --> 0
         Bf3 = grayim(reshape(convert(UInt8,1):convert(UInt8,36), 3,4,3))
-        @fact eltype(Bf3) --> Ufixed8
+        @fact eltype(Bf3) --> UFixed8
         Bf3 = grayim(reshape(convert(UInt16,1):convert(UInt16,36), 3,4,3))
-        @fact eltype(Bf3) --> Ufixed16
+        @fact eltype(Bf3) --> UFixed16
         Bf3 = grayim(reshape(1.0f0:36.0f0, 3,4,3))
         @fact eltype(Bf3) --> Float32
     end
 
     context("Colorim") do
         C = colorim(rand(UInt8, 3, 5, 5))
-        @fact eltype(C) --> RGB{Ufixed8}
+        @fact eltype(C) --> RGB{UFixed8}
         @fact colordim(C) --> 0
         @fact colorim(C) --> C
         C = colorim(rand(UInt16, 4, 5, 5), "ARGB")
-        @fact eltype(C) --> ARGB{Ufixed16}
+        @fact eltype(C) --> ARGB{UFixed16}
         C = colorim(rand(1:20, 3, 5, 5))
         @fact eltype(C) --> Int
         @fact colordim(C) --> 1
         @fact colorspace(C) --> "RGB"
-        @fact eltype(colorim(rand(UInt16, 3, 5, 5))) --> RGB{Ufixed16}
+        @fact eltype(colorim(rand(UInt16, 3, 5, 5))) --> RGB{UFixed16}
         @fact eltype(colorim(rand(3, 5, 5))) --> RGB{Float64}
         @fact colordim(colorim(rand(UInt8, 5, 5, 3))) --> 3
         @fact spatialorder(colorim(rand(UInt8, 3, 5, 5))) --> ["x", "y"]
         @fact spatialorder(colorim(rand(UInt8, 5, 5, 3))) --> ["y", "x"]
-        @fact eltype(colorim(rand(UInt8, 4, 5, 5), "RGBA")) --> RGBA{Ufixed8}
-        @fact eltype(colorim(rand(UInt8, 4, 5, 5), "ARGB")) --> ARGB{Ufixed8}
+        @fact eltype(colorim(rand(UInt8, 4, 5, 5), "RGBA")) --> RGBA{UFixed8}
+        @fact eltype(colorim(rand(UInt8, 4, 5, 5), "ARGB")) --> ARGB{UFixed8}
         @fact colordim(colorim(rand(UInt8, 5, 5, 4), "RGBA")) --> 3
         @fact colordim(colorim(rand(UInt8, 5, 5, 4), "ARGB")) --> 3
         @fact spatialorder(colorim(rand(UInt8, 4, 5, 5), "ARGB")) --> ["x", "y"]
@@ -88,8 +87,8 @@ facts("Core") do
         @fact colorspace(img_) --> "RGB"
         # Note: img from opening of facts() block
         # TODO: refactor whole block
-        @fact eltype(img) --> RGB{Ufixed8}
-        @fact eltype(imgd) --> RGB{Ufixed8}
+        @fact eltype(img) --> RGB{UFixed8}
+        @fact eltype(imgd) --> RGB{UFixed8}
     end
 
 
@@ -375,46 +374,46 @@ facts("Core") do
         @fact anew --> a
         @fact_throws ErrorException reinterpret(RGB{Float32}, af)
         Au8 = rand(0x00:0xff, 3, 5, 4)
-        A8 = reinterpret(Ufixed8, Au8)
+        A8 = reinterpret(UFixed8, Au8)
         rawrgb8 = reinterpret(RGB, A8)
-        @fact eltype(rawrgb8) --> RGB{Ufixed8}
-        @fact reinterpret(Ufixed8, rawrgb8) --> A8
+        @fact eltype(rawrgb8) --> RGB{UFixed8}
+        @fact reinterpret(UFixed8, rawrgb8) --> A8
         @fact reinterpret(UInt8, rawrgb8) --> Au8
         rawrgb32 = convert(Array{RGB{Float32}}, rawrgb8)
         @fact eltype(rawrgb32) --> RGB{Float32}
         @fact ufixed8(rawrgb32) --> rawrgb8
-        @fact reinterpret(Ufixed8, rawrgb8) --> A8
+        @fact reinterpret(UFixed8, rawrgb8) --> A8
         imrgb8 = convert(Image, rawrgb8)
         @fact spatialorder(imrgb8) --> Images.yx
         @fact convert(Image, imrgb8) --> exactly(imrgb8)
-        @fact convert(Image{RGB{Ufixed8}}, imrgb8) --> exactly(imrgb8)
-        im8 = reinterpret(Ufixed8, imrgb8)
+        @fact convert(Image{RGB{UFixed8}}, imrgb8) --> exactly(imrgb8)
+        im8 = reinterpret(UFixed8, imrgb8)
         @fact data(im8) --> A8
-        @fact permutedims(reinterpret(Ufixed8, separate(imrgb8)), (3, 1, 2)) --> im8
+        @fact permutedims(reinterpret(UFixed8, separate(imrgb8)), (3, 1, 2)) --> im8
         @fact reinterpret(UInt8, imrgb8) --> Au8
         @fact reinterpret(RGB, im8) --> imrgb8
         ims8 = separate(imrgb8)
         @fact colordim(ims8) --> 3
         @fact colorspace(ims8) --> "RGB"
         @fact convert(Image, ims8) --> exactly(ims8)
-        @fact convert(Image{Ufixed8}, ims8) --> exactly(ims8)
+        @fact convert(Image{UFixed8}, ims8) --> exactly(ims8)
         @fact separate(ims8) --> exactly(ims8)
         imrgb8_2 = convert(Image{RGB}, ims8)
-        @fact isa(imrgb8_2, Image{RGB{Ufixed8}}) --> true
+        @fact isa(imrgb8_2, Image{RGB{UFixed8}}) --> true
         @fact imrgb8_2 --> imrgb8
-        A = reinterpret(Ufixed8, UInt8[1 2; 3 4])
-        imgray = convert(Image{Gray{Ufixed8}}, A)
+        A = reinterpret(UFixed8, UInt8[1 2; 3 4])
+        imgray = convert(Image{Gray{UFixed8}}, A)
         @fact spatialorder(imgray) --> Images.yx
-        @fact data(imgray) --> reinterpret(Gray{Ufixed8}, [0x01 0x02; 0x03 0x04])
+        @fact data(imgray) --> reinterpret(Gray{UFixed8}, [0x01 0x02; 0x03 0x04])
         @fact eltype(convert(Image{HSV{Float32}}, imrgb8)) --> HSV{Float32}
         @fact eltype(convert(Image{HSV}, float32(imrgb8))) --> HSV{Float32}
         # Issue 232
-        local img = Image(reinterpret(Gray{Ufixed16}, rand(UInt16, 5, 5)))
+        local img = Image(reinterpret(Gray{UFixed16}, rand(UInt16, 5, 5)))
         imgs = subim(img, :, :)
-        @fact isa(minfinite(imgs), Ufixed16) --> true
+        @fact isa(minfinite(imgs), UFixed16) --> true
         # Raw
         imgdata = rand(UInt16, 5, 5)
-        img = Image(reinterpret(Gray{Ufixed16}, imgdata))
+        img = Image(reinterpret(Gray{UFixed16}, imgdata))
         @fact all(raw(img) .== imgdata) --> true
         @fact typeof(raw(img)) --> Array{UInt16,2}
         @fact typeof(raw(Image(rawrgb8))) --> Array{UInt8,3}  # check color images

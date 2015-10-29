@@ -83,7 +83,7 @@ Let's begin by reading an image from a file:
 ```{.julia execute="false"}
 julia> img = imread("rose.png")
 RGB Image with:
-  data: 70x46 Array{RGB{UfixedBase{Uint8,8}},2}
+  data: 70x46 Array{RGB{UFixed{Uint8,8}},2}
   properties:
     IMcs: sRGB
     spatialorder:  x y
@@ -102,20 +102,20 @@ show(img)
 to see the output above.
 
 The first line tells you that this is an RGB image.
-It is stored as a two-dimensional `Array` of `RGB{UfixedBase{Uint8,8}}`.
+It is stored as a two-dimensional `Array` of `RGB{UFixed{Uint8,8}}`.
 To see what this pixel type is, we can do the following:
 
 ```{.julia execute="false"}
 julia> img[1,1]
-RGB{Ufixed8}(0.188,0.184,0.176)
+RGB{UFixed8}(0.188,0.184,0.176)
 ```
 
 This extracts the first pixel, the one visually at the upper-left of the
 image. You can see that an `RGB` (which comes from the
 [Colors](https://github.com/JuliaGraphics/Colors.jl) package) is a triple of values.
-The `Ufixed8` number type (which comes from the
+The `UFixed8` number type (which comes from the
 [FixedPointNumbers](https://github.com/JeffBezanson/FixedPointNumbers.jl)
-package), and whose long name is `UfixedBase{Uint8,8}`) represents fractional
+package), and whose long name is `UFixed{Uint8,8}`) represents fractional
 numbers, those that can encode values that lie between 0 and 1, using just 1
 byte (8 bits).  If you've previously used other image processing libraries, you
 may be used to thinking of two basic image types, floating point-valued and
@@ -123,8 +123,8 @@ integer-valued. In those libraries, "saturated" (the color white for an RGB
 image) would be represented by `1.0` for floating point-valued images, 255 for a
 `Uint8` image, and `0x0fff` for an image collected by a 12-bit camera.
 `Images.jl`, via Colors and FixedPointNumbers, unifies these so that `1` always
-means saturated, no matter whether the element type is `Float64`, `Ufixed8`, or
-`Ufixed12`.  This makes it easier to write generic algorithms and visualization
+means saturated, no matter whether the element type is `Float64`, `UFixed8`, or
+`UFixed12`.  This makes it easier to write generic algorithms and visualization
 code, while still allowing one to use efficient (and C-compatible) raw
 representations.
 
@@ -188,7 +188,7 @@ Of course, if you prefer to work with plain arrays, you can convert it:
 julia> imA = convert(Array, img);
 
 julia> summary(imA)
-"46x70 Array{RGB{UfixedBase{Uint8,8}},2}"
+"46x70 Array{RGB{UFixed{Uint8,8}},2}"
 ```
 
 You can see that this permuted the dimensions into vertical-major order,
@@ -200,7 +200,7 @@ Matlab), you can use
 ```{.julia execute="false"}
 julia> imsep = separate(img)
 RGB Image with:
-  data: 46x70x3 Array{UfixedBase{Uint8,8},3}
+  data: 46x70x3 Array{UFixed{Uint8,8},3}
   properties:
     IMcs: sRGB
     colorspace: RGB
@@ -217,9 +217,9 @@ how to interpret these colors.
 Compare this to
 
 ```{.julia execute="false"}
-julia> imr = reinterpret(Ufixed8, img)
+julia> imr = reinterpret(UFixed8, img)
 RGB Image with:
-  data: 3x70x46 Array{UfixedBase{Uint8,8},3}
+  data: 3x70x46 Array{UFixed{Uint8,8},3}
   properties:
     IMcs: sRGB
     colorspace: RGB
@@ -237,7 +237,7 @@ You can go back to using Colors to encode your image this way:
 ```{.julia execute="false"}
 julia> imcomb = convert(Image{RGB}, imsep)
 RGB Image with:
-  data: 46x70 Array{RGB{UfixedBase{Uint8,8}},2}
+  data: 46x70 Array{RGB{UFixed{Uint8,8}},2}
   properties:
     IMcs: sRGB
     spatialorder:  y x
@@ -288,7 +288,7 @@ Of course, you can combine these commands, for example
 A = reinterpret(Uint8, data(img))
 ```
 
-will, for a `RGB{Ufixed8}` image, return a raw 3d array.  This can be useful if
+will, for a `RGB{UFixed8}` image, return a raw 3d array.  This can be useful if
 you want to interact with external code (a C-library, for example).  Assuming
 you don't want to lose orientation information, you can wrap a returned array
 `B` as `shareproperties(img, B)`.

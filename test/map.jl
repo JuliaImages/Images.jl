@@ -1,4 +1,4 @@
-using FactCheck, Images, Colors, FixedPointNumbers, Compat
+using FactCheck, Images, Colors, FixedPointNumbers
 
 macro chk(a, b)
     :(@fact ($a == $b && typeof($a) == typeof($b)) --> true)
@@ -17,7 +17,7 @@ facts("Map") do
         @chk map(mapi, [0x07]) a7
         @fact map(mapi, a7) --> exactly(a7)
         mapi = MapNone{RGB24}()
-        g = Ufixed8(0.1)
+        g = UFixed8(0.1)
         @chk Images.map1(mapi, 0.1) g
         @chk map(mapi, 0.1) RGB24(g,g,g)
         @chk map(mapi, Gray(0.1)) RGB24(g,g,g)
@@ -34,9 +34,9 @@ facts("Map") do
         @chk map(mapi, c) convert(HSV, c)
 
         # issue #200
-        c = RGBA{Ufixed8}(1,0.5,0.25,0.8)
-        mapi = MapNone{Images.ColorTypes.BGRA{Ufixed8}}()
-        @chk map(mapi, c) convert(Images.ColorTypes.BGRA{Ufixed8}, c)
+        c = RGBA{UFixed8}(1,0.5,0.25,0.8)
+        mapi = MapNone{Images.ColorTypes.BGRA{UFixed8}}()
+        @chk map(mapi, c) convert(Images.ColorTypes.BGRA{UFixed8}, c)
     end
 
     context("BitShift") do
@@ -44,7 +44,7 @@ facts("Map") do
         @chk map(mapi, 0xff) 0x01
         @chk map(mapi, 0xf0ff) 0xff
         @chk map(mapi, [0xff]) UInt8[0x01]
-        mapi = BitShift{Ufixed8,7}()
+        mapi = BitShift{UFixed8,7}()
         @chk map(mapi, 0xffuf8) 0x01uf8
         @chk map(mapi, 0xf0ffuf16) 0xffuf8
         mapi = BitShift{ARGB32,4}()
@@ -53,23 +53,23 @@ facts("Map") do
         @chk map(mapi, Gray(0xffuf8)) RGB24(0x003f3f3f)
         mapi = BitShift{ARGB32,2}()
         @chk map(mapi, Gray(0xffuf8)) ARGB32(0xff3f3f3f)
-        @chk map(mapi, GrayA{Ufixed8}(Gray(0xffuf8),0x3fuf8)) ARGB32(0x0f3f3f3f)
-        mapi = BitShift{RGB{Ufixed8},2}()
+        @chk map(mapi, GrayA{UFixed8}(Gray(0xffuf8),0x3fuf8)) ARGB32(0x0f3f3f3f)
+        mapi = BitShift{RGB{UFixed8},2}()
         @chk map(mapi, Gray(0xffuf8)) RGB(0x3fuf8, 0x3fuf8, 0x3fuf8)
-        mapi = BitShift{ARGB{Ufixed8},2}()
-        @chk map(mapi, Gray(0xffuf8)) ARGB{Ufixed8}(0x3fuf8, 0x3fuf8, 0x3fuf8, 0xffuf8)
-        @chk map(mapi, GrayA{Ufixed8}(Gray(0xffuf8),0x3fuf8)) ARGB{Ufixed8}(0x3fuf8, 0x3fuf8, 0x3fuf8, 0x0fuf8)
-        mapi = BitShift{RGBA{Ufixed8},2}()
-        @chk map(mapi, Gray(0xffuf8)) RGBA{Ufixed8}(0x3fuf8, 0x3fuf8, 0x3fuf8, 0xffuf8)
-        @chk map(mapi, GrayA{Ufixed8}(Gray(0xffuf8),0x3fuf8)) RGBA{Ufixed8}(0x3fuf8, 0x3fuf8, 0x3fuf8, 0x0fuf8)
-        mapi = BitShift(ARGB{Ufixed8}, 8)
-        @chk map(mapi, RGB{Ufixed16}(1.0,0.8,0.6)) ARGB{Ufixed8}(1.0,0.8,0.6,1.0)
-        mapi = BitShift(RGBA{Ufixed8}, 8)
-        @chk map(mapi, RGB{Ufixed16}(1.0,0.8,0.6)) RGBA{Ufixed8}(1.0,0.8,0.6,1.0)
+        mapi = BitShift{ARGB{UFixed8},2}()
+        @chk map(mapi, Gray(0xffuf8)) ARGB{UFixed8}(0x3fuf8, 0x3fuf8, 0x3fuf8, 0xffuf8)
+        @chk map(mapi, GrayA{UFixed8}(Gray(0xffuf8),0x3fuf8)) ARGB{UFixed8}(0x3fuf8, 0x3fuf8, 0x3fuf8, 0x0fuf8)
+        mapi = BitShift{RGBA{UFixed8},2}()
+        @chk map(mapi, Gray(0xffuf8)) RGBA{UFixed8}(0x3fuf8, 0x3fuf8, 0x3fuf8, 0xffuf8)
+        @chk map(mapi, GrayA{UFixed8}(Gray(0xffuf8),0x3fuf8)) RGBA{UFixed8}(0x3fuf8, 0x3fuf8, 0x3fuf8, 0x0fuf8)
+        mapi = BitShift(ARGB{UFixed8}, 8)
+        @chk map(mapi, RGB{UFixed16}(1.0,0.8,0.6)) ARGB{UFixed8}(1.0,0.8,0.6,1.0)
+        mapi = BitShift(RGBA{UFixed8}, 8)
+        @chk map(mapi, RGB{UFixed16}(1.0,0.8,0.6)) RGBA{UFixed8}(1.0,0.8,0.6,1.0)
         # Issue, #269, IJulia issue #294
-        bs = BitShift(Gray{Ufixed8}, 8)
+        bs = BitShift(Gray{UFixed8}, 8)
         v = Gray(ufixed16(0.8))
-        @chk map(bs, v) Gray{Ufixed8}(0.8)
+        @chk map(bs, v) Gray{UFixed8}(0.8)
     end
 
     context("Clamp") do
@@ -92,35 +92,35 @@ facts("Map") do
         mapi = Clamp(Float32)
         @chk map(mapi,  1.2) 1.0f0
         @chk map(mapi, -1.2) 0.0f0
-        mapi = Clamp(Ufixed12)
-        @chk map(mapi, Ufixed12(1.2)) one(Ufixed12)
-        mapi = Clamp(Gray{Ufixed12})
-        @chk map(mapi, Gray(Ufixed12(1.2))) Gray(one(Ufixed12))
+        mapi = Clamp(UFixed12)
+        @chk map(mapi, UFixed12(1.2)) one(UFixed12)
+        mapi = Clamp(Gray{UFixed12})
+        @chk map(mapi, Gray(UFixed12(1.2))) Gray(one(UFixed12))
         mapi = ClampMinMax(RGB24, 0.0, 1.0)
         @chk map(mapi, 1.2) RGB24(0x00ffffff)
         @chk map(mapi, 0.5) RGB24(0x00808080)
         @chk map(mapi, -.3) RGB24(0x00000000)
-        mapi = ClampMinMax(RGB{Ufixed8}, 0.0, 1.0)
-        @chk map(mapi, 1.2) RGB{Ufixed8}(1,1,1)
-        @chk map(mapi, 0.5) RGB{Ufixed8}(0.5,0.5,0.5)
-        @chk map(mapi, -.3) RGB{Ufixed8}(0,0,0)
-        mapi = Clamp(RGB{Ufixed8})
-        @chk map(mapi, RGB(1.2,0.5,-.3)) RGB{Ufixed8}(1,0.5,0)
-        mapi = Clamp(ARGB{Ufixed8})
-        @chk map(mapi, ARGB{Float64}(1.2,0.5,-.3,0.2)) ARGB{Ufixed8}(1.0,0.5,0.0,0.2)
-        @chk map(mapi, RGBA{Float64}(1.2,0.5,-.3,0.2)) ARGB{Ufixed8}(1.0,0.5,0.0,0.2)
-        @chk map(mapi, 0.2) ARGB{Ufixed8}(0.2,0.2,0.2,1.0)
-        @chk map(mapi, GrayA{Float32}(Gray(0.2),1.2)) ARGB{Ufixed8}(0.2,0.2,0.2,1.0)
-        @chk map(mapi, GrayA{Float32}(Gray(-.4),0.8)) ARGB{Ufixed8}(0.0,0.0,0.0,0.8)
-        mapi = Clamp(RGBA{Ufixed8})
-        @chk map(mapi, ARGB{Float64}(1.2,0.5,-.3,0.2)) RGBA{Ufixed8}(1.0,0.5,0.0,0.2)
-        @chk map(mapi, RGBA{Float64}(1.2,0.5,-.3,0.2)) RGBA{Ufixed8}(1.0,0.5,0.0,0.2)
-        @chk map(mapi, 0.2) RGBA{Ufixed8}(0.2,0.2,0.2,1.0)
-        @chk map(mapi, GrayA{Float32}(Gray(0.2),1.2)) RGBA{Ufixed8}(0.2,0.2,0.2,1.0)
-        @chk map(mapi, GrayA{Float32}(Gray(-.4),0.8)) RGBA{Ufixed8}(0.0,0.0,0.0,0.8)
+        mapi = ClampMinMax(RGB{UFixed8}, 0.0, 1.0)
+        @chk map(mapi, 1.2) RGB{UFixed8}(1,1,1)
+        @chk map(mapi, 0.5) RGB{UFixed8}(0.5,0.5,0.5)
+        @chk map(mapi, -.3) RGB{UFixed8}(0,0,0)
+        mapi = Clamp(RGB{UFixed8})
+        @chk map(mapi, RGB(1.2,0.5,-.3)) RGB{UFixed8}(1,0.5,0)
+        mapi = Clamp(ARGB{UFixed8})
+        @chk map(mapi, ARGB{Float64}(1.2,0.5,-.3,0.2)) ARGB{UFixed8}(1.0,0.5,0.0,0.2)
+        @chk map(mapi, RGBA{Float64}(1.2,0.5,-.3,0.2)) ARGB{UFixed8}(1.0,0.5,0.0,0.2)
+        @chk map(mapi, 0.2) ARGB{UFixed8}(0.2,0.2,0.2,1.0)
+        @chk map(mapi, GrayA{Float32}(Gray(0.2),1.2)) ARGB{UFixed8}(0.2,0.2,0.2,1.0)
+        @chk map(mapi, GrayA{Float32}(Gray(-.4),0.8)) ARGB{UFixed8}(0.0,0.0,0.0,0.8)
+        mapi = Clamp(RGBA{UFixed8})
+        @chk map(mapi, ARGB{Float64}(1.2,0.5,-.3,0.2)) RGBA{UFixed8}(1.0,0.5,0.0,0.2)
+        @chk map(mapi, RGBA{Float64}(1.2,0.5,-.3,0.2)) RGBA{UFixed8}(1.0,0.5,0.0,0.2)
+        @chk map(mapi, 0.2) RGBA{UFixed8}(0.2,0.2,0.2,1.0)
+        @chk map(mapi, GrayA{Float32}(Gray(0.2),1.2)) RGBA{UFixed8}(0.2,0.2,0.2,1.0)
+        @chk map(mapi, GrayA{Float32}(Gray(-.4),0.8)) RGBA{UFixed8}(0.0,0.0,0.0,0.8)
         # Issue #253
-        mapi = Clamp(BGRA{Ufixed8})
-        @chk map(mapi, RGBA{Float32}(1.2,0.5,-.3,0.2)) BGRA{Ufixed8}(1.0,0.5,0.0,0.2)
+        mapi = Clamp(BGRA{UFixed8})
+        @chk map(mapi, RGBA{Float32}(1.2,0.5,-.3,0.2)) BGRA{UFixed8}(1.0,0.5,0.0,0.2)
 
         @chk clamp(RGB{Float32}(-0.2,0.5,1.8)) RGB{Float32}(0.0,0.5,1.0)
         @chk clamp(ARGB{Float64}(1.2,0.5,-.3,0.2)) ARGB{Float64}(1.0,0.5,0.0,0.2)
@@ -130,20 +130,20 @@ facts("Map") do
     context("Issue #285") do
         a = [Gray(0xd0uf8)]
         a1 = 10*a
-        mapi = mapinfo(Gray{Ufixed8}, a1)
+        mapi = mapinfo(Gray{UFixed8}, a1)
         @chk map(mapi, a1[1]) Gray(0xffuf8)
     end
 
     context("ScaleMinMax") do
-        mapi = ScaleMinMax(Ufixed8, 100, 1000)
-        @chk map(mapi, 100) Ufixed8(0.0)
-        @chk map(mapi, 1000) Ufixed8(1.0)
-        @chk map(mapi, 10) Ufixed8(0.0)
-        @chk map(mapi, 2000) Ufixed8(1.0)
-        @chk map(mapi, 550) Ufixed8(0.5)
-        mapinew = ScaleMinMax(Ufixed8, [100,500,1000])
+        mapi = ScaleMinMax(UFixed8, 100, 1000)
+        @chk map(mapi, 100) UFixed8(0.0)
+        @chk map(mapi, 1000) UFixed8(1.0)
+        @chk map(mapi, 10) UFixed8(0.0)
+        @chk map(mapi, 2000) UFixed8(1.0)
+        @chk map(mapi, 550) UFixed8(0.5)
+        mapinew = ScaleMinMax(UFixed8, [100,500,1000])
         @fact mapinew --> mapi
-        mapinew = ScaleMinMax(Ufixed8, [0,500,2000], convert(UInt16, 100), convert(UInt16, 1000))
+        mapinew = ScaleMinMax(UFixed8, [0,500,2000], convert(UInt16, 100), convert(UInt16, 1000))
         @fact mapinew --> mapi
         mapi = ScaleMinMax(ARGB32, 100, 1000)
         @chk map(mapi, 100) ARGB32(0,0,0,1)
@@ -153,22 +153,22 @@ facts("Map") do
         @chk map(mapi,  50) RGB(0.0f0, 0.0f0, 0.0f0)
         @chk map(mapi, 550) RGB{Float32}(0.5, 0.5, 0.5)
         @chk map(mapi,2000) RGB(1.0f0, 1.0f0, 1.0f0)
-        A = Gray{Ufixed8}[Ufixed8(0.1), Ufixed8(0.9)]
+        A = Gray{UFixed8}[UFixed8(0.1), UFixed8(0.9)]
         @fact mapinfo(RGB24, A) --> MapNone{RGB24}()
-        mapi = ScaleMinMax(RGB24, A, zero(Gray{Ufixed8}), one(Gray{Ufixed8}))
+        mapi = ScaleMinMax(RGB24, A, zero(Gray{UFixed8}), one(Gray{UFixed8}))
         @fact map(mapi, A) --> map(mapinfo(RGB24, A), A)
-        mapi = ScaleMinMax(Float32, [Gray(one(Ufixed8))], 0, 1) # issue #180
-        @chk map(mapi, Gray(Ufixed8(0.6))) 0.6f0
+        mapi = ScaleMinMax(Float32, [Gray(one(UFixed8))], 0, 1) # issue #180
+        @chk map(mapi, Gray(UFixed8(0.6))) 0.6f0
         @fact_throws ErrorException ScaleMinMax(Float32, 0, 0, 1.0) # issue #245
         A = [Gray{Float64}(0.2)]
-        mapi = ScaleMinMax(RGB{Ufixed8}, A, 0.0, 0.2)
-        @fact map(mapi, A) --> [RGB{Ufixed8}(1,1,1)]
+        mapi = ScaleMinMax(RGB{UFixed8}, A, 0.0, 0.2)
+        @fact map(mapi, A) --> [RGB{UFixed8}(1,1,1)]
         mapi = ScaleMinMax(Gray{U8}, Gray{U8}(0.2), Gray{U8}(0.4))
-        @chk_approx map(mapi, Gray{U8}(0.3)) Gray{U8}(0.5)
-        @chk_approx map(mapi, 0.3) Gray{U8}(0.5)
+        @fact Gray{U8}(0.49) <= map(mapi, Gray{U8}(0.3)) <= Gray{U8}(0.5) --> true
+        @fact Gray{U8}(0.49) <= map(mapi, 0.3) <= Gray{U8}(0.5) --> true
         mapi = ScaleMinMax(Gray{U8}, 0.2, 0.4)
-        @chk_approx map(mapi, Gray{U8}(0.3)) Gray{U8}(0.5)
-        @chk_approx map(mapi, 0.3) Gray{U8}(0.5)
+        @fact Gray{U8}(0.49) <= map(mapi, Gray{U8}(0.3)) <= Gray{U8}(0.5) --> true
+        @fact Gray{U8}(0.49) <= map(mapi, 0.3) <= Gray{U8}(0.5) --> true
     end
 
     context("ScaleSigned") do
@@ -194,9 +194,9 @@ facts("Map") do
         # Issue #304
         A = rand(UInt16, 3, 2, 2)
         imgr = colorim(A)
-        mi1 = ScaleAutoMinMax(RGB{Ufixed16})
+        mi1 = ScaleAutoMinMax(RGB{UFixed16})
         res1 = raw(map(mi1, imgr))
-        mi2 = ScaleAutoMinMax(Ufixed16)
+        mi2 = ScaleAutoMinMax(UFixed16)
         res2 = raw(map(mi2, raw(imgr)))
         if res1 != res2
             @show A
@@ -206,9 +206,9 @@ facts("Map") do
 
     context("Scaling and ssd") do
         img = Images.grayim(fill(typemax(UInt16), 3, 3))
-        mapi = Images.mapinfo(Ufixed8, img)
+        mapi = Images.mapinfo(UFixed8, img)
         img8 = map(mapi, img)
-        @fact all(img8 .== typemax(Ufixed8)) --> true
+        @fact all(img8 .== typemax(UFixed8)) --> true
         A = 0
         mnA, mxA = 1.0, -1.0
         while mnA > 0 || mxA < 0
@@ -217,11 +217,11 @@ facts("Map") do
         end
         offset = 30.0
         img = convert(Images.Image, A .+ offset)
-        mapi = Images.ScaleMinMax(Ufixed8, offset, offset+mxA, 1/mxA)
+        mapi = Images.ScaleMinMax(UFixed8, offset, offset+mxA, 1/mxA)
         imgs = map(mapi, img)
         @fact minimum(imgs) --> 0
         @fact maximum(imgs) --> 1
-        @fact eltype(imgs) --> Ufixed8
+        @fact eltype(imgs) --> UFixed8
         imgs = Images.imadjustintensity(img, [])
         @fact_throws ErrorException Images.imadjustintensity(img, [1])
         mnA = minimum(A)
@@ -232,8 +232,8 @@ facts("Map") do
         B = map(Images.ClampMax(UInt8, 7), A)
         @fact (eltype(B) == UInt8 && B == [1 4 7; 2 5 7; 3 6 7]) --> true
 
-        A = reinterpret(Ufixed8, [convert(UInt8,1):convert(UInt8,24);], (3, 2, 4))
-        img = reinterpret(RGB{Ufixed8}, A, (2,4))
+        A = reinterpret(UFixed8, [convert(UInt8,1):convert(UInt8,24);], (3, 2, 4))
+        img = reinterpret(RGB{UFixed8}, A, (2,4))
         @fact separate(img) --> permutedims(A, (2,3,1))
     end
 
@@ -274,10 +274,10 @@ facts("Map") do
     end
 
     context("Map and indexed images") do
-        img = Images.ImageCmap([1 2 3; 3 2 1], [RGB{Ufixed16}(1.0,0.6,0.4), RGB{Ufixed16}(0.2, 0.4, 0.6), RGB{Ufixed16}(0.5,0.5,0.5)])
-        mapi = MapNone(RGB{Ufixed8})
+        img = Images.ImageCmap([1 2 3; 3 2 1], [RGB{UFixed16}(1.0,0.6,0.4), RGB{UFixed16}(0.2, 0.4, 0.6), RGB{UFixed16}(0.5,0.5,0.5)])
+        mapi = MapNone(RGB{UFixed8})
         imgd = map(mapi, img)
-        cmap = [RGB{Ufixed8}(1.0,0.6,0.4), RGB{Ufixed8}(0.2, 0.4, 0.6), RGB{Ufixed8}(0.5,0.5,0.5)]
+        cmap = [RGB{UFixed8}(1.0,0.6,0.4), RGB{UFixed8}(0.2, 0.4, 0.6), RGB{UFixed8}(0.5,0.5,0.5)]
         @fact imgd --> reshape(cmap[[1,3,2,2,3,1]], (2,3))
     end
 end

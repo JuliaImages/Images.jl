@@ -1,10 +1,10 @@
 # An array type for colorized overlays of grayscale images
-immutable Overlay{T,N,NC,AT<:(@compat Tuple{Vararg{AbstractArray}}),MITypes<:(@compat Tuple{Vararg{MapInfo}})} <: AbstractArray{RGB{T},N}
+immutable Overlay{T,N,NC,AT<:Tuple{Vararg{AbstractArray}},MITypes<:Tuple{Vararg{MapInfo}}} <: AbstractArray{RGB{T},N}
     channels::AT   # this holds the grayscale arrays
     colors::NTuple{NC,RGB{T}}
     mapi::MITypes
 
-    function Overlay(channels::(@compat Tuple{Vararg{AbstractArray}}), colors, mapi::(@compat Tuple{Vararg{MapInfo}}))
+    function Overlay(channels::Tuple{Vararg{AbstractArray}}, colors, mapi::Tuple{Vararg{MapInfo}})
         length(channels) == NC || error("Number of channels must match number of colors")
         length(mapi) == NC   || error("Number of ConvertInfo objects must match number of colors")
         for i = 2:NC
@@ -13,12 +13,12 @@ immutable Overlay{T,N,NC,AT<:(@compat Tuple{Vararg{AbstractArray}}),MITypes<:(@c
         new(channels, colors, mapi)
     end
 end
-Overlay(channels::(@compat Tuple{Vararg{AbstractArray}}), colors::AbstractVector, mapi::(@compat Tuple{Vararg{MapInfo}})) =
+Overlay(channels::Tuple{Vararg{AbstractArray}}, colors::AbstractVector, mapi::Tuple{Vararg{MapInfo}}) =
     Overlay(channels,tuple(colors...),mapi)
-Overlay{NC,T}(channels::(@compat Tuple{Vararg{AbstractArray}}), colors::NTuple{NC,RGB{T}}, mapi::(@compat Tuple{Vararg{MapInfo}})) =
+Overlay{NC,T}(channels::Tuple{Vararg{AbstractArray}}, colors::NTuple{NC,RGB{T}}, mapi::Tuple{Vararg{MapInfo}}) =
     Overlay{T,ndims(channels[1]),NC,typeof(channels),typeof(mapi)}(channels,colors,mapi)
 
-function Overlay(channels::(@compat Tuple{Vararg{AbstractArray}}), colors,
+function Overlay(channels::Tuple{Vararg{AbstractArray}}, colors,
                  clim = ntuple(i->(zero(eltype(channels[i])), one(eltype(channels[i]))), length(channels)))
     n = length(channels)
     for i = 1:n
@@ -31,7 +31,7 @@ function Overlay(channels::(@compat Tuple{Vararg{AbstractArray}}), colors,
 end
 
 # Returns the overlay as an image, if possible
-function OverlayImage(channels::(@compat Tuple{Vararg{AbstractArray}}), colors::(@compat Tuple{Vararg{Colorant}}), arg)
+function OverlayImage(channels::Tuple{Vararg{AbstractArray}}, colors::Tuple{Vararg{Colorant}}, arg)
     ovr = Overlay(channels, colors, arg)
     local prop
     haveprop = false

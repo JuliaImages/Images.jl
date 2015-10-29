@@ -61,7 +61,7 @@ hypot(img1::AbstractImageDirect, img2::AbstractImageDirect) = shareproperties(im
 @vectorize_2arg Gray atan2
 @vectorize_2arg Gray hypot
 
-@compat function sum(img::AbstractImageDirect, region::Union{AbstractVector,Tuple,Integer})
+function sum(img::AbstractImageDirect, region::Union{AbstractVector,Tuple,Integer})
     f = prod(size(img)[[region...]])
     out = copyproperties(img, sum(data(img), region))
     if in(colordim(img), region)
@@ -91,36 +91,38 @@ function meanfinite{T<:AbstractFloat}(img::AbstractImageDirect{T}, region)
 end
 meanfinite(img::AbstractImageIndexed, region) = meanfinite(convert(Image, img), region)
 # Note that you have to zero S and K upon entry
-@ngenerate N typeof((S,K)) function sumfinite!{T,N}(S, K, A::AbstractArray{T,N})
-    isempty(A) && return S, K
-    @nexprs N d->(sizeS_d = size(S,d))
-    sizeA1 = size(A, 1)
-    if size(S, 1) == 1 && sizeA1 > 1
-        # When we are reducing along dim == 1, we can accumulate to a temporary
-        @inbounds @nloops N i d->(d>1? (1:size(A,d)) : (1:1)) d->(j_d = sizeS_d==1 ? 1 : i_d) begin
-            s = @nref(N, S, j)
-            k = @nref(N, K, j)
-            for i_1 = 1:sizeA1
-                tmp = @nref(N, A, i)
+@generated function sumfinite!{T,N}(S, K, A::AbstractArray{T,N})
+    quote
+        isempty(A) && return S, K
+        @nexprs $N d->(sizeS_d = size(S,d))
+        sizeA1 = size(A, 1)
+        if size(S, 1) == 1 && sizeA1 > 1
+            # When we are reducing along dim == 1, we can accumulate to a temporary
+            @inbounds @nloops $N i d->(d>1? (1:size(A,d)) : (1:1)) d->(j_d = sizeS_d==1 ? 1 : i_d) begin
+                s = @nref($N, S, j)
+                k = @nref($N, K, j)
+                for i_1 = 1:sizeA1
+                    tmp = @nref($N, A, i)
+                    if isfinite(tmp)
+                        s += tmp
+                        k += 1
+                    end
+                end
+                @nref($N, S, j) = s
+                @nref($N, K, j) = k
+            end
+        else
+            # Accumulate to array storage
+            @inbounds @nloops $N i A d->(j_d = sizeS_d==1 ? 1 : i_d) begin
+                tmp = @nref($N, A, i)
                 if isfinite(tmp)
-                    s += tmp
-                    k += 1
+                    @nref($N, S, j) += tmp
+                    @nref($N, K, j) += 1
                 end
             end
-            @nref(N, S, j) = s
-            @nref(N, K, j) = k
         end
-    else
-        # Accumulate to array storage
-        @inbounds @nloops N i A d->(j_d = sizeS_d==1 ? 1 : i_d) begin
-            tmp = @nref(N, A, i)
-            if isfinite(tmp)
-                @nref(N, S, j) += tmp
-                @nref(N, K, j) += 1
-            end
-        end
+        S, K
     end
-    S, K
 end
 
 # Logical operations
@@ -200,8 +202,8 @@ end
 
 minfinite_scalar{T}(a::T, b::T) = isfinite(a) ? (b < a ? b : a) : b
 maxfinite_scalar{T}(a::T, b::T) = isfinite(a) ? (b > a ? b : a) : b
-@compat minfinite_scalar{T<:Union{Integer,FixedPoint}}(a::T, b::T) = b < a ? b : a
-@compat maxfinite_scalar{T<:Union{Integer,FixedPoint}}(a::T, b::T) = b > a ? b : a
+minfinite_scalar{T<:Union{Integer,FixedPoint}}(a::T, b::T) = b < a ? b : a
+maxfinite_scalar{T<:Union{Integer,FixedPoint}}(a::T, b::T) = b > a ? b : a
 minfinite_scalar(a, b) = minfinite_scalar(promote(a, b)...)
 maxfinite_scalar(a, b) = maxfinite_scalar(promote(a, b)...)
 
@@ -216,8 +218,8 @@ function maxfinite_scalar{C<:AbstractRGB}(c1::C, c2::C)
       maxfinite_scalar(c1.b, c2.b))
 end
 
-@compat sentinel_min{T<:Union{Integer,FixedPoint}}(::Type{T}) = typemax(T)
-@compat sentinel_max{T<:Union{Integer,FixedPoint}}(::Type{T}) = typemin(T)
+sentinel_min{T<:Union{Integer,FixedPoint}}(::Type{T}) = typemax(T)
+sentinel_max{T<:Union{Integer,FixedPoint}}(::Type{T}) = typemin(T)
 sentinel_min{T<:AbstractFloat}(::Type{T}) = convert(T, NaN)
 sentinel_max{T<:AbstractFloat}(::Type{T}) = convert(T, NaN)
 sentinel_min{C<:AbstractRGB}(::Type{C}) = _sentinel_min(C, eltype(C))
@@ -384,7 +386,7 @@ macro test_approx_eq_sigma_eps(A, B, sigma, eps)
 end
 
 # Array padding
-@compat function padindexes{T,n}(img::AbstractArray{T,n}, prepad::Union{Vector{Int},Dims}, postpad::Union{Vector{Int},Dims}, border::AbstractString)
+function padindexes{T,n}(img::AbstractArray{T,n}, prepad::Union{Vector{Int},Dims}, postpad::Union{Vector{Int},Dims}, border::AbstractString)
     I = Array(Vector{Int}, n)
     for d = 1:n
         I[d] = padindexes(img, d, prepad[d], postpad[d], border)
@@ -392,17 +394,17 @@ end
     I
 end
 
-@compat function padarray{T,n}(img::AbstractArray{T,n}, prepad::Union{Vector{Int},Dims}, postpad::Union{Vector{Int},Dims}, border::AbstractString)
+function padarray{T,n}(img::AbstractArray{T,n}, prepad::Union{Vector{Int},Dims}, postpad::Union{Vector{Int},Dims}, border::AbstractString)
     img[padindexes(img, prepad, postpad, border)...]::Array{T,n}
 end
-@compat function padarray{n}(img::BitArray{n}, prepad::Union{Vector{Int},Dims}, postpad::Union{Vector{Int},Dims}, border::AbstractString)
+function padarray{n}(img::BitArray{n}, prepad::Union{Vector{Int},Dims}, postpad::Union{Vector{Int},Dims}, border::AbstractString)
     img[padindexes(img, prepad, postpad, border)...]::BitArray{n}
 end
-@compat function padarray{n,A<:BitArray}(img::Image{Bool,n,A}, prepad::Union{Vector{Int},Dims}, postpad::Union{Vector{Int},Dims}, border::AbstractString)
+function padarray{n,A<:BitArray}(img::Image{Bool,n,A}, prepad::Union{Vector{Int},Dims}, postpad::Union{Vector{Int},Dims}, border::AbstractString)
     img[padindexes(img, prepad, postpad, border)...]::BitArray{n}
 end
 
-@compat function padarray{T,n}(img::AbstractArray{T,n}, prepad::Union{Vector{Int},Dims}, postpad::Union{Vector{Int},Dims}, border::AbstractString, value)
+function padarray{T,n}(img::AbstractArray{T,n}, prepad::Union{Vector{Int},Dims}, postpad::Union{Vector{Int},Dims}, border::AbstractString, value)
     if border != "value"
         return padarray(img, prepad, postpad, border)
     end
@@ -413,11 +415,11 @@ end
     A::Array{T,n}
 end
 
-@compat padarray{T,n}(img::AbstractArray{T,n}, padding::Union{Vector{Int},Dims}, border::AbstractString = "replicate") = padarray(img, padding, padding, border)
+padarray{T,n}(img::AbstractArray{T,n}, padding::Union{Vector{Int},Dims}, border::AbstractString = "replicate") = padarray(img, padding, padding, border)
 # Restrict the following to Number to avoid trouble when img is an Array{AbstractString}
-@compat padarray{T<:Number,n}(img::AbstractArray{T,n}, padding::Union{Vector{Int},Dims}, value::T) = padarray(img, padding, padding, "value", value)
+padarray{T<:Number,n}(img::AbstractArray{T,n}, padding::Union{Vector{Int},Dims}, value::T) = padarray(img, padding, padding, "value", value)
 
-@compat function padarray{T,n}(img::AbstractArray{T,n}, padding::Union{Vector{Int},Dims}, border::AbstractString, direction::AbstractString)
+function padarray{T,n}(img::AbstractArray{T,n}, padding::Union{Vector{Int},Dims}, border::AbstractString, direction::AbstractString)
     if direction == "both"
         return padarray(img, padding, padding, border)
     elseif direction == "pre"
@@ -573,25 +575,28 @@ function imfilter_fft_inseparable{T<:Real,K,N}(img::AbstractArray{T,N}, kern::Ab
 end
 
 # Generalization of rot180
-@ngenerate N Array{T,N} function reflect{T,N}(A::AbstractArray{T,N})
-    B = Array(T, size(A))
-    @nexprs N d->(n_d = size(A, d)+1)
-    @nloops N i A d->(j_d = n_d - i_d) begin
-        @nref(N, B, j) = @nref(N, A, i)
+@generated function reflect{T,N}(A::AbstractArray{T,N})
+    quote
+        B = Array(T, size(A))
+        @nexprs $N d->(n_d = size(A, d)+1)
+        @nloops $N i A d->(j_d = n_d - i_d) begin
+            @nref($N, B, j) = @nref($N, A, i)
+        end
+        B
     end
-    B
 end
+
 
 for N = 1:5
     @eval begin
-        function copyreal!{T<:Real}(dst::Array{T,$N}, src, I::(@compat Tuple{Vararg{UnitRange{Int}}}))
+        function copyreal!{T<:Real}(dst::Array{T,$N}, src, I::Tuple{Vararg{UnitRange{Int}}})
             @nexprs $N d->(I_d = I[d])
             @nloops $N i dst d->(j_d = first(I_d)+i_d-1) begin
                 (@nref $N dst i) = real(@nref $N src j)
             end
             dst
         end
-        function copyreal!{T<:Complex}(dst::Array{T,$N}, src, I::(@compat Tuple{Vararg{UnitRange{Int}}}))
+        function copyreal!{T<:Complex}(dst::Array{T,$N}, src, I::Tuple{Vararg{UnitRange{Int}}})
             @nexprs $N d->I_d = I[d]
             @nloops $N i dst d->(j_d = first(I_d)+i_d-1) begin
                 (@nref $N dst i) = @nref $N src j
@@ -643,7 +648,7 @@ function imfilter_gaussian{T<:AbstractFloat}(img::AbstractArray{T}, sigma::Vecto
 end
 
 # For these types, you can't have NaNs
-@compat function imfilter_gaussian{T<:Union{Integer,Ufixed},TF<:AbstractFloat}(img::AbstractArray{T}, sigma::Vector; emit_warning = true, astype::Type{TF}=Float64)
+function imfilter_gaussian{T<:Union{Integer,UFixed},TF<:AbstractFloat}(img::AbstractArray{T}, sigma::Vector; emit_warning = true, astype::Type{TF}=Float64)
     A = convert(Array{TF}, data(img))
     if all(sigma .== 0)
         return shareproperties(img, A)
@@ -918,9 +923,9 @@ if isdefined(:restrict)
     import Grid.restrict
 end
 
-restrict(img::AbstractImageDirect, ::(@compat Tuple{})) = img
+restrict(img::AbstractImageDirect, ::Tuple{}) = img
 
-@compat function restrict(img::AbstractImageDirect, region::Union{Dims, Vector{Int}}=coords_spatial(img))
+function restrict(img::AbstractImageDirect, region::Union{Dims, Vector{Int}}=coords_spatial(img))
     A = data(img)
     for dim in region
         A = _restrict(A, dim)
@@ -932,14 +937,14 @@ restrict(img::AbstractImageDirect, ::(@compat Tuple{})) = img
     props["pixelspacing"] = ps
     Image(A, props)
 end
-@compat function restrict(A::AbstractArray, region::Union{Dims, Vector{Int}}=coords_spatial(A))
+function restrict(A::AbstractArray, region::Union{Dims, Vector{Int}}=coords_spatial(A))
     for dim in region
         A = _restrict(A, dim)
     end
     A
 end
 
-@compat function restrict{S<:ByteString}(img::AbstractImageDirect, region::Union{Tuple{Vararg{ByteString}}, Vector{S}})
+function restrict{S<:ByteString}(img::AbstractImageDirect, region::Union{Tuple{Vararg{ByteString}}, Vector{S}})
     so = spatialorder(img)
     regioni = Int[]
     for i = 1:length(region)

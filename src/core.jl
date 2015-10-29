@@ -25,10 +25,10 @@ ImageCmap(data::AbstractArray, cmap::AbstractVector; kwargs...) = ImageCmap(data
 
 # Convenience constructors
 grayim(A::AbstractImage) = A
-grayim(A::AbstractArray{UInt8,2})  = grayim(reinterpret(Ufixed8, A))
-grayim(A::AbstractArray{UInt16,2}) = grayim(reinterpret(Ufixed16, A))
-grayim(A::AbstractArray{UInt8,3})  = grayim(reinterpret(Ufixed8, A))
-grayim(A::AbstractArray{UInt16,3}) = grayim(reinterpret(Ufixed16, A))
+grayim(A::AbstractArray{UInt8,2})  = grayim(reinterpret(UFixed8, A))
+grayim(A::AbstractArray{UInt16,2}) = grayim(reinterpret(UFixed16, A))
+grayim(A::AbstractArray{UInt8,3})  = grayim(reinterpret(UFixed8, A))
+grayim(A::AbstractArray{UInt16,3}) = grayim(reinterpret(UFixed16, A))
 grayim{T}(A::AbstractArray{T,2}) = Image(A; colorspace="Gray", spatialorder=["x","y"])
 grayim{T}(A::AbstractArray{T,3}) = Image(A; colorspace="Gray", spatialorder=["x","y","z"])
 
@@ -58,10 +58,10 @@ function colorim{T}(A::AbstractArray{T,3}, colorspace)
     end
 end
 
-colorim(A::AbstractArray{UInt8,3})  = colorim(reinterpret(Ufixed8, A))
-colorim(A::AbstractArray{UInt16,3}) = colorim(reinterpret(Ufixed16, A))
-colorim(A::AbstractArray{UInt8,3},  colorspace) = colorim(reinterpret(Ufixed8, A), colorspace)
-colorim(A::AbstractArray{UInt16,3}, colorspace) = colorim(reinterpret(Ufixed16, A), colorspace)
+colorim(A::AbstractArray{UInt8,3})  = colorim(reinterpret(UFixed8, A))
+colorim(A::AbstractArray{UInt16,3}) = colorim(reinterpret(UFixed16, A))
+colorim(A::AbstractArray{UInt8,3},  colorspace) = colorim(reinterpret(UFixed8, A), colorspace)
+colorim(A::AbstractArray{UInt16,3}, colorspace) = colorim(reinterpret(UFixed16, A), colorspace)
 
 
 #### Core operations ####
@@ -73,6 +73,8 @@ size(img::AbstractImage, i::Integer) = size(img.data, i)
 size(img::AbstractImage, dimname::AbstractString) = size(img.data, dimindex(img, dimname))
 
 ndims(img::AbstractImage) = ndims(img.data)
+
+linearindexing(img::Image) = linearindexing(img.data)
 
 strides(img::AbstractImage) = strides(img.data)
 
@@ -150,7 +152,7 @@ reinterpret{CV<:Colorant}(A::StridedArray{CV}) = reinterpret(eltype(CV), A)
 # Images
 reinterpret{CV1<:Colorant,CV2<:Colorant}(::Type{CV1}, img::AbstractImageDirect{CV2}) =
     shareproperties(img, reinterpret(CV1, data(img)))
-@compat function reinterpret{CV<:Colorant}(::Type{UInt32}, img::AbstractImageDirect{CV})
+function reinterpret{CV<:Colorant}(::Type{UInt32}, img::AbstractImageDirect{CV})
     CV <: Union{RGB24, ARGB32} || (CV <: AbstractRGB && sizeof(CV) == 4) || error("Can't convert $CV to UInt32")
     A = reinterpret(UInt32, data(img))
     props = copy(properties(img))
@@ -170,7 +172,7 @@ end
 ## reinterpret: T->Color
 # We have to distinguish two forms of call:
 #   form 1: reinterpret(RGB, img)
-#   form 2: reinterpret(RGB{Ufixed8}, img)
+#   form 2: reinterpret(RGB{UFixed8}, img)
 # Arrays
 reinterpret{T,CV<:Colorant}(::Type{CV}, A::Array{T,1}) = _reinterpret(CV, eltype(CV), A)
 reinterpret{T,CV<:Colorant}(::Type{CV}, A::Array{T})   = _reinterpret(CV, eltype(CV), A)
@@ -207,13 +209,13 @@ function reinterpret{T,S}(::Type{T}, img::AbstractImageDirect{S})
     shareproperties(img, reinterpret(T, data(img)))
 end
 
-## To get data in raw format, and unwrap UfixedBase if present
+## To get data in raw format, and unwrap UFixed if present
 function raw(img::AbstractArray)
     elemType = eltype(eltype(data(img)))
 
-    @compat if (elemType <: Union{})  # weird fallback case
+    if (elemType <: Union{})  # weird fallback case
         data(img)
-    elseif eltype(eltype(data(img))) <: FixedPointNumbers.UfixedBase
+    elseif eltype(eltype(data(img))) <: FixedPointNumbers.UFixed
         reinterpret( FixedPointNumbers.rawtype(eltype(eltype(img))), data(img) )
     else
         data(img)
@@ -249,10 +251,8 @@ end
 convert(::Type{Array}, img::AbstractImage) = convert(Array{eltype(img)}, img)
 
 convert{C<:Colorant}(::Type{Image{C}}, img::Image{C}) = img
-if !(VERSION < v"0.4.0-dev")
-    convert{Cdest<:Colorant,Csrc<:Colorant}(::Type{Image{Cdest}}, img::Image{Csrc}) =
+convert{Cdest<:Colorant,Csrc<:Colorant}(::Type{Image{Cdest}}, img::Image{Csrc}) =
         copyproperties(img, _convert(Array{Cdest}, data(img)))  # FIXME when Julia issue ?? is fixed
-end
 convert{Cdest<:Colorant,Csrc<:Colorant}(::Type{Image{Cdest}}, img::AbstractImageDirect{Csrc}) =
     copyproperties(img, _convert(Array{Cdest}, data(img)))  # FIXME when Julia issue ?? is fixed
 _convert{Cdest<:Colorant,Csrc<:Colorant,N}(::Type{Array{Cdest}}, img::AbstractArray{Csrc,N}) =
@@ -287,13 +287,13 @@ end
 separate(A::AbstractArray) = A
 
 # Image{Numbers} -> Image{Colorant} (the opposite of separate)
-@compat convert{C<:Colorant,T<:Fractional}(::Type{Image{C}}, img::Union{AbstractArray{T},AbstractImageDirect{T}}) =
+convert{C<:Colorant,T<:Fractional}(::Type{Image{C}}, img::Union{AbstractArray{T},AbstractImageDirect{T}}) =
     _convert(Image{C}, eltype(C), img)
-@compat _convert{C<:Colorant,T<:Fractional}(::Type{Image{C}}, ::Type{Any}, img::Union{AbstractArray{T},AbstractImageDirect{T}}) =
+_convert{C<:Colorant,T<:Fractional}(::Type{Image{C}}, ::Type{Any}, img::Union{AbstractArray{T},AbstractImageDirect{T}}) =
     _convert(Image{C{T}}, img)
-@compat _convert{C<:Colorant,T<:Fractional}(::Type{Image{C}}, ::DataType, img::Union{AbstractArray{T},AbstractImageDirect{T}}) =
+_convert{C<:Colorant,T<:Fractional}(::Type{Image{C}}, ::DataType, img::Union{AbstractArray{T},AbstractImageDirect{T}}) =
     _convert(Image{C}, img)
-@compat function _convert{C<:Colorant,T<:Fractional}(::Type{Image{C}}, img::Union{AbstractArray{T},AbstractImageDirect{T}})
+function _convert{C<:Colorant,T<:Fractional}(::Type{Image{C}}, img::Union{AbstractArray{T},AbstractImageDirect{T}})
     cd = colordim(img)
     if cd > 0
         p = [cd; setdiff(1:ndims(img), cd)]
@@ -314,7 +314,7 @@ end
 #    img["x", 100:400, "t", 32]
 # where anything not mentioned by name is taken to include the whole range
 
-@compat typealias RealIndex{T<:Real} Union{T, AbstractArray{T}}
+typealias RealIndex{T<:Real} Union{T, AbstractArray{T}}
 
 # setindex!
 setindex!(img::AbstractImage, X, i::Real) = setindex!(img.data, X, i)
@@ -380,7 +380,7 @@ function getindexim(img::AbstractImage, I::RealIndex...)
     ret
 end
 
-@compat getindexim(img::AbstractImage, dimname::ASCIIString, ind::Union{Real,AbstractArray}, nameind...) = getindexim(img, coords(img, dimname, ind, nameind...)...)
+getindexim(img::AbstractImage, dimname::ASCIIString, ind::Union{Real,AbstractArray}, nameind...) = getindexim(img, coords(img, dimname, ind, nameind...)...)
 
 subim(img::AbstractImage, I::RangeIndex...) = _subim(img, I)
 _subim{TT}(img, I::TT) = shareproperties(img, sub(img.data, I...))  # work around #8504
@@ -449,8 +449,8 @@ sliceim(img::AbstractImage, I...) = sliceim(img, ntuple(i-> isa(I[i], Colon) ? (
 # Iteration
 # Defer to the array object in case it has special iteration defined
 if VERSION >= v"0.4.0-dev+1623"
-    next{T,N}(img::AbstractImage{T,N}, s::(@compat Tuple{Bool,Base.IteratorsMD.CartesianIndex{N}})) = next(data(img), s)
-    done{T,N}(img::AbstractImage{T,N}, s::(@compat Tuple{Bool,Base.IteratorsMD.CartesianIndex{N}})) = done(data(img), s)
+    next{T,N}(img::AbstractImage{T,N}, s::Tuple{Bool,Base.IteratorsMD.CartesianIndex{N}}) = next(data(img), s)
+    done{T,N}(img::AbstractImage{T,N}, s::Tuple{Bool,Base.IteratorsMD.CartesianIndex{N}}) = done(data(img), s)
 end
 start(img::AbstractImage) = start(data(img))
 next(img::AbstractImage, s) = next(data(img), s)
@@ -460,9 +460,9 @@ done(img::AbstractImage, s) = done(data(img), s)
 # We'll frequently want to pull out different 2d slices from the same image, so here's a type and set of functions making that easier.
 # We deliberately do not require the user to specify the full list of new slicing/ranging parameters, as often we'll want to change some aspects (e.g., z-slice) but not others (e.g., color coordinates)
 type SliceData
-    slicedims::(@compat Tuple{Vararg{Int}})
-    slicestrides::(@compat Tuple{Vararg{Int}})
-    rangedims::(@compat Tuple{Vararg{Int}})
+    slicedims::Tuple{Vararg{Int}}
+    slicestrides::Tuple{Vararg{Int}}
+    rangedims::Tuple{Vararg{Int}}
 
     function SliceData(A::AbstractArray, slicedims::Int...)
         keep = trues(ndims(A))
@@ -524,7 +524,7 @@ function reslice!(img::AbstractImage, sd::SliceData, I::Int...)
     img
 end
 
-function rerange!(A::SubArray, sd::SliceData, I::(@compat Tuple{Vararg{RangeIndex}}))
+function rerange!(A::SubArray, sd::SliceData, I::Tuple{Vararg{RangeIndex}})
     indexes = RangeIndex[A.indexes...]
     for i = 1:length(I)
         indexes[sd.rangedims[i]] = I[i]
@@ -534,7 +534,7 @@ function rerange!(A::SubArray, sd::SliceData, I::(@compat Tuple{Vararg{RangeInde
     A
 end
 
-function rerange!(img::AbstractImage, sd::SliceData, I::(@compat Tuple{Vararg{RangeIndex}}))
+function rerange!(img::AbstractImage, sd::SliceData, I::Tuple{Vararg{RangeIndex}})
     rerange!(img.data, sd, I...)
     img
 end
@@ -628,13 +628,13 @@ end
 #     meaning (horizontal and vertical, respectively, irrespective of storage order).
 #     If supplied, you must have one entry per spatial dimension.
 
-properties(A::AbstractArray) = @compat Dict(
+properties(A::AbstractArray) = Dict(
     "colorspace" => colorspace(A),
     "colordim" => colordim(A),
     "timedim" => timedim(A),
     "pixelspacing" => pixelspacing(A),
     "spatialorder" => spatialorder(A))
-properties{C<:Colorant}(A::AbstractArray{C}) = @compat Dict(
+properties{C<:Colorant}(A::AbstractArray{C}) = Dict(
     "timedim" => timedim(A),
     "pixelspacing" => pixelspacing(A),
     "spatialorder" => spatialorder(A))
@@ -896,9 +896,9 @@ function spatialpermutation(to, img::AbstractImage)
 end
 
 # Permute the dimensions of an image, also permuting the relevant properties. If you have non-default properties that are vectors or matrices relative to spatial dimensions, include their names in the list of spatialprops.
-permutedims(img::AbstractImage, p::(@compat Tuple{}), spatialprops::Vector = spatialproperties(img)) = img
+permutedims(img::AbstractImage, p::Tuple{}, spatialprops::Vector = spatialproperties(img)) = img
 
-@compat function permutedims(img::AbstractImage, p::Union{Vector{Int}, Tuple{Vararg{Int}}}, spatialprops::Vector = spatialproperties(img))
+function permutedims(img::AbstractImage, p::Union{Vector{Int}, Tuple{Vararg{Int}}}, spatialprops::Vector = spatialproperties(img))
     if length(p) != ndims(img)
         error("The permutation must have length equal to the number of dimensions")
     end
@@ -933,7 +933,7 @@ permutedims(img::AbstractImage, p::(@compat Tuple{}), spatialprops::Vector = spa
     ret
 end
 
-@compat permutedims{S<:AbstractString}(img::AbstractImage, pstr::Union{Vector{S}, Tuple{Vararg{S}}}, spatialprops::Vector = spatialproperties(img)) = permutedims(img, dimindexes(img, pstr...), spatialprops)
+permutedims{S<:AbstractString}(img::AbstractImage, pstr::Union{Vector{S}, Tuple{Vararg{S}}}, spatialprops::Vector = spatialproperties(img)) = permutedims(img, dimindexes(img, pstr...), spatialprops)
 
 function permutation_canonical(img)
     assert2d(img)
@@ -1075,7 +1075,7 @@ require_dimindex(img::AbstractImage, dimname, so) = (di = dimindex(img, dimname,
 dimindexes(img::AbstractImage, dimnames::AbstractString...) = Int[dimindex(img, nam, spatialorder(img)) for nam in dimnames]
 
 to_vector(v::AbstractVector) = v
-to_vector(v::(@compat Tuple)) = [v...]
+to_vector(v::Tuple) = [v...]
 
 # converts keyword argument to a dictionary
 function kwargs2dict(kwargs)

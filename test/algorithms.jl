@@ -33,10 +33,10 @@ facts("Algorithms") do
         @fact all(A.*img2 .== fill(RGB{Float32}(1,1,1), 4, 5)) --> true
         img2 = img2 .- RGB{Float32}(1,1,1)/2
         A = rand(UInt8,3,4)
-        img = reinterpret(Images.Gray{Ufixed8}, Images.grayim(A))
+        img = reinterpret(Gray{UFixed8}, Images.grayim(A))
         imgm = mean(img)
         imgn = img/imgm
-        @fact reinterpret(Float32, Images.data(imgn)) --> roughly(convert(Array{Float32}, A/mean(A)))
+        @fact reinterpret(Float64, Images.data(imgn)) --> roughly(convert(Array{Float64}, A/mean(A)))
     end
 
     context("Reductions") do
@@ -59,7 +59,7 @@ facts("Algorithms") do
         A = rand(10:20, 5, 5)
         @fact minfinite(A) --> minimum(A)
         @fact maxfinite(A) --> maximum(A)
-        A = reinterpret(Ufixed8, rand(0x00:0xff, 5, 5))
+        A = reinterpret(UFixed8, rand(0x00:0xff, 5, 5))
         @fact minfinite(A) --> minimum(A)
         @fact maxfinite(A) --> maximum(A)
         A = rand(Float32,3,5,5)
@@ -75,16 +75,16 @@ facts("Algorithms") do
         b = convert(Array{UInt8}, [134, 252, 4])
         @fact Images.sad(a, b) --> 387
         @fact Images.ssd(a, b) --> 80699
-        af = reinterpret(Ufixed8, a)
-        bf = reinterpret(Ufixed8, b)
+        af = reinterpret(UFixed8, a)
+        bf = reinterpret(UFixed8, b)
         @fact Images.sad(af, bf) --> roughly(387f0/255)
         @fact Images.ssd(af, bf) --> roughly(80699f0/255^2)
-        ac = reinterpret(RGB{Ufixed8}, a)
-        bc = reinterpret(RGB{Ufixed8}, b)
+        ac = reinterpret(RGB{UFixed8}, a)
+        bc = reinterpret(RGB{UFixed8}, b)
         @fact Images.sad(ac, bc) --> roughly(387f0/255)
         @fact Images.ssd(ac, bc) --> roughly(80699f0/255^2)
-        ag = reinterpret(RGB{Ufixed8}, a)
-        bg = reinterpret(RGB{Ufixed8}, b)
+        ag = reinterpret(RGB{UFixed8}, a)
+        bg = reinterpret(RGB{UFixed8}, b)
         @fact Images.sad(ag, bg) --> roughly(387f0/255)
         @fact Images.ssd(ag, bg) --> roughly(80699f0/255^2)
 
@@ -145,7 +145,7 @@ facts("Algorithms") do
     context("Filtering") do
         EPS = 1e-14
         imgcol = Images.colorim(rand(3,5,6))
-        imgcolf = convert(Images.Image{RGB{Ufixed8}}, imgcol)
+        imgcolf = convert(Images.Image{RGB{UFixed8}}, imgcol)
         for T in (Float64, Int)
             A = zeros(T,3,3); A[2,2] = 1
             kern = rand(3,3)
@@ -251,13 +251,13 @@ facts("Algorithms") do
                        32.875    50.5   42.875;
                        16.90625  25.875 21.90625])
         @fact B --> roughly(Btarget)
-        Argb = reinterpret(RGB, reinterpret(Ufixed16, permutedims(A, (3,1,2))))
+        Argb = reinterpret(RGB, reinterpret(UFixed16, permutedims(A, (3,1,2))))
         B = Images.restrict(Argb)
         Bf = permutedims(reinterpret(Float64, B), (2,3,1))
-        @fact Bf --> roughly(Btarget/reinterpret(one(Ufixed16)), 1e-12)
-        Argba = reinterpret(RGBA{Ufixed16}, reinterpret(Ufixed16, A))
+        @fact Bf --> roughly(Btarget/reinterpret(one(UFixed16)), 1e-12)
+        Argba = reinterpret(RGBA{UFixed16}, reinterpret(UFixed16, A))
         B = Images.restrict(Argba)
-        @fact reinterpret(Float64, B) --> roughly(Images.restrict(A, (2,3))/reinterpret(one(Ufixed16)), 1e-12)
+        @fact reinterpret(Float64, B) --> roughly(Images.restrict(A, (2,3))/reinterpret(one(UFixed16)), 1e-12)
         A = reshape(1:60, 5, 4, 3)
         B = Images.restrict(A, (1,2,3))
         @fact cat(3, [ 2.6015625  8.71875 6.1171875;
@@ -366,7 +366,7 @@ facts("Algorithms") do
 
 context("Contrast") do
     # Issue #282
-    img = convert(Images.Image{Gray{Ufixed8}}, eye(2,2))
+    img = convert(Images.Image{Gray{UFixed8}}, eye(2,2))
     imgs = Images.imstretch(img, 0.3, 0.4)
     @fact data(imgs) --> roughly(1./(1 + (0.3./(eye(2,2) + eps())).^0.4))
 end
