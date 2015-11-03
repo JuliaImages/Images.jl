@@ -164,18 +164,18 @@ similar{T,F,To,From,S}(mapi::ScaleMinMax{To,From,S}, ::Type{T}, ::Type{F}) = Sca
 # Implementation
 function map{To<:Union{Real,AbstractGray},From<:Union{Real,AbstractGray}}(mapi::ScaleMinMax{To,From}, val::From)
     g = gray(val)
-    t = ifelse(g  < mapi.min, zero(From), ifelse(g  > mapi.max, mapi.max-mapi.min, g-mapi.min))
+    t = ifelse(g < mapi.min, zero(From), ifelse(g > mapi.max, mapi.max-mapi.min, g-mapi.min))
     convert(To, mapi.s*t)
 end
 function map{To<:Union{Real,AbstractGray},From<:Union{Real,AbstractGray}}(mapi::ScaleMinMax{To,From}, val::Union{Real,Colorant})
     map(mapi, convert(From, val))
 end
 function map1{To<:Union{RGB24,ARGB32},From<:Real}(mapi::ScaleMinMax{To,From}, val::From)
-    t = ifelse(val  < mapi.min, zero(From), ifelse(val  > mapi.max, mapi.max-mapi.min, val -mapi.min))
+    t = ifelse(val < mapi.min, zero(From), ifelse(val > mapi.max, mapi.max-mapi.min, val-mapi.min))
     convert(UFixed8, mapi.s*t)
 end
 function map1{To<:Colorant,From<:Real}(mapi::ScaleMinMax{To,From}, val::From)
-    t = ifelse(val  < mapi.min, zero(From), ifelse(val  > mapi.max, mapi.max-mapi.min, val -mapi.min))
+    t = ifelse(val < mapi.min, zero(From), ifelse(val > mapi.max, mapi.max-mapi.min, val-mapi.min))
     convert(eltype(To), mapi.s*t)
 end
 function map1{To<:Union{RGB24,ARGB32},From<:Real}(mapi::ScaleMinMax{To,From}, val::Union{Real,Colorant})

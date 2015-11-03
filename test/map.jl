@@ -198,10 +198,12 @@ facts("Map") do
         res1 = raw(map(mi1, imgr))
         mi2 = ScaleAutoMinMax(UFixed16)
         res2 = raw(map(mi2, raw(imgr)))
-        if res1 != res2
-            @show A
-        end
-        @fact res1 --> res2
+        # @fact res1 --> res2
+        # Note: this fails occassionally. Reproduce it with
+        #    s = 1.1269798f0
+        #    val = 0xdeb5
+        #    UFixed16(s*UFixed16(val,0)) == UFixed16((s/typemax(UInt16))*val)
+        @fact maxabs(convert(Array{Int32}, res1) - convert(Array{Int32}, res2)) --> less_than_or_equal(1)
     end
 
     context("Scaling and ssd") do

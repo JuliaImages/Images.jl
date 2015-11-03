@@ -133,10 +133,10 @@ facts("Core") do
         @fact imgc.data --> img.data
         imgc = copyproperties(imgd, A)
         @fact imgc.data --> A
-        img2 = similar(img)
+        img2 = @inferred(similar(img))
         @fact isa(img2, ImageCmap) --> true
         @fact (img2.data == img.data) --> false
-        img2 = similar(imgd)
+        img2 = @inferred(similar(imgd))
         @fact isa(img2, Image) --> true
         img2 = similar(img, (4,4))
         @fact isa(img2, ImageCmap) --> true
