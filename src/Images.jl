@@ -243,27 +243,4 @@ import FileIO: load, save
 @deprecate imwrite(img, filename; kwargs...) save(filename, img; kwargs...)
 export load, save
 
-
-
-import Base: scale, scale!  # delete when deprecations are removed
-@deprecate scaleminmax  ScaleMinMax
-@deprecate scaleminmax(img::AbstractArray, min::Real, max::Real)  ScaleMinMax(RGB24, img, min, max)
-@deprecate float32sc    float32
-@deprecate float64sc    float64
-@deprecate uint8sc      ufixed8sc
-@deprecate uint16sc(img)  ufixedsc(UFixed16, img)
-@deprecate ClipMin      ClampMin
-@deprecate ClipMax      ClampMax
-@deprecate ClipMinMax   ClampMinMax
-@deprecate climdefault(img) zero(eltype(img)), one(eltype(img))
-@deprecate ScaleMinMax{T<:Real}(img::AbstractArray{T}, mn, mx) ScaleMinMax(UFixed8, img, mn, mx)
-@deprecate ScaleMinMax{T<:Color}(img::AbstractArray{T}, mn, mx) ScaleMinMax(RGB{UFixed8}, img, mn, mx)
-@deprecate scaleinfo    mapinfo
-@deprecate scale(mapi::MapInfo, A) map(mapi, A)                # delete imports above when eliminated
-@deprecate scale!(dest, mapi::MapInfo, A) map!(mapi, dest, A)  #   "
-@deprecate copy(A::AbstractArray, B::AbstractArray) copyproperties(A, B)
-@deprecate share(A::AbstractArray, B::AbstractArray) shareproperties(A, B)
-
-const ScaleInfo = MapInfo  # can't deprecate types?
-
 end
