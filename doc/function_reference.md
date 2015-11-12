@@ -158,6 +158,15 @@ typeof( raw(img) )   # returns array with element type Uint8
 
 ```
 
+## separate
+```{.julia execute="false"}
+imgs = separate(img)
+```
+
+Separates the color channels of `img`, for
+example returning an `m-by-n-by-3` array from an `m-by-n` array of
+`RGB`.
+
 
 ## img[] (indexing)
 ```{.julia execute="false"}

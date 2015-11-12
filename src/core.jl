@@ -3,10 +3,32 @@
 # Plain arrays can be treated as images. Other types will have
 # metadata associated, make yours a child of one of the following:
 abstract AbstractImage{T,N} <: AbstractArray{T,N}         # image with metadata
-abstract AbstractImageDirect{T,N} <: AbstractImage{T,N}   # each pixel has own value/color
-abstract AbstractImageIndexed{T,N} <: AbstractImage{T,N}  # indexed images (i.e., lookup table)
+"""
+`AbstractImageDirect` is the supertype of all images where pixel
+values are stored directly in an `AbstractArray`.  See also
+`AbstractImageIndexed`.
+"""
+abstract AbstractImageDirect{T,N} <: AbstractImage{T,N}
+"""
+`AbstractImageIndexed` is the supertype of all "colormap" images,
+where pixel values are accessed from a lookup table.  See also
+`AbstractImageDirect`.
+"""
+abstract AbstractImageIndexed{T,N} <: AbstractImage{T,N}
 
-# Direct image (e.g., grayscale, RGB)
+"""
+```
+Image(data, [properties])
+Image(data, prop1=val1, prop2=val2, ...)
+```
+creates a new "direct" image, one in which the values in `data`
+correspond to the pixel values. In contrast with `convert`, `grayim`
+and `colorim`, this does not permute the data array or attempt to
+guess any of the `properties`. If `data` encodes color information
+along one of the dimensions of the array (as opposed to using a
+`Color` array, from the `Colors.jl` package), be sure to specify the
+`"colordim"` and `"colorspace"` in `properties`.
+"""
 type Image{T,N,A<:AbstractArray} <: AbstractImageDirect{T,N}
     data::A
     properties::Dict{ASCIIString,Any}
@@ -15,7 +37,12 @@ Image(data::AbstractArray, props::Dict) = Image{eltype(data),ndims(data),typeof(
 Image{T,N}(data::AbstractArray{T,N}, props::Dict) = Image{T,N,typeof(data)}(data,props)
 Image(data::AbstractArray; kwargs...) = Image(data, kwargs2dict(kwargs))
 
-# Indexed image (colormap)
+"""
+```
+ImageCmap(data, cmap, [properties])
+```
+creates an indexed (colormap) image.
+"""
 type ImageCmap{T<:Colorant,N,A<:AbstractArray} <: AbstractImageIndexed{T,N}
     data::A
     cmap::Vector{T}
@@ -25,6 +52,31 @@ ImageCmap{_,N}(data::AbstractArray{_,N}, cmap::AbstractVector, props::Dict) = Im
 ImageCmap(data::AbstractArray, cmap::AbstractVector; kwargs...) = ImageCmap(data, cmap, kwargs2dict(kwargs))
 
 # Convenience constructors
+"""
+```
+img = grayim(A)
+```
+creates a 2d or 3d _spatial_ grayscale Image from an AbstractArray
+`A`, assumed to be in "horizontal-major" order (and without permuting
+any dimensions). If you are working with 3d grayscale images, usage of
+this function is strongly recommended. This can fix errors like any of
+the following:
+
+```
+ERROR: Wrong number of spatial dimensions for plain Array, use an AbstractImage type
+ERROR: Cannot infer colorspace of Array, use an AbstractImage type
+ERROR: Cannot infer pixelspacing of Array, use an AbstractImage type
+```
+
+The main reason for such errors---and the reason that `grayim` is
+recommended---is the Matlab-derived convention that a `m x n x 3` array is to be
+interpreted as RGB.  One might then say that an `m x n x k` array, for `k`
+different from 3, could be interpreted as grayscale. However, this would lead to
+difficult-to-track-down surprises on the day where `k` happened to be 3 for your
+grayscale image.
+
+See also: `colorim`, `Image`, `convert(Image, A)`.
+"""
 grayim(A::AbstractImage) = A
 grayim(A::AbstractArray{UInt8,2})  = grayim(reinterpret(UFixed8, A))
 grayim(A::AbstractArray{UInt16,2}) = grayim(reinterpret(UFixed16, A))
@@ -33,6 +85,23 @@ grayim(A::AbstractArray{UInt16,3}) = grayim(reinterpret(UFixed16, A))
 grayim{T}(A::AbstractArray{T,2}) = Image(A; colorspace="Gray", spatialorder=["x","y"])
 grayim{T}(A::AbstractArray{T,3}) = Image(A; colorspace="Gray", spatialorder=["x","y","z"])
 
+"""
+```
+img = colorim(A, [colorspace])
+```
+Creates a 2d color image from an AbstractArray `A`, auto-detecting which of the
+first or last dimension encodes the color and choosing between "horizontal-" and
+"vertical-major" accordingly. `colorspace` defaults to `"RGB"` but could also be
+e.g. `"Lab"` or `"HSV"`.  If the array represents a 4-channel image, the
+`colorspace` option is mandatory since there is no way to automatically
+distinguish between `"ARGB"` and `"RGBA"`.  If both the first and last
+dimensions happen to be of size 3 or 4, it is impossible to guess which one
+represents color and thus an error is generated.  Thus, if your code needs to be
+robust to arbitrary-sized images, you should use the `Image` constructor
+directly.
+
+See also: `grayim`, `Image`, `convert(Image{RGB}, A)`.
+"""
 colorim(A::AbstractImage) = A
 function colorim{T}(A::AbstractArray{T,3})
     if size(A, 1) == 4 || size(A, 3) == 4
@@ -88,7 +157,13 @@ function dictcopy(dct)
     Dict{ASCIIString,Any}(zip(newkeys,newvals))
 end
 
-# Create a new "Image" (could be just an Array) copying the properties but replacing the data
+"""
+```
+imgnew = copyproperties(img, data)
+```
+Creates a new image from the data array `data`, copying the properties from
+Image `img`.
+"""
 copyproperties(img::AbstractArray, data::AbstractArray) = data
 
 copyproperties(img::AbstractImageDirect, data::AbstractArray) = Image(data, deepcopy(img.properties))
@@ -97,7 +172,14 @@ copyproperties(img::AbstractImageIndexed, data::AbstractArray) = ImageCmap(data,
 
 copyproperties(img::AbstractImageDirect, _data::AbstractImageDirect) = copyproperties(img, data(_data))
 
-# Provide new data but reuse the properties & cmap
+"""
+```
+imgnew = shareproperties(img, data)
+```
+Creates a new image from the data array `data`, *sharing* the properties of
+Image `img`. Any modifications made to the properties of one will affect the
+other.
+"""
 shareproperties(img::AbstractArray, data::AbstractArray) = data
 
 shareproperties(img::AbstractImageDirect, data::AbstractArray) = Image(data, img.properties)
@@ -210,14 +292,28 @@ function reinterpret{T,S}(::Type{T}, img::AbstractImageDirect{S})
     shareproperties(img, reinterpret(T, data(img)))
 end
 
-## To get data in raw format, and unwrap UFixed if present
+"""
+```
+imgraw = raw(img)
+```
+returns a reference to the array data in raw (machine-native) storage
+format. This is particularly useful when Images.jl wraps image data in
+a `FixedPointNumbers` type, and raw data access is desired. For
+example
+
+```
+img = load("someimage.tif")
+typeof( data(img) )  # return Array{UFixed{UInt8,8},2}
+typeof( raw(img) )   # returns Array{UInt8,2}
+```
+"""
 function raw(img::AbstractArray)
-    elemType = eltype(eltype(data(img)))
+    elemType = eltype(eltype(img))
 
     if (elemType <: Union{})  # weird fallback case
         data(img)
-    elseif eltype(eltype(data(img))) <: FixedPointNumbers.UFixed
-        reinterpret( FixedPointNumbers.rawtype(eltype(eltype(img))), data(img) )
+    elseif elemType <: FixedPointNumbers.UFixed
+        reinterpret( FixedPointNumbers.rawtype(elemType), data(img) )
     else
         data(img)
     end
@@ -225,6 +321,19 @@ end
 
 
 ## convert
+"""
+```
+img = convert(Image, A)
+img = convert(Image{HSV}, img)
+```
+Create a 2d Image from an array, setting up default properties. The
+data array is assumed to be in "vertical-major" order, and an m-by-n-by-3 array
+will be assumed to encode color along its third dimension.
+
+Optionally, you can specify the desired colorspace of the returned `img`.
+
+See also: `Image`, `grayim`, `colorim`.
+"""
 convert{T}(::Type{Image{T}}, img::Image{T}) = img
 convert(::Type{Image}, img::Image) = img
 convert(::Type{Image}, A::AbstractArray) = Image(A, properties(A))
@@ -236,6 +345,13 @@ end
 # Convert an Image to an array. We convert the image into the canonical storage order convention for arrays.
 # We restrict this to 2d images because for plain arrays this convention exists only for 2d.
 # In other cases---or if you don't want the storage order altered---just use data(img)
+"""
+`A = convert(Array, img)` converts an Image `img` to an Array,
+permuting dimensions (if needed) to put it in vertical-major (Matlab)
+storage order.
+
+See also `data`.
+"""
 convert{T<:Real,N}(::Type{Array{T}}, img::AbstractImageDirect{T,N}) = convert(Array{T,N}, img)
 convert{T<:Colorant,N}(::Type{Array{T}}, img::AbstractImageDirect{T,N}) = convert(Array{T,N}, img)
 convert{T}(::Type{Vector{T}}, img::AbstractImageDirect{T,1}) = convert(Vector{T}, data(img))
@@ -265,7 +381,11 @@ _convert{Cdest<:Colorant,Csrc<:Colorant}(::Type{Array{Cdest}}, ::DataType, img::
 convert{Cdest<:Colorant,Csrc<:Colorant,N}(::Type{Array{Cdest}}, img::AbstractImageDirect{Csrc,N}) =
     _convert(Array{Cdest}, convert(Array{Csrc,N}, img))
 
-# Image{Colorant} -> Image{Numbers}
+"""
+`imgs = separate(img)` separates the color channels of `img`, for
+example returning an `m-by-n-by-3` array from an `m-by-n` array of
+`RGB`.
+"""
 function separate{CV<:Colorant}(img::AbstractImage{CV})
     p = permutation_canonical(img)
     so = spatialorder(img)[p]
@@ -356,7 +476,15 @@ slice(img::AbstractImage, I::RangeIndex...) = slice(img.data, I...)
 
 slice(img::AbstractImage, dimname::ASCIIString, ind::RangeIndex, nameind::RangeIndex...) = slice(img.data, coords(img, dimname, ind, nameind...)...)
 
-# getindexim, subim, and sliceim return an Image. The first two share properties, the last requires a copy.
+"""
+```
+imgnew = getindexim(img, i, j, k,...)
+imgnew = getindexim(img, "x", 100:200, "y", 400:600)
+```
+return a new Image `imgnew`, copying (and where necessary modifying)
+the properties of `img`.  This is in contrast with `img[i, j, k...]`,
+which returns an `Array`.
+"""
 function getindexim(img::AbstractImage, I::RealIndex...)
     ret = copyproperties(img, data(img)[I...])
     cd = colordim(img)
@@ -383,11 +511,25 @@ end
 
 getindexim(img::AbstractImage, dimname::ASCIIString, ind::Union{Real,AbstractArray}, nameind...) = getindexim(img, coords(img, dimname, ind, nameind...)...)
 
+"""
+```
+imgs = subim(img, i, j, k, ...)
+imgs = subim(img, "x", 100:200, "y", 400:600)
+```
+returns an `Image` with `SubArray` data, with indexing semantics similar to `sub`.
+"""
 subim(img::AbstractImage, I::RangeIndex...) = _subim(img, I)
 _subim{TT}(img, I::TT) = shareproperties(img, sub(img.data, I...))  # work around #8504
 
 subim(img::AbstractImage, dimname::ASCIIString, ind::RangeIndex, nameind...) = subim(img, coords(img, dimname, ind, nameind...)...)
 
+"""
+```
+imgs = sliceim(img, i, j, k, ...)
+imgs = sliceim(img, "x", 100:200, "y", 400:600)
+```
+returns an `Image` with `SubArray` data, with indexing semantics similar to `slice`.
+"""
 sliceim(img::AbstractImage, I::RangeIndex...) = _sliceim(img, I)
 function _sliceim{IT}(img::AbstractImage, I::IT)
     dimmap = Array(Int, ndims(img))
@@ -434,7 +576,7 @@ function _sliceim{IT}(img::AbstractImage, I::IT)
     ret
 end
 
-sliceim(img::AbstractImage, dimname::AbstractString, ind::RangeIndex, nameind...) = subim(img, coords(img, dimname, ind, nameind...)...)
+sliceim(img::AbstractImage, dimname::AbstractString, ind::RangeIndex, nameind...) = sliceim(img, coords(img, dimname, ind, nameind...)...)
 
 sliceim(img::AbstractImage, dimname::AbstractString, ind::RangeIndex, nameind...) = sliceim(img, coords(img, dimname, ind, nameind...)...)
 
@@ -449,10 +591,8 @@ sliceim(img::AbstractImage, I...) = sliceim(img, ntuple(i-> isa(I[i], Colon) ? (
 
 # Iteration
 # Defer to the array object in case it has special iteration defined
-if VERSION >= v"0.4.0-dev+1623"
-    next{T,N}(img::AbstractImage{T,N}, s::Tuple{Bool,Base.IteratorsMD.CartesianIndex{N}}) = next(data(img), s)
-    done{T,N}(img::AbstractImage{T,N}, s::Tuple{Bool,Base.IteratorsMD.CartesianIndex{N}}) = done(data(img), s)
-end
+next{T,N}(img::AbstractImage{T,N}, s::Tuple{Bool,Base.IteratorsMD.CartesianIndex{N}}) = next(data(img), s)
+done{T,N}(img::AbstractImage{T,N}, s::Tuple{Bool,Base.IteratorsMD.CartesianIndex{N}}) = done(data(img), s)
 start(img::AbstractImage) = start(data(img))
 next(img::AbstractImage, s) = next(data(img), s)
 done(img::AbstractImage, s) = done(data(img), s)
@@ -557,6 +697,19 @@ writemime(io::IO, ::MIME"text/plain", img::AbstractImageDirect) = showim(io, img
 show(io::IO, img::AbstractImageIndexed) = showim(io, img)
 writemime(io::IO, ::MIME"text/plain", img::AbstractImageIndexed) = showim(io, img)
 
+"""
+```
+A = data(img)
+```
+returns a reference `A` to the array data in `img`. It allows you to
+use algorithms specialized for particular `AbstractArray` types on
+`Image` types. This works for both `AbstractImage`s and
+`AbstractArray`s (for the latter it just returns the input), so is a
+"safe" component of any algorithm.
+
+For algorithms written to accept arbitrary `AbstractArrays`, this
+function is not needed.
+"""
 data(img::AbstractArray) = img
 data(img::AbstractImage) = img.data
 
@@ -629,6 +782,10 @@ end
 #     meaning (horizontal and vertical, respectively, irrespective of storage order).
 #     If supplied, you must have one entry per spatial dimension.
 
+"""
+`prop = properties(img)` returns the properties-dictionary for an
+`AbstractImage`, or creates one if `img` is an `AbstractArray`.
+"""
 properties(A::AbstractArray) = Dict(
     "colorspace" => colorspace(A),
     "colordim" => colordim(A),
@@ -670,13 +827,32 @@ defaultarraycolordim = 3
 const yx = ["y", "x"]
 # order used in Cairo & most image file formats (with color as the very first dimension)
 const xy = ["x", "y"]
+
+"""
+```
+order = spatialorder(img)
+order = spatialorder(ImageType)
+```
+
+Returns the storage order of the _spatial_ coordinates of the image, e.g.,
+`["y", "x"]`. The second version works on a type, e.g., `Matrix`. See
+`storageorder`, `timedim`, and `colordim` for related properties.
+"""
 spatialorder(::Type{Matrix}) = yx
 spatialorder(img::AbstractArray) = (sdims(img) == 2) ? spatialorder(Matrix) : error("Wrong number of spatial dimensions for plain Array, use an AbstractImage type")
 
+"""
+`isdirect(img)` returns true if `img` encodes its values directly,
+rather than via an indexed colormap.
+"""
 isdirect(img::AbstractArray) = true
 isdirect(img::AbstractImageDirect) = true
 isdirect(img::AbstractImageIndexed) = false
 
+"""
+`cs = colorspace(img)` returns a string specifying the colorspace
+representation of the image.
+"""
 colorspace{C<:Colorant}(img::AbstractVector{C}) = ColorTypes.colorant_string(C)
 colorspace{C<:Colorant}(img::AbstractMatrix{C}) = ColorTypes.colorant_string(C)
 colorspace{C<:Colorant}(img::AbstractArray{C,3}) = ColorTypes.colorant_string(C)
@@ -722,6 +898,14 @@ function getcolortype{T}(str::ASCIIString, ::Type{T})
     end
 end
 
+"""
+`dim = colordim(img)` returns the dimension used to encode color, or 0
+if no dimension of the array is used for color. For example, an
+`Array` of size `(m, n, 3)` would result in 3, whereas an `Array` of
+`RGB` colorvalues would yield 0.
+
+See also: `ncolorelem`, `timedim`.
+"""
 colordim{C<:Colorant}(img::AbstractVector{C}) = 0
 colordim{C<:Colorant}(img::AbstractMatrix{C}) = 0
 colordim{C<:Colorant}(img::AbstractArray{C,3}) = 0
@@ -733,6 +917,12 @@ colordim{T}(img::AbstractArray{T,3}) = (size(img, defaultarraycolordim) == 3) ? 
 colordim(img::AbstractImageDirect) = get(img, "colordim", 0)
 colordim(img::AbstractImageIndexed) = 0
 
+"""
+`dim = timedim(img)` returns the dimension used to represent time, or
+0 if this is a single image.
+
+See also: `nimages`, `colordim`.
+"""
 timedim(img) = get(img, "timedim", 0)::Int
 
 limits(img::AbstractArray{Bool}) = 0,1
@@ -742,6 +932,19 @@ limits(img::AbstractImage{Bool}) = 0,1
 limits{T}(img::AbstractImageDirect{T}) = get(img, "limits", (zero(T), one(T)))
 limits(img::AbstractImageIndexed) = @get img "limits" (minimum(img.cmap), maximum(img.cmap))
 
+"""
+```
+ps = pixelspacing(img)
+```
+
+Returns a vector `ps` containing the spacing between adjacent pixels along each
+dimension. If this property is not available, it will be computed from
+`"spacedirections"` if present; otherwise it defaults to `ones(sdims(img))`. If
+desired, you can set this property in terms of physical
+[units](https://github.com/Keno/SIUnits.jl).
+
+See also: `spacedirections`.
+"""
 pixelspacing{T}(img::AbstractArray{T,3}) = (size(img, defaultarraycolordim) == 3) ? [1.0,1.0] : error("Cannot infer pixelspacing of Array, use an AbstractImage type")
 pixelspacing(img::AbstractMatrix) = [1.0,1.0]
 pixelspacing{T}(img::AbstractImage{T}) = @get img "pixelspacing" _pixelspacing(img)
@@ -753,6 +956,28 @@ function _pixelspacing(img::AbstractImage)
     ones(sdims(img))
 end
 
+
+"""
+```
+sd = spacedirections(img)
+```
+
+Returns a vector-of-vectors `sd`, each `sd[i]`indicating the displacement between adjacent
+pixels along spatial axis `i` of the image array, relative to some external
+coordinate system ("physical coordinates").  For example, you could indicate
+that a photograph was taken with the camera tilted 30-degree relative to
+vertical using
+
+```
+img["spacedirections"] = [[0.866025,-0.5],[0.5,0.866025]]
+```
+
+If not specified, it will be computed from `pixelspacing(img)`, placing the
+spacing along the "diagonal".  If desired, you can set this property in terms of
+physical [units](https://github.com/loladiro/SIUnits.jl).
+
+See also: `pixelspacing`.
+"""
 spacedirections(img::AbstractArray) = @get img "spacedirections" _spacedirections(img)
 function _spacedirections(img::AbstractArray)
     ps = pixelspacing(img)
@@ -761,10 +986,30 @@ function _spacedirections(img::AbstractArray)
     Vector{T}[(tmp = zeros(T, nd); tmp[i] = ps[i]; tmp) for i = 1:nd]
 end
 
+"""
+```
+so = spatialorder(img)
+so = spatialorder(ImageType)
+```
+
+Returns the storage order of the *spatial* coordinates of the image, e.g.,
+`["y", "x"]`. The second version works on a type, e.g., `Matrix`.
+
+See also: `storageorder`, `coords_spatial`, `timedim`, and `colordim`.
+"""
 spatialorder(img::AbstractImage) = @get img "spatialorder" _spatialorder(img)
 _spatialorder(img::AbstractImage) = (sdims(img) == 2) ? spatialorder(Matrix) : error("Cannot guess default spatial order for ", sdims(img), "-dimensional images")
 
-# This is mostly for user information---in code it's generally better to use spatialorder, colordim, and timedim directly
+"""
+```
+so = storageorder(img)
+```
+
+Returns the complete storage order of the image array, including `"t"` for time
+and `"color"` for color.
+
+See also: `spatialorder`, `colordim`, `timedim`.
+"""
 function storageorder(img::AbstractArray)
     so = Array(ASCIIString, ndims(img))
     so[coords_spatial(img)] = spatialorder(img)
@@ -780,9 +1025,18 @@ function storageorder(img::AbstractArray)
 end
 
 # number of spatial dimensions in the image
+"""
+`n = sdims(img)` is similar to `ndims`, but it returns just the number of *spatial* dimensions in
+the image array (excluding color and time).
+"""
 sdims(img) = ndims(img) - (colordim(img) != 0) - (timedim(img) != 0)
 
 # number of time slices
+"""
+`n = nimages(img)` returns the number of time-points in the image
+array. This is safer than `size(img, "t")` because it also works for
+plain `AbstractArray` types.
+"""
 function nimages(img)
     sd = timedim(img)
     if sd > 0
@@ -792,13 +1046,21 @@ function nimages(img)
     end
 end
 
-# number of array elements used for each pixel/voxel
+"""
+`n = ncolorelem(img)` returns the number of color elements/voxel, or 1 if color is not a separate dimension of the array.
+"""
 function ncolorelem(img)
     cd = colordim(img)
     return cd > 0 ? size(img, cd) : 1
 end
 
-# indices of spatial coordinates
+"""
+`c = coords_spatial(img)` returns a vector listing the spatial
+dimensions of the image. For example, an `Array` of size `(m,n,3)`
+would return `[1,2]`.
+
+See also: `spatialorder`.
+"""
 function coords_spatial(img)
     nd = ndims(img)
     cd = colordim(img)
@@ -822,6 +1084,16 @@ function coords_spatial(img)
 end
 
 # size of the spatial grid
+"""
+```
+ssz = size_spatial(img)
+```
+
+Returns a tuple listing the sizes of the spatial dimensions of the image. For
+example, an `Array` of size `(m,n,3)` would return `(m,n)`.
+
+See also: `nimages`, `width`, `height`, `widthheight`.
+"""
 function size_spatial(img)
     sz = size(img)
     sz[coords_spatial(img)]
@@ -830,7 +1102,10 @@ end
 #### Utilities for writing "simple algorithms" safely ####
 # If you don't feel like supporting multiple representations, call these
 
-# Two-dimensional images
+"""
+`assert2d(img)` triggers an error if the image has more than two spatial
+dimensions or has a time dimension.
+"""
 function assert2d(img::AbstractArray)
     if sdims(img) != 2
         error("Only two-dimensional images are supported")
@@ -840,28 +1115,53 @@ function assert2d(img::AbstractArray)
     end
 end
 
-# "Scalar color", either grayscale, RGB24, or an immutable type
+"""
+`assert_scalar_color(img)` triggers an error if the image uses an
+array dimension to encode color.
+"""
 function assert_scalar_color(img::AbstractArray)
     if colordim(img) != 0
         error("Only 'scalar color' is supported")
     end
 end
 
-# Check that the time dimension, if present, is last
+
+"""
+`assert_timedim_last(img)` triggers an error if the image has a time
+dimension that is not the last dimension.
+"""
 function assert_timedim_last(img::AbstractArray)
     if 0 < timedim(img) < ndims(img)
         error("Time dimension is not last")
     end
 end
 
-# Spatial storage order
+"""
+`tf = isyfirst(img)` tests whether the first spatial dimension is `"y"`.
+
+See also: `isxfirst`, `assert_yfirst`.
+"""
 isyfirst(img::AbstractArray) = spatialorder(img)[1] == "y"
+"""
+`assert_yfirst(img)` triggers an error if the first spatial dimension
+is not `"y"`.
+"""
 function assert_yfirst(img)
     if !isyfirst(img)
         error("Image must have y as its first dimension")
     end
 end
+
+"""
+`tf = isxfirst(img)` tests whether the first spatial dimension is `"x"`.
+
+See also: `isyfirst`, `assert_xfirst`.
+"""
 isxfirst(img::AbstractArray) = spatialorder(img)[1] == "x"
+"""
+`assert_xfirst(img)` triggers an error if the first spatial dimension
+is not `"x"`.
+"""
 function assert_xfirst(img::AbstractArray)
     if !isxfirst(img)
         error("Image must have x as its first dimension")
@@ -873,16 +1173,66 @@ end
 #### Permutations over dimensions ####
 
 # width and height, translating "x" and "y" spatialorder into horizontal and vertical, respectively
+
+"""
+`w, h = widthheight(img)` returns the width and height of an image, regardless of storage order.
+
+See also: `width`, `height`.
+"""
 function widthheight(img::AbstractArray, p)
     c = coords_spatial(img)
     size(img, c[p[1]]), size(img, c[p[2]])
 end
 widthheight(img::AbstractArray) = widthheight(img, spatialpermutation(xy, img))
 
+
+"""
+`w = width(img)` returns the horizontal size of the image, regardless
+of storage order. By default horizontal corresponds to dimension
+`"x"`, but see `spatialpermutation` for other options.
+"""
 width(img::AbstractArray) = widthheight(img)[1]
+"""
+`h = height(img)` returns the vertical size of the image, regardless
+of storage order. By default horizontal corresponds to dimension
+`"y"`, but see `spatialpermutation` for other options.
+"""
 height(img::AbstractArray) = widthheight(img)[2]
 
-# Calculate the permutation needed to put the spatial dimensions into a specified order
+"""
+```
+p = spatialpermutation(to, img)
+```
+
+Calculates the *spatial* permutation needed to convert the spatial dimensions to
+a given order. This is probably easiest to understand by examples: for an
+`Array` `A` of size `(m,n,3)`, `spatialorder(A)` would yield `["y", "x"]`, so
+`spatialpermutation(["y", "x"], A) = [1,2]` and `spatialpermutation(["x", "y"],
+A) = [2,1]`.  For an image type, here's a demonstration:
+
+```
+julia> Aimg = convert(Image, A)
+RGB Image with:
+  data: 4x5x3 Array{Float64,3}
+  properties:
+    colordim: 3
+    spatialorder:  y x
+    colorspace: RGB
+
+julia> Ap = permutedims(Aimg, [3, 1, 2])
+RGB Image with:
+  data: 3x4x5 Array{Float64,3}
+  properties:
+    colordim: 1
+    spatialorder:  y x
+    colorspace: RGB
+
+julia> spatialpermutation(["x","y"], Ap)
+2-element Array{Int64,1}:
+ 2
+ 1
+```
+"""
 spatialpermutation(to, img::AbstractArray) = default_permutation(to, spatialorder(img))
 function spatialpermutation(to, img::AbstractImage)
     so = spatialorder(img)
@@ -957,6 +1307,20 @@ function ctranspose(img::AbstractImage)
 end
 
 # Default list of spatial properties possessed by an image
+"""
+```
+sp = spatialproperties(img)
+```
+
+Returns all properties whose values are of the form of an array or tuple, with
+one entry per spatial dimension. If you have a custom type with additional
+spatial properties, you can set `img["spatialproperties"] = ["property1",
+"property2", ...]`. An advantage is that functions that change spatial
+dimensions, like `permutedims` and `slice`, will also adjust the properties. The
+default is `["spatialorder", "pixelspacing"]`; however, if you override the
+setting then these are not included automatically (you'll want to do so
+manually, if applicable).
+"""
 function spatialproperties(img::AbstractImage)
     if haskey(img, "spatialproperties")
         return img.properties["spatialproperties"]
