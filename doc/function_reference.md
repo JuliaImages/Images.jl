@@ -530,16 +530,15 @@ converted to a new type.
 
 Here is how to directly construct the major concrete `MapInfo` types:
 
-- `MapNone(T)`, indicating that the only form of scaling is conversion to type
-  T.  This is not very safe, as values "wrap around": for example, converting
-  `258` to a `Uint8` results in `0x02`, which would look dimmer than `255 =
-  0xff`.
+- `MapNone(T)`, indicating that the only form of scaling is conversion
+  to type T.  This can throw an error if a value `x` cannot be
+  represented as an object of type `T`, e.g., `map(MapNone{U8}, 1.2)`.
 
-- `ClampMin(T, minvalue)`, `ClampMax(T, maxvalue)`, and `ClampMinMax(T,
-  minvalue, maxvalue)` create `MapInfo` objects that clamp pixel values at the
-  specified min, max, and min/max values, respectively, before
-  converting. Clamping is equivalent to `clampedval = min(max(val, minvalue),
-  maxvalue)`.  This is much safer than `MapNone`.
+- `ClampMin(T, minvalue)`, `ClampMax(T, maxvalue)`, and
+  `ClampMinMax(T, minvalue, maxvalue)` create `MapInfo` objects that
+  clamp pixel values at the specified min, max, and min/max values,
+  respectively, before converting to type `T`. Clamping is equivalent
+  to `clampedval = min(max(val, minvalue), maxvalue)`.
 
 - `BitShift(T, N)` or `BitShift{T,N}()`, for scaling by bit-shift operators.
   `N` specifies the number of bits to right-shift by.  For example you could

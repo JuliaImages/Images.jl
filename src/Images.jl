@@ -78,6 +78,7 @@ export # types
     ClampMax,
     ClampMinMax,
     Clamp,
+    Clamp01NaN,
     LabeledArray,
     MapInfo,
     MapNone,
@@ -85,6 +86,7 @@ export # types
     OverlayImage,
     ScaleAutoMinMax,
     ScaleMinMax,
+    ScaleMinMaxNaN,
     ScaleSigned,
     SliceData,
 
