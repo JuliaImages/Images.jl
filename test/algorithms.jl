@@ -206,6 +206,22 @@ facts("Algorithms") do
         hfft[abs(hfft) .< 3eps()] = 0
         @fact Images.imfilter(eye(3), h, "inner") --> roughly(hfft)  # issue #204
 
+        # circular
+        A = zeros(3, 3)
+        A[3,2] = 1
+        kern = rand(3,3)
+        @fact Images.imfilter_fft(A, kern, "circular") --> roughly(kern[[1,3,2],[3,2,1]])
+
+        A = zeros(5, 5)
+        A[5,3] = 1
+        kern = rand(3,3)
+        @fact Images.imfilter_fft(A, kern, "circular")[[1,4,5],2:4] --> roughly(kern[[1,3,2],[3,2,1]])
+
+        A = zeros(5, 5)
+        A[5,3] = 1
+        kern = rand(3,3)
+        @fact Images.imfilter(A, kern, "circular")[[1,4,5],2:4] --> roughly(kern[[1,3,2],[3,2,1]])
+
         @fact approx_equal(Images.imfilter_gaussian(ones(4,4), [5,5]), 1.0) --> true
         A = fill(convert(Float32, NaN), 3, 3)
         A[1,1] = 1
