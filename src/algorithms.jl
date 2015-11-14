@@ -70,6 +70,9 @@ function sum(img::AbstractImageDirect, region::Union{AbstractVector,Tuple,Intege
     out
 end
 
+"""
+`M = meanfinite(img, region)` calculates the mean value along the dimensions listed in `region`, ignoring any non-finite values.
+"""
 meanfinite{T<:Real}(A::AbstractArray{T}, region) = _meanfinite(A, T, region)
 meanfinite{CT<:Colorant}(A::AbstractArray{CT}, region) = _meanfinite(A, eltype(CT), region)
 function _meanfinite{T<:AbstractFloat}(A::AbstractArray, ::Type{T}, region)
@@ -136,7 +139,12 @@ end
 (.==)(img::AbstractImageDirect, A::AbstractArray) = data(img) .== A
 
 
-
+"""
+`out = imadjustintensity(img, (minval,maxval))` maps intensities over
+the interval `[minval,maxval]` to the interval `[0,1]`. This is
+equivalent to `map(ScaleMinMax(T, minval, maxval), img)`, with `T`
+determined from the types of `img`, `minval`, and `maxval`.
+"""
 function imadjustintensity{T}(img::AbstractArray{T}, range)
     assert_scalar_color(img)
     if length(range) == 0
@@ -171,6 +179,13 @@ for (funcname, fieldname) in ((:red, :r), (:green, :g), (:blue, :b))
     end
 end
 
+"`r = red(img)` extracts the red channel from an RGB image `img`" red
+"`g = green(img)` extracts the green channel from an RGB image `img`" green
+"`b = blue(img)` extracts the blue channel from an RGB image `img`" blue
+
+"""
+`m = minfinite(A)` calculates the minimum value in `A`, ignoring any values that are not finite (Inf or NaN).
+"""
 function minfinite{T}(A::AbstractArray{T})
     ret = sentinel_min(T)
     for a in A
@@ -179,6 +194,9 @@ function minfinite{T}(A::AbstractArray{T})
     ret
 end
 
+"""
+`m = maxfinite(A)` calculates the maximum value in `A`, ignoring any values that are not finite (Inf or NaN).
+"""
 function maxfinite{T}(A::AbstractArray{T})
     ret = sentinel_max(T)
     for a in A
@@ -187,6 +205,9 @@ function maxfinite{T}(A::AbstractArray{T})
     ret
 end
 
+"""
+`m = maxabsfinite(A)` calculates the maximum absolute value in `A`, ignoring any values that are not finite (Inf or NaN).
+"""
 function maxabsfinite{T}(A::AbstractArray{T})
     ret = sentinel_min(typeof(abs(A[1])))
     for a in A
@@ -264,6 +285,9 @@ end
 ifft(img::AbstractImageDirect, region, args...) = ifft(data(img), region, args...)
 
 # average filter
+"""
+`kern = imaverage(filtersize)` constructs a boxcar-filter of the specified size.
+"""
 function imaverage(filter_size=[3,3])
     if length(filter_size) != 2
         error("wrong filter size")
@@ -276,6 +300,9 @@ function imaverage(filter_size=[3,3])
 end
 
 # laplacian filter kernel
+"""
+`kern = imlaplacian(filtersize)` returns a kernel for laplacian filtering.
+"""
 function imlaplacian(diagonals::AbstractString="nodiagonals")
     if diagonals == "diagonals"
         return [1.0 1.0 1.0; 1.0 -8.0 1.0; 1.0 1.0 1.0]
@@ -295,6 +322,11 @@ function imlaplacian(alpha::Number)
 end
 
 # 2D gaussian filter kernel
+"""
+`kern = gaussian2d(sigma, filtersize)` returns a kernel for FIR-based Gaussian filtering.
+
+See also: `imfilter_gaussian`.
+"""
 function gaussian2d(sigma::Number=0.5, filter_size=[])
     if length(filter_size) == 0
         # choose 'good' size
@@ -313,12 +345,19 @@ function gaussian2d(sigma::Number=0.5, filter_size=[])
 end
 
 # difference of gaussian
+"""
+`kern = imdog(sigma)` creates a difference-of-gaussians kernel (`sigma`s differing by a factor of
+`sqrt(2)`).
+"""
 function imdog(sigma::Number=0.5)
     m = 4*ceil(sqrt(2)*sigma)+1
     return gaussian2d(sqrt(2)*sigma, [m m]) - gaussian2d(sigma, [m m])
 end
 
 # laplacian of gaussian
+"""
+`kern = imlog(sigma)` returns a laplacian-of-gaussian kernel.
+"""
 function imlog(sigma::Number=0.5)
     m = ceil(8.5sigma)
     m = m % 2 == 0 ? m + 1 : m
@@ -342,6 +381,9 @@ for (f, op) in ((:ssd, :(abs2(x))), (:sad, :(abs(x))))
     end
 end
 
+"`s = ssd(A, B)` computes the sum-of-squared differences over arrays/images A and B" ssd
+"`s = sad(A, B)` computes the sum-of-absolute differences over arrays/images A and B" sad
+
 difftype{T<:Integer}(::Type{T}) = Int
 difftype{T<:Real}(::Type{T}) = Float32
 difftype(::Type{Float64}) = Float64
@@ -356,12 +398,17 @@ accum(::Type{Float32})    = Float32
 accum{T<:Real}(::Type{T}) = Float64
 
 # normalized by Array size
+"`s = ssdn(A, B)` computes the sum-of-squared differences over arrays/images A and B, normalized by array size"
 ssdn{T}(A::AbstractArray{T}, B::AbstractArray{T}) = ssd(A, B)/length(A)
 
 # normalized by Array size
+"`s = sadn(A, B)` computes the sum-of-absolute differences over arrays/images A and B, normalized by array size"
 sadn{T}(A::AbstractArray{T}, B::AbstractArray{T}) = sad(A, B)/length(A)
 
 # normalized cross correlation
+"""
+`C = ncc(A, B)` computes the normalized cross-correlation of `A` and `B`.
+"""
 function ncc{T}(A::AbstractArray{T}, B::AbstractArray{T})
     Am = (data(A).-mean(data(A)))[:]
     Bm = (data(B).-mean(data(B)))[:]
@@ -394,6 +441,22 @@ function padindexes{T,n}(img::AbstractArray{T,n}, prepad::Union{Vector{Int},Dims
     I
 end
 
+"""
+```
+imgpad = padarray(img, prepad, postpad, border, value)
+```
+
+For an `N`-dimensional array `img`, apply padding on both edges. `prepad` and
+`postpad` are vectors of length `N` specifying the number of pixels used to pad
+each dimension. `border` is a string, one of `"value"` (to pad with a specific
+pixel value), `"replicate"` (to repeat the edge value), `"circular"` (periodic
+boundary conditions), `"reflect"` (reflecting boundary conditions, where the
+reflection is centered on edge), and `"symmetric"` (reflecting boundary
+conditions, where the reflection is centered a half-pixel spacing beyond the
+edge, so the edge value gets repeated). Arrays are automatically padded before
+filtering. Use `"inner"` to avoid padding altogether; the output array will be
+smaller than the input.
+"""
 function padarray{T,n}(img::AbstractArray{T,n}, prepad::Union{Vector{Int},Dims}, postpad::Union{Vector{Int},Dims}, border::AbstractString)
     img[padindexes(img, prepad, postpad, border)...]::Array{T,n}
 end
@@ -457,6 +520,19 @@ end
 ###
 ### imfilter
 ###
+"""
+```
+imgf = imfilter(img, kernel, [border, value])
+```
+
+filters the array `img` with the given `kernel`, using boundary conditions
+specified by `border` and `value`. See `padarray` for an explanation of
+the boundary conditions. Default is to use `"replicate"` boundary conditions.
+This uses finite-impulse-response (FIR) filtering, and is fast only for
+relatively small `kernel`s.
+
+See also: `imfilter_fft`, `imfilter_gaussian`.
+"""
 imfilter(img, kern, border, value) = imfilter_inseparable(img, kern, border, value)
 # Do not combine these with the previous using a default value (see the 2d specialization below)
 imfilter(img, filter) = imfilter(img, filter, "replicate", zero(eltype(img)))
@@ -528,10 +604,38 @@ for N = 1:5
     end
 end
 
+"""
+```
+imfilter!(dest, img, kernel)
+```
+
+filters the image with the given `kernel`, storing the output in the
+pre-allocated output `dest`. The size of `dest` must not be greater than the
+size of the result of `imfilter` with `border = "inner"`, and it behaves
+identically.  This uses finite-impulse-response (FIR) filtering, and is fast
+only for relatively small `kernel`s.
+
+No padding is performed; see `padarray` for options if you want to do
+this manually.
+
+See also: `imfilter`, `padarray`.
+"""
+imfilter!
 
 ###
 ### imfilter_fft
 ###
+"""
+```
+imgf = imfilter_fft(img, kernel, [border, value])
+```
+
+filters `img` with the given `kernel` using an FFT algorithm.  This
+is slower than `imfilter` for small kernels, but much faster for large
+kernels. For Gaussian blur, an even faster choice is `imfilter_gaussian`.
+
+See also: `imfilter`, `imfilter_gaussian`.
+"""
 imfilter_fft(img, kern, border, value) = copyproperties(img, imfilter_fft_inseparable(img, kern, border, value))
 imfilter_fft(img, filter) = imfilter_fft(img, filter, "replicate", 0)
 imfilter_fft(img, filter, border) = imfilter_fft(img, filter, border, 0)
@@ -622,6 +726,19 @@ realtype{R<:Real}(::Type{Complex{R}}) = R
 # Note these two papers use different sign conventions for the coefficients.
 
 # Note: astype is ignored for AbstractFloat input
+"""
+```
+imgf = imfilter_gaussian(img, sigma)
+```
+
+filters `img` with a Gaussian of the specified width. `sigma` should have
+one value per array dimension (any number of dimensions are supported), 0
+indicating that no filtering is to occur along that dimension. Uses the Young,
+van Vliet, and van Ginkel IIR-based algorithm to provide fast gaussian filtering
+even with large `sigma`. Edges are handled by "NA" conditions, meaning the
+result is normalized by the number and weighting of available pixels, and
+missing data (NaNs) are handled likewise.
+"""
 function imfilter_gaussian{CT<:Colorant}(img::AbstractArray{CT}, sigma; emit_warning = true, astype::Type=Float64)
     A = reinterpret(eltype(CT), data(img))
     newsigma = ndims(A) > ndims(img) ? [0;sigma] : sigma
@@ -828,7 +945,16 @@ end
 # Laplacian of Gaussian filter
 # Separable implementation from Huertas and Medioni,
 # IEEE Trans. Pat. Anal. Mach. Int., PAMI-8, 651, (1986)
+"""
+```
+imgf = imfilter_LoG(img, sigma, [border])
+```
 
+filters a 2D image with a Laplacian of Gaussian of the specified width. `sigma`
+may be a vector with one value per array dimension, or may be a single scalar
+value for uniform filtering in both dimensions.  Uses the Huertas and Medioni
+separable algorithm.
+"""
 function imfilter_LoG{T}(img::AbstractArray{T,2}, σ::Vector, border="replicate")
     # Limited to 2D for now.
     # See Sage D, Neumann F, Hediger F, Gasser S, Unser M.
@@ -923,6 +1049,12 @@ if isdefined(:restrict)
     import Grid.restrict
 end
 
+"""
+`imgr = restrict(img[, region])` performs two-fold reduction in size
+along the dimensions listed in `region`, or all spatial coordinates if
+`region` is not specified.  It anti-aliases the image as it goes, so
+is better than a naive summation over 2x2 blocks.
+"""
 restrict(img::AbstractImageDirect, ::Tuple{}) = img
 
 function restrict(img::AbstractImageDirect, region::Union{Dims, Vector{Int}}=coords_spatial(img))
@@ -1118,6 +1250,15 @@ end
 function _imstretch{T}(img::AbstractArray{T}, m::Number, slope::Number)
     shareproperties(img, 1./(1 + (m./(data(img) .+ eps(T))).^slope))
 end
+
+"""
+`imgs = imstretch(img, m, slope)` enhances or reduces (for
+slope > 1 or < 1, respectively) the contrast near saturation (0 and 1). This is
+essentially a symmetric gamma-correction. For a pixel of brightness `p`, the new
+intensity is `1/(1+m/(p+eps)^slope)`.
+
+This assumes the input `img` has intensities between 0 and 1.
+"""
 imstretch(img::AbstractArray, m::Number, slope::Number) = _imstretch(float(img), m, slope)
 
 # image gradients
@@ -1129,6 +1270,16 @@ forwarddiffx{T}(u::Array{T,2}) = [u[:,2:end] u[:,end]] - u
 backdiffy{T}(u::Array{T,2}) = u - [u[1,:]; u[1:end-1,:]]
 backdiffx{T}(u::Array{T,2}) = u - [u[:,1] u[:,1:end-1]]
 
+"""
+```
+imgr = imROF(img, lambda, iterations)
+```
+
+Perform Rudin-Osher-Fatemi (ROF) filtering, more commonly known as Total
+Variation (TV) denoising or TV regularization. `lambda` is the regularization
+coefficient for the derivative, and `iterations` is the number of relaxation
+iterations taken. 2d only.
+"""
 function imROF{T}(img::Array{T,2}, lambda::Number, iterations::Integer)
     # Total Variation regularized image denoising using the primal dual algorithm
     # Also called Rudin Osher Fatemi (ROF) model
@@ -1171,7 +1322,27 @@ end
 ### Morphological operations
 
 # Erode and dilate support 3x3 regions only (and higher-dimensional generalizations).
+"""
+```
+imgd = dilate(img, [region])
+```
+
+perform a max-filter over nearest-neighbors. The
+default is 8-connectivity in 2d, 27-connectivity in 3d, etc. You can specify the
+list of dimensions that you want to include in the connectivity, e.g., `region =
+[1,2]` would exclude the third dimension from filtering.
+"""
 dilate(img::AbstractImageDirect, region=coords_spatial(img)) = shareproperties(img, dilate!(copy(data(img)), region))
+"""
+```
+imge = erode(img, [region])
+```
+
+perform a min-filter over nearest-neighbors. The
+default is 8-connectivity in 2d, 27-connectivity in 3d, etc. You can specify the
+list of dimensions that you want to include in the connectivity, e.g., `region =
+[1,2]` would exclude the third dimension from filtering.
+"""
 erode(img::AbstractImageDirect, region=coords_spatial(img)) = shareproperties(img, erode!(copy(data(img)), region))
 dilate(img::AbstractArray, region=coords_spatial(img)) = dilate!(copy(img), region)
 erode(img::AbstractArray, region=coords_spatial(img)) = erode!(copy(img), region)
@@ -1204,8 +1375,16 @@ function extremefilt!(extrfilt::AbstractArray, order::Ordering, region=coords_sp
     extrfilt
 end
 
+"""
+`imgo = opening(img, [region])` performs the `opening` morphology operation, equivalent to `dilate(erode(img))`.
+`region` allows you to control the dimensions over which this operation is performed.
+"""
 opening(img::AbstractArray, region=coords_spatial(img)) = opening!(copy(img), region)
 opening!(img::AbstractArray, region=coords_spatial(img)) = dilate!(erode!(img, region),region)
+"""
+`imgc = closing(img, [region])` performs the `closing` morphology operation, equivalent to `erode(dilate(img))`.
+`region` allows you to control the dimensions over which this operation is performed.
+"""
 closing(img::AbstractArray, region=coords_spatial(img)) = closing!(copy(img), region)
 closing!(img::AbstractArray, region=coords_spatial(img)) = erode!(dilate!(img, region),region)
 
@@ -1223,6 +1402,18 @@ extr(order::Ordering, x::Color, y::Color, z::Color) = extr(order, convert(RGB, x
 
 # phantom images
 
+"""
+```
+phantom = shepp_logan(N,[M]; highContrast=true)
+```
+
+output the NxM Shepp-Logan phantom, which is a standard test image usually used
+for comparing image reconstruction algorithms in the field of computed
+tomography (CT) and magnetic resonance imaging (MRI). If the argument M is
+omitted, the phantom is of size NxN. When setting the keyword argument
+``highConstrast` to false, the CT version of the phantom is created. Otherwise,
+the high contrast MRI version is calculated.
+"""
 function shepp_logan(M,N; highContrast=true)
   # Initially proposed in Shepp, Larry; B. F. Logan (1974).
   # "The Fourier Reconstruction of a Head Section". IEEE Transactions on Nuclear Science. NS-21.
