@@ -78,6 +78,7 @@ export # types
     ClampMax,
     ClampMinMax,
     Clamp,
+    Clamp01NaN,
     LabeledArray,
     MapInfo,
     MapNone,
@@ -85,6 +86,7 @@ export # types
     OverlayImage,
     ScaleAutoMinMax,
     ScaleMinMax,
+    ScaleMinMaxNaN,
     ScaleSigned,
     SliceData,
 
@@ -238,32 +240,44 @@ export # Deprecated exports
     scalesigned
 
 
+"""
+`Images` is a package for representing and processing images.
+
+Constructors, conversions, and traits:
+
+    - Construction: `Image`, `ImageCmap`, `grayim`, `colorim`, `convert`, `copyproperties`, `shareproperties`
+    - Traits: `colordim`, `colorspace`, `coords_spatial`, `data`, `isdirect`, `isxfirst`, `isyfirst`, `pixelspacing`, `properties`, `sdims`, `spacedirections`, `spatialorder`, `storageorder`, `timedim`
+    - Size-related traits: `height`, `nchannels`, `ncolorelem`, `nimages`, `size_spatial`, `width`, `widthheight`
+    - Trait assertions: `assert_2d`, `assert_scalar_color`, `assert_timedim_last`, `assert_xfirst`, `assert_yfirst`
+    - Indexing operations: `getindexim`, `sliceim`, `subim`
+    - Conversions: `convert`, `raw`, `reinterpret`, `separate`
+
+Contrast/coloration:
+
+    - `MapInfo`: `MapNone`, `BitShift`, `ClampMinMax`, `ScaleMinMax`, `ScaleAutoMinMax`, etc.
+    - `imadjustintensity`, `sc`, `imstretch`, `imcomplement`
+
+
+Algorithms:
+
+    - Reductions: `maxfinite`, `maxabsfinite`, `minfinite`, `meanfinite`, `sad`, `ssd`
+    - Resizing: `restrict`, `imresize` (not yet exported)
+    - Filtering: `imfilter`, `imfilter_fft`, `imfilter_gaussian`, `imfilter_LoG`, `imROF`, `ncc`, `padarray`
+    - Filtering kernels: `ando[345]`, `guassian2d`, `imaverage`, `imdog`, `imlaplacian`, `prewitt`, `sobel`
+    - Gradients: `backdiffx`, `backdiffy`, `forwarddiffx`, `forwarddiffy`, `imgradients`
+    - Edge detection: `imedge`, `imgradients`, `thin_edges`, `magnitude`, `phase`, `magnitudephase`, `orientation`
+    - Morphological operations: `dilate`, `erode`, `closing`, `opening`
+    - Connected components: `label_components`
+
+Test images and phantoms (see also TestImages.jl):
+
+    - `shepp_logan`
+"""
+Images
+
 import FileIO: load, save
 @deprecate imread(filename; kwargs...) load(filename; kwargs...)
 @deprecate imwrite(img, filename; kwargs...) save(filename, img; kwargs...)
 export load, save
-
-
-
-import Base: scale, scale!  # delete when deprecations are removed
-@deprecate scaleminmax  ScaleMinMax
-@deprecate scaleminmax(img::AbstractArray, min::Real, max::Real)  ScaleMinMax(RGB24, img, min, max)
-@deprecate float32sc    float32
-@deprecate float64sc    float64
-@deprecate uint8sc      ufixed8sc
-@deprecate uint16sc(img)  ufixedsc(UFixed16, img)
-@deprecate ClipMin      ClampMin
-@deprecate ClipMax      ClampMax
-@deprecate ClipMinMax   ClampMinMax
-@deprecate climdefault(img) zero(eltype(img)), one(eltype(img))
-@deprecate ScaleMinMax{T<:Real}(img::AbstractArray{T}, mn, mx) ScaleMinMax(UFixed8, img, mn, mx)
-@deprecate ScaleMinMax{T<:Color}(img::AbstractArray{T}, mn, mx) ScaleMinMax(RGB{UFixed8}, img, mn, mx)
-@deprecate scaleinfo    mapinfo
-@deprecate scale(mapi::MapInfo, A) map(mapi, A)                # delete imports above when eliminated
-@deprecate scale!(dest, mapi::MapInfo, A) map!(mapi, dest, A)  #   "
-@deprecate copy(A::AbstractArray, B::AbstractArray) copyproperties(A, B)
-@deprecate share(A::AbstractArray, B::AbstractArray) shareproperties(A, B)
-
-const ScaleInfo = MapInfo  # can't deprecate types?
 
 end

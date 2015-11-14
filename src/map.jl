@@ -20,13 +20,39 @@
 
 
 # Dispatch-based elementwise manipulations
+"""
+`MapInfo{T}` is an abstract type that encompasses objects designed to
+perform intensity or color transformations on pixels.  For example,
+before displaying an image in a window, you might need to adjust the
+contrast settings; `MapInfo` objects provide a means to describe these
+transformations without calculating them immediately.  This delayed
+execution can be useful in many contexts.  For example, if you want to
+display a movie, it would be quite wasteful to have to first transform
+the entire movie; instead, `MapInfo` objects allow one to specify a
+transformation to be performed on-the-fly as particular frames are
+displayed.
+
+You can create your own custom `MapInfo` objects. For example, given a
+grayscale image, you could color "saturated" pixels red using
+
+```jl
+immutable ColorSaturated{C<:AbstractRGB} <: MapInfo{C}
+end
+
+Base.map{C}(::ColorSaturated{C}, val::Union{Number,Gray}) = ifelse(val == 1, C(1,0,0), C(val,val,val))
+
+imgc = map(ColorSaturated{RGB{U8}}(), img)
+```
+
+For pre-defined types see `MapNone`, `BitShift`, `ClampMinMax`, `ScaleMinMax`,
+`ScaleAutoMinMax`, and `ScaleSigned`.
+"""
 abstract MapInfo{T}
 eltype{T}(mapi::MapInfo{T}) = T
 
 
 ## MapNone
-# At most, this does conversions
-
+"`MapNone(T)` is a `MapInfo` object that converts `x` to have type `T`."
 immutable MapNone{T} <: MapInfo{T}; end
 
 # Constructors
@@ -48,9 +74,27 @@ map{T}(mapi::MapNone{T}, img::AbstractArray{T}) = img
 
 
 ## BitShift
-# This is really a "saturating bitshift", for example
-#    map(BitShift{UInt8,7}(), 0xf0ff) == 0xff rather than 0xe1 even though 0xf0ff>>>7 == 0x01e1
+"""
+`BitShift{T,N}` performs a "saturating rightward bit-shift" operation.
+It is particularly useful in converting high bit-depth images to 8-bit
+images for the purpose of display.  For example,
 
+```
+map(BitShift(UFixed8, 8), 0xa2d5uf16) === 0xa2uf8
+```
+
+converts a `UFixed16` to the corresponding `UFixed8` by discarding the
+least significant byte.  However,
+
+```
+map(BitShift(UFixed8, 7), 0xa2d5uf16) == 0xffuf8
+```
+
+because `0xa2d5>>7 == 0x0145 > typemax(UInt8)`.
+
+When applicable, the main advantage of using `BitShift` rather than
+`MapNone` or `ScaleMinMax` is speed.
+"""
 immutable BitShift{T,N} <: MapInfo{T} end
 BitShift{T}(::Type{T}, n::Int) = BitShift{T,n}()  # note that this is not type-stable
 
@@ -72,11 +116,23 @@ map1{CT<:Colorant,N}(mapi::BitShift{CT,N}, val::UFixed) = _map(eltype(CT), BS{N}
 
 # Types and constructors
 abstract AbstractClamp{T} <: MapInfo{T}
+"""
+`ClampMin(T, minvalue)` is a `MapInfo` object that clamps pixel values
+to be greater than or equal to `minvalue` before converting to type `T`.
+
+See also: `ClampMax`, `ClampMinMax`.
+"""
 immutable ClampMin{T,From} <: AbstractClamp{T}
     min::From
 end
 ClampMin{T,From}(::Type{T}, min::From) = ClampMin{T,From}(min)
 ClampMin{T}(min::T) = ClampMin{T,T}(min)
+"""
+`ClampMax(T, maxvalue)` is a `MapInfo` object that clamps pixel values
+to be less than or equal to `maxvalue` before converting to type `T`.
+
+See also: `ClampMin`, `ClampMinMax`.
+"""
 immutable ClampMax{T,From} <: AbstractClamp{T}
     max::From
 end
@@ -86,9 +142,24 @@ immutable ClampMinMax{T,From} <: AbstractClamp{T}
     min::From
     max::From
 end
+"""
+`ClampMinMax(T, minvalue, maxvalue)` is a `MapInfo` object that clamps
+pixel values to be between `minvalue` and `maxvalue` before converting
+to type `T`.
+
+See also: `ClampMin`, `ClampMax`, and `Clamp`.
+"""
 ClampMinMax{T,From}(::Type{T}, min::From, max::From) = ClampMinMax{T,From}(min,max)
 ClampMinMax{T}(min::T, max::T) = ClampMinMax{T,T}(min,max)
-immutable Clamp{T} <: AbstractClamp{T} end  # specialized for clamping colorvalues (e.g., 0 to 1 for RGB, also fractional)
+"""
+`Clamp(C)` is a `MapInfo` object that clamps color values to be within
+gamut.  For example,
+
+```
+map(Clamp(RGB{U8}), RGB(1.2, -0.4, 0.6)) === RGB{U8}(1, 0, 0.6)
+```
+"""
+immutable Clamp{T} <: AbstractClamp{T} end
 Clamp{T}(::Type{T}) = Clamp{T}()
 
 similar{T,F}(mapi::ClampMin, ::Type{T}, ::Type{F}) = ClampMin{T,F}(convert(F, mapi.min))
@@ -135,8 +206,19 @@ clamp01{Pdest<:TransparentRGB}(::Type{Pdest}, x::TransparentRGB) = (To = eltype(
 clamp(x::Union{AbstractRGB, TransparentRGB}) = clamp01(x)
 
 ## ScaleMinMax
-# This clamps, subtracts the min value, then scales
+"""
+`ScaleMinMax(T, min, max, [scalefactor])` is a `MapInfo` object that
+clamps the image at the specified `min`/`max` values, subtracts the
+`min` value, scales the result by multiplying by `scalefactor`, and
+finally converts to type `T`.  If `scalefactor` is not specified, it
+defaults to scaling the interval `[min,max]` to `[0,1]`.
 
+Alternative constructors include `ScaleMinMax(T, img)` for which
+`min`, `max`, and `scalefactor` are computed from the minimum and
+maximum values found in `img`.
+
+See also: `ScaleMinMaxNaN`, `ScaleAutoMinMax`, `MapNone`, `BitShift`.
+"""
 immutable ScaleMinMax{To,From,S<:AbstractFloat} <: MapInfo{To}
     min::From
     max::From
@@ -186,9 +268,15 @@ function map1{To<:Colorant,From<:Real}(mapi::ScaleMinMax{To,From}, val::Union{Re
 end
 
 ## ScaleSigned
-# Multiplies by a scaling factor and then clamps to the range [-1,1].
-# Intended for positive/negative coloring
-
+"""
+`ScaleSigned(T, scalefactor)` is a `MapInfo` object designed for
+visualization of images where the pixel's sign has special meaning.
+It multiplies the pixel value by `scalefactor`, then clamps to the
+interval `[-1,1]`. If `T` is a floating-point type, it stays in this
+representation.  If `T` is an `AbstractRGB`, then it is encoded as a
+magenta (positive)/green (negative) image, with the intensity of the
+color proportional to the clamped absolute value.
+"""
 immutable ScaleSigned{T, S<:AbstractFloat} <: MapInfo{T}
     s::S
 end
@@ -200,7 +288,7 @@ ScaleSigned(img::AbstractArray) = ScaleSigned(Float32, img)
 similar{T,To,S}(mapi::ScaleSigned{To,S}, ::Type{T}, ::Type) = ScaleSigned{T,S}(mapi.s)
 
 map{T}(mapi::ScaleSigned{T}, val::Real) = convert(T, clamppm(mapi.s*val))
-function map{C<:Union{RGB24, RGB{UFixed8}}}(mapi::ScaleSigned{C}, val::Real)
+function map{C<:AbstractRGB}(mapi::ScaleSigned{C}, val::Real)
     x = clamppm(mapi.s*val)
     g = UFixed8(abs(x))
     ifelse(x >= 0, C(g, zero(UFixed8), g), C(zero(UFixed8), g, zero(UFixed8)))
@@ -210,18 +298,35 @@ clamppm(x::Real) = ifelse(x >= 0, min(x, one(x)), max(x, -one(x)))
 
 ## ScaleAutoMinMax
 # Works only on whole arrays, not values
-
+"""
+`ScaleAutoMinMax(T)` constructs a `MapInfo` object that causes images
+to be dynamically scaled to their specific min/max values, using the
+same algorithm for `ScaleMinMax`. When displaying a movie, the min/max
+will be recalculated for each frame, so this can result in
+inconsistent contrast scaling.
+"""
 immutable ScaleAutoMinMax{T} <: MapInfo{T} end
 ScaleAutoMinMax{T}(::Type{T}) = ScaleAutoMinMax{T}()
 ScaleAutoMinMax() = ScaleAutoMinMax{UFixed8}()
 
 similar{T}(mapi::ScaleAutoMinMax, ::Type{T}, ::Type) = ScaleAutoMinMax{T}()
 
-## NaN-ignoring mapping
+## NaN-nulling mapping
+"""
+`ScaleMinMaxNaN(smm)` constructs a `MapInfo` object from a
+`ScaleMinMax` object `smm`, with the additional property that `NaN`
+values map to zero.
+
+See also: `ScaleMinMax`.
+"""
 immutable ScaleMinMaxNaN{To,From,S} <: MapInfo{To}
     smm::ScaleMinMax{To,From,S}
 end
 
+"""
+`Clamp01NaN(T)` constructs a `MapInfo` object that clamps grayscale or
+color pixels to the interval `[0,1]`, sending `NaN` pixels to zero.
+"""
 immutable Clamp01NaN{T} <: MapInfo{T} end
 
 # Implementation
@@ -426,15 +531,28 @@ end
 
 
 #### MapInfo defaults
-# Each "client" can define its own methods. "clients" include UFixed, RGB24/ARGB32, and ImageMagick
+# Each "client" can define its own methods. "clients" include UFixed,
+# RGB24/ARGB32, and ImageMagick
 
 const bitshiftto8 = ((UFixed10, 2), (UFixed12, 4), (UFixed14, 6), (UFixed16, 8))
 
 # typealias GrayType{T<:Fractional} Union{T, Gray{T}}
 typealias GrayArray{T<:Fractional} Union{AbstractArray{T}, AbstractArray{Gray{T}}}
-# note, though, that we need to override for AbstractImage in case the "colorspace" property is defined differently
+# note, though, that we need to override for AbstractImage in case the
+# "colorspace" property is defined differently
 
 # mapinfo{T<:Union{Real,Colorant}}(::Type{T}, img::AbstractArray{T}) = MapNone(img)
+"""
+`mapi = mapinf(T, img)` returns a `MapInfo` object that is deemed
+appropriate for converting pixels of `img` to be of type `T`. `T` can
+either be a specific type (e.g., `RGB24`), or you can specify an
+abstract type like `Clamp` and it will return one of the `Clamp`
+family of `MapInfo` objects.
+
+You can define your own rules for `mapinfo`.  For example, the
+`ImageMagick` package defines methods for how pixels values should be
+converted before saving images to disk.
+"""
 mapinfo{T<:UFixed}(::Type{T}, img::AbstractArray{T}) = MapNone(img)
 mapinfo{T<:AbstractFloat}(::Type{T}, img::AbstractArray{T}) = MapNone(img)
 
@@ -544,7 +662,14 @@ uint32color!{T,N}(buf::Array{UInt32,N}, img::AbstractImageDirect{T,N}, mi::MapIn
 uint32color!{T,N,N1}(buf::Array{UInt32,N}, img::AbstractImageDirect{T,N1}, mi::MapInfo) =
     map!(mi, buf, img, TypeConst{colordim(img)})
 
+"""
+```
+imgsc = sc(img)
+imgsc = sc(img, min, max)
+```
 
+Applies default or specified `ScaleMinMax` mapping to the image.
+"""
 sc(img::AbstractArray) = map(ScaleMinMax(UFixed8, img), img)
 sc(img::AbstractArray, mn::Real, mx::Real) = map(ScaleMinMax(UFixed8, img, mn, mx), img)
 

@@ -1,4 +1,17 @@
 # An array type for colorized overlays of grayscale images
+"""
+```
+A = Overlay(channels, colors, clim)
+A = Overlay(channels, colors, mapi)
+```
+
+Create an `Overlay` array from grayscale channels.  `channels = (channel1,
+channel2, ...)`, `colors` is a vector or tuple of `Color`s, and `clim` is a
+vector or tuple of min/max values, e.g., `clim = ((min1,max1),(min2,max2),...)`.
+Alternatively, you can supply a list of `MapInfo` objects.
+
+See also: `OverlayImage`.
+"""
 immutable Overlay{T,N,NC,AT<:Tuple{Vararg{AbstractArray}},MITypes<:Tuple{Vararg{MapInfo}}} <: AbstractArray{RGB{T},N}
     channels::AT   # this holds the grayscale arrays
     colors::NTuple{NC,RGB{T}}
@@ -31,6 +44,7 @@ function Overlay(channels::Tuple{Vararg{AbstractArray}}, colors,
 end
 
 # Returns the overlay as an image, if possible
+"`OverlayImage` is identical to `Overlay`, except that it returns an Image."
 function OverlayImage(channels::Tuple{Vararg{AbstractArray}}, colors::Tuple{Vararg{Colorant}}, arg)
     ovr = Overlay(channels, colors, arg)
     local prop
