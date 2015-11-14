@@ -547,7 +547,11 @@ function imfilter_fft_inseparable{T<:Colorant,K,N,M}(img::AbstractArray{T,N}, ke
 end
 
 function imfilter_fft_inseparable{T<:Real,K,N}(img::AbstractArray{T,N}, kern::AbstractArray{K,N}, border::AbstractString, value)
-    if border != "inner"
+    if border == "circular" && size(img) == size(kern)
+        A = data(img)
+        krn = reflect(kern)
+        out = real(ifftshift(ifft(fft(A).*fft(krn))))
+    elseif border != "inner"
         prepad  = [div(size(kern,i)-1, 2) for i = 1:N]
         postpad = [div(size(kern,i),   2) for i = 1:N]
         fullpad = [nextprod([2,3], size(img,i) + prepad[i] + postpad[i]) - size(img, i) - prepad[i] for i = 1:N]
