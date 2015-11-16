@@ -1048,6 +1048,42 @@ perform the `opening` and `closing` morphology operations. `opening` does first
 in the oposite way. The region parameter is passed to `erode` and `dilate` and describes
 the kernel size over which these operations are performed.
 
+## tophat
+```{.julia execute="false"}
+tophat(img, [region])
+```
+
+performs `top hat` of an image,
+which is defined as the image minus its morphological opening.
+The region parameter describes the kernel size over which these operations are performed.
+
+## bothat
+```{.julia execute="false"}
+bothat(img, [region])
+```
+
+performs `bottom hat` of an image,
+which is defined as its morphological closing minus the original image.
+The region parameter describes the kernel size over which these operations are performed.
+
+## morphogradient
+```{.julia execute="false"}
+morphogradient(img, [region])
+```
+
+returns morphological gradient of the image,
+which is the difference between the dilation and the erosion of a given image.
+The region parameter describes the kernel size over which these operations are performed.
+
+## morpholaplace
+```{.julia execute="false"}
+morpholaplace(img, [region])
+```
+
+performs `Morphological Laplacian` of an image,
+which is defined as the arithmetic difference between the internal and the external gradient.
+The region parameter describes the kernel size over which these operations are performed.
+
 ## label_components
 ```{.julia execute="false"}
 label_components(tf, [connectivity])
