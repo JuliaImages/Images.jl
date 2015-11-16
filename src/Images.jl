@@ -180,6 +180,10 @@ export # types
     erode,
     opening,
     closing,
+    tophat,
+    bothat,
+    morphogradient,
+    morpholaplace,
     forwarddiffx,
     forwarddiffy,
     gaussian2d,
@@ -266,7 +270,7 @@ Algorithms:
     - Filtering kernels: `ando[345]`, `guassian2d`, `imaverage`, `imdog`, `imlaplacian`, `prewitt`, `sobel`
     - Gradients: `backdiffx`, `backdiffy`, `forwarddiffx`, `forwarddiffy`, `imgradients`
     - Edge detection: `imedge`, `imgradients`, `thin_edges`, `magnitude`, `phase`, `magnitudephase`, `orientation`
-    - Morphological operations: `dilate`, `erode`, `closing`, `opening`
+    - Morphological operations: `dilate`, `erode`, `closing`, `opening`, `tophat`, `bothat`, `morphogradient`, `morpholaplace`
     - Connected components: `label_components`
 
 Test images and phantoms (see also TestImages.jl):

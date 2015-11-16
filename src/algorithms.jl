@@ -1385,12 +1385,41 @@ end
 """
 opening(img::AbstractArray, region=coords_spatial(img)) = opening!(copy(img), region)
 opening!(img::AbstractArray, region=coords_spatial(img)) = dilate!(erode!(img, region),region)
+
 """
 `imgc = closing(img, [region])` performs the `closing` morphology operation, equivalent to `erode(dilate(img))`.
 `region` allows you to control the dimensions over which this operation is performed.
 """
 closing(img::AbstractArray, region=coords_spatial(img)) = closing!(copy(img), region)
 closing!(img::AbstractArray, region=coords_spatial(img)) = erode!(dilate!(img, region),region)
+
+"""
+`imgth = tophat(img, [region])` performs `top hat` of an image,
+which is defined as the image minus its morphological opening.
+`region` allows you to control the dimensions over which this operation is performed.
+"""
+tophat(img::AbstractArray, region=coords_spatial(img)) = img - opening(img, region)
+
+"""
+`imgbh = bothat(img, [region])` performs `bottom hat` of an image,
+which is defined as its morphological closing minus the original image.
+`region` allows you to control the dimensions over which this operation is performed.
+"""
+bothat(img::AbstractArray, region=coords_spatial(img)) = closing(img, region) - img
+
+"""
+`imgmg = morphogradient(img, [region])` returns morphological gradient of the image,
+which is the difference between the dilation and the erosion of a given image.
+`region` allows you to control the dimensions over which this operation is performed.
+"""
+morphogradient(img::AbstractArray, region=coords_spatial(img)) = dilate(img, region) - erode(img, region)
+
+"""
+`imgml = morpholaplace(img, [region])` performs `Morphological Laplacian` of an image,
+which is defined as the arithmetic difference between the internal and the external gradient.
+`region` allows you to control the dimensions over which this operation is performed.
+"""
+morpholaplace(img::AbstractArray, region=coords_spatial(img)) = dilate(img, region) + erode(img, region) - 2img
 
 extr(order::ForwardOrdering, x::Real, y::Real) = max(x,y)
 extr(order::ForwardOrdering, x::Real, y::Real, z::Real) = max(x,y,z)
