@@ -332,6 +332,51 @@ facts("Algorithms") do
         @fact Ac --> B
     end
 
+    context("Morphological Top-hat") do
+        A = zeros(13, 13)
+        A[2:3, 2:3] = 1
+        Ae = copy(A)
+        A[5:9, 5:9] = 1
+        Ao = Images.tophat(A)
+        @fact Ao --> Ae
+        Aoo = Images.tophat(Ae)
+        @fact Aoo --> Ae
+    end
+
+    context("Morphological Bottom-hat") do
+        A = ones(13, 13)
+        A[2:3, 2:3] = 0
+        Ae = 1 - copy(A)
+        A[5:9, 5:9] = 0
+        Ao = Images.bothat(A)
+        @fact Ao --> Ae
+    end
+
+    context("Morphological Gradient") do
+        A = zeros(13, 13)
+        A[5:9, 5:9] = 1
+        Ao = Images.morphogradient(A)
+        Ae = zeros(13, 13)
+        Ae[4:10, 4:10] = 1
+        Ae[6:8, 6:8] = 0
+        @fact Ao --> Ae
+        Aee = Images.dilate(A) - Images.erode(A)
+        @fact Aee --> Ae
+    end
+
+    context("Morphological Laplacian") do
+        A = zeros(13, 13)
+        A[5:9, 5:9] = 1
+        Ao = Images.morpholaplace(A)
+        Ae = zeros(13, 13)
+        Ae[4:10, 4:10] = 1
+        Ae[5:9, 5:9] = -1
+        Ae[6:8, 6:8] = 0
+        @fact Ao --> Ae
+        Aee = Images.dilate(A) + Images.erode(A) - 2A
+        @fact Aee --> Ae
+    end
+
     context("Label components") do
         A = [true  true  false true;
              true  false true  true]
