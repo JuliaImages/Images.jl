@@ -5,6 +5,8 @@ if testing_units
     using SIUnits, SIUnits.ShortUnits
 end
 
+const scalar_getindex_new = VERSION >= v"0.5.0-dev+1195"
+
 facts("Core") do
     a = rand(3,3)
     @inferred(Image(a))
@@ -201,12 +203,25 @@ facts("Core") do
         @fact ndims(s) --> 2
         @fact sdims(s) --> 2
         @fact size(s) --> (1,4)
-        @fact data(s) --> B[2, 1:4]
-        s = getindexim(img, 2, 1:4)
-        @fact ndims(s) --> 2
-        @fact sdims(s) --> 2
-        @fact size(s) --> (1,4)
-        @fact data(s) --> B[2, 1:4]
+        @fact data(s) --> sub(B, 2, 1:4)
+        if scalar_getindex_new
+            s = getindexim(img, 2, 1:4)
+            @fact ndims(s) --> 1
+            @fact sdims(s) --> 1
+            @fact size(s) --> (4,)
+            @fact data(s) --> B[2, 1:4]
+            s = getindexim(img, 2:2, 1:4)
+            @fact ndims(s) --> 2
+            @fact sdims(s) --> 2
+            @fact size(s) --> (1,4)
+            @fact data(s) --> B[2:2, 1:4]
+        else
+            s = getindexim(img, 2, 1:4)
+            @fact ndims(s) --> 2
+            @fact sdims(s) --> 2
+            @fact size(s) --> (1,4)
+            @fact data(s) --> B[2, 1:4]
+        end
         s = subim(img, 2, 1:4)
         @fact ndims(s) --> 2
         @fact sdims(s) --> 2
@@ -254,13 +269,13 @@ facts("Core") do
 
         s = permutedims(imgds, (3,1,2))
         @fact colordim(s) --> 1
-        ss = getindexim(s, 2, :, :)
+        ss = getindexim(s, 2:2, :, :)
         @fact colorspace(ss) --> "Unknown"
         @fact colordim(ss) --> 1
         sss = squeeze(ss, 1)
         @fact colorspace(ss) --> "Unknown"
         @fact colordim(sss) --> 0
-        ss = getindexim(imgds, 2, :, :)
+        ss = getindexim(imgds, 2:2, :, :)
         @fact colordim(ss) --> 3
         @fact spatialorder(ss) --> ["y", "x"]
         sss = squeeze(ss, 1)
