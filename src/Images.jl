@@ -39,6 +39,8 @@ include("algorithms.jl")
 include("connected.jl")
 include("edge.jl")
 include("writemime.jl")
+include("corner.jl")
+
 
 function precompile()
     for T in (UInt8, UInt16, Int, Float32, Float64)
@@ -189,6 +191,7 @@ export # types
     gaussian2d,
     imaverage,
     imcomplement,
+    imcorner,
     imdog,
     imedge,
     imfilter,
