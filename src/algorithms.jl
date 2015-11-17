@@ -443,9 +443,20 @@ end
 # returns: percentage difference on match, error otherwise
 function test_approx_eq_sigma_eps{T<:Real}(A::AbstractArray, B::AbstractArray,
                                   sigma::AbstractVector{T} = ones(ndims(A)),
-                                  eps::AbstractFloat = 1e-2)
+                                  eps::AbstractFloat = 1e-2,
+                                  expand_arrays::Bool = true)
     if size(A) != size(B)
-        error("Arrays differ: size(A): $(size(A)) size(B): $(size(B))")
+        if expand_arrays
+            newsize = map(max, size(A), size(B))
+            if size(A) != newsize
+                A = copy!(zeros(eltype(A), newsize...), A)
+            end
+            if size(B) != newsize
+                B = copy!(zeros(eltype(B), newsize...), B)
+            end
+        else
+            error("Arrays differ: size(A): $(size(A)) size(B): $(size(B))")
+        end
     end
     if length(sigma) != ndims(A)
         error("Invalid sigma in test_approx_eq_sigma_eps. Should be ndims(A)-length vector of the number of pixels to blur.  Got: $sigma")

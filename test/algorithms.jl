@@ -1,5 +1,7 @@
 using FactCheck, Base.Test, Images, Colors, FixedPointNumbers
 
+srand(1234)
+
 facts("Algorithms") do
     # Comparison of each element in arrays with a scalar
     approx_equal(ar, v) = all(abs(ar.-v) .< sqrt(eps(v)))
@@ -92,21 +94,21 @@ facts("Algorithms") do
         @fact_throws ErrorException (Images.@test_approx_eq_sigma_eps a rand(13,15) [1,1] 0.01)
         @fact_throws ErrorException (Images.@test_approx_eq_sigma_eps a rand(15,15) [1,1] 0.01)
         @fact (Images.@test_approx_eq_sigma_eps a a [1,1] 0.01) --> nothing
-        @fact (Images.@test_approx_eq_sigma_eps a a+0.01*rand(size(a)) [1,1] 0.1) --> nothing
-        @fact_throws ErrorException (Images.@test_approx_eq_sigma_eps a a+0.5*rand(size(a)) [1,1] 0.1)
+        @fact (Images.@test_approx_eq_sigma_eps a a+0.01*rand(size(a)) [1,1] 0.01) --> nothing
+        @fact_throws ErrorException (Images.@test_approx_eq_sigma_eps a a+0.5*rand(size(a)) [1,1] 0.01)
         a = colorim(rand(3,15,15))
         @fact (Images.@test_approx_eq_sigma_eps a a [1,1] 0.01) --> nothing
         @fact_throws ErrorException (Images.@test_approx_eq_sigma_eps a colorim(rand(3,15,15)) [1,1] 0.01)
 
-        a = rand(5,5)
-        @fact_throws ErrorException Images.test_approx_eq_sigma_eps(a, rand(3,5), [1,1], 0.1)
-        @fact_throws ErrorException Images.test_approx_eq_sigma_eps(a, rand(5,5), [1,1], 0.1)
-        @fact Images.test_approx_eq_sigma_eps(a, a, [1,1], 0.1) --> 0.0
-        @fact Images.test_approx_eq_sigma_eps(a, a+0.01*rand(size(a)), [1,1], 0.1) --> greater_than(0.0)
-        @fact_throws ErrorException Images.test_approx_eq_sigma_eps(a, a+0.5*rand(size(a)), [1,1], 0.1)
-        a = colorim(rand(3,5,5))
-        @fact Images.test_approx_eq_sigma_eps(a, a, [1,1], 0.1) --> 0.0
-        @fact_throws ErrorException Images.test_approx_eq_sigma_eps(a, colorim(rand(3,5,5)), [1,1], 0.1)
+        a = rand(15,15)
+        @fact_throws ErrorException Images.test_approx_eq_sigma_eps(a, rand(13,15), [1,1], 0.01)
+        @fact_throws ErrorException Images.test_approx_eq_sigma_eps(a, rand(15,15), [1,1], 0.01)
+        @fact Images.test_approx_eq_sigma_eps(a, a, [1,1], 0.01) --> 0.0
+        @fact Images.test_approx_eq_sigma_eps(a, a+0.01*rand(size(a)), [1,1], 0.01) --> greater_than(0.0)
+        @fact_throws ErrorException Images.test_approx_eq_sigma_eps(a, a+0.5*rand(size(a)), [1,1], 0.01)
+        a = colorim(rand(3,15,15))
+        @fact Images.test_approx_eq_sigma_eps(a, a, [1,1], 0.01) --> 0.0
+        @fact_throws ErrorException Images.test_approx_eq_sigma_eps(a, colorim(rand(3,15,15)), [1,1], 0.01)
     end
 
     context("fft and ifft") do
