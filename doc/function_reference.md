@@ -977,6 +977,16 @@ Variation (TV) denoising or TV regularization. `lambda` is the regularization
 coefficient for the derivative, and `iterations` is the number of relaxation
 iterations taken. 2d only.
 
+## imcorner
+```{.julia execute="false"}
+imcorner(img, method, border, blocksize, k)
+```
+
+Perform corner detection, using either the Harris method or the Shi-Tomasi method. 
+Valid methods are `"harris"` or `"eigen"`. `border` specifies the type of border used
+by `imfilter`. `blockSize` is the size of the box filter applied. `k` is the parameter used by Harris
+detection, it is ignored in the Shi-Tomasi method.
+
 # Resizing
 
 ## restrict
