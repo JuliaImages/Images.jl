@@ -979,7 +979,7 @@ iterations taken. 2d only.
 
 ## imcorner
 ```{.julia execute="false"}
-imcorner(img, method="harris", border="replicate", blockSize=3, k=0.04)
+imcorner(img; method="harris", border="replicate", blockSize=3, k=0.04)
 ```
 
 Perform corner detection, using either the Harris method or the Shi-Tomasi method. 
