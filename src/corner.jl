@@ -1,4 +1,4 @@
-function imcorner(img::AbstractArray, method::AbstractString="harris", border::AbstractString="replicate", blockSize::Int=3, k::Float64=0.04)
+function imcorner(img::AbstractArray; method::AbstractString="harris", border::AbstractString="replicate", blockSize::Int=3, k::Float64=0.04)
     # Performes corner detection using the Harris method or the Shi-Tomasi method
 
     (grad_x,grad_y) = imgradients(img, "sobel",border);
