@@ -979,13 +979,12 @@ iterations taken. 2d only.
 
 ## imcorner
 ```{.julia execute="false"}
-imcorner(img, method, border, blocksize, k)
+imcorner(img, method="harris", border="replicate", blockSize=3, k=0.04)
 ```
 
 Perform corner detection, using either the Harris method or the Shi-Tomasi method. 
-Valid methods are `"harris"` or `"eigen"`. `border` specifies the type of border used
-by `imfilter`. `blockSize` is the size of the box filter applied. `k` is the parameter used by Harris
-detection, it is ignored in the Shi-Tomasi method.
+Valid methods are `"harris"` (default) or `"shi-tomasi"`. `border` specifies the type of border used
+by `imfilter`. `blockSize` is the size of the neighborhood used in corner detection. `k` is the Harris detector free parameter, it is ignored in the Shi-Tomasi method.
 
 # Resizing
 
