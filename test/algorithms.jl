@@ -109,6 +109,9 @@ facts("Algorithms") do
         a = colorim(rand(3,15,15))
         @fact Images.test_approx_eq_sigma_eps(a, a, [1,1], 0.01) --> 0.0
         @fact_throws ErrorException Images.test_approx_eq_sigma_eps(a, colorim(rand(3,15,15)), [1,1], 0.01)
+
+        @fact Images.test_approx_eq_sigma_eps(a[:,1:end-1], a[1:end-1,:], [3,3], 0.1) --> less_than(0.1)
+        @fact_throws Images.test_approx_eq_sigma_eps(a[:,1:end-1], a[1:end-1,:], [3,3], 0.01)
     end
 
     context("fft and ifft") do
