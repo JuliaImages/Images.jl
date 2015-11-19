@@ -388,6 +388,10 @@ difftype{T<:Integer}(::Type{T}) = Int
 difftype{T<:Real}(::Type{T}) = Float32
 difftype(::Type{Float64}) = Float64
 difftype{CV<:Colorant}(::Type{CV}) = difftype(CV, eltype(CV))
+difftype{CV<:RGBA,T<:Real}(::Type{CV}, ::Type{T}) = RGBA{Float32}
+difftype{CV<:RGBA}(::Type{CV}, ::Type{Float64}) = RGBA{Float64}
+difftype{CV<:BGRA,T<:Real}(::Type{CV}, ::Type{T}) = BGRA{Float32}
+difftype{CV<:BGRA}(::Type{CV}, ::Type{Float64}) = BGRA{Float64}
 difftype{CV<:AbstractGray,T<:Real}(::Type{CV}, ::Type{T}) = Gray{Float32}
 difftype{CV<:AbstractGray}(::Type{CV}, ::Type{Float64}) = Gray{Float64}
 difftype{CV<:AbstractRGB,T<:Real}(::Type{CV}, ::Type{T}) = RGB{Float32}
@@ -430,6 +434,42 @@ macro test_approx_eq_sigma_eps(A, B, sigma, eps)
             error("Arrays A and B differ")
         end
     end
+end
+
+# image difference testing (@tbreloff's, based on the macro)
+#   A/B: images/arrays to compare
+#   sigma: tuple of ints... how many pixels to blur
+#   eps: error allowance
+# returns: percentage difference on match, error otherwise
+function test_approx_eq_sigma_eps{T<:Real}(A::AbstractArray, B::AbstractArray,
+                                  sigma::AbstractVector{T} = ones(ndims(A)),
+                                  eps::AbstractFloat = 1e-2,
+                                  expand_arrays::Bool = true)
+    if size(A) != size(B)
+        if expand_arrays
+            newsize = map(max, size(A), size(B))
+            if size(A) != newsize
+                A = copy!(zeros(eltype(A), newsize...), A)
+            end
+            if size(B) != newsize
+                B = copy!(zeros(eltype(B), newsize...), B)
+            end
+        else
+            error("Arrays differ: size(A): $(size(A)) size(B): $(size(B))")
+        end
+    end
+    if length(sigma) != ndims(A)
+        error("Invalid sigma in test_approx_eq_sigma_eps. Should be ndims(A)-length vector of the number of pixels to blur.  Got: $sigma")
+    end
+    Af = imfilter_gaussian(A, sigma)
+    Bf = imfilter_gaussian(B, sigma)
+    diffscale = max(maxabsfinite(A), maxabsfinite(B))
+    d = sad(Af, Bf)
+    diffpct = d / (length(Af) * diffscale)
+    if diffpct > eps
+        error("Arrays differ.  Difference: $diffpct  eps: $eps")
+    end
+    diffpct
 end
 
 # Array padding
