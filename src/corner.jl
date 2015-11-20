@@ -1,5 +1,15 @@
+"""
+```
+imge = imcorner(img; [method], [border], [blockSize], [k])
+```
+Performs corner detection, using either the Harris method or the Shi-Tomasi
+method. `method` is `'harris'` (default) or `'shi-tomasi'`. `'border'` is the border 
+mode used in computing the gradient (default is `'replicate'`). `'blockSize'` is
+the size of the box filter kernel (default of `3`). `k` is the Harris free parameter 
+(default of `0.04`). It is only used when method is set to `'harris'`.
+
+"""
 function imcorner(img::AbstractArray; method::AbstractString="harris", border::AbstractString="replicate", blockSize::Int=3, k::Float64=0.04)
-    # Performes corner detection using the Harris method or the Shi-Tomasi method
 
     (grad_x,grad_y) = imgradients(img, "sobel",border);
 
