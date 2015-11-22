@@ -180,6 +180,7 @@ export # types
     backdiffy,
     dilate,
     erode,
+    extrema_filter,
     opening,
     closing,
     tophat,
