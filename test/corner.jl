@@ -5,7 +5,7 @@ facts("Corner") do
     A[16:26,16:26] = 1
 
 	context("Harris") do
-		Ac = Images.imcorner(A,"harris")
+		Ac = Images.imcorner(A,method="harris")
 		# check corner intensity
 		@fact Ac[16,16] --> roughly(maximum(Ac))
 		@fact Ac[16,26] --> roughly(Ac[16,16])
@@ -27,7 +27,7 @@ facts("Corner") do
 	end
 
 	context("Shi-Tomasi") do
-		Ac = Images.imcorner(A,"shi-tomasi")
+		Ac = Images.imcorner(A,method="shi-tomasi")
 		# check corner intensity
 		@fact Ac[16,16] --> roughly(maximum(Ac))
 		@fact Ac[16,26] --> roughly(Ac[16,16])
