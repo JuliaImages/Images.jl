@@ -1603,23 +1603,6 @@ function extrema_filter{T <: Number}(a::AbstractArray{T}, window::Int)
     return minval, maxval
 end
 
-
-function min_filter(a::AbstractArray, window::Int)
-
-    minval, maxval = minmax_filter(a, window)
-
-    return minval
-end
-
-
-function max_filter(a::AbstractArray, window::Int)
-
-    minval, maxval = minmax_filter(a, window)
-
-    return maxval
-end
-
-
 function wedgeisempty(X::Wedge)
     X.n <= 0
 end
