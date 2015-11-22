@@ -15,6 +15,7 @@ include("overlays.jl")
 include("algorithms.jl")
 include("edge.jl")
 include("writemime.jl")
+include("corner.jl")
 
 isinteractive() || FactCheck.exitstatus()
 

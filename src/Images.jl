@@ -39,6 +39,8 @@ include("algorithms.jl")
 include("connected.jl")
 include("edge.jl")
 include("writemime.jl")
+include("corner.jl")
+
 
 function precompile()
     for T in (UInt8, UInt16, Int, Float32, Float64)
@@ -189,6 +191,7 @@ export # types
     gaussian2d,
     imaverage,
     imcomplement,
+    imcorner,
     imdog,
     imedge,
     imfilter,
@@ -270,6 +273,7 @@ Algorithms:
     - Filtering kernels: `ando[345]`, `guassian2d`, `imaverage`, `imdog`, `imlaplacian`, `prewitt`, `sobel`
     - Gradients: `backdiffx`, `backdiffy`, `forwarddiffx`, `forwarddiffy`, `imgradients`
     - Edge detection: `imedge`, `imgradients`, `thin_edges`, `magnitude`, `phase`, `magnitudephase`, `orientation`
+    - Corner detection: `imcorner`
     - Morphological operations: `dilate`, `erode`, `closing`, `opening`, `tophat`, `bothat`, `morphogradient`, `morpholaplace`
     - Connected components: `label_components`
 
