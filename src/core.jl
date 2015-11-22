@@ -773,8 +773,6 @@ end
 #   colordim: the array dimension used to store color information, or 0 if there
 #     is no dimension corresponding to color
 #   timedim: the array dimension used for time (i.e., sequence), or 0 for single images
-#   limits: (minvalue,maxvalue) for this type of image (e.g., (0,255) for UInt8
-#     images, even if pixels do not reach these values)
 #   pixelspacing: the spacing between adjacent pixels along spatial dimensions
 #   spacedirections: the direction of each array axis in physical space (a vector-of-vectors, one per dimension)
 #   spatialorder: a string naming each spatial dimension, in the storage order of
@@ -925,12 +923,12 @@ See also: `nimages`, `colordim`.
 """
 timedim(img) = get(img, "timedim", 0)::Int
 
-limits(img::AbstractArray{Bool}) = 0,1
+oldlimits(img::AbstractArray{Bool}) = 0,1
 # limits{T<:Integer}(img::AbstractArray{T}) = typemin(T), typemax(T)  # best not to use Integers...
-limits{T<:AbstractFloat}(img::AbstractArray{T}) = zero(T), one(T)
-limits(img::AbstractImage{Bool}) = 0,1
-limits{T}(img::AbstractImageDirect{T}) = get(img, "limits", (zero(T), one(T)))
-limits(img::AbstractImageIndexed) = @get img "limits" (minimum(img.cmap), maximum(img.cmap))
+oldlimits{T<:AbstractFloat}(img::AbstractArray{T}) = zero(T), one(T)
+oldlimits(img::AbstractImage{Bool}) = 0,1
+oldlimits{T}(img::AbstractImageDirect{T}) = get(img, "limits", (zero(T), one(T)))
+oldlimits(img::AbstractImageIndexed) = @get img "limits" (minimum(img.cmap), maximum(img.cmap))
 
 """
 ```
