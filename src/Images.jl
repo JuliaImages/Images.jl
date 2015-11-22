@@ -231,21 +231,6 @@ export # types
     # phantoms
     shepp_logan
 
-export # Deprecated exports
-    ClipMin,
-    ClipMax,
-    ClipMinMax,
-    ScaleInfo,
-    climdefault,
-    float32sc,
-    float64sc,
-    ntsc2rgb,
-    rgb2gray,
-    rgb2ntsc,
-    scaleinfo,
-    scaleminmax,
-    scalesigned
-
 
 """
 `Images` is a package for representing and processing images.
@@ -287,5 +272,10 @@ import FileIO: load, save
 @deprecate imread(filename; kwargs...) load(filename; kwargs...)
 @deprecate imwrite(img, filename; kwargs...) save(filename, img; kwargs...)
 export load, save
+
+function limits(img)
+    Base.depwarn("limits is deprecated, all limits are (0,1)", :limits)
+    oldlimits(img)
+end
 
 end

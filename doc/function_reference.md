@@ -317,31 +317,6 @@ isyfirst(img)
 
 Tests whether the first spatial dimension is `"x"` or `"y"`, respectively.
 
-## limits
-```{.julia execute="false"}
-limits(img)
-```
-
-Returns the value of the `"limits"` property, or infers the limits from the data
-type (e.g., `Uint8`) when the property does not exist. Setting a default value
-for FloatingPoint types presents a bit of a challenge; for `Image` FloatingPoint
-types, the default is `(-Inf, Inf)` (consistent with using `typemin/typemax` for
-integer types), but for plain `Array`s the convention is `(0,1)`. See also
-`climdefault` which always returns a finite value, defaulting to `(0,1)` for a
-FloatingPoint image type for which `"limits"` has not been explicitly set.
-
-For example, if you're using a 14-bit camera and encoding the values with
-`Uint16`, you can set the limits property to `(0x0000, 0x3fff)` to indicate that
-not all 16 bits are meaningful.
-
-Note that there is no guarantee that the image values
-fall within the stated limits; this is intended as a "hint"
-and is used particularly for setting default contrast when images are displayed.
-
-Arithmetic on images updates the setting of the `"limits"` property. For
-example, `imgdiff = img1-img2`, where both are `Image`s with `"limits"` set to
-`(0.0,1.0)`, will result in `limits(imgdiff) = (-1.0,1.0)`.
-
 ## pixelsplacing
 ```{.julia execute="false"}
 pixelspacing(img)
@@ -851,7 +826,7 @@ radians (default: 1 degree in radians = pi/180).
 Example:
 
 ```{.julia execute="false"}
-g = rgb2gray(rgb_image)
+g = convert(Image{Gray}, rgb_image)
 gx, gy = imgradients(g)
 mag, grad_angle = magnitude_phase(gx,gy)
 mag[mag .< 0.5] = 0.0  # Threshold magnitude image
@@ -982,7 +957,7 @@ iterations taken. 2d only.
 imcorner(img; method="harris", border="replicate", blockSize=3, k=0.04)
 ```
 
-Perform corner detection, using either the Harris method or the Shi-Tomasi method. 
+Perform corner detection, using either the Harris method or the Shi-Tomasi method.
 Valid methods are `"harris"` (default) or `"shi-tomasi"`. `border` specifies the type of border used
 by `imfilter`. `blockSize` is the size of the neighborhood used in corner detection. `k` is the Harris detector free parameter, it is ignored in the Shi-Tomasi method.
 
