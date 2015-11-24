@@ -153,8 +153,12 @@ function entropy(img::AbstractArray; kind=:shannon)
 
   _, counts = hist(img[:], 256)
   p = counts / length(img)
+  logp = logᵦ(p)
 
-  -sum((p.!=0).*p.*logᵦ(p))
+  # take care of empty bins
+  logp[isinf(logp)] = 0
+
+  -sum(p.*logp)
 end
 
 function entropy(img::AbstractArray{Bool}; kind=:shannon)
@@ -165,7 +169,7 @@ function entropy(img::AbstractArray{Bool}; kind=:shannon)
   (0 < p < 1) ? - p*log2(p) - (1-p)*log2(1-p) : zero(p)
 end
 
-entropy{C<:AbstractGray}(img::AbstractArray{C}; kind=:shannon) = entropy(raw(img), kind)
+entropy{C<:AbstractGray}(img::AbstractArray{C}; kind=:shannon) = entropy(raw(img), kind=kind)
 
 # Logical operations
 (.<)(img::AbstractImageDirect, n::Number) = data(img) .< n
