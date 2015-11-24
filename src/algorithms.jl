@@ -128,6 +128,45 @@ meanfinite(img::AbstractImageIndexed, region) = meanfinite(convert(Image, img), 
     end
 end
 
+# Entropy for grayscale (intensity) images
+function _log(kind::Symbol)
+  if kind == :shannon
+    x -> log2(x)
+  elseif kind == :nat
+    x -> log(x)
+  elseif kind == :hartley
+    x -> log10(x)
+  else
+    throw(ArgumentError("Invalid entropy unit. (:shannon, :nat or :hartley)"))
+  end
+end
+
+"""
+`entropy(img, kind)` is the entropy of a grayscale image defined as -sum(p.*logb(p)).
+The base b of the logarithm (a.k.a. entropy unit) is one of the following:
+  `:shannon ` (log base 2, default)
+  `:nat` (log base e)
+  `:hartley` (log base 10)
+"""
+function entropy(img::AbstractArray; kind=:shannon)
+  logᵦ = _log(kind)
+
+  _, counts = hist(img[:], 256)
+  p = counts / length(img)
+
+  -sum((p.!=0).*p.*logᵦ(p))
+end
+
+function entropy(img::AbstractArray{Bool}; kind=:shannon)
+  logᵦ = _log(kind)
+
+  p = sum(img) / length(img)
+
+  (0 < p < 1) ? - p*log2(p) - (1-p)*log2(1-p) : zero(p)
+end
+
+entropy{C<:AbstractGray}(img::AbstractArray{C}; kind=:shannon) = entropy(raw(img), kind)
+
 # Logical operations
 (.<)(img::AbstractImageDirect, n::Number) = data(img) .< n
 (.>)(img::AbstractImageDirect, n::Number) = data(img) .> n
