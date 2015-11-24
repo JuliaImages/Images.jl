@@ -213,6 +213,7 @@ export # types
     magnitude,
     magnitude_phase,
     meanfinite,
+    entropy,
     ncc,
     orientation,
     padarray,
