@@ -166,7 +166,7 @@ function entropy(img::AbstractArray{Bool}; kind=:shannon)
 
   p = sum(img) / length(img)
 
-  (0 < p < 1) ? - p*log2(p) - (1-p)*log2(1-p) : zero(p)
+  (0 < p < 1) ? - p*logᵦ(p) - (1-p)*logᵦ(1-p) : zero(p)
 end
 
 entropy{C<:AbstractGray}(img::AbstractArray{C}; kind=:shannon) = entropy(raw(img), kind=kind)
