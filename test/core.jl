@@ -226,10 +226,18 @@ facts("Core") do
         @fact ndims(s) --> 2
         @fact sdims(s) --> 2
         @fact size(s) --> (1,4)
+        s = subim(img, 2, [1,2,4])
+        @fact ndims(s) --> 2
+        @fact sdims(s) --> 2
+        @fact size(s) --> (1,3)
         s = sliceim(img, 2, 1:4)
         @fact ndims(s) --> 1
         @fact sdims(s) --> 1
         @fact size(s) --> (4,)
+        s = sliceim(img, 2, [1,2,4])
+        @fact ndims(s) --> 1
+        @fact sdims(s) --> 1
+        @fact size(s) --> (3,)
         s = sliceim(imgds, 2, 1:4, 1:3)
         @fact ndims(s) --> 2
         @fact sdims(s) --> 1
@@ -263,8 +271,6 @@ facts("Core") do
         s = slice(img, "y", 2)
         @fact ndims(s) --> 1
         @fact size(s) --> (5,)
-        @fact_throws ErrorException subim(img, [1,3,2],1:4)
-        @fact_throws ErrorException sliceim(img, [1,3,2],1:4)
         @fact size(getindexim(imgds, :, 1:2, :)) --> (size(imgds,1), 2, 3)
 
         s = permutedims(imgds, (3,1,2))

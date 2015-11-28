@@ -435,7 +435,7 @@ end
 #    img["x", 100:400, "t", 32]
 # where anything not mentioned by name is taken to include the whole range
 
-typealias RealIndex{T<:Real} Union{T, AbstractArray{T}}
+typealias RealIndex{T<:Real} Union{T, AbstractArray{T}, Colon}
 
 # setindex!
 setindex!(img::AbstractImage, X, i::Real) = setindex!(img.data, X, i)
@@ -468,13 +468,16 @@ getindex(img::AbstractImage, dimname::ASCIIString, ind, nameind...) = getindex(i
 
 getindex(img::AbstractImage, propname::ASCIIString) = getindex(img.properties, propname)
 
-sub(img::AbstractImage, I::RangeIndex...) = sub(img.data, I...)
+typealias Indexable{T<:Real} Union{Int, AbstractVector{T}, Colon}  # for ambiguity resolution
+sub(img::AbstractImage, I::Indexable...) = sub(img.data, I...)
+sub(img::AbstractImage, I::RealIndex...) = sub(img.data, I...)
 
-sub(img::AbstractImage, dimname::ASCIIString, ind::RangeIndex, nameind::RangeIndex...) = sub(img.data, coords(img, dimname, ind, nameind...)...)
+sub(img::AbstractImage, dimname::ASCIIString, ind::RealIndex, nameind...) = sub(img.data, coords(img, dimname, ind, nameind...)...)
 
-slice(img::AbstractImage, I::RangeIndex...) = slice(img.data, I...)
+slice(img::AbstractImage, I::Indexable...) = slice(img.data, I...)
+slice(img::AbstractImage, I::RealIndex...) = slice(img.data, I...)
 
-slice(img::AbstractImage, dimname::ASCIIString, ind::RangeIndex, nameind::RangeIndex...) = slice(img.data, coords(img, dimname, ind, nameind...)...)
+slice(img::AbstractImage, dimname::ASCIIString, ind::RealIndex, nameind...) = slice(img.data, coords(img, dimname, ind, nameind...)...)
 
 """
 ```
@@ -489,7 +492,7 @@ function getindexim(img::AbstractImage, I::RealIndex...)
     ret = copyproperties(img, data(img)[I...])
     cd = colordim(img)
     nd = ndims(ret)
-    if cd > nd || (cd > 0 && length(I[cd]) < size(img, cd))
+    if cd > nd || (cd > 0 && _length(I[cd], img, cd) < size(img, cd))
         ret["colorspace"] = "Unknown"
         if cd > nd
             ret["colordim"] = 0
@@ -508,8 +511,11 @@ function getindexim(img::AbstractImage, I::RealIndex...)
     end
     ret
 end
+_length(indx, A, d) = length(indx)
+_length(indx::Colon, A, d) = size(A,d)
 
-getindexim(img::AbstractImage, dimname::ASCIIString, ind::Union{Real,AbstractArray}, nameind...) = getindexim(img, coords(img, dimname, ind, nameind...)...)
+
+getindexim(img::AbstractImage, dimname::ASCIIString, ind::RealIndex, nameind...) = getindexim(img, coords(img, dimname, ind, nameind...)...)
 
 """
 ```
@@ -518,10 +524,10 @@ imgs = subim(img, "x", 100:200, "y", 400:600)
 ```
 returns an `Image` with `SubArray` data, with indexing semantics similar to `sub`.
 """
-subim(img::AbstractImage, I::RangeIndex...) = _subim(img, I)
+subim(img::AbstractImage, I::RealIndex...) = _subim(img, I)
 _subim{TT}(img, I::TT) = shareproperties(img, sub(img.data, I...))  # work around #8504
 
-subim(img::AbstractImage, dimname::ASCIIString, ind::RangeIndex, nameind...) = subim(img, coords(img, dimname, ind, nameind...)...)
+subim(img::AbstractImage, dimname::ASCIIString, ind::RealIndex, nameind...) = subim(img, coords(img, dimname, ind, nameind...)...)
 
 """
 ```
@@ -530,7 +536,7 @@ imgs = sliceim(img, "x", 100:200, "y", 400:600)
 ```
 returns an `Image` with `SubArray` data, with indexing semantics similar to `slice`.
 """
-sliceim(img::AbstractImage, I::RangeIndex...) = _sliceim(img, I)
+sliceim(img::AbstractImage, I::RealIndex...) = _sliceim(img, I)
 function _sliceim{IT}(img::AbstractImage, I::IT)
     dimmap = Array(Int, ndims(img))
     n = 0
@@ -576,17 +582,9 @@ function _sliceim{IT}(img::AbstractImage, I::IT)
     ret
 end
 
-sliceim(img::AbstractImage, dimname::AbstractString, ind::RangeIndex, nameind...) = sliceim(img, coords(img, dimname, ind, nameind...)...)
+sliceim(img::AbstractImage, dimname::AbstractString, ind::RealIndex, nameind...) = sliceim(img, coords(img, dimname, ind, nameind...)...)
 
-sliceim(img::AbstractImage, dimname::AbstractString, ind::RangeIndex, nameind...) = sliceim(img, coords(img, dimname, ind, nameind...)...)
-
-subim(img::AbstractImage, I::AbstractVector...) = error("Indexes must be integers or ranges")
-sliceim(img::AbstractImage, I::AbstractVector...) = error("Indexes must be integers or ranges")
-
-# Support colon indexes
-getindexim(img::AbstractImage, I...) = getindexim(img, ntuple(i-> isa(I[i], Colon) ? (1:size(img,i)) : I[i], length(I))...)
-subim(img::AbstractImage, I...) = subim(img, ntuple(i-> isa(I[i], Colon) ? (1:size(img,i)) : I[i], length(I))...)
-sliceim(img::AbstractImage, I...) = sliceim(img, ntuple(i-> isa(I[i], Colon) ? (1:size(img,i)) : I[i], length(I))...)
+sliceim(img::AbstractImage, dimname::AbstractString, ind::RealIndex, nameind...) = sliceim(img, coords(img, dimname, ind, nameind...)...)
 
 
 # Iteration
