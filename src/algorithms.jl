@@ -1191,13 +1191,13 @@ for N = 1:5
                 indx = 0
                 if dim == 1
                     @inbounds @nloops $N i d->(d==1 ? (1:1) : (1:size(A,d))) d->(j_d = d==1 ? i_d+1 : i_d) begin
-                        nxt = @nref $N A j
+                        nxt = convert(T, @nref $N A j)
                         out[indx+=1] = half*(@nref $N A i) + quarter*nxt
                         for k = 3:2:size(A,1)-2
                             prv = nxt
                             i_1 = k
                             j_1 = k+1
-                            nxt = @nref $N A j
+                            nxt = convert(T, @nref $N A j)
                             out[indx+=1] = quarter*(prv+nxt) + half*(@nref $N A i)
                         end
                         i_1 = size(A,1)
@@ -1236,7 +1236,7 @@ for N = 1:5
                 oneeighth = convert(eltype(T), 0.125)
                 indx = 0
                 if dim == 1
-                    z = zero(A[1])
+                    z = convert(T, zero(A[1]))
                     @inbounds @nloops $N i d->(d==1 ? (1:1) : (1:size(A,d))) d->(j_d = i_d) begin
                         c = d = z
                         for k = 1:size(out,1)-1
@@ -1244,8 +1244,8 @@ for N = 1:5
                             b = d
                             j_1 = 2*k
                             i_1 = j_1-1
-                            c = @nref $N A i
-                            d = @nref $N A j
+                            c = convert(T, @nref $N A i)
+                            d = convert(T, @nref $N A j)
                             out[indx+=1] = oneeighth*(a+d) + threeeighths*(b+c)
                         end
                         out[indx+=1] = oneeighth*c+threeeighths*d
