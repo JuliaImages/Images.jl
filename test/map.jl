@@ -169,6 +169,11 @@ facts("Map") do
         mapi = ScaleMinMax(Gray{U8}, 0.2, 0.4)
         @fact Gray{U8}(0.49) <= map(mapi, Gray{U8}(0.3)) <= Gray{U8}(0.5) --> true
         @fact Gray{U8}(0.49) <= map(mapi, 0.3) <= Gray{U8}(0.5) --> true
+
+        A = [-0.5 0.5; Inf NaN]
+        @fact map(Clamp01NaN(A), A) --> [0.0 0.5; 1.0 0.0]
+        B = colorim(repeat(reshape(A, (1,2,2)), outer=[3,1,1]))
+        @fact map(Clamp01NaN(B), B) --> [RGB(0.0,0,0) RGB(0.5,0.5,0.5); RGB(1.0,1,1) RGB(0.0,0,0)]
     end
 
     context("ScaleSigned") do

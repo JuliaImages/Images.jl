@@ -324,10 +324,13 @@ immutable ScaleMinMaxNaN{To,From,S} <: MapInfo{To}
 end
 
 """
-`Clamp01NaN(T)` constructs a `MapInfo` object that clamps grayscale or
-color pixels to the interval `[0,1]`, sending `NaN` pixels to zero.
+`Clamp01NaN(T)` or `Clamp01NaN(img)` constructs a `MapInfo` object
+that clamps grayscale or color pixels to the interval `[0,1]`, sending
+`NaN` pixels to zero.
 """
 immutable Clamp01NaN{T} <: MapInfo{T} end
+
+Clamp01NaN{T}(A::AbstractArray{T}) = Clamp01NaN{T}()
 
 # Implementation
 similar{T,F,To,From,S}(mapi::ScaleMinMaxNaN{To,From,S}, ::Type{T}, ::Type{F}) = ScaleMinMaxNaN{T,F,S}(similar(mapi.smm, T, F))
