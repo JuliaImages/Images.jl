@@ -307,6 +307,10 @@ facts("Algorithms") do
         imgr = Images.restrict(imgcol, (1,2))
         @fact pixelspacing(imgr) --> [2,2]
         @fact pixelspacing(imgcol) --> [1,1]  # issue #347
+        # Issue #395
+        img1 = colorim(fill(0.9, 3, 5, 5))
+        img2 = colorim(fill(U8(0.9), 3, 5, 5))
+        @fact separate(restrict(img1)) --> roughly(separate(restrict(img2)), 0.01)
     end
 
     context("Erode/ dilate") do
