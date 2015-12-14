@@ -1476,8 +1476,6 @@ extr(order::Ordering, x::Color, y::Color, z::Color) = extr(order, convert(RGB, x
 
 # Min max filter
 
-type Wedge
-    buffer::AbstractArray
 # This is a port of the Lemire min max filter as implemented by Bruno Luong
 # http://arxiv.org/abs/cs.DS/0610046
 # http://lemire.me/
