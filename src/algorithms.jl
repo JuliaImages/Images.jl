@@ -1478,6 +1478,13 @@ extr(order::Ordering, x::Color, y::Color, z::Color) = extr(order, convert(RGB, x
 
 type Wedge
     buffer::AbstractArray
+# This is a port of the Lemire min max filter as implemented by Bruno Luong
+# http://arxiv.org/abs/cs.DS/0610046
+# http://lemire.me/
+# http://www.mathworks.com/matlabcentral/fileexchange/24705-min-max-filter
+
+type Wedge{A <: AbstractArray}
+    buffer::A
     size::Int
     n::Int
     first::Int
@@ -1512,8 +1519,8 @@ for N = 2:4
             end
 
             # Circular shift the dimensions
-            maxval_temp = permutedims(maxval_temp, mod([1:$N], $N)+1)
-            minval_temp = permutedims(minval_temp, mod([1:$N], $N)+1)
+            maxval_temp = permutedims(maxval_temp, mod(collect(1:$N), $N)+1)
+            minval_temp = permutedims(minval_temp, mod(collect(1:$N), $N)+1)
 
         end
 
@@ -1547,12 +1554,12 @@ function extrema_filter{T <: Number}(a::AbstractArray{T}, window::Int)
 
     for i = 2:n
         if i > window
-            if ~wedgeisempty(U)
+            if !wedgeisempty(U)
                 maxval[i-window] = a[getfirst(U)]
             else
                 maxval[i-window] = a[i-1]
             end
-            if ~wedgeisempty(L)
+            if !wedgeisempty(L)
                 minval[i-window] = a[getfirst(L)]
             else
                 minval[i-window] = a[i-1]
@@ -1560,9 +1567,9 @@ function extrema_filter{T <: Number}(a::AbstractArray{T}, window::Int)
         end # window
 
         if a[i] > a[i-1]
-            L = pushback(L, i-1)
+            pushback!(L, i-1)
             if i==window+getfirst(L); L=popfront(L); end
-            while ~wedgeisempty(U)
+            while !wedgeisempty(U)
                 if a[i] <= a[getlast(U)]
                     if i == window+getfirst(U); U = popfront(U); end
                     break
@@ -1572,10 +1579,10 @@ function extrema_filter{T <: Number}(a::AbstractArray{T}, window::Int)
 
         else
 
-            U = pushback(U, i-1)
+            pushback!(U, i-1)
             if i==window+getfirst(U); U=popfront(U); end
 
-            while ~wedgeisempty(L)
+            while !wedgeisempty(L)
                 if a[i] >= a[getlast(L)]
                     if i == window+getfirst(L); L = popfront(L); end
                     break
@@ -1588,13 +1595,13 @@ function extrema_filter{T <: Number}(a::AbstractArray{T}, window::Int)
     end # for i
 
     i = n+1
-    if ~wedgeisempty(U)
+    if !wedgeisempty(U)
         maxval[i-window] = a[getfirst(U)]
     else
         maxval[i-window] = a[i-1]
     end
 
-    if ~wedgeisempty(L)
+    if !wedgeisempty(L)
         minval[i-window] = a[getfirst(L)]
     else
         minval[i-window] = a[i-1]
@@ -1603,16 +1610,35 @@ function extrema_filter{T <: Number}(a::AbstractArray{T}, window::Int)
     return minval, maxval
 end
 
+
+function min_filter(a::AbstractArray, window::Int)
+
+    minval, maxval = extrema_filter(a, window)
+
+    return minval
+end
+
+
+function max_filter(a::AbstractArray, window::Int)
+
+    minval, maxval = extrema_filter(a, window)
+
+    return maxval
+end
+
+
 function wedgeisempty(X::Wedge)
     X.n <= 0
 end
 
-function pushback(X::Wedge, v)
-    X.last = mod(X.last, X.size) + 1
+function pushback!(X::Wedge, v)
+    X.last += 1
+    if X.last > X.size
+        X.last = 1
+    end
     X.buffer[X.last] = v
     X.n = X.n+1
-    X.mxn = maximum([X.mxn, X.n])
-    return X
+    X.mxn = max(X.mxn, X.n)
 end
 
 function getfirst(X::Wedge)
