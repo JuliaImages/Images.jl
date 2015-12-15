@@ -361,7 +361,32 @@ facts("Algorithms") do
         @fact y[1] --> 4
         @fact z[1] --> 3
         @fact t[1] --> 1
-
+        # 2d case
+        A = rand(5,5)/10
+        A[2,2] = 0.8
+        A[4,4] = 0.6
+        minval, maxval = extrema_filter(A, [2, 2])
+        matching = falses(A)
+        matching[2:end, 2:end] = maxval .== A[2:end, 2:end]
+        @fact sort(A[matching])[end-1:end] --> [0.6, 0.8]
+        # 3d case
+        A = rand(5,5,5)/10
+        A[2,2,2] = 0.7
+        A[4,4,2] = 0.4
+        A[2,2,4] = 0.5
+        minval, maxval = extrema_filter(A, [2, 2, 2])
+        matching = falses(A)
+        matching[2:end, 2:end, 2:end] = maxval .== A[2:end, 2:end, 2:end]
+        @fact sort(A[matching])[end-2:end] --> [0.4, 0.5, 0.7]
+        # 4d case
+        A = rand(5,5,5,5)/10
+        A[2,2,2,2] = 0.7
+        A[4,4,2,3] = 0.4
+        A[2,2,4,3] = 0.5
+        minval, maxval = extrema_filter(A, [2, 2, 2, 2])
+        matching = falses(A)
+        matching[2:end, 2:end, 2:end, 2:end] = maxval .== A[2:end, 2:end, 2:end, 2:end]
+        @fact sort(A[matching])[end-2:end] --> [0.4, 0.5, 0.7]
     end
 
     context("Opening / closing") do
