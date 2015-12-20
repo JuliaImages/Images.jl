@@ -37,7 +37,7 @@ its own.
 ## Package interactions
 
 A few other packages define overlapping functions or types (e.g., [Winston](https://github.com/nolta/Winston.jl) defines `Image`).
-When using both Images and these packages, you can always specify which version you want with `Images.Image(data, properites)`.
+When using both Images and these packages, you can always specify which version you want with `Images.Image(data, properties)`.
 
 ## Image viewing
 
