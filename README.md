@@ -21,14 +21,23 @@ Install via the package manager,
 Pkg.add("Images")
 ```
 
-It's helpful to have ImageMagick installed on your system, as Images relies on it for reading and writing many common image types.
-ImageMagick _should_ be installed for you automatically. In case of trouble,
-more details about manual installation and troubleshooting can be found in the [installation help](doc/install.md). Mac users in particular seem to have trouble; you may find [debugging Homebrew](https://github.com/JuliaLang/Homebrew.jl/wiki/Debugging-Homebrew.jl) useful.
+## Image I/O
+
+It's helpful to have one or more image I/O libraries (see
+https://github.com/JuliaIO) installed on your system, as Images relies
+on them for reading and writing many common image types.  These
+libraries are managed by
+[FileIO](https://github.com/JuliaIO/FileIO.jl), and in interactive
+usage it should prompt you to install any dependencies.
+
+If you have problems loading or saving Images, please report bugs to
+the appropriate I/O packages. This package does not perform any I/O on
+its own.
 
 ## Package interactions
 
-A few other packages define overlapping functions or types ([PyPlot](https://github.com/stevengj/PyPlot.jl) defines `imread`, and [Winston](https://github.com/nolta/Winston.jl) defines `Image`).
-When using both Images and these packages, you can always specify which version you want with `Images.imread("myimage.png")`.
+A few other packages define overlapping functions or types (e.g., [Winston](https://github.com/nolta/Winston.jl) defines `Image`).
+When using both Images and these packages, you can always specify which version you want with `Images.Image(data, properites)`.
 
 ## Image viewing
 
@@ -71,7 +80,7 @@ These will be deposited inside an `Images` directory inside your temporary direc
 
 Let's begin by reading an image from a file:
 ```
-julia> img = imread("rose.png")
+julia> img = load("rose.png")
 RGB Image with:
   data: 70x46 Array{RGB{UFixed{Uint8,8}},2}
   properties:
