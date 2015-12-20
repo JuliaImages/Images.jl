@@ -304,7 +304,6 @@ and the available functions
 can be found in the `doc/` directory. Here are some of the topics available:
 
 - The [core](doc/core.md), i.e., the representation of images
-- [I/O](doc/extendingIO.md) and custom image file formats
 - [Function reference](doc/function_reference.md)
 - [Overlays](doc/overlays.md), a type for combining multiple grayscale arrays into a single color array
 
