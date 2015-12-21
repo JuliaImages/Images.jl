@@ -1,15 +1,15 @@
 #### Similarity and dissimilarity measures between images ####
 
 """
-`MHD(imgA, imgB)` is the modified Hausdorff distance between binary
-images (or point sets).
+`hausdorff_distance(imgA, imgB)` is the modified Hausdorff distance
+between binary images (or point sets).
 
 References
 ----------
 Dubuisson, M-P; Jain, A. K., 1994. A Modified Hausdorff Distance for
 Object-Matching.
 """
-function MHD(imgA::AbstractArray, imgB::AbstractArray)
+function hausdorff_distance(imgA::AbstractArray, imgB::AbstractArray)
   @assert size(imgA) == size(imgB) "Images must have the same dimensions"
 
   # trivial case

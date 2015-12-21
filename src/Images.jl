@@ -231,7 +231,7 @@ export # types
     thin_edges_nonmaxsup_subpix,
 
     # distances
-    MHD,
+    hausdorff_distance,
 
     # phantoms
     shepp_logan
