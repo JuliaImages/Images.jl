@@ -40,6 +40,7 @@ include("connected.jl")
 include("edge.jl")
 include("writemime.jl")
 include("corner.jl")
+include("distances.jl")
 
 
 function precompile()
@@ -229,6 +230,9 @@ export # types
     thin_edges_subpix,
     thin_edges_nonmaxsup,
     thin_edges_nonmaxsup_subpix,
+
+    # distances
+    hausdorff_distance,
 
     # phantoms
     shepp_logan

@@ -16,6 +16,7 @@ include("algorithms.jl")
 include("edge.jl")
 include("writemime.jl")
 include("corner.jl")
+include("distances.jl")
 
 isinteractive() || FactCheck.exitstatus()
 
