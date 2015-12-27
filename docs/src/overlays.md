@@ -1,10 +1,4 @@
----
-title: Overlays
-author: Tim Holy
-order: 60
-...
-
-<h1>Overlays</h1>
+# Overlays
 
 Frequently one wants to combine two (or more) grayscale images into a single
 colorized image.  `Images` defines an `AbstractArray` type, `Overlay`, making
@@ -12,7 +6,7 @@ this straightforward.
 
 To create an overlay, use the following syntax:
 
-```{.julia execute="false"}
+```julia
 O = Overlay((gray1,gray2,...), (color1,color2,...), (clim1,clim2,...))
 ```
 

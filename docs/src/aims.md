@@ -1,10 +1,4 @@
----
-title: Aims
-author: Tim Holy
-order: 20
-...
-
-<h1>Aims</h1>
+# Aims
 
 Images are very diverse.  You might be working with a single photograph, or you
 might be processing MRI scans from databases of hundreds of subjects.  In the
