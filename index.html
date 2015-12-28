@@ -1,261 +1,369 @@
 <!DOCTYPE html>
-<html>
-<head>
-  <meta name="author" content="Tim Holy">
-  <meta charset="utf-8">
-  <title>Introduction</title>
-  <link href='http://fonts.googleapis.com/css?family=Source+Sans+Pro:400,700|Source+Code+Pro:400,700'
-        rel='stylesheet' type='text/css'>
-  <link href="css/bootstrap.min.css" rel="stylesheet" type="text/css" media="all">
-  <link href="css/custom.css" rel="stylesheet" type="text/css" media="all">
-  <link href="css/hk-pyg.css" rel="stylesheet" type="text/css" media="all">
-  <script src="js/jquery-2.0.3.min.js" type="text/javascript"></script>
-  <script src="js/bootstrap.min.js" type="text/javascript"></script>
-  <script src="js/list.min.js" type="text/javascript"></script>
-</head>
-<body>
-  <div id="topbar" style="z-index: 3">
-    <div class="container">
-      <div class="row">
-        <ul>
-          <li><div id="pkgname">Images 0.4.47+</div></li>
-          <li><a href="http:&#x2F;&#x2F;github.com&#x2F;timholy&#x2F;Images.jl">Code</a></li>
-          <li><a href="http:&#x2F;&#x2F;github.com&#x2F;timholy&#x2F;Images.jl/issues">Issues</a></li>
-        </ul>
-      </div>
-    </div>
-  </div>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="description" content="An image processing library for Julia">
+        <meta name="author" content="Tim Holy">
+        
+        <link rel="shortcut icon" href="./img/favicon.ico">
 
-  <div class="container" style="z-index: auto">
-    <div class="row">
-      <div class="col-sm-7">
-      <div id="body-content">
-      <h1>Images.jl</h1>
+	<title>Images</title>
+
+        <link href="./css/bootstrap-custom.min.css" rel="stylesheet">
+        <link href="./css/font-awesome-4.0.3.css" rel="stylesheet">
+        <link href="./css/base.css" rel="stylesheet">
+        <link rel="stylesheet" href="./css/highlight.css">
+
+        <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+        <!--[if lt IE 9]>
+            <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+            <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+        <![endif]-->
+
+        
+    </head>
+
+    <body class="homepage">
+
+        <div class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container">
+
+        <!-- Collapsed navigation -->
+        <div class="navbar-header">
+            
+            <!-- Expander button -->
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            
+
+            <!-- Main title -->
+            <a class="navbar-brand" href=".">Images</a>
+        </div>
+
+        <!-- Expanded navigation -->
+        <div class="navbar-collapse collapse">
+            
+                <!-- Main navigation -->
+                <ul class="nav navbar-nav">
+                
+                
+                    <li class="active">
+                        <a href=".">Intro</a>
+                    </li>
+                
+                
+                
+                    <li >
+                        <a href="aims/">Aims</a>
+                    </li>
+                
+                
+                
+                    <li >
+                        <a href="core/">Core Concepts</a>
+                    </li>
+                
+                
+                
+                    <li >
+                        <a href="overlays/">Overlays</a>
+                    </li>
+                
+                
+                
+                    <li >
+                        <a href="function_reference/">Function Reference</a>
+                    </li>
+                
+                
+                </ul>
+            
+
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <a href="#" data-toggle="modal" data-target="#mkdocs_search_modal">
+                        <i class="fa fa-search"></i> Search
+                    </a>
+                </li>
+                
+                    <li class="disabled">
+                        <a rel="next" >
+                            <i class="fa fa-arrow-left"></i> Previous
+                        </a>
+                    </li>
+                    <li >
+                        <a rel="prev" href="aims/">
+                            Next <i class="fa fa-arrow-right"></i>
+                        </a>
+                    </li>
+                
+                
+                    <li>
+                        <a href="https://github.com/rsrock/Images.jl.git">
+                            
+                                <i class="fa fa-github"></i>
+                            
+                            GitHub
+                        </a>
+                    </li>
+                
+            </ul>
+        </div>
+    </div>
+</div>
+
+        <div class="container">
+            
+                <div class="col-md-3"><div class="bs-sidebar hidden-print affix well" role="complementary">
+    <ul class="nav bs-sidenav">
+    
+        <li class="main active"><a href="#imagesjl">Images.jl</a></li>
+        
+            <li><a href="#installation">Installation</a></li>
+        
+            <li><a href="#package-interactions">Package interactions</a></li>
+        
+            <li><a href="#image-viewing">Image viewing</a></li>
+        
+            <li><a href="#testimages">TestImages</a></li>
+        
+            <li><a href="#getting-started">Getting started</a></li>
+        
+            <li><a href="#further-documentation">Further documentation</a></li>
+        
+            <li><a href="#credits">Credits</a></li>
+        
+    
+    </ul>
+</div></div>
+                <div class="col-md-9" role="main">
+
+<!-- Generated by Docile.jl -->
+
+<h1 id="imagesjl">Images.jl</h1>
 <p>An image processing library for <a href="http://julialang.org/">Julia</a>.</p>
-<h1 id="installation">Installation</h1>
+<h2 id="installation">Installation</h2>
 <p>Install via the package manager,</p>
-<pre><code class="language-&#123;.julia execute&#61;&quot;false&quot;&#125;">Pkg.add&#40;&quot;Images&quot;&#41;</code></pre>
-<p>It&#39;s helpful to have ImageMagick installed on your system, as Images relies on it for reading and writing many common image types.  ImageMagick _should_ be installed for you automatically. In case of trouble, more details about manual installation and troubleshooting can be found in the <a href="install.html">installation help</a>. Mac users in particular seem to have trouble; you may find <a href="https://github.com/JuliaLang/Homebrew.jl/wiki/Debugging-Homebrew.jl">debugging Homebrew</a> useful.</p>
-<h1 id="package-interactions">Package interactions</h1>
-<p>A few other packages define overlapping functions or types &#40;<a href="https://github.com/stevengj/PyPlot.jl">PyPlot</a> defines <code>imread</code>, and <a href="https://github.com/nolta/Winston.jl">Winston</a> defines <code>Image</code>&#41;.  When using both Images and these packages, you can always specify which version you want with <code>Images.imread&#40;&quot;myimage.png&quot;&#41;</code>.</p>
-<h1 id="image-viewing">Image viewing</h1>
-<p>If you&#39;re using the <a href="https://github.com/JuliaLang/IJulia.jl">IJulia</a> notebook, images will be displayed <a href="http://htmlpreview.github.com/?https://github.com/timholy/Images.jl/blob/master/ImagesDemo.html">automatically</a>.</p>
+<pre><code>Pkg.add(&quot;Images&quot;)
+</code></pre>
+
+<p>It's helpful to have ImageMagick installed on your system, as Images relies on it for reading and writing many common image types.  ImageMagick <em>should</em> be installed for you automatically. In case of trouble, more details about manual installation and troubleshooting can be found in the <a href="./install.html">installation help</a>. Mac users in particular seem to have trouble; you may find <a href="https://github.com/JuliaLang/Homebrew.jl/wiki/Debugging-Homebrew.jl">debugging Homebrew</a> useful.</p>
+<h2 id="package-interactions">Package interactions</h2>
+<p>A few other packages define overlapping functions or types (<a href="https://github.com/stevengj/PyPlot.jl">PyPlot</a> defines <code>imread</code>, and <a href="https://github.com/nolta/Winston.jl">Winston</a> defines <code>Image</code>).  When using both Images and these packages, you can always specify which version you want with <code>Images.imread("myimage.png")</code>.</p>
+<h2 id="image-viewing">Image viewing</h2>
+<p>If you're using the <a href="https://github.com/JuliaLang/IJulia.jl">IJulia</a> notebook, images will be displayed <a href="http://htmlpreview.github.com/?https://github.com/timholy/Images.jl/blob/master/ImagesDemo.html">automatically</a>.</p>
 <p>Julia code for the display of images can be found in <a href="https://github.com/timholy/ImageView.jl">ImageView</a>.  Installation of this package is recommended but not required.</p>
-<h1 id="testimages">TestImages</h1>
-<p>When testing ideas or just following along with the documentation, it can be useful to have some images to work with.  The <a href="https://github.com/timholy/TestImages.jl">TestImages</a> package bundles several &quot;standard&quot; images for you.  To load one of the images from this package, say</p>
-<pre><code class="language-&#123;.julia execute&#61;&quot;false&quot;&#125;">using TestImages
-img &#61; testimage&#40;&quot;mandrill&quot;&#41;</code></pre>
-<p>The examples below will assume you&#39;re loading a particular file from your disk, but you can substitute those commands with <code>testimage</code>.</p>
-<h1 id="getting-started">Getting started</h1>
-<p>For these examples you&#39;ll need to install both <code>Images</code> and <code>ImageView</code>. Depending on your task, it&#39;s also very useful to have two other packages loaded, <a href="https://github.com/JuliaGraphics/Colors.jl">Colors</a> and <a href="https://github.com/JeffBezanson/FixedPointNumbers.jl">FixedPointNumbers</a>.  Load the code for all of these packages with</p>
-<pre><code class="language-&#123;.julia execute&#61;&quot;false&quot;&#125;">using Images, Colors, FixedPointNumbers, ImageView</code></pre>
-<h2 id="loading-your-first-image-how-images-are-represented">Loading your first image: how images are represented</h2>
-<p>You likely have a number of images already at your disposal, and you can use these, TestImages.jl, or run <code>readremote.jl</code> in the <code>test/</code> directory.  &#40;This requires an internet connection.&#41;  These will be deposited inside an <code>Images</code> directory inside your temporary directory &#40;e.g., <code>/tmp</code> on Linux systems&#41;. The <code>&quot;rose.png&quot;</code> image in this example comes from the latter.</p>
-<p>Let&#39;s begin by reading an image from a file:</p>
-<pre><code class="language-&#123;.julia execute&#61;&quot;false&quot;&#125;">julia&gt; img &#61; imread&#40;&quot;rose.png&quot;&#41;
+<h2 id="testimages">TestImages</h2>
+<p>When testing ideas or just following along with the documentation, it can be useful to have some images to work with.  The <a href="https://github.com/timholy/TestImages.jl">TestImages</a> package bundles several "standard" images for you.  To load one of the images from this package, say</p>
+<pre><code>using TestImages
+img = testimage(&quot;mandrill&quot;)
+</code></pre>
+
+<p>The examples below will assume you're loading a particular file from your disk, but you can substitute those commands with <code>testimage</code>.</p>
+<h2 id="getting-started">Getting started</h2>
+<p>For these examples you'll need to install both <code>Images</code> and <code>ImageView</code>. Depending on your task, it's also very useful to have two other packages loaded, <a href="https://github.com/JuliaGraphics/Colors.jl">Colors</a> and <a href="https://github.com/JeffBezanson/FixedPointNumbers.jl">FixedPointNumbers</a>.  Load the code for all of these packages with</p>
+<pre><code>using Images, Colors, FixedPointNumbers, ImageView
+</code></pre>
+
+<h3 id="loading-your-first-image-how-images-are-represented">Loading your first image: how images are represented</h3>
+<p>You likely have a number of images already at your disposal, and you can use these, TestImages.jl, or run <code>readremote.jl</code> in the <code>test/</code> directory.  (This requires an internet connection.)  These will be deposited inside an <code>Images</code> directory inside your temporary directory (e.g., <code>/tmp</code> on Linux systems). The <code>"rose.png"</code> image in this example comes from the latter.</p>
+<p>Let's begin by reading an image from a file:</p>
+<pre><code>julia&gt; img = imread(&quot;rose.png&quot;)
 RGB Image with:
-  data: 70x46 Array&#123;RGB&#123;UfixedBase&#123;Uint8,8&#125;&#125;,2&#125;
+  data: 70x46 Array{RGB{UFixed{Uint8,8}},2}
   properties:
     IMcs: sRGB
     spatialorder:  x y
-    pixelspacing:  1 1</code></pre>
-<p>If you&#39;re using Images through IJulia, rather than this text output you probably see the image itself.  This is nice, but often it&#39;s quite helpful to see the structure of these Image objects.  This happens automatically at the REPL; within IJulia you can call</p>
-<pre><code class="language-&#123;.julia execute&#61;&quot;false&quot;&#125;">show&#40;img&#41;</code></pre>
+    pixelspacing:  1 1
+</code></pre>
+
+<p>If you're using Images through IJulia, rather than this text output you probably see the image itself.  This is nice, but often it's quite helpful to see the structure of these Image objects.  This happens automatically at the REPL; within IJulia you can call</p>
+<pre><code>show(img)
+</code></pre>
+
 <p>to see the output above.</p>
-<p>The first line tells you that this is an RGB image. It is stored as a two-dimensional <code>Array</code> of <code>RGB&#123;UfixedBase&#123;Uint8,8&#125;&#125;</code>. To see what this pixel type is, we can do the following:</p>
-<pre><code class="language-&#123;.julia execute&#61;&quot;false&quot;&#125;">julia&gt; img&#91;1,1&#93;
-RGB&#123;Ufixed8&#125;&#40;0.188,0.184,0.176&#41;</code></pre>
-<p>This extracts the first pixel, the one visually at the upper-left of the image. You can see that an <code>RGB</code> &#40;which comes from the <a href="https://github.com/JuliaGraphics/Colors.jl">Colors</a> package&#41; is a triple of values. The <code>Ufixed8</code> number type &#40;which comes from the <a href="https://github.com/JeffBezanson/FixedPointNumbers.jl">FixedPointNumbers</a> package&#41;, and whose long name is <code>UfixedBase&#123;Uint8,8&#125;</code>&#41; represents fractional numbers, those that can encode values that lie between 0 and 1, using just 1 byte &#40;8 bits&#41;.  If you&#39;ve previously used other image processing libraries, you may be used to thinking of two basic image types, floating point-valued and integer-valued. In those libraries, &quot;saturated&quot; &#40;the color white for an RGB image&#41; would be represented by <code>1.0</code> for floating point-valued images, 255 for a <code>Uint8</code> image, and <code>0x0fff</code> for an image collected by a 12-bit camera. <code>Images.jl</code>, via Colors and FixedPointNumbers, unifies these so that <code>1</code> always means saturated, no matter whether the element type is <code>Float64</code>, <code>Ufixed8</code>, or <code>Ufixed12</code>.  This makes it easier to write generic algorithms and visualization code, while still allowing one to use efficient &#40;and C-compatible&#41; raw representations.</p>
-<p>You can see that this image has <code>properties</code>, of which there are three: <code>&quot;IMcs&quot;</code>, <code>&quot;spatialorder&quot;</code> and <code>&quot;pixelspacing&quot;</code>.  We&#39;ll talk more about the latter two in the next section.  The <code>&quot;IMcs&quot;</code> is really for internal use by ImageMagick; it says that the colorspace is <code>&quot;sRGB&quot;</code>, although &#40;depending on which version of the library you have&#41; you may see it say <code>&quot;RGB&quot;</code>.  Such differences are due to <a href="http://www.imagemagick.org/script/color-management.php">changes</a> in how ImageMagick handles colorspaces, and the fact that both older and newer versions of the library are still widespread.</p>
-<p>You can retrieve the properties using <code>props &#61; properties&#40;img&#41;</code>. This returns the dictionary used by <code>img</code>; any modifications you make to <code>props</code> will update the properties of <code>img</code>.</p>
+<p>The first line tells you that this is an RGB image. It is stored as a two-dimensional <code>Array</code> of <code>RGB{UFixed{Uint8,8}}</code>. To see what this pixel type is, we can do the following:</p>
+<pre><code>julia&gt; img[1,1]
+RGB{UFixed8}(0.188,0.184,0.176)
+</code></pre>
+
+<p>This extracts the first pixel, the one visually at the upper-left of the image. You can see that an <code>RGB</code> (which comes from the <a href="https://github.com/JuliaGraphics/Colors.jl">Colors</a> package) is a triple of values. The <code>UFixed8</code> number type (which comes from the <a href="https://github.com/JeffBezanson/FixedPointNumbers.jl">FixedPointNumbers</a> package), and whose long name is <code>UFixed{Uint8,8}</code>) represents fractional numbers, those that can encode values that lie between 0 and 1, using just 1 byte (8 bits).  If you've previously used other image processing libraries, you may be used to thinking of two basic image types, floating point-valued and integer-valued. In those libraries, "saturated" (the color white for an RGB image) would be represented by <code>1.0</code> for floating point-valued images, 255 for a <code>Uint8</code> image, and <code>0x0fff</code> for an image collected by a 12-bit camera. <code>Images.jl</code>, via Colors and FixedPointNumbers, unifies these so that <code>1</code> always means saturated, no matter whether the element type is <code>Float64</code>, <code>UFixed8</code>, or <code>UFixed12</code>.  This makes it easier to write generic algorithms and visualization code, while still allowing one to use efficient (and C-compatible) raw representations.</p>
+<p>You can see that this image has <code>properties</code>, of which there are three: <code>"IMcs"</code>, <code>"spatialorder"</code> and <code>"pixelspacing"</code>.  We'll talk more about the latter two in the next section.  The <code>"IMcs"</code> is really for internal use by ImageMagick; it says that the colorspace is <code>"sRGB"</code>, although (depending on which version of the library you have) you may see it say <code>"RGB"</code>.  Such differences are due to <a href="http://www.imagemagick.org/script/color-management.php">changes</a> in how ImageMagick handles colorspaces, and the fact that both older and newer versions of the library are still widespread.</p>
+<p>You can retrieve the properties using <code>props = properties(img)</code>. This returns the dictionary used by <code>img</code>; any modifications you make to <code>props</code> will update the properties of <code>img</code>.</p>
 <p>Likewise, given an Image <code>img</code>, you can access the underlying array with</p>
-<pre><code class="language-&#123;.julia execute&#61;&quot;false&quot;&#125;">A &#61; data&#40;img&#41;</code></pre>
+<pre><code>A = data(img)
+</code></pre>
+
 <p>This is handy for those times when you want to call an algorithm that is implemented only for <code>Array</code>s. At the end, however, you may want to restore the contextual information available in an Image. While you can use the <code>Image</code> constructor directly, two alternatives can be convenient:</p>
-<pre><code class="language-&#123;.julia execute&#61;&quot;false&quot;&#125;">imgc &#61; copyproperties&#40;img, A&#41;
-imgs &#61; shareproperties&#40;img, A&#41;</code></pre>
+<pre><code>imgc = copyproperties(img, A)
+imgs = shareproperties(img, A)
+</code></pre>
+
 <p><code>imgc</code> has its own properties dictionary, initialized to be a copy of the one used by <code>img</code>.  In contrast, <code>imgs</code> shares a properties dictionary with <code>img</code>; any modification to the properties of <code>img</code> will also modify them for <code>imgs</code>. Use either as appropriate to your circumstance.</p>
-<p>The Images package is designed to work with either plain arrays or with Image types–-in general, though, you&#39;re probably best off leaving things as an Image, particularly if you work with movies, 3d images, or other more complex objects.</p>
-<h2 id="storage-order-and-changing-the-representation-of-images">Storage order and changing the representation of images</h2>
-<p>In the example above, the <code>&quot;spatialorder&quot;</code> property has value <code>&#91;&quot;x&quot;, &quot;y&quot;&#93;</code>. This indicates that the image data are in &quot;horizontal-major&quot; order, meaning that a pixel at spatial location <code>&#40;x,y&#41;</code> would be addressed as <code>img&#91;x,y&#93;</code> rather than <code>img&#91;y,x&#93;</code>. <code>&#91;&quot;y&quot;, &quot;x&quot;&#93;</code> would indicate vertical-major.  Consequently, this image is 70 pixels wide and 46 pixels high.</p>
+<p>The Images package is designed to work with either plain arrays or with Image types–-in general, though, you're probably best off leaving things as an Image, particularly if you work with movies, 3d images, or other more complex objects.</p>
+<h3 id="storage-order-and-changing-the-representation-of-images">Storage order and changing the representation of images</h3>
+<p>In the example above, the <code>"spatialorder"</code> property has value <code>["x", "y"]</code>. This indicates that the image data are in "horizontal-major" order, meaning that a pixel at spatial location <code>(x,y)</code> would be addressed as <code>img[x,y]</code> rather than <code>img[y,x]</code>. <code>["y", "x"]</code> would indicate vertical-major.  Consequently, this image is 70 pixels wide and 46 pixels high.</p>
 <p>Images returns this image in horizontal-major order because this is how it was stored on disk.  Because the Images package is designed to scale to terabyte-sized images, a general philosophy is to work with whatever format users provide without forcing changes to the raw array representation. Consequently, when you load an image, its representation will match that used in the file.</p>
 <p>Of course, if you prefer to work with plain arrays, you can convert it:</p>
-<pre><code class="language-&#123;.julia execute&#61;&quot;false&quot;&#125;">julia&gt; imA &#61; convert&#40;Array, img&#41;;
+<pre><code>julia&gt; imA = convert(Array, img);
 
-julia&gt; summary&#40;imA&#41;
-&quot;46x70 Array&#123;RGB&#123;UfixedBase&#123;Uint8,8&#125;&#125;,2&#125;&quot;</code></pre>
-<p>You can see that this permuted the dimensions into vertical-major order, consistent with the column-major order with which Julia stores <code>Arrays</code>. Note that this preserved the element type, returning an <code>Array&#123;RGB&#125;</code>.  If you prefer to extract into an array of plain numbers in color-last order &#40;typical of Matlab&#41;, you can use</p>
-<pre><code class="language-&#123;.julia execute&#61;&quot;false&quot;&#125;">julia&gt; imsep &#61; separate&#40;img&#41;
+julia&gt; summary(imA)
+&quot;46x70 Array{RGB{UFixed{Uint8,8}},2}&quot;
+</code></pre>
+
+<p>You can see that this permuted the dimensions into vertical-major order, consistent with the column-major order with which Julia stores <code>Arrays</code>. Note that this preserved the element type, returning an <code>Array{RGB}</code>.  If you prefer to extract into an array of plain numbers in color-last order (typical of Matlab), you can use</p>
+<pre><code>julia&gt; imsep = separate(img)
 RGB Image with:
-  data: 46x70x3 Array&#123;UfixedBase&#123;Uint8,8&#125;,3&#125;
+  data: 46x70x3 Array{UFixed{Uint8,8},3}
   properties:
     IMcs: sRGB
     colorspace: RGB
     colordim: 3
     spatialorder:  y x
-    pixelspacing:  1 1</code></pre>
-<p>You can see that <code>&quot;spatialorder&quot;</code> was changed to reflect the new layout, and that two new properties were added: <code>&quot;colordim&quot;</code>, which specifies which dimension of the array is used to encode color, and <code>&quot;colorspace&quot;</code> so you know how to interpret these colors.</p>
+    pixelspacing:  1 1
+</code></pre>
+
+<p>You can see that <code>"spatialorder"</code> was changed to reflect the new layout, and that two new properties were added: <code>"colordim"</code>, which specifies which dimension of the array is used to encode color, and <code>"colorspace"</code> so you know how to interpret these colors.</p>
 <p>Compare this to</p>
-<pre><code class="language-&#123;.julia execute&#61;&quot;false&quot;&#125;">julia&gt; imr &#61; reinterpret&#40;Ufixed8, img&#41;
+<pre><code>julia&gt; imr = reinterpret(UFixed8, img)
 RGB Image with:
-  data: 3x70x46 Array&#123;UfixedBase&#123;Uint8,8&#125;,3&#125;
+  data: 3x70x46 Array{UFixed{Uint8,8},3}
   properties:
     IMcs: sRGB
     colorspace: RGB
     colordim: 1
     spatialorder:  x y
-    pixelspacing:  1 1</code></pre>
-<p><code>reinterpret</code> gives you a new view of the same underlying memory as <code>img</code>, whereas <code>convert&#40;Array, img&#41;</code> and <code>separate&#40;img&#41;</code> create new arrays if the memory-layout needs alteration.</p>
+    pixelspacing:  1 1
+</code></pre>
+
+<p><code>reinterpret</code> gives you a new view of the same underlying memory as <code>img</code>, whereas <code>convert(Array, img)</code> and <code>separate(img)</code> create new arrays if the memory-layout needs alteration.</p>
 <p>You can go back to using Colors to encode your image this way:</p>
-<pre><code class="language-&#123;.julia execute&#61;&quot;false&quot;&#125;">julia&gt; imcomb &#61; convert&#40;Image&#123;RGB&#125;, imsep&#41;
+<pre><code>julia&gt; imcomb = convert(Image{RGB}, imsep)
 RGB Image with:
-  data: 46x70 Array&#123;RGB&#123;UfixedBase&#123;Uint8,8&#125;&#125;,2&#125;
+  data: 46x70 Array{RGB{UFixed{Uint8,8}},2}
   properties:
     IMcs: sRGB
     spatialorder:  y x
-    pixelspacing:  1 1</code></pre>
+    pixelspacing:  1 1
+</code></pre>
+
 <p>or even change to a new colorspace like this:</p>
-<pre><code class="language-&#123;.julia execute&#61;&quot;false&quot;&#125;">julia&gt; imhsv &#61; convert&#40;Image&#123;HSV&#125;, float32&#40;img&#41;&#41;
+<pre><code>julia&gt; imhsv = convert(Image{HSV}, float32(img))
 HSV Image with:
-  data: 70x46 Array&#123;HSV&#123;Float32&#125;,2&#125;
+  data: 70x46 Array{HSV{Float32},2}
   properties:
     IMcs: sRGB
     spatialorder:  x y
-    pixelspacing:  1 1</code></pre>
-<p>Many of the colorspaces supported by Colors &#40;or rather its base package, ColorTypes&#41; need a wider range of values than <code>&#91;0,1&#93;</code>, so it&#39;s necessary to convert to floating point.</p>
-<p>If you say <code>view&#40;imhsv&#41;</code>, you may be surprised to see something that looks like the original RGB image. Since the colorspace is known, it converts to RGB before rendering it. If, for example, you wanted to see what a &quot;pure-V&quot; image looks like, you can do this:</p>
-<pre><code class="language-&#123;.julia execute&#61;&quot;false&quot;&#125;">imv &#61; shareproperties&#40;imhsv, &#91;HSV&#40;0, 0, imhsv&#91;i,j&#93;.v&#41; for i &#61; 1:size&#40;imhsv,1&#41;,j &#61; 1:size&#40;imhsv,2&#41;&#93;&#41;
-view&#40;imv&#41;</code></pre>
+    pixelspacing:  1 1
+</code></pre>
+
+<p>Many of the colorspaces supported by Colors (or rather its base package, ColorTypes) need a wider range of values than <code>[0,1]</code>, so it's necessary to convert to floating point.</p>
+<p>If you say <code>view(imhsv)</code>, you may be surprised to see something that looks like the original RGB image. Since the colorspace is known, it converts to RGB before rendering it. If, for example, you wanted to see what a "pure-V" image looks like, you can do this:</p>
+<pre><code>imv = shareproperties(imhsv, [HSV(0, 0, imhsv[i,j].v) for i = 1:size(imhsv,1),j = 1:size(imhsv,2)])
+view(imv)
+</code></pre>
+
 <p>and a pure-H image like this:</p>
-<pre><code class="language-&#123;.julia execute&#61;&quot;false&quot;&#125;">imh &#61; shareproperties&#40;imhsv, &#91;HSV&#40;imhsv&#91;i,j&#93;.h, 0.5, 0.5&#41; for i &#61; 1:size&#40;imhsv,1&#41;,j &#61; 1:size&#40;imhsv,2&#41;&#93;&#41;
-view&#40;imh&#41;</code></pre>
-<p>&#40;Hue without saturation or value generates gray or black, so we used a constant different from zero for these parameters.&#41;</p>
+<pre><code>imh = shareproperties(imhsv, [HSV(imhsv[i,j].h, 0.5, 0.5) for i = 1:size(imhsv,1),j = 1:size(imhsv,2)])
+view(imh)
+</code></pre>
+
+<p>(Hue without saturation or value generates gray or black, so we used a constant different from zero for these parameters.)</p>
 <!– use standard html instead of markdown, to set resize behavior –> <img class="img-responsive" src="doc/figures/rose_hsv.png" />
+
 <p>Of course, you can combine these commands, for example</p>
-<pre><code class="language-&#123;.julia execute&#61;&quot;false&quot;&#125;">A &#61; reinterpret&#40;Uint8, data&#40;img&#41;&#41;</code></pre>
-<p>will, for a <code>RGB&#123;Ufixed8&#125;</code> image, return a raw 3d array.  This can be useful if you want to interact with external code &#40;a C-library, for example&#41;.  Assuming you don&#39;t want to lose orientation information, you can wrap a returned array <code>B</code> as <code>shareproperties&#40;img, B&#41;</code>.</p>
-<h2 id="other-properties-and-usage-of-units">Other properties, and usage of Units</h2>
-<p>The <code>&quot;pixelspacing&quot;</code> property informs ImageView that this image has an aspect ratio 1.  In scientific or medical imaging, you can use actual units to encode this property, for example through the <a href="https://github.com/Keno/SIUnits.jl">SIUnits</a> package.  For example, if you&#39;re doing microscopy you might specify</p>
-<pre><code class="language-&#123;.julia execute&#61;&quot;false&quot;&#125;">using SIUnits
-img&#91;&quot;pixelspacing&quot;&#93; &#61; &#91;0.32Micro*Meter,0.32Micro*Meter&#93;</code></pre>
-<p>If you&#39;re performing three-dimensional imaging, you might set different values for the different axes:</p>
-<pre><code class="language-&#123;.julia execute&#61;&quot;false&quot;&#125;">using SIUnits.ShortUnits
-mriscan&#91;&quot;pixelspacing&quot;&#93; &#61; &#91;0.2mm, 0.2mm, 2mm&#93;</code></pre>
+<pre><code>A = reinterpret(Uint8, data(img))
+</code></pre>
+
+<p>will, for a <code>RGB{UFixed8}</code> image, return a raw 3d array.  This can be useful if you want to interact with external code (a C-library, for example).  Assuming you don't want to lose orientation information, you can wrap a returned array <code>B</code> as <code>shareproperties(img, B)</code>.</p>
+<h3 id="other-properties-and-usage-of-units">Other properties, and usage of Units</h3>
+<p>The <code>"pixelspacing"</code> property informs ImageView that this image has an aspect ratio 1.  In scientific or medical imaging, you can use actual units to encode this property, for example through the <a href="https://github.com/Keno/SIUnits.jl">SIUnits</a> package.  For example, if you're doing microscopy you might specify</p>
+<pre><code>using SIUnits
+img[&quot;pixelspacing&quot;] = [0.32Micro*Meter,0.32Micro*Meter]
+</code></pre>
+
+<p>If you're performing three-dimensional imaging, you might set different values for the different axes:</p>
+<pre><code>using SIUnits.ShortUnits
+mriscan[&quot;pixelspacing&quot;] = [0.2mm, 0.2mm, 2mm]
+</code></pre>
+
 <p>ImageView includes facilities for scale bars, and by supplying your pixel spacing you can ensure that the scale bars are accurate.</p>
-<h2 id="a-brief-demonstration-of-image-processing">A brief demonstration of image processing</h2>
-<p>Now let&#39;s work through a more sophisticated example:</p>
-<pre><code class="language-&#123;.julia execute&#61;&quot;false&quot;&#125;">using Images, TestImages, ImageView
-img &#61; testimage&#40;&quot;mandrill&quot;&#41;
-view&#40;img&#41;
-# Let&#39;s do some blurring
-kern &#61; ones&#40;Float32,7,7&#41;/49
-imgf &#61; imfilter&#40;img, kern&#41;
-view&#40;imgf&#41;
-# Let&#39;s make an oversaturated image
-imgs &#61; 2imgf
-view&#40;imgs&#41;</code></pre>
+<h3 id="a-brief-demonstration-of-image-processing">A brief demonstration of image processing</h3>
+<p>Now let's work through a more sophisticated example:</p>
+<pre><code>using Images, TestImages, ImageView
+img = testimage(&quot;mandrill&quot;)
+view(img)
+# Let's do some blurring
+kern = ones(Float32,7,7)/49
+imgf = imfilter(img, kern)
+view(imgf)
+# Let's make an oversaturated image
+imgs = 2imgf
+view(imgs)
+</code></pre>
+
 <!– use standard html instead of markdown, to set resize behavior –> <img class="img-responsive" src="doc/figures/mandrill.jpg" />
-<h1 id="further-documentation">Further documentation</h1>
+
+<h2 id="further-documentation">Further documentation</h2>
 <p>Detailed documentation about the design of the library and the available functions can be found in the navigation list to the right. Here are some of the topics available:</p>
 <ul>
-<li>The <a href="core.html">core</a> representation of images</li>
-<li><a href="extendingIO.html">I/O</a> and custom image file formats</li>
-<li><a href="function_reference.html">Function reference</a></li>
-<li><a href="overlays.html">Overlays</a>, a type for combining multiple grayscale arrays   into a single color array</li>
-<li><a href="fixing_breakages.html">Changes</a> describes some recent changes and how to   fix likely breakages in old code</li>
+<li>The <a href="./core.html">core</a> representation of images</li>
+<li><a href="./function_reference.html">Function reference</a></li>
+<li><a href="./overlays.html">Overlays</a>, a type for combining multiple grayscale arrays   into a single color array</li>
 </ul>
-<h1 id="credits">Credits</h1>
-<p>Elements of this package descend from &quot;image.jl&quot; that once lived in Julia&#39;s <code>extras/</code> directory.  That file had several authors, of which the primary were Jeff Bezanson, Stefan Kroboth, Tim Holy, Mike Nolta, and Stefan Karpinski.  This repository has been quite heavily reworked; the current package maintainer is Tim Holy, and important contributions have been made by Ron Rock, Kevin Squire, Lucas Beyer, Elliot Saba, Isaiah Norton, Daniel Perry, Waldir Pimenta, Tobias Knopp, Jason Merrill, Dahua Lin, and several others.</p>
-
-      <hr>
-      </div>
-      </div>
-
-      <div class="col-sm-offset-8" style="z-index: 2">
-        <div id="table-of-contents">
-          <div id="table-of-contents-content">
-            <input class="search" placeholder="SEARCH" />
-            <ul class="toc list nav"><li>
-    <a class="toc-item toc-current-doc" href="index.html">Introduction</a>
-</li>
-<li>
-    <a style="margin-left: 0.5em" class="toc-item" href="#installation">Installation</a>
-</li>
-<li>
-    <a style="margin-left: 0.5em" class="toc-item" href="#package-interactions">Package interactions</a>
-</li>
-<li>
-    <a style="margin-left: 0.5em" class="toc-item" href="#image-viewing">Image viewing</a>
-</li>
-<li>
-    <a style="margin-left: 0.5em" class="toc-item" href="#testimages">TestImages</a>
-</li>
-<li>
-    <a style="margin-left: 0.5em" class="toc-item" href="#getting-started">Getting started</a>
-</li>
-<li>
-    <a style="margin-left: 1.0em" class="toc-item" href="#loading-your-first-image-how-images-are-represented">Loading your first image: how images are represented</a>
-</li>
-<li>
-    <a style="margin-left: 1.0em" class="toc-item" href="#storage-order-and-changing-the-representation-of-images">Storage order and changing the representation of images</a>
-</li>
-<li>
-    <a style="margin-left: 1.0em" class="toc-item" href="#other-properties-and-usage-of-units">Other properties, and usage of Units</a>
-</li>
-<li>
-    <a style="margin-left: 1.0em" class="toc-item" href="#a-brief-demonstration-of-image-processing">A brief demonstration of image processing</a>
-</li>
-<li>
-    <a style="margin-left: 0.5em" class="toc-item" href="#further-documentation">Further documentation</a>
-</li>
-<li>
-    <a style="margin-left: 0.5em" class="toc-item" href="#credits">Credits</a>
-</li>
-<li>
-    <a class="toc-item" href="aims.html">Aims</a>
-</li>
-<li>
-    <a class="toc-item" href="install.html">Installation</a>
-</li>
-<li>
-    <a class="toc-item" href="core.html">Core Concepts</a>
-</li>
-<li>
-    <a class="toc-item" href="function_reference.html">Function Reference</a>
-</li>
-<li>
-    <a class="toc-item" href="overlays.html">Overlays</a>
-</li>
-<li>
-    <a class="toc-item" href="extendingIO.html">Extending IO</a>
-</li>
-<li>
-    <a class="toc-item" href="status.html">Development Status</a>
-</li>
-</ul>
-
-            <script>
-                var toclist = new List("table-of-contents",
-                                       {valueNames: ["toc-item"]})
-
-                $("body").scrollspy({target: "#table-of-contents"});
-
-                $("#table-of-contents li").on("activate.bs.scrollspy",
-                    function(event) {
-                        $("#table-of-contents ul").find("a").css({"font-weight": "normal"});
-                        $(this).children("a").css({"font-weight": "bolder"});
-                    });
-            </script>
-          </div>
+<h2 id="credits">Credits</h2>
+<p>Elements of this package descend from "image.jl" that once lived in Julia's <code>extras/</code> directory.  That file had several authors, of which the primary were Jeff Bezanson, Stefan Kroboth, Tim Holy, Mike Nolta, and Stefan Karpinski.  This repository has been quite heavily reworked; the current package maintainer is Tim Holy, and important contributions have been made by Ron Rock, Kevin Squire, Lucas Beyer, Elliot Saba, Isaiah Norton, Daniel Perry, Waldir Pimenta, Tobias Knopp, Jason Merrill, Dahua Lin, and several others.</p></div>
+            
         </div>
-      </div>
-    </div>
 
-  <footer class="col-sm-8">
-    <p class="muted">Last modified by Tim Holy on . Generated with
-    <a href="https://github.com/dcjones/Judo.jl">Judo</a>.</p>
-  </footer>
+        <footer class="col-md-12">
+            <hr>
+            
+            <p>Documentation built with <a href="http://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
 
-  </div>
-</body>
+        <script src="./js/jquery-1.10.2.min.js"></script>
+        <script src="./js/bootstrap-3.0.3.min.js"></script>
+        <script src="./js/highlight.pack.js"></script>
+        <script>var base_url = '.';</script>
+        <script data-main="./mkdocs/js/search.js" src="./mkdocs/js/require.js"></script>
+        <script src="./js/base.js"></script>
+
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="Search Modal" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                        <h4 class="modal-title" id="exampleModalLabel">Search</h4>
+                    </div>
+                    <div class="modal-body">
+                        <p>
+                            From here you can search these documents. Enter
+                            your search terms below.
+                        </p>
+                        <form role="form">
+                            <div class="form-group">
+                                <input type="text" class="form-control" placeholder="Search..." id="mkdocs-search-query">
+                            </div>
+                        </form>
+                        <div id="mkdocs-search-results"></div>
+                    </div>
+                    <div class="modal-footer">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </body>
 </html>
 
+<!--
+MkDocs version : 0.14.0
+Build Date UTC : 2015-12-28 00:42:07.726760
+-->
