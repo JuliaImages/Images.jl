@@ -9,9 +9,7 @@ An image processing library for [Julia](http://julialang.org/).
 
 ## Documentation
 
-<!-- Note: to update the documentation after editing the markdown files on
-master: git checkout gh-pages; git merge master; ./makedocs -->
-[Full documentation is found here](http://timholy.github.io/Images.jl)
+[Full documentation is found here](http://timholy.github.io/Images.jl/home)
 
 ## Installation
 
