@@ -4,17 +4,17 @@
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <meta name="description" content="An image processing library for Julia">
+        
         <meta name="author" content="Tim Holy">
         
-        <link rel="shortcut icon" href="./img/favicon.ico">
+        <link rel="shortcut icon" href="../img/favicon.ico">
 
-	<title>Images</title>
+	<title>Home - Images</title>
 
-        <link href="./css/bootstrap-custom.min.css" rel="stylesheet">
-        <link href="./css/font-awesome-4.0.3.css" rel="stylesheet">
-        <link href="./css/base.css" rel="stylesheet">
-        <link rel="stylesheet" href="./css/highlight.css">
+        <link href="../css/bootstrap-custom.min.css" rel="stylesheet">
+        <link href="../css/font-awesome-4.0.3.css" rel="stylesheet">
+        <link href="../css/base.css" rel="stylesheet">
+        <link rel="stylesheet" href="../css/highlight.css">
 
         <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
         <!--[if lt IE 9]>
@@ -25,7 +25,7 @@
         
     </head>
 
-    <body class="homepage">
+    <body>
 
         <div class="navbar navbar-default navbar-fixed-top" role="navigation">
     <div class="container">
@@ -43,7 +43,7 @@
             
 
             <!-- Main title -->
-            <a class="navbar-brand" href=".">Images</a>
+            <a class="navbar-brand" href="./">Images</a>
         </div>
 
         <!-- Expanded navigation -->
@@ -54,31 +54,55 @@
                 
                 
                     <li class="active">
-                        <a href=".">Intro</a>
+                        <a href="./">Home</a>
+                    </li>
+                
+                
+                
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">User Guide <b class="caret"></b></a>
+                        <ul class="dropdown-menu">
+                        
+                            
+<li >
+    <a href="../aims/">Aims</a>
+</li>
+
+                        
+                            
+<li >
+    <a href="../core/">Core Concepts</a>
+</li>
+
+                        
+                            
+<li >
+    <a href="../overlays/">Overlays</a>
+</li>
+
+                        
+                        </ul>
                     </li>
                 
                 
                 
                     <li >
-                        <a href="aims/">Aims</a>
+                        <a href="../function_reference/">Function Reference</a>
                     </li>
                 
                 
                 
-                    <li >
-                        <a href="core/">Core Concepts</a>
-                    </li>
-                
-                
-                
-                    <li >
-                        <a href="overlays/">Overlays</a>
-                    </li>
-                
-                
-                
-                    <li >
-                        <a href="function_reference/">Function Reference</a>
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">About <b class="caret"></b></a>
+                        <ul class="dropdown-menu">
+                        
+                            
+<li >
+    <a href="../LICENSE/">License</a>
+</li>
+
+                        
+                        </ul>
                     </li>
                 
                 
@@ -98,14 +122,14 @@
                         </a>
                     </li>
                     <li >
-                        <a rel="prev" href="aims/">
+                        <a rel="prev" href="../aims/">
                             Next <i class="fa fa-arrow-right"></i>
                         </a>
                     </li>
                 
                 
                     <li>
-                        <a href="https://github.com/rsrock/Images.jl.git">
+                        <a href="https://github.com/timholy/Images.jl.git">
                             
                                 <i class="fa fa-github"></i>
                             
@@ -150,10 +174,10 @@
 <p>An image processing library for <a href="http://julialang.org/">Julia</a>.</p>
 <h2 id="installation">Installation</h2>
 <p>Install via the package manager,</p>
-<pre><code>Pkg.add(&quot;Images&quot;)
+<pre><code class="julia">Pkg.add(&quot;Images&quot;)
 </code></pre>
 
-<p>It's helpful to have ImageMagick installed on your system, as Images relies on it for reading and writing many common image types.  ImageMagick <em>should</em> be installed for you automatically. In case of trouble, more details about manual installation and troubleshooting can be found in the <a href="./install.html">installation help</a>. Mac users in particular seem to have trouble; you may find <a href="https://github.com/JuliaLang/Homebrew.jl/wiki/Debugging-Homebrew.jl">debugging Homebrew</a> useful.</p>
+<p>It's helpful to have ImageMagick installed on your system, as Images relies on it for reading and writing many common image types.  ImageMagick <em>should</em> be installed for you automatically. In case of trouble, more details about manual installation and troubleshooting can be found in the <a href="../install.html">installation help</a>. Mac users in particular seem to have trouble; you may find <a href="https://github.com/JuliaLang/Homebrew.jl/wiki/Debugging-Homebrew.jl">debugging Homebrew</a> useful.</p>
 <h2 id="package-interactions">Package interactions</h2>
 <p>A few other packages define overlapping functions or types (<a href="https://github.com/stevengj/PyPlot.jl">PyPlot</a> defines <code>imread</code>, and <a href="https://github.com/nolta/Winston.jl">Winston</a> defines <code>Image</code>).  When using both Images and these packages, you can always specify which version you want with <code>Images.imread("myimage.png")</code>.</p>
 <h2 id="image-viewing">Image viewing</h2>
@@ -161,20 +185,20 @@
 <p>Julia code for the display of images can be found in <a href="https://github.com/timholy/ImageView.jl">ImageView</a>.  Installation of this package is recommended but not required.</p>
 <h2 id="testimages">TestImages</h2>
 <p>When testing ideas or just following along with the documentation, it can be useful to have some images to work with.  The <a href="https://github.com/timholy/TestImages.jl">TestImages</a> package bundles several "standard" images for you.  To load one of the images from this package, say</p>
-<pre><code>using TestImages
+<pre><code class="julia">using TestImages
 img = testimage(&quot;mandrill&quot;)
 </code></pre>
 
 <p>The examples below will assume you're loading a particular file from your disk, but you can substitute those commands with <code>testimage</code>.</p>
 <h2 id="getting-started">Getting started</h2>
 <p>For these examples you'll need to install both <code>Images</code> and <code>ImageView</code>. Depending on your task, it's also very useful to have two other packages loaded, <a href="https://github.com/JuliaGraphics/Colors.jl">Colors</a> and <a href="https://github.com/JeffBezanson/FixedPointNumbers.jl">FixedPointNumbers</a>.  Load the code for all of these packages with</p>
-<pre><code>using Images, Colors, FixedPointNumbers, ImageView
+<pre><code class="julia">using Images, Colors, FixedPointNumbers, ImageView
 </code></pre>
 
 <h3 id="loading-your-first-image-how-images-are-represented">Loading your first image: how images are represented</h3>
 <p>You likely have a number of images already at your disposal, and you can use these, TestImages.jl, or run <code>readremote.jl</code> in the <code>test/</code> directory.  (This requires an internet connection.)  These will be deposited inside an <code>Images</code> directory inside your temporary directory (e.g., <code>/tmp</code> on Linux systems). The <code>"rose.png"</code> image in this example comes from the latter.</p>
 <p>Let's begin by reading an image from a file:</p>
-<pre><code>julia&gt; img = imread(&quot;rose.png&quot;)
+<pre><code class="julia">julia&gt; img = imread(&quot;rose.png&quot;)
 RGB Image with:
   data: 70x46 Array{RGB{UFixed{Uint8,8}},2}
   properties:
@@ -184,12 +208,12 @@ RGB Image with:
 </code></pre>
 
 <p>If you're using Images through IJulia, rather than this text output you probably see the image itself.  This is nice, but often it's quite helpful to see the structure of these Image objects.  This happens automatically at the REPL; within IJulia you can call</p>
-<pre><code>show(img)
+<pre><code class="julia">show(img)
 </code></pre>
 
 <p>to see the output above.</p>
 <p>The first line tells you that this is an RGB image. It is stored as a two-dimensional <code>Array</code> of <code>RGB{UFixed{Uint8,8}}</code>. To see what this pixel type is, we can do the following:</p>
-<pre><code>julia&gt; img[1,1]
+<pre><code class="julia">julia&gt; img[1,1]
 RGB{UFixed8}(0.188,0.184,0.176)
 </code></pre>
 
@@ -197,11 +221,11 @@ RGB{UFixed8}(0.188,0.184,0.176)
 <p>You can see that this image has <code>properties</code>, of which there are three: <code>"IMcs"</code>, <code>"spatialorder"</code> and <code>"pixelspacing"</code>.  We'll talk more about the latter two in the next section.  The <code>"IMcs"</code> is really for internal use by ImageMagick; it says that the colorspace is <code>"sRGB"</code>, although (depending on which version of the library you have) you may see it say <code>"RGB"</code>.  Such differences are due to <a href="http://www.imagemagick.org/script/color-management.php">changes</a> in how ImageMagick handles colorspaces, and the fact that both older and newer versions of the library are still widespread.</p>
 <p>You can retrieve the properties using <code>props = properties(img)</code>. This returns the dictionary used by <code>img</code>; any modifications you make to <code>props</code> will update the properties of <code>img</code>.</p>
 <p>Likewise, given an Image <code>img</code>, you can access the underlying array with</p>
-<pre><code>A = data(img)
+<pre><code class="julia">A = data(img)
 </code></pre>
 
 <p>This is handy for those times when you want to call an algorithm that is implemented only for <code>Array</code>s. At the end, however, you may want to restore the contextual information available in an Image. While you can use the <code>Image</code> constructor directly, two alternatives can be convenient:</p>
-<pre><code>imgc = copyproperties(img, A)
+<pre><code class="julia">imgc = copyproperties(img, A)
 imgs = shareproperties(img, A)
 </code></pre>
 
@@ -211,14 +235,14 @@ imgs = shareproperties(img, A)
 <p>In the example above, the <code>"spatialorder"</code> property has value <code>["x", "y"]</code>. This indicates that the image data are in "horizontal-major" order, meaning that a pixel at spatial location <code>(x,y)</code> would be addressed as <code>img[x,y]</code> rather than <code>img[y,x]</code>. <code>["y", "x"]</code> would indicate vertical-major.  Consequently, this image is 70 pixels wide and 46 pixels high.</p>
 <p>Images returns this image in horizontal-major order because this is how it was stored on disk.  Because the Images package is designed to scale to terabyte-sized images, a general philosophy is to work with whatever format users provide without forcing changes to the raw array representation. Consequently, when you load an image, its representation will match that used in the file.</p>
 <p>Of course, if you prefer to work with plain arrays, you can convert it:</p>
-<pre><code>julia&gt; imA = convert(Array, img);
+<pre><code class="julia">julia&gt; imA = convert(Array, img);
 
 julia&gt; summary(imA)
 &quot;46x70 Array{RGB{UFixed{Uint8,8}},2}&quot;
 </code></pre>
 
 <p>You can see that this permuted the dimensions into vertical-major order, consistent with the column-major order with which Julia stores <code>Arrays</code>. Note that this preserved the element type, returning an <code>Array{RGB}</code>.  If you prefer to extract into an array of plain numbers in color-last order (typical of Matlab), you can use</p>
-<pre><code>julia&gt; imsep = separate(img)
+<pre><code class="julia">julia&gt; imsep = separate(img)
 RGB Image with:
   data: 46x70x3 Array{UFixed{Uint8,8},3}
   properties:
@@ -231,7 +255,7 @@ RGB Image with:
 
 <p>You can see that <code>"spatialorder"</code> was changed to reflect the new layout, and that two new properties were added: <code>"colordim"</code>, which specifies which dimension of the array is used to encode color, and <code>"colorspace"</code> so you know how to interpret these colors.</p>
 <p>Compare this to</p>
-<pre><code>julia&gt; imr = reinterpret(UFixed8, img)
+<pre><code class="julia">julia&gt; imr = reinterpret(UFixed8, img)
 RGB Image with:
   data: 3x70x46 Array{UFixed{Uint8,8},3}
   properties:
@@ -244,7 +268,7 @@ RGB Image with:
 
 <p><code>reinterpret</code> gives you a new view of the same underlying memory as <code>img</code>, whereas <code>convert(Array, img)</code> and <code>separate(img)</code> create new arrays if the memory-layout needs alteration.</p>
 <p>You can go back to using Colors to encode your image this way:</p>
-<pre><code>julia&gt; imcomb = convert(Image{RGB}, imsep)
+<pre><code class="julia">julia&gt; imcomb = convert(Image{RGB}, imsep)
 RGB Image with:
   data: 46x70 Array{RGB{UFixed{Uint8,8}},2}
   properties:
@@ -254,7 +278,7 @@ RGB Image with:
 </code></pre>
 
 <p>or even change to a new colorspace like this:</p>
-<pre><code>julia&gt; imhsv = convert(Image{HSV}, float32(img))
+<pre><code class="julia">julia&gt; imhsv = convert(Image{HSV}, float32(img))
 HSV Image with:
   data: 70x46 Array{HSV{Float32},2}
   properties:
@@ -265,38 +289,38 @@ HSV Image with:
 
 <p>Many of the colorspaces supported by Colors (or rather its base package, ColorTypes) need a wider range of values than <code>[0,1]</code>, so it's necessary to convert to floating point.</p>
 <p>If you say <code>view(imhsv)</code>, you may be surprised to see something that looks like the original RGB image. Since the colorspace is known, it converts to RGB before rendering it. If, for example, you wanted to see what a "pure-V" image looks like, you can do this:</p>
-<pre><code>imv = shareproperties(imhsv, [HSV(0, 0, imhsv[i,j].v) for i = 1:size(imhsv,1),j = 1:size(imhsv,2)])
+<pre><code class="julia">imv = shareproperties(imhsv, [HSV(0, 0, imhsv[i,j].v) for i = 1:size(imhsv,1),j = 1:size(imhsv,2)])
 view(imv)
 </code></pre>
 
 <p>and a pure-H image like this:</p>
-<pre><code>imh = shareproperties(imhsv, [HSV(imhsv[i,j].h, 0.5, 0.5) for i = 1:size(imhsv,1),j = 1:size(imhsv,2)])
+<pre><code class="julia">imh = shareproperties(imhsv, [HSV(imhsv[i,j].h, 0.5, 0.5) for i = 1:size(imhsv,1),j = 1:size(imhsv,2)])
 view(imh)
 </code></pre>
 
 <p>(Hue without saturation or value generates gray or black, so we used a constant different from zero for these parameters.)</p>
-<!– use standard html instead of markdown, to set resize behavior –> <img class="img-responsive" src="doc/figures/rose_hsv.png" />
+<!– use standard html instead of markdown, to set resize behavior –> <img class="img-responsive" src="img/rose_hsv.png" />
 
 <p>Of course, you can combine these commands, for example</p>
-<pre><code>A = reinterpret(Uint8, data(img))
+<pre><code class="julia">A = reinterpret(Uint8, data(img))
 </code></pre>
 
 <p>will, for a <code>RGB{UFixed8}</code> image, return a raw 3d array.  This can be useful if you want to interact with external code (a C-library, for example).  Assuming you don't want to lose orientation information, you can wrap a returned array <code>B</code> as <code>shareproperties(img, B)</code>.</p>
 <h3 id="other-properties-and-usage-of-units">Other properties, and usage of Units</h3>
 <p>The <code>"pixelspacing"</code> property informs ImageView that this image has an aspect ratio 1.  In scientific or medical imaging, you can use actual units to encode this property, for example through the <a href="https://github.com/Keno/SIUnits.jl">SIUnits</a> package.  For example, if you're doing microscopy you might specify</p>
-<pre><code>using SIUnits
+<pre><code class="julia">using SIUnits
 img[&quot;pixelspacing&quot;] = [0.32Micro*Meter,0.32Micro*Meter]
 </code></pre>
 
 <p>If you're performing three-dimensional imaging, you might set different values for the different axes:</p>
-<pre><code>using SIUnits.ShortUnits
+<pre><code class="julia">using SIUnits.ShortUnits
 mriscan[&quot;pixelspacing&quot;] = [0.2mm, 0.2mm, 2mm]
 </code></pre>
 
 <p>ImageView includes facilities for scale bars, and by supplying your pixel spacing you can ensure that the scale bars are accurate.</p>
 <h3 id="a-brief-demonstration-of-image-processing">A brief demonstration of image processing</h3>
 <p>Now let's work through a more sophisticated example:</p>
-<pre><code>using Images, TestImages, ImageView
+<pre><code class="julia">using Images, TestImages, ImageView
 img = testimage(&quot;mandrill&quot;)
 view(img)
 # Let's do some blurring
@@ -308,14 +332,14 @@ imgs = 2imgf
 view(imgs)
 </code></pre>
 
-<!– use standard html instead of markdown, to set resize behavior –> <img class="img-responsive" src="doc/figures/mandrill.jpg" />
+<!– use standard html instead of markdown, to set resize behavior –> <img class="img-responsive" src="img/mandrill.jpg" />
 
 <h2 id="further-documentation">Further documentation</h2>
 <p>Detailed documentation about the design of the library and the available functions can be found in the navigation list to the right. Here are some of the topics available:</p>
 <ul>
-<li>The <a href="./core.html">core</a> representation of images</li>
-<li><a href="./function_reference.html">Function reference</a></li>
-<li><a href="./overlays.html">Overlays</a>, a type for combining multiple grayscale arrays   into a single color array</li>
+<li>The <a href="../core.html">core</a> representation of images</li>
+<li><a href="../function_reference.html">Function reference</a></li>
+<li><a href="../overlays.html">Overlays</a>, a type for combining multiple grayscale arrays   into a single color array</li>
 </ul>
 <h2 id="credits">Credits</h2>
 <p>Elements of this package descend from "image.jl" that once lived in Julia's <code>extras/</code> directory.  That file had several authors, of which the primary were Jeff Bezanson, Stefan Kroboth, Tim Holy, Mike Nolta, and Stefan Karpinski.  This repository has been quite heavily reworked; the current package maintainer is Tim Holy, and important contributions have been made by Ron Rock, Kevin Squire, Lucas Beyer, Elliot Saba, Isaiah Norton, Daniel Perry, Waldir Pimenta, Tobias Knopp, Jason Merrill, Dahua Lin, and several others.</p></div>
@@ -328,12 +352,12 @@ view(imgs)
             <p>Documentation built with <a href="http://www.mkdocs.org/">MkDocs</a>.</p>
         </footer>
 
-        <script src="./js/jquery-1.10.2.min.js"></script>
-        <script src="./js/bootstrap-3.0.3.min.js"></script>
-        <script src="./js/highlight.pack.js"></script>
-        <script>var base_url = '.';</script>
-        <script data-main="./mkdocs/js/search.js" src="./mkdocs/js/require.js"></script>
-        <script src="./js/base.js"></script>
+        <script src="../js/jquery-1.10.2.min.js"></script>
+        <script src="../js/bootstrap-3.0.3.min.js"></script>
+        <script src="../js/highlight.pack.js"></script>
+        <script>var base_url = '..';</script>
+        <script data-main="../mkdocs/js/search.js" src="../mkdocs/js/require.js"></script>
+        <script src="../js/base.js"></script>
 
         <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="Search Modal" aria-hidden="true">
             <div class="modal-dialog">
@@ -362,8 +386,3 @@ view(imgs)
 
     </body>
 </html>
-
-<!--
-MkDocs version : 0.14.0
-Build Date UTC : 2015-12-28 00:42:07.726760
--->

@@ -43,7 +43,7 @@
             
 
             <!-- Main title -->
-            <a class="navbar-brand" href="..">Images</a>
+            <a class="navbar-brand" href="../home/">Images</a>
         </div>
 
         <!-- Expanded navigation -->
@@ -54,31 +54,55 @@
                 
                 
                     <li >
-                        <a href="..">Intro</a>
+                        <a href="../home/">Home</a>
                     </li>
                 
                 
                 
-                    <li >
-                        <a href="../aims/">Aims</a>
-                    </li>
-                
-                
-                
-                    <li >
-                        <a href="../core/">Core Concepts</a>
-                    </li>
-                
-                
-                
-                    <li >
-                        <a href="../overlays/">Overlays</a>
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">User Guide <b class="caret"></b></a>
+                        <ul class="dropdown-menu">
+                        
+                            
+<li >
+    <a href="../aims/">Aims</a>
+</li>
+
+                        
+                            
+<li >
+    <a href="../core/">Core Concepts</a>
+</li>
+
+                        
+                            
+<li >
+    <a href="../overlays/">Overlays</a>
+</li>
+
+                        
+                        </ul>
                     </li>
                 
                 
                 
                     <li class="active">
                         <a href="./">Function Reference</a>
+                    </li>
+                
+                
+                
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">About <b class="caret"></b></a>
+                        <ul class="dropdown-menu">
+                        
+                            
+<li >
+    <a href="../LICENSE/">License</a>
+</li>
+
+                        
+                        </ul>
                     </li>
                 
                 
@@ -97,15 +121,15 @@
                             <i class="fa fa-arrow-left"></i> Previous
                         </a>
                     </li>
-                    <li class="disabled">
-                        <a rel="prev" >
+                    <li >
+                        <a rel="prev" href="../LICENSE/">
                             Next <i class="fa fa-arrow-right"></i>
                         </a>
                     </li>
                 
                 
                     <li>
-                        <a href="https://github.com/rsrock/Images.jl.git">
+                        <a href="https://github.com/timholy/Images.jl.git">
                             
                                 <i class="fa fa-github"></i>
                             
@@ -131,23 +155,11 @@
     
         <li class="main "><a href="#accessing-image-data">Accessing image data</a></li>
         
-            <li><a href="#img">img</a></li>
-        
-            <li><a href="#sub-and-slice">sub and slice</a></li>
-        
-            <li><a href="#subim-and-sliceim">subim and sliceim</a></li>
-        
     
         <li class="main "><a href="#properties-dictionary-like-interface">Properties dictionary-like interface</a></li>
         
-            <li><a href="#haskey">haskey</a></li>
-        
-            <li><a href="#get">get</a></li>
-        
     
         <li class="main "><a href="#properties-accessor-function-interface">Properties accessor-function interface</a></li>
-        
-            <li><a href="#size">size</a></li>
         
     
         <li class="main "><a href="#element-transformation-and-intensity-scaling">Element transformation and intensity scaling</a></li>
@@ -156,10 +168,6 @@
         
     
         <li class="main "><a href="#color-conversion">Color conversion</a></li>
-        
-            <li><a href="#convert">convert</a></li>
-        
-            <li><a href="#map">map</a></li>
         
     
         <li class="main "><a href="#image-io">Image I/O</a></li>
@@ -209,51 +217,14 @@ Image(data, prop1=val1, prop2=val2, ...)
 </code></pre>
 
 <p>creates an indexed (colormap) image.</p>
-<p><a name="Base.convert"></a></p>
-<pre><code class="rst">..  convert(T, x)
-
-Convert ``x`` to a value of type ``T``.
-
-If ``T`` is an ``Integer`` type, an :exc:`InexactError` will be raised if
-``x`` is not representable by ``T``, for example if ``x`` is not
-integer-valued, or is outside the range supported by ``T``.
-
-.. doctest::
-
-   julia&gt; convert(Int, 3.0)
-   3
-
-   julia&gt; convert(Int, 3.5)
-   ERROR: InexactError()
-    in convert at int.jl:209
-
-If ``T`` is a :obj:`AbstractFloat` or :obj:`Rational` type, then it will return
-the closest value to ``x`` representable by ``T``.
-
-.. doctest::
-
-   julia&gt; x = 1/3
-   0.3333333333333333
-
-   julia&gt; convert(Float32, x)
-   0.33333334f0
-
-   julia&gt; convert(Rational{Int32}, x)
-   1//3
-
-   julia&gt; convert(Rational{Int64}, x)
-   6004799503160661//18014398509481984
+<pre><code>convert(Image, A)
+convert(Array, img)
+convert(Image{HSV}, img)
 </code></pre>
 
-<p><code>A = convert(Array, img)</code> converts an Image <code>img</code> to an Array, permuting dimensions (if needed) to put it in vertical-major (Matlab) storage order.</p>
-<p>See also <code>data</code>.</p>
-<pre><code>img = convert(Image, A)
-img = convert(Image{HSV}, img)
-</code></pre>
-
-<p>Create a 2d Image from an array, setting up default properties. The data array is assumed to be in "vertical-major" order, and an m-by-n-by-3 array will be assumed to encode color along its third dimension.</p>
-<p>Optionally, you can specify the desired colorspace of the returned <code>img</code>.</p>
-<p>See also: <code>Image</code>, <code>grayim</code>, <code>colorim</code>.</p>
+<p>The first creates a 2d image from an array, setting up default properties. The data array is assumed to be in "vertical-major" order, and an m-by-n-by-3 array will be assumed to encode color along its third dimension.</p>
+<p><code>convert(Array, img)</code> works in the opposite direction, permuting dimensions (if needed) to put it in Matlab-standard storage order.</p>
+<p>The third syntax allows you to convert from one colorspace to another.</p>
 <p><a name="Images.grayim"></a></p>
 <pre><code>img = grayim(A)
 </code></pre>
@@ -336,8 +307,8 @@ typeof( raw(img) )   # returns Array{UInt8,2}
 
 <p><a name="Images.separate"></a></p>
 <p><code>imgs = separate(img)</code> separates the color channels of <code>img</code>, for example returning an <code>m-by-n-by-3</code> array from an <code>m-by-n</code> array of <code>RGB</code>.</p>
-<h2 id="img">img<a href="../indexing"></a></h2>
-<pre><code>img[i, j, k,...]
+<p>img<a href="../indexing"></a></p>
+<pre><code class="julia">img[i, j, k,...]
 img[&quot;x&quot;, 100:200, &quot;y&quot;, 400:600]
 </code></pre>
 
@@ -348,16 +319,16 @@ imgnew = getindexim(img, &quot;x&quot;, 100:200, &quot;y&quot;, 400:600)
 </code></pre>
 
 <p>return a new Image <code>imgnew</code>, copying (and where necessary modifying) the properties of <code>img</code>.  This is in contrast with <code>img[i, j, k...]</code>, which returns an <code>Array</code>.</p>
-<h2 id="sub-and-slice">sub and slice</h2>
-<pre><code>sub(img, i, j, k, ...)
+<p>sub and slice</p>
+<pre><code class="julia">sub(img, i, j, k, ...)
 sub(img, &quot;x&quot;, 100:200, &quot;y&quot;, 400:600)
 slice(img, i, j, k, ...)
 slice(img, &quot;x&quot;, 15, &quot;y&quot;, 400:600)
 </code></pre>
 
 <p>returns a <code>SubArray</code> of image data, with the ordinary meanings of <code>sub</code> and <code>slice</code>.</p>
-<h2 id="subim-and-sliceim">subim and sliceim</h2>
-<pre><code>subim(img, i, j, k, ...)
+<p>subim and sliceim</p>
+<pre><code class="julia">subim(img, i, j, k, ...)
 subim(img, &quot;x&quot;, 100:200, &quot;y&quot;, 400:600)
 sliceim(img, i, j, k, ...)
 subim(img, &quot;x&quot;, 15, &quot;y&quot;, 400:600)
@@ -366,18 +337,18 @@ subim(img, &quot;x&quot;, 15, &quot;y&quot;, 400:600)
 <p>returns an <code>Image</code> with <code>SubArray</code> data.</p>
 <h1 id="properties-dictionary-like-interface">Properties dictionary-like interface</h1>
 <p>Unless specified, these functions work on both plain arrays (when properties can be inferred), and on <code>Image</code> types.</p>
-<pre><code>val = img[&quot;propertyname&quot;]
+<pre><code class="julia">val = img[&quot;propertyname&quot;]
 img[&quot;propertyname&quot;] = val
 </code></pre>
 
 <p>get and set, respectively, the value of a property. These work only for <code>Image</code> types.</p>
-<h2 id="haskey">haskey</h2>
-<pre><code>haskey(img, &quot;propertyname&quot;)
+<p>haskey</p>
+<pre><code class="julia">haskey(img, &quot;propertyname&quot;)
 </code></pre>
 
 <p>Tests whether the named property exists. Returns false for <code>Array</code>s.</p>
-<h2 id="get">get</h2>
-<pre><code>get(img, &quot;propertyname&quot;, defaultvalue)
+<p>get</p>
+<pre><code class="julia">get(img, &quot;propertyname&quot;, defaultvalue)
 </code></pre>
 
 <p>Gets the named property, or returns the default if not present. For <code>Array</code>, the default is always returned.</p>
@@ -429,8 +400,8 @@ img[&quot;propertyname&quot;] = val
 <p><code>n = nimages(img)</code> returns the number of time-points in the image array. This is safer than <code>size(img, "t")</code> because it also works for plain <code>AbstractArray</code> types.</p>
 <p><a name="Images.sdims"></a></p>
 <p><code>n = sdims(img)</code> is similar to <code>ndims</code>, but it returns just the number of <em>spatial</em> dimensions in the image array (excluding color and time).</p>
-<h2 id="size">size</h2>
-<pre><code>size(img, 2)
+<p>size</p>
+<pre><code class="julia">size(img, 2)
 size(img, &quot;t&quot;)
 </code></pre>
 
@@ -503,7 +474,7 @@ julia&gt; spatialpermutation([&quot;x&quot;,&quot;y&quot;], Ap)
 <p>Many images require some type of transformation before you can use or view them. For example, visualization libraries work in terms of 8-bit data, so if you're using a 16-bit scientific camera, your image values will need to be scaled before display.</p>
 <p>One can directly rescale the pixel intensities in the image array.  In general, element-wise transformations are handled by <code>map</code> or <code>map!</code>, where the latter is used when you want to provide a pre-allocated output.  You can use an anonymous function of your own design, or, if speed is paramount, the "anonymous functions" of the <a href="https://github.com/timholy/FastAnonymous.jl">FastAnonymous</a> package.</p>
 <p>Images also supports "lazy transformations." When loading a very large image, (e.g., loaded by memory-mapping) you may use or view just a small portion of it. In such cases, it would be quite wasteful to force transformation of the entire image, and indeed on might exhaust available memory or need to write a new file on disk.  <code>Images</code> supports lazy-evaluation scaling through the <code>MapInfo</code> abstract type.  The basic syntax is</p>
-<pre><code>valout = map(mapi::MapInfo, valin)
+<pre><code class="julia">valout = map(mapi::MapInfo, valin)
 </code></pre>
 
 <p>Here <code>val</code> can refer to a single pixel's data, or to the entire image array. The <code>mapi</code> input is a type that determines how the input value is scale and converted to a new type.</p>
@@ -555,13 +526,13 @@ imgc = map(ColorSaturated{RGB{U8}}(), img)
 <p><code>mapi = mapinf(T, img)</code> returns a <code>MapInfo</code> object that is deemed appropriate for converting pixels of <code>img</code> to be of type <code>T</code>. <code>T</code> can either be a specific type (e.g., <code>RGB24</code>), or you can specify an abstract type like <code>Clamp</code> and it will return one of the <code>Clamp</code> family of <code>MapInfo</code> objects.</p>
 <p>You can define your own rules for <code>mapinfo</code>.  For example, the <code>ImageMagick</code> package defines methods for how pixels values should be converted before saving images to disk.</p>
 <h1 id="color-conversion">Color conversion</h1>
-<h2 id="convert">convert</h2>
-<pre><code>convert(Image{Color}, img)
+<p>convert</p>
+<pre><code class="julia">convert(Image{Color}, img)
 </code></pre>
 
 <p>as described above. Use <code>convert(Image{Gray}, img)</code> to calculate a grayscale representation of a color image using the <a href="http://en.wikipedia.org/wiki/Luma_%28video%29#Rec._601_luma_versus_Rec._709_luma_coefficients">Rec 601 luma</a>.</p>
-<h2 id="map">map</h2>
-<pre><code>map(mapi, img)
+<p>map</p>
+<pre><code class="julia">map(mapi, img)
 map!(mapi, dest, img)
 </code></pre>
 

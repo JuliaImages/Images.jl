@@ -43,7 +43,7 @@
             
 
             <!-- Main title -->
-            <a class="navbar-brand" href="..">Images</a>
+            <a class="navbar-brand" href="../home/">Images</a>
         </div>
 
         <!-- Expanded navigation -->
@@ -54,31 +54,55 @@
                 
                 
                     <li >
-                        <a href="..">Intro</a>
+                        <a href="../home/">Home</a>
                     </li>
                 
                 
                 
-                    <li >
-                        <a href="../aims/">Aims</a>
-                    </li>
-                
-                
-                
-                    <li >
-                        <a href="../core/">Core Concepts</a>
-                    </li>
-                
-                
-                
-                    <li class="active">
-                        <a href="./">Overlays</a>
+                    <li class="dropdown active">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">User Guide <b class="caret"></b></a>
+                        <ul class="dropdown-menu">
+                        
+                            
+<li >
+    <a href="../aims/">Aims</a>
+</li>
+
+                        
+                            
+<li >
+    <a href="../core/">Core Concepts</a>
+</li>
+
+                        
+                            
+<li class="active">
+    <a href="./">Overlays</a>
+</li>
+
+                        
+                        </ul>
                     </li>
                 
                 
                 
                     <li >
                         <a href="../function_reference/">Function Reference</a>
+                    </li>
+                
+                
+                
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">About <b class="caret"></b></a>
+                        <ul class="dropdown-menu">
+                        
+                            
+<li >
+    <a href="../LICENSE/">License</a>
+</li>
+
+                        
+                        </ul>
                     </li>
                 
                 
@@ -105,7 +129,7 @@
                 
                 
                     <li>
-                        <a href="https://github.com/rsrock/Images.jl.git">
+                        <a href="https://github.com/timholy/Images.jl.git">
                             
                                 <i class="fa fa-github"></i>
                             
@@ -135,7 +159,7 @@
 <h1 id="overlays">Overlays</h1>
 <p>Frequently one wants to combine two (or more) grayscale images into a single colorized image.  <code>Images</code> defines an <code>AbstractArray</code> type, <code>Overlay</code>, making this straightforward.</p>
 <p>To create an overlay, use the following syntax:</p>
-<pre><code>O = Overlay((gray1,gray2,...), (color1,color2,...), (clim1,clim2,...))
+<pre><code class="julia">O = Overlay((gray1,gray2,...), (color1,color2,...), (clim1,clim2,...))
 </code></pre>
 
 <p>Here <code>gray1</code> and <code>gray2</code> are the arrays representing individual "channels" of information, each equivalent to a grayscale image.  <code>color1</code> and <code>color2</code> are the <a href="https://github.com/JuliaGraphics/Colors.jl">Colors</a> that will be used for the corresponding grayscale arrays; for example, to put <code>gray1</code> in the red channel, you'd use <code>color1 = RGB(1,0,0)</code>.  (You can choose any RGB value you want, it doesn't have to be a "pure" RGB channel.)  Finally, <code>clim1</code> and <code>clim2</code> represent the intensity-scaling applied to each image; setting <code>clim1 = (400,3000)</code> would send any values in <code>gray1</code> less than 400 to black, and any values bigger than 3000 to red, with other values between encoded linearly.</p>
