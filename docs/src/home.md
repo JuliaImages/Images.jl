@@ -1,18 +1,12 @@
----
-title: Introduction
-author: Tim Holy
-order: 1
-...
-
-<h1>Images.jl</h1>
+# Images.jl
 
 An image processing library for [Julia](http://julialang.org/).
 
-# Installation
+## Installation
 
 Install via the package manager,
 
-```{.julia execute="false"}
+```julia
 Pkg.add("Images")
 ```
 
@@ -25,7 +19,7 @@ trouble; you may find
 [debugging Homebrew](https://github.com/JuliaLang/Homebrew.jl/wiki/Debugging-Homebrew.jl)
 useful.
 
-# Package interactions
+## Package interactions
 
 A few other packages define overlapping functions or types
 ([PyPlot](https://github.com/stevengj/PyPlot.jl) defines `imread`, and
@@ -33,7 +27,7 @@ A few other packages define overlapping functions or types
 both Images and these packages, you can always specify which version you want
 with `Images.imread("myimage.png")`.
 
-# Image viewing
+## Image viewing
 
 If you're using the [IJulia](https://github.com/JuliaLang/IJulia.jl) notebook,
 images will be displayed
@@ -43,14 +37,14 @@ Julia code for the display of images can be found in
 [ImageView](https://github.com/timholy/ImageView.jl).  Installation of this
 package is recommended but not required.
 
-# TestImages
+## TestImages
 
 When testing ideas or just following along with the documentation, it can be
 useful to have some images to work with.  The
 [TestImages](https://github.com/timholy/TestImages.jl) package bundles several
 "standard" images for you.  To load one of the images from this package, say
 
-```{.julia execute="false"}
+```julia
 using TestImages
 img = testimage("mandrill")
 ```
@@ -58,7 +52,7 @@ img = testimage("mandrill")
 The examples below will assume you're loading a particular file from your disk,
 but you can substitute those commands with `testimage`.
 
-# Getting started
+## Getting started
 
 For these examples you'll need to install both `Images` and `ImageView`.
 Depending on your task, it's also very useful to have two other packages loaded,
@@ -66,11 +60,11 @@ Depending on your task, it's also very useful to have two other packages loaded,
 [FixedPointNumbers](https://github.com/JeffBezanson/FixedPointNumbers.jl).  Load
 the code for all of these packages with
 
-```{.julia execute="false"}
+```julia
 using Images, Colors, FixedPointNumbers, ImageView
 ```
 
-## Loading your first image: how images are represented
+### Loading your first image: how images are represented
 
 You likely have a number of images already at your disposal, and you can use
 these, TestImages.jl, or run `readremote.jl` in the `test/` directory.  (This
@@ -80,7 +74,7 @@ directory inside your temporary directory (e.g., `/tmp` on Linux systems). The
 
 Let's begin by reading an image from a file:
 
-```{.julia execute="false"}
+```julia
 julia> img = imread("rose.png")
 RGB Image with:
   data: 70x46 Array{RGB{UFixed{Uint8,8}},2}
@@ -95,7 +89,7 @@ see the image itself.  This is nice, but often it's quite helpful to see the
 structure of these Image objects.  This happens automatically at the REPL;
 within IJulia you can call
 
-```{.julia execute="false"}
+```julia
 show(img)
 ```
 
@@ -105,7 +99,7 @@ The first line tells you that this is an RGB image.
 It is stored as a two-dimensional `Array` of `RGB{UFixed{Uint8,8}}`.
 To see what this pixel type is, we can do the following:
 
-```{.julia execute="false"}
+```julia
 julia> img[1,1]
 RGB{UFixed8}(0.188,0.184,0.176)
 ```
@@ -144,7 +138,7 @@ to `props` will update the properties of `img`.
 
 Likewise, given an Image `img`, you can access the underlying array with
 
-```{.julia execute="false"}
+```julia
 A = data(img)
 ```
 
@@ -153,7 +147,7 @@ implemented only for `Array`s. At the end, however, you may want to restore the
 contextual information available in an Image. While you can use the `Image`
 constructor directly, two alternatives can be convenient:
 
-```{.julia execute="false"}
+```julia
 imgc = copyproperties(img, A)
 imgs = shareproperties(img, A)
 ```
@@ -167,7 +161,7 @@ The Images package is designed to work with either plain arrays or with Image
 types---in general, though, you're probably best off leaving things as an Image,
 particularly if you work with movies, 3d images, or other more complex objects.
 
-## Storage order and changing the representation of images
+### Storage order and changing the representation of images
 
 In the example above, the `"spatialorder"` property has value `["x", "y"]`.
 This indicates that the image data are in "horizontal-major" order, meaning that
@@ -184,7 +178,7 @@ the file.
 
 Of course, if you prefer to work with plain arrays, you can convert it:
 
-```{.julia execute="false"}
+```julia
 julia> imA = convert(Array, img);
 
 julia> summary(imA)
@@ -197,7 +191,7 @@ that this preserved the element type, returning an `Array{RGB}`.  If you prefer
 to extract into an array of plain numbers in color-last order (typical of
 Matlab), you can use
 
-```{.julia execute="false"}
+```julia
 julia> imsep = separate(img)
 RGB Image with:
   data: 46x70x3 Array{UFixed{Uint8,8},3}
@@ -216,7 +210,7 @@ how to interpret these colors.
 
 Compare this to
 
-```{.julia execute="false"}
+```julia
 julia> imr = reinterpret(UFixed8, img)
 RGB Image with:
   data: 3x70x46 Array{UFixed{Uint8,8},3}
@@ -234,7 +228,7 @@ memory-layout needs alteration.
 
 You can go back to using Colors to encode your image this way:
 
-```{.julia execute="false"}
+```julia
 julia> imcomb = convert(Image{RGB}, imsep)
 RGB Image with:
   data: 46x70 Array{RGB{UFixed{Uint8,8}},2}
@@ -246,7 +240,7 @@ RGB Image with:
 
 or even change to a new colorspace like this:
 
-```{.julia execute="false"}
+```julia
 julia> imhsv = convert(Image{HSV}, float32(img))
 HSV Image with:
   data: 70x46 Array{HSV{Float32},2}
@@ -264,14 +258,14 @@ the original RGB image. Since the colorspace is known, it converts to RGB before
 rendering it. If, for example, you wanted to see what a "pure-V" image looks
 like, you can do this:
 
-```{.julia execute="false"}
+```julia
 imv = shareproperties(imhsv, [HSV(0, 0, imhsv[i,j].v) for i = 1:size(imhsv,1),j = 1:size(imhsv,2)])
 view(imv)
 ```
 
 and a pure-H image like this:
 
-```{.julia execute="false"}
+```julia
 imh = shareproperties(imhsv, [HSV(imhsv[i,j].h, 0.5, 0.5) for i = 1:size(imhsv,1),j = 1:size(imhsv,2)])
 view(imh)
 ```
@@ -280,11 +274,11 @@ view(imh)
 different from zero for these parameters.)
 
 <!-- use standard html instead of markdown, to set resize behavior -->
-<img class="img-responsive" src="doc/figures/rose_hsv.png" />
+<img class="img-responsive" src="img/rose_hsv.png" />
 
 Of course, you can combine these commands, for example
 
-```{.julia execute="false"}
+```julia
 A = reinterpret(Uint8, data(img))
 ```
 
@@ -293,7 +287,7 @@ you want to interact with external code (a C-library, for example).  Assuming
 you don't want to lose orientation information, you can wrap a returned array
 `B` as `shareproperties(img, B)`.
 
-## Other properties, and usage of Units
+### Other properties, and usage of Units
 
 The `"pixelspacing"` property informs ImageView that this image has an aspect
 ratio 1.  In scientific or medical imaging, you can use actual units to encode
@@ -301,7 +295,7 @@ this property, for example through the
 [SIUnits](https://github.com/Keno/SIUnits.jl) package.  For example, if you're
 doing microscopy you might specify
 
-```{.julia execute="false"}
+```julia
 using SIUnits
 img["pixelspacing"] = [0.32Micro*Meter,0.32Micro*Meter]
 ```
@@ -309,7 +303,7 @@ img["pixelspacing"] = [0.32Micro*Meter,0.32Micro*Meter]
 If you're performing three-dimensional imaging, you might set different values
 for the different axes:
 
-```{.julia execute="false"}
+```julia
 using SIUnits.ShortUnits
 mriscan["pixelspacing"] = [0.2mm, 0.2mm, 2mm]
 ```
@@ -317,11 +311,11 @@ mriscan["pixelspacing"] = [0.2mm, 0.2mm, 2mm]
 ImageView includes facilities for scale bars, and by supplying your pixel
 spacing you can ensure that the scale bars are accurate.
 
-## A brief demonstration of image processing
+### A brief demonstration of image processing
 
 Now let's work through a more sophisticated example:
 
-```{.julia execute="false"}
+```julia
 using Images, TestImages, ImageView
 img = testimage("mandrill")
 view(img)
@@ -335,23 +329,20 @@ view(imgs)
 ```
 
 <!-- use standard html instead of markdown, to set resize behavior -->
-<img class="img-responsive" src="doc/figures/mandrill.jpg" />
+<img class="img-responsive" src="img/mandrill.jpg" />
 
-# Further documentation
+## Further documentation
 
 Detailed documentation about the design of the library and the available
 functions can be found in the navigation list to the right. Here are some of the
 topics available:
 
 - The [core](core.html) representation of images
-- [I/O](extendingIO.html) and custom image file formats
 - [Function reference](function_reference.html)
 - [Overlays](overlays.html), a type for combining multiple grayscale arrays
   into a single color array
-- [Changes](fixing_breakages.html) describes some recent changes and how to
-  fix likely breakages in old code
 
-# Credits
+## Credits
 
 Elements of this package descend from "image.jl" that once lived in Julia's
 `extras/` directory.  That file had several authors, of which the primary were

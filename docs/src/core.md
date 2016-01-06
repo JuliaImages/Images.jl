@@ -1,14 +1,8 @@
----
-title: Core Concepts
-author: Tim Holy
-order: 40
-...
+# Julia Images Guide
 
-<h1>Julia Images Guide</h1>
+## The basic types
 
-# The basic types
-
-## Plain arrays
+### Plain arrays
 
 Images can be plain arrays, which are interpreted to be in "Matlab format": the
 first two dimensions are height (`h`) and width (`w`), a storage order here
@@ -47,7 +41,7 @@ to work.
 However, a more flexible approach is to use one of the self-documenting image
 types.
 
-## Image types
+### Image types
 
 All image types should descend from `AbstractImage`, an abstract base type used
 to indicate that an array is to be interpreted as an image. If you're writing a
@@ -61,7 +55,7 @@ called `data` and `properties`. (In code, you should not use these directly,
 instead using the functions `data` and `properties` to extract these.)  These
 are the only two fields in the first concrete image type, called `Image`:
 
-```{.julia execute="false"}
+```julia
 type Image{T,N,A<:AbstractArray} <: AbstractImageDirect{T,N}
     data::A
     properties::Dict{ASCIIString,Any}
@@ -84,7 +78,7 @@ images. More detail about this point can be found below.
 
 The only other concrete image type is for indexed images:
 
-```{.julia execute="false"}
+```julia
 type ImageCmap{T,N,A<:AbstractArray,C<:AbstractArray} <: AbstractImageIndexed{T,N}
     data::A
     cmap::C
@@ -95,7 +89,7 @@ end
 The `data` array here just encodes the index used to look up the color in the
 `cmap` field.
 
-# Addressing image data
+## Addressing image data
 
 For any valid image type, `data(img)` returns the array that corresponds to the
 image.  This works when `img` is a plain `Array` (in which case no operation is
@@ -127,14 +121,14 @@ One of the properties (see below) that you can grant to images is
 Using this feature, you can cut out regions or slices from images in the
 following ways:
 
-```{.julia execute="false"}
+```julia
 A = img["x", 200:400, "y", 500:700]
 imgs = sliceim(img, "z", 14)      # cuts out the 14th frame in a stack
 ```
 
 These routines "do the right thing" no matter what storage order is being used.
 
-# Image properties and accessor functions
+## Image properties and accessor functions
 
 The `properties` dictionary can contain any information you want to store along
 with your images. Typically, each property is also affiliated with an accessor
@@ -144,7 +138,7 @@ Let's illustrate this with one of the default properties, `"colorspace"`.
 The value of this property is a string, such as `"RGB"` or `"Gray"` or `"HSV"`.
 You can extract the value of this field using a function:
 
-```{.julia execute="false"}
+```julia
 cs = colorspace(img)
 ```
 
@@ -191,20 +185,20 @@ the date/time at which the image was captured, the patient ID, etc. The main
 point of having a properties dictionary, rather than a type with fixed fields,
 is the flexibility of adding whatever metadata you find to be useful.
 
-# Writing generic algorithms
+## Writing generic algorithms
 
 Let's say you have an algorithm implemented for `Array`s, and you want to extend
 it to work on `Image` types. Let's consider the example of a hypothetical
 `imfilter`, written to perform kernel-based filtering in arbitrary dimensions.
 Let's say your `imfilter` looks like this:
 
-```{.julia execute="false"}
+```julia
 function imfilter{T,N}(A::Array{T,N}, kernel::Array{T,N}, options...)
 ```
 
 The first step might be to simply provide a version for `AbstractImage` types:
 
-```{.julia execute="false"}
+```julia
 function imfilter{T,N}(img::AbstractImage{T,N}, kernel::Array{T,N}, options...)
     out = imfilter(data(img), kernel, options...)
     shareproperties(img, out)
@@ -217,7 +211,7 @@ filter of dimension `N-1` applied to each color channel separately. We can
 implement this version simultaneously for both `Image` types and other array
 types as follows:
 
-```{.julia execute="false"}
+```julia
 function imfilter{T,N,N1}(img::AbstractArray{T,N}, kernel::Array{T,N1}, options...)
     cd = colordim(img)
     if N1 != N - (cd != 0)
