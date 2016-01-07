@@ -538,8 +538,7 @@ map!(mapi, dest, img)
 
 <p>can be used to specify both the form of the result and the algorithm used.</p>
 <h1 id="image-io">Image I/O</h1>
-<p>See also the more <a href="../extendingIO.html">thorough description</a>.</p>
-<p>TODO: edit to point to FileIO</p>
+<p>Image loading and saving is handled by the <a href="https://github.com/JuliaIO/FileIO.jl">FileIO</a> package.</p>
 <h1 id="image-algorithms">Image algorithms</h1>
 <p>You can perform arithmetic with <code>Image</code>s and <code>Color</code>s. Algorithms also include the following functions:</p>
 <h1 id="linear-filtering-and-padding">Linear filtering and padding</h1>
@@ -628,28 +627,28 @@ thinned, subpix =  thin_edges_subpix(mag, gradient)
 <p>No documentation found.</p>
 <p><code>Images.forwarddiffx</code> is a generic <code>Function</code>.</p>
 <pre><code class="julia"># 1 method for generic function &quot;forwarddiffx&quot;:
-forwarddiffx{T}(u::Array{T,2}) at /Users/rrock/.julia/v0.4/Images/src/algorithms.jl:1356
+forwarddiffx{T}(u::Array{T,2}) at /home/tim/.julia/v0.4/Images/src/algorithms.jl:1356
 </code></pre>
 
 <p><a name="Images.forwarddiffy"></a></p>
 <p>No documentation found.</p>
 <p><code>Images.forwarddiffy</code> is a generic <code>Function</code>.</p>
 <pre><code class="julia"># 1 method for generic function &quot;forwarddiffy&quot;:
-forwarddiffy{T}(u::Array{T,2}) at /Users/rrock/.julia/v0.4/Images/src/algorithms.jl:1355
+forwarddiffy{T}(u::Array{T,2}) at /home/tim/.julia/v0.4/Images/src/algorithms.jl:1355
 </code></pre>
 
 <p><a name="Images.backdiffx"></a></p>
 <p>No documentation found.</p>
 <p><code>Images.backdiffx</code> is a generic <code>Function</code>.</p>
 <pre><code class="julia"># 1 method for generic function &quot;backdiffx&quot;:
-backdiffx{T}(u::Array{T,2}) at /Users/rrock/.julia/v0.4/Images/src/algorithms.jl:1358
+backdiffx{T}(u::Array{T,2}) at /home/tim/.julia/v0.4/Images/src/algorithms.jl:1358
 </code></pre>
 
 <p><a name="Images.backdiffy"></a></p>
 <p>No documentation found.</p>
 <p><code>Images.backdiffy</code> is a generic <code>Function</code>.</p>
 <pre><code class="julia"># 1 method for generic function &quot;backdiffy&quot;:
-backdiffy{T}(u::Array{T,2}) at /Users/rrock/.julia/v0.4/Images/src/algorithms.jl:1357
+backdiffy{T}(u::Array{T,2}) at /home/tim/.julia/v0.4/Images/src/algorithms.jl:1357
 </code></pre>
 
 <p><a name="Images.padarray"></a></p>
