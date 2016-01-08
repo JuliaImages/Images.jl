@@ -239,9 +239,7 @@ can be used to specify both the form of the result and the algorithm used.
 
 # Image I/O
 
-See also the more [thorough description](extendingIO.html).
-
-TODO: edit to point to FileIO
+Image loading and saving is handled by the [FileIO](https://github.com/JuliaIO/FileIO.jl) package.
 
 # Image algorithms
 
