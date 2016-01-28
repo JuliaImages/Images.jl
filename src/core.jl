@@ -1297,7 +1297,7 @@ end
 function ctranspose(img::AbstractImage)
     assert2d(img)
     s = coords_spatial(img)
-    p = [1:ndims(img)]
+    p = collect(1:ndims(img))
     p[s] = s[2:-1:1]
     permutedims(img, p)
 end
