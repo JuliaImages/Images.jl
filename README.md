@@ -246,7 +246,7 @@ view(imh)
 ```
 (Hue without saturation or value generates gray or black, so we used a constant different from zero for these parameters.)
 
-![raw](doc/figures/rose_hsv.png)
+![raw](docs/src/img/rose_hsv.png)
 
 Of course, you can combine these commands, for example
 ```julia
@@ -292,7 +292,7 @@ view(imgf)
 imgs = 2imgf
 view(imgs)
 ```
-![processing](doc/figures/mandrill.jpg)
+![processing](docs/src/img/mandrill.jpg)
 
 
 ## Further documentation ##
