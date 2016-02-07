@@ -541,14 +541,14 @@ function _sliceim{IT}(img::AbstractImage, I::IT)
     dimmap = Array(Int, ndims(img))
     n = 0
     for j = 1:ndims(img)
-        if !isa(I[j], Int); n += 1; end;
+        if !isa(I[j], Real); n += 1; end;
         dimmap[j] = n
     end
     S = slice(img.data, I...)
     ret = copyproperties(img, S)
     cd = colordim(img)
     if cd > 0
-        if isa(I[cd], Int)
+        if isa(I[cd], Real)
             ret.properties["colordim"] = 0
             ret.properties["colorspace"] = "Unknown"
         else
@@ -560,12 +560,12 @@ function _sliceim{IT}(img::AbstractImage, I::IT)
     end
     td = timedim(img)
     if td > 0
-        ret.properties["timedim"] = isa(I[td], Int) ? 0 : dimmap[td]
+        ret.properties["timedim"] = isa(I[td], Real) ? 0 : dimmap[td]
     end
     sp = spatialproperties(img)
     if !isempty(sp)
         c = coords_spatial(img)
-        keep = Bool[map(x -> isa(x, AbstractVector), I[c])...]
+        keep = Bool[map(x -> !isa(x, Real), I[c])...]
         if !all(keep)
             for pname in sp
                 p = img.properties[pname]
