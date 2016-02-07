@@ -853,7 +853,7 @@ end
 
 # For these types, you can't have NaNs
 function imfilter_gaussian{T<:Union{Integer,UFixed},TF<:AbstractFloat}(img::AbstractArray{T}, sigma::Vector; emit_warning = true, astype::Type{TF}=Float64)
-    A = convert(Array{TF}, data(img))
+    A = copy!(Array(TF, size(img)), data(img))
     if all(sigma .== 0)
         return shareproperties(img, A)
     end
