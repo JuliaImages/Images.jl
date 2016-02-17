@@ -321,6 +321,10 @@ include the following functions:
     morphogradient
     morpholaplace
     label_components
+    component_boxes
+    component_lengths
+    component_indices
+    component_subscripts
 }
 
 # Phantoms

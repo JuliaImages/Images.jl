@@ -475,6 +475,10 @@ facts("Algorithms") do
         lbltarget2 = [1 1 0 1;
                       1 0 1 1]
         @fact Images.label_components(A, connectivity) --> lbltarget2
+        @fact component_boxes(lbltarget) --> Vector{Tuple}[[(1,2),(2,3)],[(1,1),(2,2)],[(1,3),(2,4)]]
+        @fact component_lengths(lbltarget) --> [2,3,3]
+        @fact component_indices(lbltarget) --> Array{Int64}[[4,5],[1,2,3],[6,7,8]]
+        @fact component_subscripts(lbltarget) --> Array{Tuple}[[(2,2),(1,3)],[(1,1),(2,1),(1,2)],[(2,3),(1,4),(2,4)]]
     end
 
     context("Phantoms") do
