@@ -225,7 +225,7 @@ function minlabel(sets::DisjointMinSets)
     out
 end
 
-"`component_boxes(labeled_array)` -> an array of bounding boxes for each label"
+"`component_boxes(labeled_array)` -> an array of bounding boxes for each label, including the background label 0"
 function component_boxes(img::AbstractArray{Int})
     n = [Vector{Int64}[ fill(typemax(Int64),ndims(img)), fill(typemin(Int64),ndims(img)) ]
             for i=0:maximum(img)]
@@ -243,7 +243,7 @@ function component_boxes(img::AbstractArray{Int})
     map(x->map(y->tuple(y...),x),n)
 end
 
-"`component_lengths(labeled_array)` -> an array of areas (2D), volumes (3D), etc. for each label"
+"`component_lengths(labeled_array)` -> an array of areas (2D), volumes (3D), etc. for each label, including the background label 0"
 function component_lengths(img::AbstractArray{Int})
     n = zeros(Int64,maximum(img)+1)
     for i=1:length(img)
@@ -252,7 +252,7 @@ function component_lengths(img::AbstractArray{Int})
     n
 end
 
-"`component_indices(labeled_array)` -> an array of pixels for each label"
+"`component_indices(labeled_array)` -> an array of pixels for each label, including the background label 0"
 function component_indices(img::AbstractArray{Int})
     n = [Int64[] for i=0:maximum(img)]
     for i=1:length(img)
@@ -261,7 +261,7 @@ function component_indices(img::AbstractArray{Int})
     n
 end
 
-"`component_subscripts(labeled_array)` -> an array of pixels for each label"
+"`component_subscripts(labeled_array)` -> an array of pixels for each label, including the background label 0"
 function component_subscripts(img::AbstractArray{Int})
     n = [Tuple[] for i=0:maximum(img)]
     s = size(img)
