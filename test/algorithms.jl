@@ -479,6 +479,7 @@ facts("Algorithms") do
         @fact component_lengths(lbltarget) --> [2,3,3]
         @fact component_indices(lbltarget) --> Array{Int64}[[4,5],[1,2,3],[6,7,8]]
         @fact component_subscripts(lbltarget) --> Array{Tuple}[[(2,2),(1,3)],[(1,1),(2,1),(1,2)],[(2,3),(1,4),(2,4)]]
+        @fact component_centroids(lbltarget) --> Tuple[(1.5,2.5),(4/3,4/3),(5/3,11/3)]
     end
 
     context("Phantoms") do

@@ -325,6 +325,7 @@ include the following functions:
     component_lengths
     component_indices
     component_subscripts
+    component_centroids
 }
 
 # Phantoms

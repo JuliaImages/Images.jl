@@ -216,6 +216,7 @@ export # types
     component_lengths,
     component_indices,
     component_subscripts,
+    component_centroids,
     magnitude,
     magnitude_phase,
     meanfinite,

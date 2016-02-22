@@ -227,10 +227,10 @@ end
 
 "`component_boxes(labeled_array)` -> an array of bounding boxes for each label, including the background label 0"
 function component_boxes(img::AbstractArray{Int})
-    n = [Vector{Int64}[ fill(typemax(Int64),ndims(img)), fill(typemin(Int64),ndims(img)) ]
+    nd = ndims(img)
+    n = [Vector{Int64}[ fill(typemax(Int64),nd), fill(typemin(Int64),nd) ]
             for i=0:maximum(img)]
     s = size(img)
-    nd = ndims(img)
     for i=1:length(img)
         vcur = ind2sub(s,i)
         vmin = n[img[i]+1][1]
@@ -269,4 +269,20 @@ function component_subscripts(img::AbstractArray{Int})
       push!(n[img[i]+1],ind2sub(s,i))
     end
     n
+end
+
+"`component_centroids(labeled_array)` -> an array of centroids for each label, including the background label 0"
+function component_centroids(img::AbstractArray{Int})
+    nd = ndims(img)
+    n = [zeros(nd+1) for i=0:maximum(img)]
+    s = size(img)
+    for i=1:length(img)
+        vcur = ind2sub(s,i)
+        vsum = n[img[i]+1]
+        for d=1:nd
+            vsum[d] += vcur[d]
+        end
+        vsum[end] += 1
+    end
+    map(x->tuple(x[1]/x[3],x[2]/x[3]),n)
 end
