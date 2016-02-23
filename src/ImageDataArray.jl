@@ -55,6 +55,9 @@ macro disambiguation_func(func)
 	expr
 end
 
+
+#Needed to add these manually:
+
 #.<(Images.AbstractImageDirect{Bool, N<:Any}, AbstractArray{Bool, N<:Any}) at /home/s/.julia/v0.4/Images/src/algorithms.jl:177
 #.<(Images.AbstractImageDirect, Union{DataArrays.PooledDataArray, DataArrays.DataArray}) at /home/s/.julia/v0.4/Images/src/ImageDataArray.jl:47.
 @disambiguation_func(.<(AbstractImageDirect{Bool}, Union{DataArrays.DataArray{Bool}, DataArrays.PooledDataArray{Bool}}))
@@ -63,6 +66,8 @@ end
 @disambiguation_func(.==(AbstractImageDirect{Bool}, Union{DataArrays.DataArray{Bool}, DataArrays.PooledDataArray{Bool}}))
 @disambiguation_func(.==(AbstractImageDirect{Bool, N<:Any}, Union{DataArrays.DataArray{Bool, N}, DataArrays.PooledDataArray{Bool, R<:Integer, N}}))
 
+
+# More ore less the output from the warnings:
 
 #fixes:
 #-(AbstractImageDirect, AbstractArray) at /home/s/.julia/v0.5/ImagesCore/src/algorithms.jl:35
