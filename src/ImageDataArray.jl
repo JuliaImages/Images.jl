@@ -1,7 +1,5 @@
 import DataArrays
 
-import Base: ==, .==, +, -, *, /, .+, .-, .*, ./, .^, .<, .>
-
 """
 We use the messages directly printed by the warning, so we need to remove 
 things like Array{T<:Float32, N<:Any} and put the T and N into the typevarlist
