@@ -33,10 +33,10 @@ immutable TypeConst{N} end  # for passing compile-time constants to functions
 
 include("core.jl")
 
-if VERSION > v"0.4"
+if VERSION > v"0.4.4"
     include("ImageDataArray.jl")
 else
-    include("ImageDataArray04.jl")
+    include("ImageDataArray_04.jl")
 end
 
 include("map.jl")
