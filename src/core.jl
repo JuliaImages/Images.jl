@@ -584,8 +584,6 @@ end
 
 sliceim(img::AbstractImage, dimname::AbstractString, ind::RealIndex, nameind...) = sliceim(img, coords(img, dimname, ind, nameind...)...)
 
-sliceim(img::AbstractImage, dimname::AbstractString, ind::RealIndex, nameind...) = sliceim(img, coords(img, dimname, ind, nameind...)...)
-
 
 # Iteration
 # Defer to the array object in case it has special iteration defined

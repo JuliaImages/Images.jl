@@ -24,6 +24,8 @@ import FixedPointNumbers: ufixed8, ufixed10, ufixed12, ufixed14, ufixed16
 using Base.Cartesian
 include("compatibility/forcartesian.jl")
 
+
+
 # if isdefined(module_parent(Images), :Grid)
 #     import ..Grid.restrict
 # end
@@ -31,7 +33,32 @@ include("compatibility/forcartesian.jl")
 const is_little_endian = ENDIAN_BOM == 0x04030201
 immutable TypeConst{N} end  # for passing compile-time constants to functions
 
-include("core.jl")
+module ImagesCore
+
+    using Colors, ColorVectorSpace, FixedPointNumbers
+    import Base: ==, .==, +, -, *, /, .+, .-, .*, ./, .^, .<, .>
+    import Base: atan2, clamp, convert, copy, copy!, ctranspose, delete!, done,
+                 eltype, fft, float32, float64, get, getindex, haskey, hypot,
+                 ifft, length, linearindexing, map, map!, maximum, mimewritable,
+                 minimum, next, ndims, one, parent, permutedims, reinterpret,
+                 setindex!, show, showcompact, similar, size, slice, sqrt, squeeze,
+                 start, strides, sub, sum, write, writemime, zero
+
+    include("core.jl")
+
+    include("ImageDataArray.jl")
+
+    export # types
+        AbstractImage,
+        AbstractImageDirect,
+        AbstractImageIndexed,
+        Image
+end
+
+
+using .ImagesCore
+importall .ImagesCore
+
 include("map.jl")
 include("overlays.jl")
 include("labeledarrays.jl")
