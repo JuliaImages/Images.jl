@@ -246,7 +246,7 @@ view(imh)
 ```
 (Hue without saturation or value generates gray or black, so we used a constant different from zero for these parameters.)
 
-![raw](doc/figures/rose_hsv.png)
+![raw](docs/src/img/rose_hsv.png)
 
 Of course, you can combine these commands, for example
 ```julia
@@ -292,7 +292,7 @@ view(imgf)
 imgs = 2imgf
 view(imgs)
 ```
-![processing](doc/figures/mandrill.jpg)
+![processing](docs/src/img/mandrill.jpg)
 
 
 ## Further documentation ##
@@ -301,9 +301,9 @@ Detailed documentation about the design of the library
 and the available functions
 can be found in the `doc/` directory. Here are some of the topics available:
 
-- The [core](doc/core.md), i.e., the representation of images
-- [Function reference](doc/function_reference.md)
-- [Overlays](doc/overlays.md), a type for combining multiple grayscale arrays into a single color array
+- The [core](docs/src//core.md), i.e., the representation of images
+- [Function reference](docs/src/function_reference.md)
+- [Overlays](docs/src//overlays.md), a type for combining multiple grayscale arrays into a single color array
 
 # Credits
 

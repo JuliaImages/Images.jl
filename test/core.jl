@@ -243,6 +243,11 @@ facts("Core") do
         @fact sdims(s) --> 1
         @fact colordim(s) --> 2
         @fact spatialorder(s) --> ["x"]
+        s = sliceim(imgds, 2, :, 1:3)
+        @fact ndims(s) --> 2
+        @fact sdims(s) --> 1
+        @fact colordim(s) --> 2
+        @fact spatialorder(s) --> ["x"]
         s = sliceim(imgds, 2:2, 1:4, 1:3)
         @fact ndims(s) --> 3
         @fact sdims(s) --> 2

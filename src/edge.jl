@@ -287,7 +287,7 @@ g = rgb2gray(rgb_image)
 gx, gy = imgradients(g)
 mag, grad_angle = magnitude_phase(gx,gy)
 mag[mag .< 0.5] = 0.0  # Threshold magnitude image
-thinned, subpix =  thin_edges_subpix(mag, gradient)
+thinned, subpix =  thin_edges_subpix(mag, grad_angle)
 ```
 """
 thin_edges{T}(img::AbstractArray{T,2}, gradientangles::AbstractArray, border::AbstractString="replicate") =
