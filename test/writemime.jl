@@ -3,7 +3,25 @@ facts("Writemime") do
     if !isdir(workdir)
         mkdir(workdir)
     end
-    context("use of restrict") do
+    context("no compression or expansion") do
+        A = U8[0.01 0.99; 0.25 0.75]
+        fn = joinpath(workdir, "writemime.png")
+        open(fn, "w") do file
+            writemime(file, MIME("image/png"), grayim(A), minpixels=0, maxpixels=typemax(Int))
+        end
+        b = load(fn)
+        @fact data(b) --> A
+    end
+    context("small images (expansion)") do
+        A = U8[0.01 0.99; 0.25 0.75]
+        fn = joinpath(workdir, "writemime.png")
+        open(fn, "w") do file
+            writemime(file, MIME("image/png"), grayim(A), minpixels=5, maxpixels=typemax(Int))
+        end
+        b = load(fn)
+        @fact data(b) --> A[[1,1,2,2],[1,1,2,2]]
+    end
+    context("big images (use of restrict)") do
         abig = grayim(rand(UInt8, 1024, 1023))
         fn = joinpath(workdir, "big.png")
         open(fn, "w") do file
