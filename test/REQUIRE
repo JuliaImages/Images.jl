@@ -1,2 +1,5 @@
 @osx TestImages
 FactCheck
+@windows ImageMagick
+@linux ImageMagick
+@osx QuartzImageIO
