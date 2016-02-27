@@ -9,7 +9,7 @@ facts("Writemime") do
         open(fn, "w") do file
             writemime(file, MIME("image/png"), grayim(A), minpixels=0, maxpixels=typemax(Int))
         end
-        b = load(fn)
+        b = convert(Image{Gray{U8}}, load(fn))
         @fact data(b) --> A
     end
     context("small images (expansion)") do
@@ -18,7 +18,7 @@ facts("Writemime") do
         open(fn, "w") do file
             writemime(file, MIME("image/png"), grayim(A), minpixels=5, maxpixels=typemax(Int))
         end
-        b = load(fn)
+        b = convert(Image{Gray{U8}}, load(fn))
         @fact data(b) --> A[[1,1,2,2],[1,1,2,2]]
     end
     context("big images (use of restrict)") do
@@ -28,7 +28,7 @@ facts("Writemime") do
         open(fn, "w") do file
             writemime(file, MIME("image/png"), grayim(A), minpixels=0, maxpixels=5)
         end
-        b = load(fn)
+        b = convert(Image{Gray{U8}}, load(fn))
         @fact data(b) --> convert(Array{U8}, Ar)
         # a genuinely big image (tests the defaults)
         abig = grayim(rand(UInt8, 1024, 1023))
@@ -36,7 +36,7 @@ facts("Writemime") do
         open(fn, "w") do file
             writemime(file, MIME("image/png"), abig, maxpixels=10^6)
         end
-        b = load(fn)
+        b = convert(Image{Gray{U8}}, load(fn))
         abigui = convert(Array{UFixed8,2}, data(restrict(abig, (1,2))))
         @fact data(b) --> abigui
     end
