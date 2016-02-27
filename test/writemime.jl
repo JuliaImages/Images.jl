@@ -1,6 +1,5 @@
-writemime_(io::IO, ::MIME"image/png", img::AbstractImage) = serialize(io, map(Images.mapinfo_writemime(img), img))
 facts("Writemime") do
-	workdir = joinpath(tempdir(), "Images")
+    workdir = joinpath(tempdir(), "Images")
     if !isdir(workdir)
         mkdir(workdir)
     end
@@ -10,9 +9,7 @@ facts("Writemime") do
         open(fn, "w") do file
             writemime(file, MIME("image/png"), abig, maxpixels=10^6)
         end
-        b = open(fn, "r") do io 
-        	deserialize(io)
-        end
+        b = load(fn)
         abigui = convert(Array{UFixed8,2}, data(restrict(abig, (1,2))))
         @fact data(b) --> convert(Array{UFixed8,2}, data(restrict(abig, (1,2))))
     end
