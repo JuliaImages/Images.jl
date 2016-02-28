@@ -6,31 +6,28 @@ mimewritable(::MIME"image/svg+xml", img::AbstractImage) = false
 mimewritable(::MIME"image/png", img::AbstractImage) = sdims(img) == 2 && timedim(img) == 0
 mimewritable{C<:Colorant}(::MIME"image/png", img::AbstractArray{C}) = sdims(img) == 2 && timedim(img) == 0
 
-
+# This is used for output by IJulia. Really large images can make
+# display very slow, so we shrink big images.  Conversely, tiny images
+# don't show up well, so in such cases we repeat pixels.
 function writemime(io::IO, mime::MIME"image/png", img::AbstractImage; mapi=mapinfo_writemime(img), minpixels=10^4, maxpixels=10^6)
     assert2d(img)
     A = data(img)
     nc = ncolorelem(img)
     npix = length(A)/nc
     while npix > maxpixels
+        # Big images
         A = restrict(A, coords_spatial(img))
         npix = length(A)/nc
     end
     if npix < minpixels
+        # Tiny images
         fac = ceil(Int, sqrt(minpixels/npix))
         r = ones(Int, ndims(img))
         r[coords_spatial(img)] = fac
         A = repeat(A, inner=r)
     end
     imgcopy = shareproperties(img, A)
-    CurrentMod = current_module()
-    if isdefined(:writemime_) && applicable(CurrentMod.writemime_, io, mime, imgcopy)
-        return CurrentMod.writemime_(io, mime, imgcopy)
-    else
-        error("No IO library loaded for writemime $mime with $(typeof(img)).
-            Please consider putting \"using ImageMagick\" in your script"
-        )
-    end
+    save(Stream(format"PNG", io), imgcopy)
 end
 
 writemime(stream::IO, mime::MIME"image/png", img::AbstractImageIndexed; kwargs...) = (println(kwargs);
