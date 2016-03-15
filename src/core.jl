@@ -142,6 +142,8 @@ size(img::AbstractImage) = size(img.data)
 size(img::AbstractImage, i::Integer) = size(img.data, i)
 size(img::AbstractImage, dimname::AbstractString) = size(img.data, dimindex(img, dimname))
 
+resize!(a::AbstractImage, nl::Integer) = resize!(a.data, nl)
+
 ndims(img::AbstractImage) = ndims(img.data)
 
 linearindexing(img::Image) = linearindexing(img.data)

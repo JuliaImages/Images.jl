@@ -108,6 +108,8 @@ facts("Core") do
         @fact ncolorelem(img) --> 1
         @fact ncolorelem(imgd) --> 1
         @fact ncolorelem(imgds) --> 3
+        @fact sort(vec(img)).data[1] --> minimum(img)  # resize! necessary
+        @fact sort(vec(imgds)).data[1] --> minimum(imgds)
     end
 
     context("1-dimensional images") do
