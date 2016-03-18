@@ -203,6 +203,9 @@ export # types
     imfilter_gaussian,
     imfilter_gaussian!,
     imfilter_LoG,
+    blob_LoG,
+    findlocalmaxima,
+    findlocalminima,
     imgaussiannoise,
     imgradients,
     imlaplacian,
@@ -271,6 +274,7 @@ Algorithms:
     - Gradients: `backdiffx`, `backdiffy`, `forwarddiffx`, `forwarddiffy`, `imgradients`
     - Edge detection: `imedge`, `imgradients`, `thin_edges`, `magnitude`, `phase`, `magnitudephase`, `orientation`
     - Corner detection: `imcorner`
+    - Blob detection: `blob_LoG`, `findlocalmaxima`, `findlocalminima`
     - Morphological operations: `dilate`, `erode`, `closing`, `opening`, `tophat`, `bothat`, `morphogradient`, `morpholaplace`
     - Connected components: `label_components`
 

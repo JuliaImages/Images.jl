@@ -268,6 +268,14 @@ include the following functions:
     padarray
 }
 
+# Feature Extraction
+
+@{
+    blob_LoG
+    findlocalmaxima
+    findlocalminima
+}
+
 # Filtering kernels
 
 @{
