@@ -1,6 +1,7 @@
 # An array type for colorized overlays of grayscale images
 """
 ```
+A = Overlay(channels, colors)
 A = Overlay(channels, colors, clim)
 A = Overlay(channels, colors, mapi)
 ```
@@ -45,7 +46,8 @@ end
 
 # Returns the overlay as an image, if possible
 "`OverlayImage` is identical to `Overlay`, except that it returns an Image."
-function OverlayImage(channels::Tuple{Vararg{AbstractArray}}, colors::Tuple{Vararg{Colorant}}, arg)
+function OverlayImage(channels::Tuple{Vararg{AbstractArray}}, colors::Tuple{Vararg{Colorant}},
+            arg = ntuple(i->(zero(eltype(channels[i])), one(eltype(channels[i]))), length(channels)))
     ovr = Overlay(channels, colors, arg)
     local prop
     haveprop = false
