@@ -15,6 +15,14 @@ facts("Overlay") do
         @fact size(ovr, 1) --> 5
         @fact size(ovr, 2) --> 1
         @fact nchannels(ovr) --> 2
+        @fact raw(ovr) --> [0x00 0x80 0xff 0xff 0xff;
+                            0x00 0x00 0x00 0x00 0x00;
+                            0x00 0x80 0xff 0xff 0xff]
+        @fact separate(ovr) --> UFixed8[0   0   0;
+                                        0.5 0   0.5;
+                                        1   0   1;
+                                        1   0   1;
+                                        1   0   1]
         iob = IOBuffer()
         show(iob, ovr)  # exercise only
     end
