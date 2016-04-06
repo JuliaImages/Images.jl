@@ -435,6 +435,11 @@ facts("Core") do
         @fact data(imgray) --> reinterpret(Gray{UFixed8}, [0x01 0x02; 0x03 0x04])
         @fact eltype(convert(Image{HSV{Float32}}, imrgb8)) --> HSV{Float32}
         @fact eltype(convert(Image{HSV}, float32(imrgb8))) --> HSV{Float32}
+
+        @fact eltype(convert(Array{Gray}, imrgb8)) --> Gray{U8}
+        @fact eltype(convert(Image{Gray}, imrgb8)) --> Gray{U8}
+        @fact eltype(convert(Array{Gray}, data(imrgb8))) --> Gray{U8}
+        @fact eltype(convert(Image{Gray}, data(imrgb8))) --> Gray{U8}
         # Issue 232
         local img = Image(reinterpret(Gray{UFixed16}, rand(UInt16, 5, 5)))
         imgs = subim(img, :, :)

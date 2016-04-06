@@ -323,6 +323,14 @@ end
 
 
 ## convert
+# Implementations safe for under-specified color types
+# ambiguity resolution:
+convert{T<:Colorant,n}(::Type{Array{T}}, x::Array{T,n}) = x
+convert{T<:Colorant,n}(::Type{Array{T}}, x::BitArray{n}) = convert(Array{ccolor(T,Gray{U8}),n}, x)
+
+convert{T<:Colorant,n,S}(::Type{Array{T}}, x::Array{S,n}) = convert(Array{ccolor(T,S),n}, x)
+convert{T<:Colorant,n,S}(::Type{Array{T,n}}, x::Array{S,n}) = copy!(similar(x,ccolor(T,S)), x)
+
 """
 ```
 img = convert(Image, A)
@@ -344,6 +352,11 @@ function convert(::Type{Image}, img::ImageCmap)
     data = reshape(img.cmap[vec(img.data)], size(img.data))
     Image(data, copy(properties(img)))
 end
+
+convert{C<:Colorant}(::Type{Image{C}}, img::Image{C}) = img
+convert{Cdest<:Colorant,Csrc<:Colorant}(::Type{Image{Cdest}}, img::Image{Csrc}) = copyproperties(img, convert(Array{ccolor(Cdest,Csrc)}, data(img)))
+convert{Cdest<:Colorant,Csrc<:Colorant}(::Type{Image{Cdest}}, img::AbstractArray{Csrc}) = Image(convert(Array{Cdest}, data(img)), properties(img))
+
 # Convert an Image to an array. We convert the image into the canonical storage order convention for arrays.
 # We restrict this to 2d images because for plain arrays this convention exists only for 2d.
 # In other cases---or if you don't want the storage order altered---just use data(img)
@@ -371,17 +384,13 @@ convert(::Type{Array}, img::AbstractImage) = convert(Array{eltype(img)}, img)
 
 convert{C<:Colorant}(::Type{Image{C}}, img::Image{C}) = img
 convert{Cdest<:Colorant,Csrc<:Colorant}(::Type{Image{Cdest}}, img::Image{Csrc}) =
-        copyproperties(img, _convert(Array{Cdest}, data(img)))  # FIXME when Julia issue ?? is fixed
+        copyproperties(img, convert(Array{ccolor(Cdest,Csrc)}, data(img)))  # FIXME when Julia issue ?? is fixed
 convert{Cdest<:Colorant,Csrc<:Colorant}(::Type{Image{Cdest}}, img::AbstractImageDirect{Csrc}) =
-    copyproperties(img, _convert(Array{Cdest}, data(img)))  # FIXME when Julia issue ?? is fixed
-_convert{Cdest<:Colorant,Csrc<:Colorant,N}(::Type{Array{Cdest}}, img::AbstractArray{Csrc,N}) =
-    _convert(Array{Cdest}, eltype(Cdest), img)     # FIXME when Julia issue ?? is fixed
-_convert{Cdest<:Colorant,Csrc<:Colorant}(::Type{Array{Cdest}}, ::Type{Any}, img::AbstractArray{Csrc}) =
-    convert(Array{Cdest{eltype(Csrc)}}, img)
-_convert{Cdest<:Colorant,Csrc<:Colorant}(::Type{Array{Cdest}}, ::DataType, img::AbstractArray{Csrc}) =
-    convert(Array{Cdest}, img)
+    copyproperties(img, convert(Array{ccolor(Cdest,Csrc)}, data(img)))  # FIXME when Julia issue ?? is fixed
 convert{Cdest<:Colorant,Csrc<:Colorant,N}(::Type{Array{Cdest}}, img::AbstractImageDirect{Csrc,N}) =
-    _convert(Array{Cdest}, convert(Array{Csrc,N}, img))
+    convert(Array{ccolor(Cdest,Csrc)}, convert(Array{Csrc,N}, img))
+
+convert{T<:Colorant}(::Type{Array{T}}, x) = copy!(similar(x,ccolor(T,eltype(x))), x)
 
 """
 `imgs = separate(img)` separates the color channels of `img`, for
