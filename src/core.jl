@@ -1294,6 +1294,8 @@ end
 
 permutedims{S<:AbstractString}(img::AbstractImage, pstr::Union{Vector{S}, Tuple{Vararg{S}}}, spatialprops::Vector = spatialproperties(img)) = permutedims(img, dimindexes(img, pstr...), spatialprops)
 
+permutedims(A::AbstractArray, p) = permutedims(convert(Array, A), p)
+
 function permutation_canonical(img)
     assert2d(img)
     p = spatialpermutation(spatialorder(Matrix), img)

@@ -64,4 +64,13 @@ facts("Overlay") do
         @fact isa(ovr, Images.Image) --> true
         @fact abs(ovr[1, 2] - RGB{Float32}(a[1, 2], b[1, 2], a[1, 2])) --> roughly(0, atol=1e-5)
     end
+
+    context("permutation") do
+        L1 = convert(Image{Gray}, rand(Float32, 10,10))
+        L2 = convert(Image{Gray}, rand(Float32, 10,10))
+        L3 = convert(Image{Gray}, rand(Float32, 10,10))
+        overlay = OverlayImage((L1, L2, L3), (colorant"red", colorant"blue", colorant"green"), ((0,1),(0,1),(0,1)))
+        permutedims(overlay, [2,1])
+        permutedims(data(overlay), [2,1])
+    end
 end
