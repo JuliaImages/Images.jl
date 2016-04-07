@@ -1,4 +1,5 @@
 julia 0.4
+ColorTypes 0.2.2
 Colors 0.6
 ColorVectorSpace 0.1
 FixedPointNumbers 0.1
