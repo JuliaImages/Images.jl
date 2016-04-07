@@ -179,6 +179,9 @@
         <li class="main "><a href="#linear-filtering-and-padding">Linear filtering and padding</a></li>
         
     
+        <li class="main "><a href="#feature-extraction">Feature Extraction</a></li>
+        
+    
         <li class="main "><a href="#filtering-kernels">Filtering kernels</a></li>
         
     
@@ -280,7 +283,8 @@ ERROR: Cannot infer pixelspacing of Array, use an AbstractImage type
 </code></pre>
 
 <p><a name="Images.Overlay"></a></p>
-<pre><code>A = Overlay(channels, colors, clim)
+<pre><code>A = Overlay(channels, colors)
+A = Overlay(channels, colors, clim)
 A = Overlay(channels, colors, mapi)
 </code></pre>
 
@@ -502,7 +506,7 @@ julia&gt; spatialpermutation([&quot;x&quot;,&quot;y&quot;], Ap)
 </ul>
 <p>There are also convenience functions:</p>
 <p><a name="Images.imstretch"></a></p>
-<p><code>imgs = imstretch(img, m, slope)</code> enhances or reduces (for slope &gt; 1 or &lt; 1, respectively) the contrast near saturation (0 and 1). This is essentially a symmetric gamma-correction. For a pixel of brightness <code>p</code>, the new intensity is <code>1/(1+m/(p+eps)^slope)</code>.</p>
+<p><code>imgs = imstretch(img, m, slope)</code> enhances or reduces (for slope &gt; 1 or &lt; 1, respectively) the contrast near saturation (0 and 1). This is essentially a symmetric gamma-correction. For a pixel of brightness <code>p</code>, the new intensity is <code>1/(1+(m/(p+eps))^slope)</code>.</p>
 <p>This assumes the input <code>img</code> has intensities between 0 and 1.</p>
 <p><a name="Images.sc"></a></p>
 <pre><code>imgsc = sc(img)
@@ -620,35 +624,35 @@ thinned, subpix = thin_edges_nonmaxsup_subpix(img, gradientangle, [border]; [rad
 gx, gy = imgradients(g)
 mag, grad_angle = magnitude_phase(gx,gy)
 mag[mag .&lt; 0.5] = 0.0  # Threshold magnitude image
-thinned, subpix =  thin_edges_subpix(mag, gradient)
+thinned, subpix =  thin_edges_subpix(mag, grad_angle)
 </code></pre>
 
 <p><a name="Images.forwarddiffx"></a></p>
 <p>No documentation found.</p>
 <p><code>Images.forwarddiffx</code> is a generic <code>Function</code>.</p>
 <pre><code class="julia"># 1 method for generic function &quot;forwarddiffx&quot;:
-forwarddiffx{T}(u::Array{T,2}) at /home/tim/.julia/v0.4/Images/src/algorithms.jl:1356
+forwarddiffx{T}(u::Array{T,2}) at /home/tim/.julia/v0.4/Images/src/algorithms.jl:1426
 </code></pre>
 
 <p><a name="Images.forwarddiffy"></a></p>
 <p>No documentation found.</p>
 <p><code>Images.forwarddiffy</code> is a generic <code>Function</code>.</p>
 <pre><code class="julia"># 1 method for generic function &quot;forwarddiffy&quot;:
-forwarddiffy{T}(u::Array{T,2}) at /home/tim/.julia/v0.4/Images/src/algorithms.jl:1355
+forwarddiffy{T}(u::Array{T,2}) at /home/tim/.julia/v0.4/Images/src/algorithms.jl:1425
 </code></pre>
 
 <p><a name="Images.backdiffx"></a></p>
 <p>No documentation found.</p>
 <p><code>Images.backdiffx</code> is a generic <code>Function</code>.</p>
 <pre><code class="julia"># 1 method for generic function &quot;backdiffx&quot;:
-backdiffx{T}(u::Array{T,2}) at /home/tim/.julia/v0.4/Images/src/algorithms.jl:1358
+backdiffx{T}(u::Array{T,2}) at /home/tim/.julia/v0.4/Images/src/algorithms.jl:1428
 </code></pre>
 
 <p><a name="Images.backdiffy"></a></p>
 <p>No documentation found.</p>
 <p><code>Images.backdiffy</code> is a generic <code>Function</code>.</p>
 <pre><code class="julia"># 1 method for generic function &quot;backdiffy&quot;:
-backdiffy{T}(u::Array{T,2}) at /home/tim/.julia/v0.4/Images/src/algorithms.jl:1357
+backdiffy{T}(u::Array{T,2}) at /home/tim/.julia/v0.4/Images/src/algorithms.jl:1427
 </code></pre>
 
 <p><a name="Images.padarray"></a></p>
@@ -656,6 +660,17 @@ backdiffy{T}(u::Array{T,2}) at /home/tim/.julia/v0.4/Images/src/algorithms.jl:13
 </code></pre>
 
 <p>For an <code>N</code>-dimensional array <code>img</code>, apply padding on both edges. <code>prepad</code> and <code>postpad</code> are vectors of length <code>N</code> specifying the number of pixels used to pad each dimension. <code>border</code> is a string, one of <code>"value"</code> (to pad with a specific pixel value), <code>"replicate"</code> (to repeat the edge value), <code>"circular"</code> (periodic boundary conditions), <code>"reflect"</code> (reflecting boundary conditions, where the reflection is centered on edge), and <code>"symmetric"</code> (reflecting boundary conditions, where the reflection is centered a half-pixel spacing beyond the edge, so the edge value gets repeated). Arrays are automatically padded before filtering. Use <code>"inner"</code> to avoid padding altogether; the output array will be smaller than the input.</p>
+<h1 id="feature-extraction">Feature Extraction</h1>
+<p><a name="Images.blob_LoG"></a></p>
+<p><code>blob_LoG(img, sigmas) -&gt; Vector{Tuple}</code></p>
+<p>Find "blobs" in an N-D image using Lapacian of Gaussians at the specifed sigmas.  Returned are the local maxima's heights, radii, and spatial coordinates.</p>
+<p>See Lindeberg T (1998), "Feature Detection with Automatic Scale Selection", International Journal of Computer Vision, 30(2), 79–116.</p>
+<p>Note that only 2-D images are currently supported due to a limitation of <code>imfilter_LoG</code>.</p>
+<p><a name="Images.findlocalmaxima"></a></p>
+<p><code>findlocalmaxima(img, [region, edges]) -&gt; Array{Tuple}</code></p>
+<p>Returns the coordinates of elements whose value is larger than all of their immediate neighbors.  <code>region</code> is a list of dimensions to consider.  <code>edges</code> is a boolean specifying whether to include the first and last elements of each dimension.</p>
+<p><a name="Images.findlocalminima"></a></p>
+<p>Like <code>findlocalmaxima</code>, but returns the coordinates of the smallest elements.</p>
 <h1 id="filtering-kernels">Filtering kernels</h1>
 <p><a name="Images.gaussian2d"></a></p>
 <p><code>kern = gaussian2d(sigma, filtersize)</code> returns a kernel for FIR-based Gaussian filtering.</p>
@@ -751,6 +766,16 @@ label = label_components(tf, [region])
 </ul>
 <p>The default is <code>region = 1:ndims(A)</code>.</p>
 <p>The output <code>label</code> is an integer array, where 0 is used for background pixels, and each connected region gets a different integer index.</p>
+<p><a name="Images.component_boxes"></a></p>
+<p><code>component_boxes(labeled_array)</code> -&gt; an array of bounding boxes for each label, including the background label 0</p>
+<p><a name="Images.component_lengths"></a></p>
+<p><code>component_lengths(labeled_array)</code> -&gt; an array of areas (2D), volumes (3D), etc. for each label, including the background label 0</p>
+<p><a name="Images.component_indices"></a></p>
+<p><code>component_indices(labeled_array)</code> -&gt; an array of pixels for each label, including the background label 0</p>
+<p><a name="Images.component_subscripts"></a></p>
+<p><code>component_subscripts(labeled_array)</code> -&gt; an array of pixels for each label, including the background label 0</p>
+<p><a name="Images.component_centroids"></a></p>
+<p><code>component_centroids(labeled_array)</code> -&gt; an array of centroids for each label, including the background label 0</p>
 <h1 id="phantoms">Phantoms</h1>
 <p><a name="Images.shepp_logan"></a></p>
 <pre><code>phantom = shepp_logan(N,[M]; highContrast=true)
