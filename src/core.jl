@@ -309,18 +309,10 @@ typeof( data(img) )  # return Array{UFixed{UInt8,8},2}
 typeof( raw(img) )   # returns Array{UInt8,2}
 ```
 """
-function raw(img::AbstractArray)
-    elemType = eltype(eltype(img))
-
-    if (elemType <: Union{})  # weird fallback case
-        data(img)
-    elseif elemType <: FixedPointNumbers.UFixed
-        reinterpret( FixedPointNumbers.rawtype(elemType), data(img) )
-    else
-        data(img)
-    end
-end
-
+raw(img::AbstractArray) = _raw(data(img), eltype(eltype(img)))
+_raw{T<:UFixed}(A::Array, ::Type{T}) = reinterpret(FixedPointNumbers.rawtype(T), A)
+_raw{T}(A::Array, ::Type{T}) = A
+_raw{T}(A::AbstractArray, ::Type{T}) = _raw(convert(Array, A), T)
 
 ## convert
 # Implementations safe for under-specified color types
@@ -380,7 +372,7 @@ function convert{T,N}(::Type{Array{T,N}}, img::AbstractImageDirect{T,N})
         return permutedims(dat, p)
     end
 end
-convert(::Type{Array}, img::AbstractImage) = convert(Array{eltype(img)}, img)
+convert{T,N}(::Type{Array{T,N}}, img::AbstractArray) = copy!(Array{T}(size(img)), img)
 
 convert{C<:Colorant}(::Type{Image{C}}, img::Image{C}) = img
 convert{Cdest<:Colorant,Csrc<:Colorant}(::Type{Image{Cdest}}, img::Image{Csrc}) =
@@ -399,23 +391,32 @@ example returning an `m-by-n-by-3` array from an `m-by-n` array of
 """
 function separate{CV<:Colorant}(img::AbstractImage{CV})
     p = permutation_canonical(img)
+    A = _separate(data(img), p)
     so = spatialorder(img)[p]
-    T = eltype(CV)
-    if n_elts(CV) > 1
-        A = permutedims(reinterpret(T, data(img), tuple(n_elts(CV), size(img)...)), [p+1;1])
-    else
-        A = permutedims(reinterpret(T, data(img), size(img)), p)
-    end
     props = copy(properties(img))
     props["colorspace"] = colorspace(img)
     props["colordim"] = ndims(A)
     props["spatialorder"] = so
     Image(A, props)
 end
-function separate{CV<:Colorant}(A::AbstractArray{CV})
+function _separate{CV}(A::Array{CV}, p)
     T = eltype(CV)
-    permutedims(reinterpret(T, A, tuple(n_elts(CV), size(A)...)), [2:ndims(A)+1;1])
+    if n_elts(CV) > 1
+        permutedims(reinterpret(T, A, tuple(n_elts(CV), size(A)...)), [p+1;1])
+    else
+        permutedims(reinterpret(T, A, size(A)), p)
+    end
 end
+_separate{CV}(A::AbstractArray{CV}, p) = _separate(convert(Array, A), p)
+function separate{CV<:Colorant}(A::Array{CV})
+    T = eltype(CV)
+    if n_elts(CV) > 1
+        permutedims(reinterpret(T, A, tuple(n_elts(CV), size(A)...)), [2:ndims(A)+1;1])
+    else
+        reinterpret(T, A, size(A))
+    end
+end
+separate{CV<:Colorant}(A::AbstractArray{CV}) = separate(convert(Array, A))
 separate(A::AbstractArray) = A
 
 # Image{Numbers} -> Image{Colorant} (the opposite of separate)
@@ -1292,6 +1293,8 @@ function permutedims(img::AbstractImage, p::Union{Vector{Int}, Tuple{Vararg{Int}
 end
 
 permutedims{S<:AbstractString}(img::AbstractImage, pstr::Union{Vector{S}, Tuple{Vararg{S}}}, spatialprops::Vector = spatialproperties(img)) = permutedims(img, dimindexes(img, pstr...), spatialprops)
+
+permutedims(A::AbstractArray, p) = permutedims(convert(Array, A), p)
 
 function permutation_canonical(img)
     assert2d(img)

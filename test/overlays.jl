@@ -15,6 +15,14 @@ facts("Overlay") do
         @fact size(ovr, 1) --> 5
         @fact size(ovr, 2) --> 1
         @fact nchannels(ovr) --> 2
+        @fact raw(ovr) --> [0x00 0x80 0xff 0xff 0xff;
+                            0x00 0x00 0x00 0x00 0x00;
+                            0x00 0x80 0xff 0xff 0xff]
+        @fact separate(ovr) --> UFixed8[0   0   0;
+                                        0.5 0   0.5;
+                                        1   0   1;
+                                        1   0   1;
+                                        1   0   1]
         iob = IOBuffer()
         show(iob, ovr)  # exercise only
     end
@@ -55,5 +63,14 @@ facts("Overlay") do
         ovr = Images.OverlayImage((a, b), (RGB{Float32}(1, 0, 1), RGB{Float32}(0, 1, 0)), ((0, 1), (0, 1)))
         @fact isa(ovr, Images.Image) --> true
         @fact abs(ovr[1, 2] - RGB{Float32}(a[1, 2], b[1, 2], a[1, 2])) --> roughly(0, atol=1e-5)
+    end
+
+    context("permutation") do
+        L1 = convert(Image{Gray}, rand(Float32, 10,10))
+        L2 = convert(Image{Gray}, rand(Float32, 10,10))
+        L3 = convert(Image{Gray}, rand(Float32, 10,10))
+        overlay = OverlayImage((L1, L2, L3), (colorant"red", colorant"blue", colorant"green"), ((0,1),(0,1),(0,1)))
+        permutedims(overlay, [2,1])
+        permutedims(data(overlay), [2,1])
     end
 end
