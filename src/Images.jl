@@ -174,6 +174,11 @@ export # types
     ufixed8sc,
     ufixedsc,
 
+    # flip dimensions
+    flipx,
+    flipy,
+    flipz,
+
     # algorithms
     ando3,
     ando4,

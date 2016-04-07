@@ -765,6 +765,14 @@ function imfilter_fft_inseparable{T<:Real,K,N}(img::AbstractArray{T,N}, kern::Ab
     out
 end
 
+# flips the dimension specified by name instead of index
+# it is thus independent of the storage order
+Base.flipdim(img::AbstractImage, dimname::ASCIIString) = shareproperties(img, flipdim(data(img), dimindex(img, dimname)))
+
+flipx(img::AbstractImage) = flipdim(img, "x")
+flipy(img::AbstractImage) = flipdim(img, "y")
+flipz(img::AbstractImage) = flipdim(img, "z")
+
 # Generalization of rot180
 @generated function reflect{T,N}(A::AbstractArray{T,N})
     quote
