@@ -39,6 +39,12 @@ facts("Algorithms") do
         imgm = mean(img)
         imgn = img/imgm
         @fact reinterpret(Float64, Images.data(imgn)) --> roughly(convert(Array{Float64}, A/mean(A)))
+        @fact imcomplement([Gray(0.2)]) --> [Gray(0.8)]
+        @fact imcomplement([Gray{U8}(0.2)]) --> [Gray{U8}(0.8)]
+        @fact imcomplement([RGB(0,0.3,1)]) --> [RGB(1,0.7,0)]
+        @fact imcomplement([RGBA(0,0.3,1,0.7)]) --> [RGBA(1.0,0.7,0.0,0.7)]
+        @fact imcomplement([RGBA{U8}(0,0.6,1,0.7)]) --> [RGBA{U8}(1.0,0.4,0.0,0.7)]
+
         img = rand(1:10,10,10)
         img2 = rand(1:2,10,10)
         img3 = reinterpret(Gray{U8}, grayim(rand(UInt8,10,10)))

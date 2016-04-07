@@ -1331,8 +1331,11 @@ imgaussiannoise{T}(img::AbstractArray{T}, variance::Number) = imgaussiannoise(im
 imgaussiannoise{T}(img::AbstractArray{T}) = imgaussiannoise(img, 0.01, 0)
 
 function imcomplement{T}(img::AbstractArray{T})
-    return 1 - img
+    reshape([complement(x) for x in img], size(img))
 end
+imcomplement(img::AbstractImage) = copyproperties(img, imcomplement(data(img)))
+complement(x) = one(x)-x
+complement(x::TransparentColor) = typeof(x)(complement(color(x)), alpha(x))
 
 function _imstretch{T}(img::AbstractArray{T}, m::Number, slope::Number)
     shareproperties(img, 1./(1 + (m./(data(img) .+ eps(T))).^slope))
