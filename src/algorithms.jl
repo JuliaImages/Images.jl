@@ -741,7 +741,7 @@ function imfilter_fft_inseparable{T<:Real,K,N}(img::AbstractArray{T,N}, kern::Ab
     elseif border != "inner"
         prepad  = [div(size(kern,i)-1, 2) for i = 1:N]
         postpad = [div(size(kern,i),   2) for i = 1:N]
-        fullpad = [nextprod([2,3], size(img,i) + prepad[i] + postpad[i]) - size(img, i) - prepad[i] for i = 1:N]
+        fullpad = Int[nextprod([2,3], size(img,i) + prepad[i] + postpad[i]) - size(img, i) - prepad[i] for i = 1:N]  # work around julia #15276
         A = padarray(img, prepad, fullpad, border, convert(T, value))
         krn = zeros(eltype(one(T)*one(K)), size(A))
         indexesK = ntuple(d->[size(krn,d)-prepad[d]+1:size(krn,d);1:size(kern,d)-prepad[d]], N)
