@@ -631,6 +631,7 @@ mapinfo(::Type{UInt32}, img::AbstractArray{UInt32}) = MapNone{UInt32}()
 # floating-point values to [0,1].
 mapinfo{T<:UFixed}(::Type{Clamp}, img::AbstractArray{T}) = MapNone{T}()
 mapinfo{T<:AbstractFloat}(::Type{Clamp}, img::AbstractArray{T}) = ClampMinMax(UFixed8, zero(T), one(T))
+let handled = Set()
 for ACV in (Color, AbstractRGB)
     for CV in subtypes(ACV)
         (length(CV.parameters) == 1 && !(CV.abstract)) || continue
@@ -639,6 +640,10 @@ for ACV in (Color, AbstractRGB)
         @eval mapinfo{CV<:$CV}(::Type{Clamp}, img::AbstractArray{CV}) = Clamp{$CVnew{UFixed8}}()
         CVnew = CV<:AbstractGray ? Gray : BGR
         AC, CA       = alphacolor(CV), coloralpha(CV)
+        if AC in handled
+            continue
+        end
+        push!(handled, AC)
         ACnew, CAnew = alphacolor(CVnew), coloralpha(CVnew)
         @eval begin
             mapinfo{T<:UFixed}(::Type{Clamp}, img::AbstractArray{$AC{T}}) = MapNone{$ACnew{T}}()
@@ -647,6 +652,7 @@ for ACV in (Color, AbstractRGB)
             mapinfo{P<:$CA}(::Type{Clamp}, img::AbstractArray{P}) = Clamp{$CAnew{UFixed8}}()
         end
     end
+end
 end
 mapinfo(::Type{Clamp}, img::AbstractArray{RGB24}) = MapNone{RGB{UFixed8}}()
 mapinfo(::Type{Clamp}, img::AbstractArray{ARGB32}) = MapNone{BGRA{UFixed8}}()

@@ -318,10 +318,17 @@ _raw{T}(A::AbstractArray, ::Type{T}) = _raw(convert(Array, A), T)
 # Implementations safe for under-specified color types
 # ambiguity resolution:
 convert{T<:Colorant,n}(::Type{Array{T}}, x::Array{T,n}) = x
-convert{T<:Colorant,n}(::Type{Array{T}}, x::BitArray{n}) = convert(Array{ccolor(T,Gray{U8}),n}, x)
+convert{T<:Colorant,n}(::Type{Array{T,n}}, x::Array{T,n}) = x
+convert{T<:Colorant,n}(::Type{Array{T}}, x::BitArray{n}) = convert(Array{ccolor(T,Gray{Bool}),n}, x)
+if VERSION >= v"0.5.0-dev"
+    # See julia #15801. May be unfixable on 0.4.
+    convert{T<:Colorant,n}(::Type{Array{T,n}}, x::BitArray{n}) = Base._convert(Array{ccolor(T,Gray{Bool}),n}, x)
+end
 
-convert{T<:Colorant,n,S}(::Type{Array{T}}, x::Array{S,n}) = convert(Array{ccolor(T,S),n}, x)
-convert{T<:Colorant,n,S}(::Type{Array{T,n}}, x::Array{S,n}) = copy!(similar(x,ccolor(T,S)), x)
+if VERSION < v"0.5.0-dev"
+    convert{T<:Colorant,n,S}(::Type{Array{T}}, x::Array{S,n}) = convert(Array{ccolor(T,S),n}, x)
+    convert{T<:Colorant,n,S}(::Type{Array{T,n}}, x::Array{S,n}) = copy!(Array(ccolor(T,S), size(x)), x)
+end
 
 """
 ```
@@ -362,7 +369,9 @@ See also `data`.
 convert{T<:Real,N}(::Type{Array{T}}, img::AbstractImageDirect{T,N}) = convert(Array{T,N}, img)
 convert{T<:Colorant,N}(::Type{Array{T}}, img::AbstractImageDirect{T,N}) = convert(Array{T,N}, img)
 convert{T}(::Type{Vector{T}}, img::AbstractImageDirect{T,1}) = convert(Vector{T}, data(img))
-function convert{T,N}(::Type{Array{T,N}}, img::AbstractImageDirect{T,N})
+convert{T<:Colorant,N,S}(::Type{Array{T,N}}, img::AbstractImageDirect{S,N}) = _convert(Array{ccolor(T,S),N}, img)
+convert{T,N,S}(::Type{Array{T,N}}, img::AbstractImageDirect{S,N}) = _convert(Array{T,N}, img)
+function _convert{T,N,S}(::Type{Array{T,N}}, img::AbstractImageDirect{S,N})
     assert2d(img)  # only well-defined in 2d
     p = permutation_canonical(img)
     dat = convert(Array{T}, data(img))
@@ -372,17 +381,20 @@ function convert{T,N}(::Type{Array{T,N}}, img::AbstractImageDirect{T,N})
         return permutedims(dat, p)
     end
 end
-convert{T,N}(::Type{Array{T,N}}, img::AbstractArray) = copy!(Array{T}(size(img)), img)
+convert{T<:Colorant,n,S}(::Type{Array{T}}, x::AbstractArray{S,n}) = convert(Array{ccolor(T,S),n}, x)
+if VERSION < v"0.5.0-dev"
+    convert{T,N}(::Type{Array{T,N}}, img::AbstractArray) = copy!(Array{T}(size(img)), img)
+else
+    convert{T<:Colorant,n,S}(::Type{Array{T,n}}, x::AbstractArray{S,n}) = copy!(Array(ccolor(T,S), size(x)), x)
+end
 
-convert{C<:Colorant}(::Type{Image{C}}, img::Image{C}) = img
-convert{Cdest<:Colorant,Csrc<:Colorant}(::Type{Image{Cdest}}, img::Image{Csrc}) =
-        copyproperties(img, convert(Array{ccolor(Cdest,Csrc)}, data(img)))  # FIXME when Julia issue ?? is fixed
 convert{Cdest<:Colorant,Csrc<:Colorant}(::Type{Image{Cdest}}, img::AbstractImageDirect{Csrc}) =
     copyproperties(img, convert(Array{ccolor(Cdest,Csrc)}, data(img)))  # FIXME when Julia issue ?? is fixed
 convert{Cdest<:Colorant,Csrc<:Colorant,N}(::Type{Array{Cdest}}, img::AbstractImageDirect{Csrc,N}) =
     convert(Array{ccolor(Cdest,Csrc)}, convert(Array{Csrc,N}, img))
 
-convert{T<:Colorant}(::Type{Array{T}}, x) = copy!(similar(x,ccolor(T,eltype(x))), x)
+#convert{T<:Colorant}(::Type{Array{T}}, x) = copy!(similar(x,ccolor(T,eltype(x))), x)
+#convert{T<:Colorant,n,S}(::Type{Array{T,n}}, x::AbstractArray{S,n}) = copy!(Array(ccolor(T,S), size(x)), x)
 
 """
 `imgs = separate(img)` separates the color channels of `img`, for
@@ -447,7 +459,7 @@ end
 #    img["x", 100:400, "t", 32]
 # where anything not mentioned by name is taken to include the whole range
 
-typealias RealIndex{T<:Real} Union{T, AbstractArray{T}, Colon}
+typealias RealIndex{T<:Real} Union{T, AbstractVector{T}, Colon}
 
 # setindex!
 setindex!(img::AbstractImage, X, i::Real) = setindex!(img.data, X, i)
@@ -593,8 +605,6 @@ function _sliceim{IT}(img::AbstractImage, I::IT)
     end
     ret
 end
-
-sliceim(img::AbstractImage, dimname::AbstractString, ind::RealIndex, nameind...) = sliceim(img, coords(img, dimname, ind, nameind...)...)
 
 sliceim(img::AbstractImage, dimname::AbstractString, ind::RealIndex, nameind...) = sliceim(img, coords(img, dimname, ind, nameind...)...)
 
@@ -1294,7 +1304,9 @@ end
 
 permutedims{S<:AbstractString}(img::AbstractImage, pstr::Union{Vector{S}, Tuple{Vararg{S}}}, spatialprops::Vector = spatialproperties(img)) = permutedims(img, dimindexes(img, pstr...), spatialprops)
 
-permutedims(A::AbstractArray, p) = permutedims(convert(Array, A), p)
+if VERSION < v"0.5.0-dev"
+    permutedims(A::AbstractArray, p) = permutedims(convert(Array, A), p)
+end
 
 function permutation_canonical(img)
     assert2d(img)
