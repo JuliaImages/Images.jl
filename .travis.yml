@@ -7,10 +7,13 @@ julia:
     - nightly
 notifications:
     email: false
-script:
+before_script:
     - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
     - julia -e 'Pkg.clone(pwd()); Pkg.build("Images")'
+    - julia -e 'Pkg.add("ImageMagick"); Pkg.add("QuartzImageIO")'
+script:
     - julia -e 'Pkg.test("Images", coverage=true)'
+    - julia -e 'Pkg.test("ImageMagick", coverage=true); @osx_only Pkg.test("QuartzImageIO", coverage=true)'
 after_success:
     - if [ $TRAVIS_JULIA_VERSION = "0.4" ] && [ $TRAVIS_OS_NAME = "linux" ]; then
          julia -e 'cd(Pkg.dir("Images")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())';
