@@ -1048,22 +1048,24 @@ International Journal of Computer Vision, 30(2), 79–116.
 
 Note that only 2-D images are currently supported due to a limitation of `imfilter_LoG`.
 """
-function blob_LoG{T,N}(img::AbstractArray{T,N}, sigmas)
-    img_LoG = Array(Float64, length(sigmas), size(img)...)
-    for isigma in eachindex(sigmas)
-        img_LoG[isigma,:] = sigmas[isigma] * imfilter_LoG(img, sigmas[isigma])
-    end
+@generated function blob_LoG{T,N}(img::AbstractArray{T,N}, sigmas)
+    quote
+        img_LoG = Array(Float64, length(sigmas), size(img)...)
+        @inbounds for isigma in eachindex(sigmas)
+            img_LoG[isigma,:] = sigmas[isigma] * imfilter_LoG(img, sigmas[isigma])
+        end
 
-    radii = sqrt(2)*sigmas
-    maxima = findlocalmaxima(img_LoG, 1:ndims(img_LoG), false)
-    [(img_LoG[x...], radii[x[1]], x[2:end]...) for x in maxima]
+        radii = sqrt(2.0)*sigmas
+        maxima = findlocalmaxima(img_LoG, 1:ndims(img_LoG), false)
+        [(img_LoG[x...], radii[x[1]], (@ntuple $N d->x[d+1])...) for x in maxima]
+    end
 end
 
 @generated function findlocalextrema{T,N}(img::AbstractArray{T,N}, region::Union{Tuple{Int},Vector{Int},UnitRange{Int},Int}, edges::Bool, order::Base.Order.Ordering)
     quote
         issubset(region,1:ndims(img)) || throw(ArgumentError("Invalid region."))
         extrema = Tuple{(@ntuple $N d->Int)...}[]
-        @nloops $N i d->((1+!edges):(size(img,d)-!edges)) begin
+        @inbounds @nloops $N i d->((1+!edges):(size(img,d)-!edges)) begin
             isextrema = true
             img_I = (@nref $N img i)
             @nloops $N j d->(in(d,region) ? (max(1,i_d-1):min(size(img,d),i_d+1)) : i_d) begin
@@ -1080,7 +1082,7 @@ end
 end
 
 """
-`findlocalmaxima(img, [region, edges]) -> Array{Tuple}`
+`findlocalmaxima(img, [region, edges]) -> Vector{Tuple}`
 
 Returns the coordinates of elements whose value is larger than all of their
 immediate neighbors.  `region` is a list of dimensions to consider.  `edges`

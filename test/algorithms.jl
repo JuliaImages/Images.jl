@@ -296,6 +296,13 @@ facts("Algorithms") do
         @fact maximum(abs(Images.imfilter_LoG(A, [1,1]) - Images.imlog(1.0))) --> less_than(EPS)
         @fact maximum(Images.imfilter_LoG([0 0 0 0 1 0 0 0 0], [1,1]) - sum(Images.imlog(1.0),1)) --> less_than(EPS)
         @fact maximum(Images.imfilter_LoG([0 0 0 0 1 0 0 0 0]', [1,1]) - sum(Images.imlog(1.0),2)) --> less_than(EPS)
+
+        @fact Images.imaverage() --> fill(1/9, 3, 3)
+        @fact Images.imaverage([3,3]) --> fill(1/9, 3, 3)
+        @fact_throws ErrorException Images.imaverage([5])
+    end
+
+    context("Features") do
         A = zeros(Int, 9, 9); A[5, 5] = 1
         @fact all(x->x<eps(),[blob_LoG(A, 2.0.^[0.5,0,1])[1]...] - [0.3183098861837907,sqrt(2),5,5]) --> true
         A = zeros(Int, 9, 9); A[[1:2;5],5]=1
@@ -306,10 +313,6 @@ facts("Algorithms") do
         @fact findlocalmaxima(A) --> [(5,5,5)]
         @fact findlocalmaxima(A,2) --> [(1,5,5),(2,5,5),(5,5,5)]
         @fact findlocalmaxima(A,2,false) --> [(2,5,5),(5,5,5)]
-
-        @fact Images.imaverage() --> fill(1/9, 3, 3)
-        @fact Images.imaverage([3,3]) --> fill(1/9, 3, 3)
-        @fact_throws ErrorException Images.imaverage([5])
     end
 
     context("Restriction") do
