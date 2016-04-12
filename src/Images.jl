@@ -33,6 +33,13 @@ const is_little_endian = ENDIAN_BOM == 0x04030201
 immutable TypeConst{N} end  # for passing compile-time constants to functions
 
 include("core.jl")
+
+if VERSION > v"0.4.4"
+    include("ImageDataArray.jl")
+else
+    include("ImageDataArray_04.jl")
+end
+
 include("map.jl")
 include("overlays.jl")
 include("labeledarrays.jl")
