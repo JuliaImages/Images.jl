@@ -281,7 +281,7 @@ Algorithms:
     - Corner detection: `imcorner`
     - Blob detection: `blob_LoG`, `findlocalmaxima`, `findlocalminima`
     - Morphological operations: `dilate`, `erode`, `closing`, `opening`, `tophat`, `bothat`, `morphogradient`, `morpholaplace`
-    - Connected components: `label_components`
+    - Connected components: `label_components`, `component_boxes`, `component_lengths`, `component_indices`, `component_subscripts`, `component_centroids`
 
 Test images and phantoms (see also TestImages.jl):
 
