@@ -1,5 +1,7 @@
 using Images, FactCheck, Base.Test, Colors
 
+global checkboard
+
 facts("Edge") do
     EPS = 1e-14
 
@@ -9,7 +11,6 @@ facts("Edge") do
     white{T<:Unsigned}(::Type{T}) = typemax(T)
     black{T<:Unsigned}(::Type{T}) = typemin(T)
 
-    global checkerboard
     function checkerboard{T}(::Type{T}, sq_width::Integer, count::Integer)
         wh = fill(white(T), (sq_width,sq_width))
         bk = fill(black(T), (sq_width,sq_width))
