@@ -183,23 +183,14 @@ entropy{C<:AbstractGray}(img::AbstractArray{C}; kind=:shannon) = entropy(raw(img
 
 
 """
-`out = imadjustintensity(img, (minval,maxval))` maps intensities over
-the interval `[minval,maxval]` to the interval `[0,1]`. This is
-equivalent to `map(ScaleMinMax(T, minval, maxval), img)`, with `T`
-determined from the types of `img`, `minval`, and `maxval`.
+  `imadjustintensity(img [, (minval,maxval)]) -> Image`
+
+   Map intensities over the interval `(minval,maxval)` to the interval
+   `[0,1]`. This is equivalent to `map(ScaleMinMax(eltype(img), minval,
+   maxval), img)`.  (minval,maxval) defaults to `extrema(img)`.
 """
-function imadjustintensity{T}(img::AbstractArray{T}, range)
-    assert_scalar_color(img)
-    if length(range) == 0
-        range = [minimum(img) maximum(img)]
-    elseif length(range) == 1
-        error("incorrect range")
-    end
-    tmp = (img .- range[1])/(range[2] - range[1])
-    tmp[tmp .> 1] = 1
-    tmp[tmp .< 0] = 0
-    out = tmp
-end
+imadjustintensity{T}(img::AbstractArray{T}, range) = map(ScaleMinMax(T, range...), img)
+imadjustintensity{T}(img::AbstractArray{T}) = map(ScaleAutoMinMax(T), img)
 
 # functions red, green, and blue
 for (funcname, fieldname) in ((:red, :r), (:green, :g), (:blue, :b))
