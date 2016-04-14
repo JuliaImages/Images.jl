@@ -229,10 +229,10 @@ facts("Map") do
         @fact minimum(imgs) --> 0
         @fact maximum(imgs) --> 1
         @fact eltype(imgs) --> UFixed8
-        imgs = Images.imadjustintensity(img, [])
-        @fact_throws ErrorException Images.imadjustintensity(img, [1])
+        imgs = Images.imadjustintensity(img)
+        @fact_throws MethodError Images.imadjustintensity(img, [1])
         mnA = minimum(A)
-        @fact Images.ssd(imgs, (A.-mnA)/(mxA-mnA)) --> less_than(eps())
+        @fact Images.ssd(imgs, (A.-mnA)/(mxA-mnA)) --> less_than(eps(UFixed16))
         A = reshape(1:9, 3, 3)
         B = map(Images.ClampMin(Float32, 3), A)
         @fact (eltype(B) == Float32 && B == [3 4 7; 3 5 8; 3 6 9]) --> true
