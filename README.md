@@ -2,6 +2,8 @@
 
 An image processing library for [Julia](http://julialang.org/).
 
+## Project Status
+
 [![Images](http://pkg.julialang.org/badges/Images_0.4.svg)](http://pkg.julialang.org/?pkg=Images)
 [![Build Status](https://travis-ci.org/timholy/Images.jl.svg?branch=master)](https://travis-ci.org/timholy/Images.jl)
 [![Build status](https://ci.appveyor.com/api/projects/status/github/timholy/Images.jl?svg=true&branch=master)](https://ci.appveyor.com/project/timholy/images-jl/branch/master)
@@ -9,11 +11,13 @@ An image processing library for [Julia](http://julialang.org/).
 
 ## Documentation
 
-[Full documentation is found here](http://timholy.github.io/Images.jl/home)
+Full documentation is found here:
+[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://rsrock.github.io/Images.jl/stable)
+[![](https://img.shields.io/badge/docs-latest-blue.svg)](https://rsrock.github.io/Images.jl/latest)
 
 ## Installation
 
-Install via the package manager,
+Install via the package manager:
 
 ```
 Pkg.add("Images")
@@ -293,17 +297,6 @@ imgs = 2imgf
 view(imgs)
 ```
 ![processing](docs/src/img/mandrill.jpg)
-
-
-## Further documentation ##
-
-Detailed documentation about the design of the library
-and the available functions
-can be found in the `doc/` directory. Here are some of the topics available:
-
-- The [core](docs/src//core.md), i.e., the representation of images
-- [Function reference](docs/src/function_reference.md)
-- [Overlays](docs/src//overlays.md), a type for combining multiple grayscale arrays into a single color array
 
 # Credits
 

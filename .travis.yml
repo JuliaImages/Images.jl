@@ -15,3 +15,5 @@ after_success:
     - if [ $TRAVIS_JULIA_VERSION = "0.4" ] && [ $TRAVIS_OS_NAME = "linux" ]; then
          julia -e 'cd(Pkg.dir("Images")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())';
       fi
+    - julia -e 'Pkg.clone("https://github.com/MichaelHatherly/Documenter.jl")'
+    - julia -e 'cd(Pkg.dir("Images")); include(joinpath("docs", "make.jl"))'
