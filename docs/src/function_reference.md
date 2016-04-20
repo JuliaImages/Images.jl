@@ -4,8 +4,9 @@ Below, `[]` in an argument list means an optional argument.
 
 # Image construction
 
-@{Image}
-@{ImageCmap}
+    {docs}
+    Image
+    ImageCmap
 
 ```
 convert(Image, A)
@@ -22,7 +23,7 @@ needed) to put it in Matlab-standard storage order.
 
 The third syntax allows you to convert from one colorspace to another.
 
-@{
+    {docs}
     grayim
     colorim
     copyproperties
@@ -30,15 +31,13 @@ The third syntax allows you to convert from one colorspace to another.
     similar
     Overlay
     OverlayImage
-}
 
 # Accessing image data
 
-@{
+    {docs}
     data
     raw
     separate
-}
 
 img[] (indexing)
 ```julia
@@ -50,9 +49,8 @@ return image data as an array. The latter syntax allows you to address
 dimensions by name, irrespective of the storage order. The returned values have
 the same storage order as the parent.
 
-@{
+    {docs}
     getindexim
-}
 
 sub and slice
 ```julia
@@ -108,7 +106,7 @@ default is always returned.
 Unless specified, these functions work on both plain arrays (when properties can
 be inferred), and on `Image` types.
 
-@{
+    {docs}
     assert2d
     assert_scalar_color
     assert_timedim_last
@@ -124,7 +122,6 @@ be inferred), and on `Image` types.
     spacedirections
     nimages
     sdims
-}
 
 size
 ```julia
@@ -135,7 +132,7 @@ size(img, "t")
 Obtains the size of the specified dimension, even for dimensions specified by
 name. See also `nimages`, `size_spatial`, `width`, `height`, and `widthheight`.
 
-@{
+    {docs}
     size_spatial
     spatialorder
     spatialpermutation
@@ -144,7 +141,6 @@ name. See also `nimages`, `size_spatial`, `width`, `height`, and `widthheight`.
     timedim
     width
     widthheight
-}
 
 # Element transformation and intensity scaling
 
@@ -211,12 +207,11 @@ Here is how to directly construct the major concrete `MapInfo` types:
 
 There are also convenience functions:
 
-@{
+    {docs}
     imstretch
     sc
     MapInfo
     mapinfo
-}
 
 # Color conversion
 
@@ -248,7 +243,7 @@ include the following functions:
 
 # Linear filtering and padding
 
-@{
+    {docs}
     imfilter
     imfilter!
     imfilter_fft
@@ -266,19 +261,17 @@ include the following functions:
     backdiffx
     backdiffy
     padarray
-}
 
 # Feature Extraction
 
-@{
+    {docs}
     blob_LoG
     findlocalmaxima
     findlocalminima
-}
 
 # Filtering kernels
 
-@{
+    {docs}
     gaussian2d
     imaverage
     imdog
@@ -289,24 +282,21 @@ include the following functions:
     ando3
     ando4
     ando5
-}
 
 # Nonlinear filtering and transformation
 
-@{
+    {docs}
     imROF
     imcorner
-}
 
 # Resizing
 
-@{
+    {docs}
     restrict
-}
 
 # Image statistics
 
-@{
+    {docs}
     minfinite
     maxfinite
     maxabsfinite
@@ -315,11 +305,10 @@ include the following functions:
     ssdn
     sad
     sadn
-}
 
 # Morphological operations
 
-@{
+    {docs}
     dilate
     erode
     opening
@@ -334,10 +323,8 @@ include the following functions:
     component_indices
     component_subscripts
     component_centroids
-}
 
 # Phantoms
 
-@{
+    {docs}
     shepp_logan
-}
