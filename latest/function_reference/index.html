@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<!--[if lt IE 7 ]><html class="no-js ie6"><![endif]-->
+<!--[if IE 7 ]><html class="no-js ie7"><![endif]-->
+<!--[if IE 8 ]><html class="no-js ie8"><![endif]-->
+<!--[if IE 9 ]><html class="no-js ie9"><![endif]-->
+<!--[if (gt IE 9)|!(IE)]><!--> <html class="no-js"> <!--<![endif]-->
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,maximum-scale=1">
+    
+      
+        <title>Function Reference - Images.jl</title>
+      
+      
+      
+      
+        <meta name="author" content="Tim Holy">
+      
+    
+    <meta property="og:url" content="None">
+    <meta property="og:title" content="Images.jl">
+    <meta property="og:image" content="None/../">
+    <meta name="apple-mobile-web-app-title" content="Images.jl">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
+    
+    <link rel="shortcut icon" type="image/x-icon" href="../None">
+    <link rel="icon" type="image/x-icon" href="../None">
+    <style>
+      @font-face {
+      	font-family: 'Icon';
+      	src: url('../assets/fonts/icon.eot?52m981');
+      	src: url('../assets/fonts/icon.eot?#iefix52m981')
+               format('embedded-opentype'),
+      		   url('../assets/fonts/icon.woff?52m981')
+               format('woff'),
+      		   url('../assets/fonts/icon.ttf?52m981')
+               format('truetype'),
+      		   url('../assets/fonts/icon.svg?52m981#icon')
+               format('svg');
+      	font-weight: normal;
+      	font-style: normal;
+      }
+    </style>
+    <link rel="stylesheet" href="../assets/stylesheets/application-54f87043f3.css">
+    
+      <link rel="stylesheet" href="../assets/stylesheets/palettes-05ab2406df.css">
+    
+    
+      
+      
+      
+      <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Source Pro:400,700|Source+Code+Pro">
+      <style>
+        body, input {
+          font-family: 'Source Pro', Helvetica, Arial, sans-serif;
+        }
+        pre, code {
+          font-family: 'Source Code Pro', 'Courier New', 'Courier', monospace;
+        }
+      </style>
+    
+    
+      <link rel="stylesheet" href="../assets/Documenter.css">
+    
+    <script src="../assets/javascripts/modernizr-4ab42b99fd.js"></script>
+    
+  </head>
+  
+  
+  
+  <body class="palette-primary-indigo palette-accent-light-blue">
+    
+      
+      
+    
+    <div class="backdrop">
+      <div class="backdrop-paper"></div>
+    </div>
+    <input class="toggle" type="checkbox" id="toggle-drawer">
+    <input class="toggle" type="checkbox" id="toggle-search">
+    <label class="toggle-button overlay" for="toggle-drawer"></label>
+    <header class="header">
+      <nav aria-label="Header">
+  <div class="bar default">
+    <div class="button button-menu" role="button" aria-label="Menu">
+      <label class="toggle-button icon icon-menu" for="toggle-drawer">
+        <span></span>
+      </label>
+    </div>
+    <div class="stretch">
+      <div class="title">
+        
+          <span class="path">
+            
+          </span>
+        
+        Function Reference
+      </div>
+    </div>
+    
+    
+    <div class="button button-search" role="button" aria-label="Search">
+      <label class="toggle-button icon icon-search" title="Search" for="toggle-search"></label>
+    </div>
+  </div>
+  <div class="bar search">
+    <div class="button button-close" role="button" aria-label="Close">
+      <label class="toggle-button icon icon-back" for="toggle-search"></label>
+    </div>
+    <div class="stretch">
+      <div class="field">
+        <input class="query" type="text" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck>
+      </div>
+    </div>
+    <div class="button button-reset" role="button" aria-label="Search">
+      <button class="toggle-button icon icon-close" id="reset-search"></button>
+    </div>
+  </div>
+</nav>
+    </header>
+    <main class="main">
+      
+      <div class="drawer">
+        <nav aria-label="Navigation">
+  
+  <a href="https://github.com/timholy/Images.jl.git" class="project">
+    <div class="banner">
+      
+      <div class="name">
+        <strong>
+          Images.jl
+          <span class="version">
+            
+          </span>
+        </strong>
+        
+          <br>
+          timholy/Images.jl.git
+        
+      </div>
+    </div>
+  </a>
+  <div class="scrollable">
+    <div class="wrapper">
+      
+        <ul class="repo">
+          <li class="repo-download">
+            
+            <a href="https://github.com/timholy/Images.jl.git/archive/master.zip" target="_blank" title="Download" data-action="download">
+              <i class="icon icon-download"></i> Download
+            </a>
+          </li>
+          <li class="repo-stars">
+            <a href="https://github.com/timholy/Images.jl.git/stargazers" target="_blank" title="Stargazers" data-action="star">
+              <i class="icon icon-star"></i> Stars
+              <span class="count">&ndash;</span>
+            </a>
+          </li>
+        </ul>
+        <hr>
+      
+      <div class="toc">
+        <ul>
+          
+            
+  <li>
+    <a class="" title="Home" href="..">
+      Home
+    </a>
+    
+  </li>
+
+          
+            
+  <li>
+    <span class="section">User Guide</span>
+    <ul>
+      
+        
+  <li>
+    <a class="" title="Aims" href="../aims/">
+      Aims
+    </a>
+    
+  </li>
+
+      
+        
+  <li>
+    <a class="" title="Core Concepts" href="../core/">
+      Core Concepts
+    </a>
+    
+  </li>
+
+      
+        
+  <li>
+    <a class="" title="Overlays" href="../overlays/">
+      Overlays
+    </a>
+    
+  </li>
+
+      
+    </ul>
+  </li>
+
+          
+            
+  <li>
+    <a class="current" title="Function Reference" href="./">
+      Function Reference
+    </a>
+    
+      
+        
+      
+      
+    
+  </li>
+
+          
+        </ul>
+        
+      </div>
+    </div>
+  </div>
+</nav>
+      </div>
+      <article class="article">
+        <div class="wrapper">
+          
+          <p><a id='Function-Reference-1'></a></p>
+<h1 id="function-reference">Function Reference</h1>
+<p>Below, <code>[]</code> in an argument list means an optional argument.</p>
+<p><a id='Image-construction-1'></a></p>
+<h1 id="image-construction">Image construction</h1>
+<p>@{Image} @{ImageCmap}</p>
+<pre><code>convert(Image, A)
+convert(Array, img)
+convert(Image{HSV}, img)
+</code></pre>
+
+<p>The first creates a 2d image from an array, setting up default properties. The data array is assumed to be in "vertical-major" order, and an m-by-n-by-3 array will be assumed to encode color along its third dimension.</p>
+<p><code>convert(Array, img)</code> works in the opposite direction, permuting dimensions (if needed) to put it in Matlab-standard storage order.</p>
+<p>The third syntax allows you to convert from one colorspace to another.</p>
+<p>@{     grayim     colorim     copyproperties     shareproperties     similar     Overlay     OverlayImage }</p>
+<p><a id='Accessing-image-data-1'></a></p>
+<h1 id="accessing-image-data">Accessing image data</h1>
+<p>@{     data     raw     separate }</p>
+<p>img<a href="../indexing"></a></p>
+<pre><code class="julia">img[i, j, k,...]
+img[&quot;x&quot;, 100:200, &quot;y&quot;, 400:600]
+</code></pre>
+
+<p>return image data as an array. The latter syntax allows you to address dimensions by name, irrespective of the storage order. The returned values have the same storage order as the parent.</p>
+<p>@{     getindexim }</p>
+<p>sub and slice</p>
+<pre><code class="julia">sub(img, i, j, k, ...)
+sub(img, &quot;x&quot;, 100:200, &quot;y&quot;, 400:600)
+slice(img, i, j, k, ...)
+slice(img, &quot;x&quot;, 15, &quot;y&quot;, 400:600)
+</code></pre>
+
+<p>returns a <code>SubArray</code> of image data, with the ordinary meanings of <code>sub</code> and <code>slice</code>.</p>
+<p>subim and sliceim</p>
+<pre><code class="julia">subim(img, i, j, k, ...)
+subim(img, &quot;x&quot;, 100:200, &quot;y&quot;, 400:600)
+sliceim(img, i, j, k, ...)
+subim(img, &quot;x&quot;, 15, &quot;y&quot;, 400:600)
+</code></pre>
+
+<p>returns an <code>Image</code> with <code>SubArray</code> data.</p>
+<p><a id='Properties-dictionary-like-interface-1'></a></p>
+<h1 id="properties-dictionary-like-interface">Properties dictionary-like interface</h1>
+<p>Unless specified, these functions work on both plain arrays (when properties can be inferred), and on <code>Image</code> types.</p>
+<pre><code class="julia">val = img[&quot;propertyname&quot;]
+img[&quot;propertyname&quot;] = val
+</code></pre>
+
+<p>get and set, respectively, the value of a property. These work only for <code>Image</code> types.</p>
+<p>haskey</p>
+<pre><code class="julia">haskey(img, &quot;propertyname&quot;)
+</code></pre>
+
+<p>Tests whether the named property exists. Returns false for <code>Array</code>s.</p>
+<p>get</p>
+<pre><code class="julia">get(img, &quot;propertyname&quot;, defaultvalue)
+</code></pre>
+
+<p>Gets the named property, or returns the default if not present. For <code>Array</code>, the default is always returned.</p>
+<p><a id='Properties-accessor-function-interface-1'></a></p>
+<h1 id="properties-accessor-function-interface">Properties accessor-function interface</h1>
+<p>Unless specified, these functions work on both plain arrays (when properties can be inferred), and on <code>Image</code> types.</p>
+<p>@{     assert2d     assert_scalar_color     assert_timedim_last     assert_xfirst     colordim     colorspace     coords_spatial     height     isdirect     isxfirst     isyfirst     pixelspacing     spacedirections     nimages     sdims }</p>
+<p>size</p>
+<pre><code class="julia">size(img, 2)
+size(img, &quot;t&quot;)
+</code></pre>
+
+<p>Obtains the size of the specified dimension, even for dimensions specified by name. See also <code>nimages</code>, <code>size_spatial</code>, <code>width</code>, <code>height</code>, and <code>widthheight</code>.</p>
+<p>@{     size_spatial     spatialorder     spatialpermutation     spatialproperties     storageorder     timedim     width     widthheight }</p>
+<p><a id='Element-transformation-and-intensity-scaling-1'></a></p>
+<h1 id="element-transformation-and-intensity-scaling">Element transformation and intensity scaling</h1>
+<p>Many images require some type of transformation before you can use or view them. For example, visualization libraries work in terms of 8-bit data, so if you're using a 16-bit scientific camera, your image values will need to be scaled before display.</p>
+<p>One can directly rescale the pixel intensities in the image array.  In general, element-wise transformations are handled by <code>map</code> or <code>map!</code>, where the latter is used when you want to provide a pre-allocated output.  You can use an anonymous function of your own design, or, if speed is paramount, the "anonymous functions" of the <a href="https://github.com/timholy/FastAnonymous.jl">FastAnonymous</a> package.</p>
+<p>Images also supports "lazy transformations." When loading a very large image, (e.g., loaded by memory-mapping) you may use or view just a small portion of it. In such cases, it would be quite wasteful to force transformation of the entire image, and indeed on might exhaust available memory or need to write a new file on disk.  <code>Images</code> supports lazy-evaluation scaling through the <code>MapInfo</code> abstract type.  The basic syntax is</p>
+<pre><code class="julia">valout = map(mapi::MapInfo, valin)
+</code></pre>
+
+<p>Here <code>val</code> can refer to a single pixel's data, or to the entire image array. The <code>mapi</code> input is a type that determines how the input value is scale and converted to a new type.</p>
+<p><a id='MapInfo-1'></a></p>
+<h2 id="mapinfo">MapInfo</h2>
+<p>Here is how to directly construct the major concrete <code>MapInfo</code> types:</p>
+<ul>
+<li>
+<p><code>MapNone(T)</code>, indicating that the only form of scaling is conversion   to type T.  This can throw an error if a value <code>x</code> cannot be   represented as an object of type <code>T</code>, e.g., <code>map(MapNone{U8}, 1.2)</code>.</p>
+</li>
+<li>
+<p><code>ClampMin(T, minvalue)</code>, <code>ClampMax(T, maxvalue)</code>, and   <code>ClampMinMax(T, minvalue, maxvalue)</code> create <code>MapInfo</code> objects that   clamp pixel values at the specified min, max, and min/max values,   respectively, before converting to type <code>T</code>. Clamping is equivalent   to <code>clampedval = min(max(val, minvalue), maxvalue)</code>.</p>
+</li>
+<li>
+<p><code>BitShift(T, N)</code> or <code>BitShift{T,N}()</code>, for scaling by bit-shift operators.   <code>N</code> specifies the number of bits to right-shift by.  For example you could   convert a 14-bit image to 8-bits using <code>BitShift(Uint8, 6)</code>.  In general this   will be faster than using multiplication.</p>
+</li>
+<li>
+<p><code>ScaleMinMax(T, min, max, [scalefactor])</code> clamps the image at the specified   min/max values, subtracts the min value, scales the result by multiplying by   <code>scalefactor</code>, and finally converts the type.  If <code>scalefactor</code> is not   specified, it defaults to scaling the range <code>[min,max]</code> to <code>[0,1]</code>.</p>
+</li>
+<li>
+<p><code>ScaleAutoMinMax(T)</code> will cause images to be dynamically scaled to their   specific min/max values, using the same algorithm for <code>ScaleMinMax</code>. When   displaying a movie, the min/max will be recalculated for each frame, so this   can result in inconsistent contrast scaling.</p>
+</li>
+<li>
+<p><code>ScaleSigned(T, scalefactor)</code> multiplies the image by the scalefactor, then   clamps to the range <code>[-1,1]</code>. If <code>T</code> is a floating-point type, it stays in   this representation.  If <code>T</code> is <code>RGB24</code> or <code>RGB{UFixed8}</code>, then it is encoded   as a magenta (positive)/green (negative) image.</p>
+</li>
+</ul>
+<p>There are also convenience functions:</p>
+<p>@{     imstretch     sc     MapInfo     mapinfo }</p>
+<p><a id='Color-conversion-1'></a></p>
+<h1 id="color-conversion">Color conversion</h1>
+<p>convert</p>
+<pre><code class="julia">convert(Image{Color}, img)
+</code></pre>
+
+<p>as described above. Use <code>convert(Image{Gray}, img)</code> to calculate a grayscale representation of a color image using the <a href="http://en.wikipedia.org/wiki/Luma_%28video%29#Rec._601_luma_versus_Rec._709_luma_coefficients">Rec 601 luma</a>.</p>
+<p>map</p>
+<pre><code class="julia">map(mapi, img)
+map!(mapi, dest, img)
+</code></pre>
+
+<p>can be used to specify both the form of the result and the algorithm used.</p>
+<p><a id='Image-I/O-1'></a></p>
+<h1 id="image-io">Image I/O</h1>
+<p>Image loading and saving is handled by the <a href="https://github.com/JuliaIO/FileIO.jl">FileIO</a> package.</p>
+<p><a id='Image-algorithms-1'></a></p>
+<h1 id="image-algorithms">Image algorithms</h1>
+<p>You can perform arithmetic with <code>Image</code>s and <code>Color</code>s. Algorithms also include the following functions:</p>
+<p><a id='Linear-filtering-and-padding-1'></a></p>
+<h1 id="linear-filtering-and-padding">Linear filtering and padding</h1>
+<p>@{     imfilter     imfilter!     imfilter_fft     imfilter_gaussian     imfilter_LoG     imgradients     magnitude     phase     orientation     magnitude_phase     imedge     thin_edges     forwarddiffx     forwarddiffy     backdiffx     backdiffy     padarray }</p>
+<p><a id='Feature-Extraction-1'></a></p>
+<h1 id="feature-extraction">Feature Extraction</h1>
+<p>@{     blob_LoG     findlocalmaxima     findlocalminima }</p>
+<p><a id='Filtering-kernels-1'></a></p>
+<h1 id="filtering-kernels">Filtering kernels</h1>
+<p>@{     gaussian2d     imaverage     imdog     imlaplacian     imlog     sobel     prewitt     ando3     ando4     ando5 }</p>
+<p><a id='Nonlinear-filtering-and-transformation-1'></a></p>
+<h1 id="nonlinear-filtering-and-transformation">Nonlinear filtering and transformation</h1>
+<p>@{     imROF     imcorner }</p>
+<p><a id='Resizing-1'></a></p>
+<h1 id="resizing">Resizing</h1>
+<p>@{     restrict }</p>
+<p><a id='Image-statistics-1'></a></p>
+<h1 id="image-statistics">Image statistics</h1>
+<p>@{     minfinite     maxfinite     maxabsfinite     meanfinite     ssd     ssdn     sad     sadn }</p>
+<p><a id='Morphological-operations-1'></a></p>
+<h1 id="morphological-operations">Morphological operations</h1>
+<p>@{     dilate     erode     opening     closing     tophat     bothat     morphogradient     morpholaplace     label_components     component_boxes     component_lengths     component_indices     component_subscripts     component_centroids }</p>
+<p><a id='Phantoms-1'></a></p>
+<h1 id="phantoms">Phantoms</h1>
+<p>@{     shepp_logan }</p>
+          <aside class="copyright" role="note">
+            
+            Documentation built with
+            <a href="http://www.mkdocs.org" target="_blank">MkDocs</a>
+            using the
+            <a href="http://squidfunk.github.io/mkdocs-material/" target="_blank">
+              Material
+            </a>
+            theme.
+          </aside>
+          
+            <footer class="footer">
+              
+  <nav class="pagination" aria-label="Footer">
+    <div class="previous">
+      
+        <a href="../overlays/" title="Overlays">
+          <span class="direction">
+            Previous
+          </span>
+          <div class="page">
+            <div class="button button-previous" role="button" aria-label="Previous">
+              <i class="icon icon-back"></i>
+            </div>
+            <div class="stretch">
+              <div class="title">
+                Overlays
+              </div>
+            </div>
+          </div>
+        </a>
+      
+    </div>
+    <div class="next">
+      
+    </div>
+  </nav>
+
+            </footer>
+          
+        </div>
+      </article>
+      <div class="results" role="status" aria-live="polite">
+        <div class="scrollable">
+          <div class="wrapper">
+            <div class="meta"></div>
+            <div class="list"></div>
+          </div>
+        </div>
+      </div>
+    </main>
+    <script>
+      var base_url = '..';
+      var repo_id  = 'timholy/Images.jl.git';
+    </script>
+    <script src="../assets/javascripts/application-997097ee0c.js"></script>
+    
+      <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+      <script src="../assets/mathjaxhelper.js"></script>
+    
+    
+  </body>
+</html>
