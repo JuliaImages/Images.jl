@@ -12,8 +12,9 @@ An image processing library for [Julia](http://julialang.org/).
 ## Documentation
 
 Full documentation is found here:
-[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://rsrock.github.io/Images.jl/stable)
-[![](https://img.shields.io/badge/docs-latest-blue.svg)](https://rsrock.github.io/Images.jl/latest)
+
+[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://timholy.github.io/Images.jl/stable)
+[![](https://img.shields.io/badge/docs-latest-blue.svg)](https://timholy.github.io/Images.jl/latest)
 
 ## Installation
 
