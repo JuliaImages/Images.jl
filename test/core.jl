@@ -25,30 +25,31 @@ facts("Core") do
     context("Constructors of Image types") do
         @fact colorspace(B) --> "Gray"
         @fact colordim(B) --> 0
-        local img = Image(B, colorspace="RGB", colordim=1)  # keyword constructor
-        @fact colorspace(img) --> "RGB"
-        @fact colordim(img) --> 1
-        img = grayim(B)
-        @fact colorspace(img) --> "Gray"
-        @fact colordim(B) --> 0
-        @fact grayim(img) --> img
-        # this is recommended for "integer-valued" images (or even better, directly as a UFixed type)
-        Bf = grayim(round(UInt8, B))
-        @fact eltype(Bf) --> UFixed8
-        @fact colorspace(Bf) --> "Gray"
-        @fact colordim(Bf) --> 0
-        Bf = grayim(B)
-        @fact eltype(Bf) --> UFixed16
-        # colorspace encoded as a Color (enables multiple dispatch)
-        BfCV = reinterpret(Gray{UFixed8}, round(UInt8, B))
-        @fact colorspace(BfCV) --> "Gray"
-        @fact colordim(BfCV) --> 0
-        Bf3 = grayim(reshape(convert(UInt8,1):convert(UInt8,36), 3,4,3))
-        @fact eltype(Bf3) --> UFixed8
-        Bf3 = grayim(reshape(convert(UInt16,1):convert(UInt16,36), 3,4,3))
-        @fact eltype(Bf3) --> UFixed16
-        Bf3 = grayim(reshape(1.0f0:36.0f0, 3,4,3))
-        @fact eltype(Bf3) --> Float32
+        let img = Image(B, colorspace="RGB", colordim=1)  # keyword constructor
+            @fact colorspace(img) --> "RGB"
+            @fact colordim(img) --> 1
+            img = grayim(B)
+            @fact colorspace(img) --> "Gray"
+            @fact colordim(B) --> 0
+            @fact grayim(img) --> img
+            # this is recommended for "integer-valued" images (or even better, directly as a UFixed type)
+            Bf = grayim(round(UInt8, B))
+            @fact eltype(Bf) --> UFixed8
+            @fact colorspace(Bf) --> "Gray"
+            @fact colordim(Bf) --> 0
+            Bf = grayim(B)
+            @fact eltype(Bf) --> UFixed16
+            # colorspace encoded as a Color (enables multiple dispatch)
+            BfCV = reinterpret(Gray{UFixed8}, round(UInt8, B))
+            @fact colorspace(BfCV) --> "Gray"
+            @fact colordim(BfCV) --> 0
+            Bf3 = grayim(reshape(collect(convert(UInt8,1):convert(UInt8,36)), 3,4,3))
+            @fact eltype(Bf3) --> UFixed8
+            Bf3 = grayim(reshape(collect(convert(UInt16,1):convert(UInt16,36)), 3,4,3))
+            @fact eltype(Bf3) --> UFixed16
+            Bf3 = grayim(reshape(collect(1.0f0:36.0f0), 3,4,3))
+            @fact eltype(Bf3) --> Float32
+        end
     end
 
     context("Colorim") do
@@ -82,15 +83,16 @@ facts("Core") do
     end
 
     context("Indexed color") do
-        local cmap = linspace(RGB(0x0cuf8, 0x00uf8, 0x00uf8), RGB(0xffuf8, 0x00uf8, 0x00uf8), 20)
-        local img_ = ImageCmap(copy(B), cmap, Dict{ASCIIString, Any}([("spatialorder", Images.yx)]))
-        @fact colorspace(img_) --> "RGB"
-        img_ = ImageCmap(copy(B), cmap, spatialorder=Images.yx)
-        @fact colorspace(img_) --> "RGB"
-        # Note: img from opening of facts() block
-        # TODO: refactor whole block
-        @fact eltype(img) --> RGB{UFixed8}
-        @fact eltype(imgd) --> RGB{UFixed8}
+        let cmap = linspace(RGB(0x0cuf8, 0x00uf8, 0x00uf8), RGB(0xffuf8, 0x00uf8, 0x00uf8), 20)
+            img_ = ImageCmap(copy(B), cmap, Dict{ASCIIString, Any}([("spatialorder", Images.yx)]))
+            @fact colorspace(img_) --> "RGB"
+            img_ = ImageCmap(copy(B), cmap, spatialorder=Images.yx)
+            @fact colorspace(img_) --> "RGB"
+            # Note: img from opening of facts() block
+            # TODO: refactor whole block
+            @fact eltype(img) --> RGB{UFixed8}
+            @fact eltype(imgd) --> RGB{UFixed8}
+        end
     end
 
 
@@ -449,17 +451,18 @@ facts("Core") do
         @fact eltype(convert(Array{Gray}, data(imrgb8))) --> Gray{U8}
         @fact eltype(convert(Image{Gray}, data(imrgb8))) --> Gray{U8}
         # Issue 232
-        local img = Image(reinterpret(Gray{UFixed16}, rand(UInt16, 5, 5)))
-        imgs = subim(img, :, :)
-        @fact isa(minfinite(imgs), UFixed16) --> true
-        # Raw
-        imgdata = rand(UInt16, 5, 5)
-        img = Image(reinterpret(Gray{UFixed16}, imgdata))
-        @fact all(raw(img) .== imgdata) --> true
-        @fact typeof(raw(img)) --> Array{UInt16,2}
-        @fact typeof(raw(Image(rawrgb8))) --> Array{UInt8,3}  # check color images
-        @fact size(raw(Image(rawrgb8))) --> (3,5,4)
-        @fact typeof(raw(imgdata)) --> typeof(imgdata)  # check array fallback
-        @fact all(raw(imgdata) .== imgdata) --> true
+        let img = Image(reinterpret(Gray{UFixed16}, rand(UInt16, 5, 5)))
+            imgs = subim(img, :, :)
+            @fact isa(minfinite(imgs), UFixed16) --> true
+            # Raw
+            imgdata = rand(UInt16, 5, 5)
+            img = Image(reinterpret(Gray{UFixed16}, imgdata))
+            @fact all(raw(img) .== imgdata) --> true
+            @fact typeof(raw(img)) --> Array{UInt16,2}
+            @fact typeof(raw(Image(rawrgb8))) --> Array{UInt8,3}  # check color images
+            @fact size(raw(Image(rawrgb8))) --> (3,5,4)
+            @fact typeof(raw(imgdata)) --> typeof(imgdata)  # check array fallback
+            @fact all(raw(imgdata) .== imgdata) --> true
+        end
     end
 end
