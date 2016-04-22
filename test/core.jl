@@ -108,8 +108,16 @@ facts("Core") do
         @fact ncolorelem(img) --> 1
         @fact ncolorelem(imgd) --> 1
         @fact ncolorelem(imgds) --> 3
-        @fact sort(vec(img)).data[1] --> minimum(img)  # resize! necessary
-        @fact sort(vec(imgds)).data[1] --> minimum(imgds)
+        vimg = vec(img)
+        @fact isa(vimg, ImageCmap) --> true
+        @fact haskey(vimg, "spatialorder") --> false
+        @fact haskey(vimg, "pixelspacing") --> false
+        @fact sort(vimg)[1] --> minimum(img)
+        vimgds = vec(imgds)
+        @fact isa(vimgds, Image) --> true
+        @fact haskey(vimg, "colordim") --> false
+        @fact haskey(vimg, "colorspace") --> false
+        @fact sort(vimgds)[1] --> minimum(imgds)
     end
 
     context("1-dimensional images") do

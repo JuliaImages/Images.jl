@@ -8,7 +8,8 @@ import Base: ==, .==, +, -, *, /, .+, .-, .*, ./, .^, .<, .>
 import Base: atan2, clamp, convert, copy, copy!, ctranspose, delete!, done,
              eltype, fft, float32, float64, get, getindex, haskey, hypot,
              ifft, length, linearindexing, map, map!, maximum, mimewritable,
-             minimum, next, ndims, one, parent, permutedims, reinterpret, resize!,
+             minimum, next, ndims, one, parent, permutedims, reinterpret,
+             reshape, resize!,
              setindex!, show, showcompact, similar, size, slice, sqrt, squeeze,
              start, strides, sub, sum, write, writemime, zero
 # "deprecated imports" are below
