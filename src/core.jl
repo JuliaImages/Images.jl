@@ -216,6 +216,18 @@ function copy!(imgdest::AbstractImage, imgsrc::AbstractImage, prop1::ASCIIString
     imgdest
 end
 
+function reshape{N}(img::AbstractImage, dims::NTuple{N,Int})
+    ret = copyproperties(img, reshape(data(img), dims))
+    for prop in spatialproperties(img)
+        delete!(ret, prop)
+    end
+    if colordim(img) != 0
+        delete!(ret, "colordim")
+        delete!(ret, "colorspace")
+    end
+    delete!(ret, "timedim")
+    ret
+end
 
 ## reinterpret: Color->T
 # Arrays
