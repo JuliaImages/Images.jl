@@ -174,6 +174,16 @@ facts("Map") do
         @fact map(Clamp01NaN(A), A) --> [0.0 0.5; 1.0 0.0]
         B = colorim(repeat(reshape(A, (1,2,2)), outer=[3,1,1]))
         @fact map(Clamp01NaN(B), B) --> [RGB(0.0,0,0) RGB(0.5,0.5,0.5); RGB(1.0,1,1) RGB(0.0,0,0)]
+        # Integer-valued images are not recommended, but let's at
+        # least make sure they work
+        smm = ScaleMinMax(UInt8, 0.0, 1.0, 255)
+        @fact map(smm, 0.0) --> exactly(0x00)
+        @fact map(smm, 1.0) --> exactly(0xff)
+        @fact map(smm, 0.1) --> exactly(round(UInt8, 0.1*255.0f0))
+        smm = ScaleMinMax(Gray{U8}, typemin(Int8), typemax(Int8))
+        @fact map(smm, 2) --> Gray{U8}(0.51)
+        smm = ScaleMinMax(RGB24, typemin(Int8), typemax(Int8))
+        @fact map(smm, 2) --> RGB24(0x828282)
     end
 
     context("ScaleSigned") do
