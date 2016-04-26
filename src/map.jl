@@ -235,6 +235,9 @@ immutable ScaleMinMax{To,From,S<:AbstractFloat} <: MapInfo{To}
 end
 
 ScaleMinMax{To,From}(::Type{To}, min::From, max::From, s::AbstractFloat) = ScaleMinMax{To,From,typeof(s)}(min, max, s)
+ScaleMinMax{To,From}(::Type{To}, min::From, max::From, s) = ScaleMinMax(To, min, max, convert_float(To, Float32, s))
+convert_float{To<:AbstractFloat,T}(::Type{To}, ::Type{T}, s) = convert(To, s)
+convert_float{To,T}(::Type{To}, ::Type{T}, s) = convert(T, s)
 ScaleMinMax{To<:Union{Fractional,Colorant},From}(::Type{To}, mn::From, mx::From) = ScaleMinMax(To, mn, mx, 1.0f0/(convert(Float32, mx)-convert(Float32, mn)))
 
 # ScaleMinMax constructors that take AbstractArray input
@@ -249,20 +252,22 @@ similar{T,F,To,From,S}(mapi::ScaleMinMax{To,From,S}, ::Type{T}, ::Type{F}) = Sca
 
 # Implementation
 function immap{To<:Union{Real,AbstractGray},From<:Union{Real,AbstractGray}}(mapi::ScaleMinMax{To,From}, val::From)
-    g = gray(val)
-    t = ifelse(g < mapi.min, zero(From), ifelse(g > mapi.max, mapi.max-mapi.min, g-mapi.min))
-    convert(To, mapi.s*t)
+    t = clamp(gray(val), gray(mapi.min), gray(mapi.max))
+    f = mapi.s*t - mapi.s*mapi.min  # better than mapi.s*(t-mapi.min) (overflow)
+    convertsafely(To, f)
 end
 function immap{To<:Union{Real,AbstractGray},From<:Union{Real,AbstractGray}}(mapi::ScaleMinMax{To,From}, val::Union{Real,Colorant})
     immap(mapi, convert(From, val))
 end
 function map1{To<:Union{RGB24,ARGB32},From<:Real}(mapi::ScaleMinMax{To,From}, val::From)
-    t = ifelse(val < mapi.min, zero(From), ifelse(val > mapi.max, mapi.max-mapi.min, val-mapi.min))
-    convert(UFixed8, mapi.s*t)
+    t = clamp(val, mapi.min, mapi.max)
+    f = mapi.s*t - mapi.s*mapi.min
+    convert(UFixed8, f)
 end
 function map1{To<:Colorant,From<:Real}(mapi::ScaleMinMax{To,From}, val::From)
-    t = ifelse(val < mapi.min, zero(From), ifelse(val > mapi.max, mapi.max-mapi.min, val-mapi.min))
-    convert(eltype(To), mapi.s*t)
+    t = clamp(val, mapi.min, mapi.max)
+    f = mapi.s*t - mapi.s*mapi.min
+    convertsafely(eltype(To), f)
 end
 function map1{To<:Union{RGB24,ARGB32},From<:Real}(mapi::ScaleMinMax{To,From}, val::Union{Real,Colorant})
     map1(mapi, convert(From, val))
@@ -695,3 +700,6 @@ end
 
 ufixedsc{T<:UFixed}(::Type{T}, img::AbstractImageDirect) = immap(mapinfo(T, img), img)
 ufixed8sc(img::AbstractImageDirect) = ufixedsc(UFixed8, img)
+
+convertsafely{T}(::Type{T}, val) = convert(T, val)
+convertsafely{T<:Integer}(::Type{T}, val::AbstractFloat) = round(T, val)
