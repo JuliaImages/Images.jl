@@ -269,6 +269,11 @@ include the following functions:
     findlocalmaxima
     findlocalminima
 
+# Exposure
+
+    {docs}
+    imhist
+
 # Filtering kernels
 
     {docs}

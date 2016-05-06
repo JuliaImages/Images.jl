@@ -158,6 +158,24 @@ facts("Algorithms") do
         @fact img2 --> roughly(reinterpret(Float32, img))
     end
 
+    context("Exposure") do
+        img = 1:1:10
+        bins, hist = Images.imhist(img, 10)
+        @fact bins --> 1.0:1.0:10.0
+        @fact hist --> [0,1, 1, 1, 1, 1, 1, 1, 1, 1, 1,0]
+        bins, hist = Images.imhist(img, 5, 2, 6)
+        @fact bins --> 2.0:1.0:6.0
+        @fact hist --> [1, 1, 1, 1, 1, 1, 4]
+
+        img = reshape(0:1:99, 10, 10)
+        bins, hist = Images.imhist(img, 10)
+        @fact bins --> 0.0:10.0:90.0
+        @fact hist --> [0, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 0]
+        bins, hist = Images.imhist(img, 7, 25, 59)
+        @fact bins --> 25.0:5.0:55.0
+        @fact hist --> [25, 5, 5, 5, 5, 5, 5, 5, 40]
+    end
+
     context("Array padding") do
         A = [1 2; 3 4]
         @fact Images.padindexes(A, 1, 0, 0, "replicate") --> [1,2]
