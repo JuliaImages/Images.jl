@@ -702,6 +702,16 @@ padarray
 <strong><code>Images.findlocalminima</code></strong> &mdash; <em>Function</em>.</p>
 <hr />
 <p>Like <code>findlocalmaxima</code>, but returns the coordinates of the smallest elements.</p>
+<p><a id='Exposure-1'></a></p>
+<h1 id="exposure">Exposure</h1>
+<p><a id='Images.imhist' href='#Images.imhist'>#</a>
+<strong><code>Images.imhist</code></strong> &mdash; <em>Function</em>.</p>
+<hr />
+<pre><code>range, histogram = imhist(img, nbins)
+range, histogram = imhist(img, nbins, minval, maxval)
+</code></pre>
+
+<p>Generates a histogram for the image over nbins spread between (minval, maxval). If minval and maxval are not given, then the minimum and maximum values present in the image are taken.</p>
 <p><a id='Filtering-kernels-1'></a></p>
 <h1 id="filtering-kernels">Filtering kernels</h1>
 <p><a id='Images.gaussian2d' href='#Images.gaussian2d'>#</a>
