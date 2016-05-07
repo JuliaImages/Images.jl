@@ -1197,6 +1197,42 @@ if isdefined(:restrict)
 end
 
 """
+```
+range, histogram = imhist(img, nbins)
+range, histogram = imhist(img, nbins, minval, maxval)
+```
+
+Generates a histogram for the image over nbins spread between (minval, maxval). If minval and maxval are not given, then the
+minimum and maximum values present in the image are taken.
+"""
+
+imhist{T<:Colorant}(img::AbstractArray{T}, nbins=400) = imhist(convert(Array{Gray}, data(img)), nbins)
+imhist{T<:Colorant}(img::AbstractArray{T}, nbins, minval, maxval) = imhist(convert(Array{Gray}, data(img)), nbins, minval, maxval)
+
+function imhist{T<:Union{Gray,Number}}(img::AbstractArray{T}, nbins = 400)
+    minval = minfinite(img)
+    maxval = maxfinite(img)
+    imhist(img, nbins, minval, maxval)
+end
+
+function imhist{T<:Union{Gray,Number}}(img::AbstractArray{T}, nbins, minval::T, maxval::T)
+    bins = minval:(maxval-minval+1)/(nbins):maxval
+    histogram = zeros(Integer,nbins+2)
+    for val in img
+        if val>maxval
+            histogram[end] += 1
+            continue
+        end
+        index = searchsortedlast(bins, val)
+        histogram[index+1] += 1
+    end
+    bins, histogram
+end
+
+imhist{T<:Union{Gray,Number}}(img::AbstractArray{T}, nbins, minval, maxval) = imhist(img, nbins, convert(T, minval), convert(T, maxval))
+
+
+"""
 `imgr = restrict(img[, region])` performs two-fold reduction in size
 along the dimensions listed in `region`, or all spatial coordinates if
 `region` is not specified.  It anti-aliases the image as it goes, so
