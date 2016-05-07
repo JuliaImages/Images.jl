@@ -153,10 +153,14 @@ strides(img::AbstractImage) = strides(img.data)
 copy(img::Image) = Image(copy(img.data), dictcopy(img.properties))
 copy(img::ImageCmap) = ImageCmap(copy(img.data), copy(img.cmap), dictcopy(img.properties))
 
-function dictcopy(dct)
-    newkeys = [copy(key) for key in keys(dct)]
-    newvals = [copy(val) for val in values(dct)]
-    Dict{ASCIIString,Any}(zip(newkeys,newvals))
+if VERSION < v"0.5.0-dev"
+    function dictcopy(dct)
+        newkeys = [copy(key) for key in keys(dct)]
+        newvals = [copy(val) for val in values(dct)]
+        Dict{ASCIIString,Any}(zip(newkeys,newvals))
+    end
+else
+    dictcopy(dct) = deepcopy(dct)
 end
 
 """
