@@ -22,6 +22,8 @@ typealias TransparentGray{C<:AbstractGray,T} TransparentColor{C,T,2}
 using Graphics
 import Graphics: width, height, Point
 import FixedPointNumbers: ufixed8, ufixed10, ufixed12, ufixed14, ufixed16
+using Compat
+import Compat.String
 
 using Base.Cartesian
 include("compatibility/forcartesian.jl")

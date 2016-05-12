@@ -700,6 +700,3 @@ end
 
 ufixedsc{T<:UFixed}(::Type{T}, img::AbstractImageDirect) = immap(mapinfo(T, img), img)
 ufixed8sc(img::AbstractImageDirect) = ufixedsc(UFixed8, img)
-
-convertsafely{T}(::Type{T}, val) = convert(T, val)
-convertsafely{T<:Integer}(::Type{T}, val::AbstractFloat) = round(T, val)

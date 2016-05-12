@@ -70,7 +70,7 @@ end
 for NC = 1:3
     NCm = NC-1
     for K = 1:4
-        indexargs = Symbol[symbol(string("i_",d)) for d = 1:K]
+        indexargs = Symbol[Symbol("i_", d) for d = 1:K]
         sigargs = Expr[:($a::Integer) for a in indexargs]
         @eval begin
             function getindex{T,N,AT,MITypes}(O::Overlay{T,N,$NC,AT,MITypes}, $(sigargs...))

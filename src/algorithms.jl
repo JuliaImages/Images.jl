@@ -758,7 +758,7 @@ end
 
 # flips the dimension specified by name instead of index
 # it is thus independent of the storage order
-Base.flipdim(img::AbstractImage, dimname::ASCIIString) = shareproperties(img, flipdim(data(img), dimindex(img, dimname)))
+Base.flipdim(img::AbstractImage, dimname::String) = shareproperties(img, flipdim(data(img), dimindex(img, dimname)))
 
 flipx(img::AbstractImage) = flipdim(img, "x")
 flipy(img::AbstractImage) = flipdim(img, "y")
@@ -1259,7 +1259,7 @@ function restrict(A::AbstractArray, region::Union{Dims, Vector{Int}}=coords_spat
     A
 end
 
-function restrict{S<:ByteString}(img::AbstractImageDirect, region::Union{Tuple{Vararg{ByteString}}, Vector{S}})
+function restrict{S<:String}(img::AbstractImageDirect, region::Union{Tuple{Vararg{String}}, Vector{S}})
     so = spatialorder(img)
     regioni = Int[]
     for i = 1:length(region)
@@ -1406,7 +1406,7 @@ imresize(original, new_size) = imresize!(similar(original, new_size), original)
 
 convertsafely{T<:AbstractFloat}(::Type{T}, val) = convert(T, val)
 convertsafely{T<:Integer}(::Type{T}, val::Integer) = convert(T, val)
-convertsafely{T<:Integer}(::Type{T}, val::AbstractFloat) = trunc(T, val+oftype(val, 0.5))
+convertsafely{T<:Integer}(::Type{T}, val::AbstractFloat) = round(T, val)
 convertsafely{T}(::Type{T}, val) = convert(T, val)
 
 

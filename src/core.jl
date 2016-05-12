@@ -31,7 +31,7 @@ along one of the dimensions of the array (as opposed to using a
 """
 type Image{T,N,A<:AbstractArray} <: AbstractImageDirect{T,N}
     data::A
-    properties::Dict{ASCIIString,Any}
+    properties::Dict{Compat.ASCIIString,Any}
 end
 Image(data::AbstractArray, props::Dict) = Image{eltype(data),ndims(data),typeof(data)}(data,props)
 Image{T,N}(data::AbstractArray{T,N}, props::Dict) = Image{T,N,typeof(data)}(data,props)
@@ -46,7 +46,7 @@ creates an indexed (colormap) image.
 type ImageCmap{T<:Colorant,N,A<:AbstractArray} <: AbstractImageIndexed{T,N}
     data::A
     cmap::Vector{T}
-    properties::Dict{ASCIIString,Any}
+    properties::Dict{Compat.ASCIIString,Any}
 end
 ImageCmap{_,N}(data::AbstractArray{_,N}, cmap::AbstractVector, props::Dict) = ImageCmap{eltype(cmap),N,typeof(data)}(data, cmap, props)
 ImageCmap(data::AbstractArray, cmap::AbstractVector; kwargs...) = ImageCmap(data, cmap, kwargs2dict(kwargs))
@@ -157,7 +157,7 @@ if VERSION < v"0.5.0-dev"
     function dictcopy(dct)
         newkeys = [copy(key) for key in keys(dct)]
         newvals = [copy(val) for val in values(dct)]
-        Dict{ASCIIString,Any}(zip(newkeys,newvals))
+        Dict{Compat.ASCIIString,Any}(zip(newkeys,newvals))
     end
 else
     dictcopy(dct) = deepcopy(dct)
@@ -212,7 +212,7 @@ similar{T}(img::AbstractImageIndexed, ::Type{T}) = ImageCmap(similar(img.data, T
 similar{T}(img::AbstractImageIndexed, ::Type{T}, dims::Dims) = ImageCmap(similar(img.data, T, dims), copy(img.cmap), copy(img.properties))
 
 # copy properties
-function copy!(imgdest::AbstractImage, imgsrc::AbstractImage, prop1::ASCIIString, props::ASCIIString...)
+function copy!(imgdest::AbstractImage, imgsrc::AbstractImage, prop1::String, props::String...)
     imgdest[prop1] = imgsrc[prop1]
     for p in props
         imgdest[p] = imgsrc[p]
@@ -504,20 +504,20 @@ getindex(img::AbstractImage, I::RealIndex, J::RealIndex,
 getindex(img::AbstractImage, I::RealIndex...) = getindex(img.data, I...)
 
 # getindex(img::AbstractImage, dimname::AbstractString, ind::RealIndex, nameind...) = getindex(img.data, coords(img, dimname, ind, nameind...)...)
-getindex(img::AbstractImage, dimname::ASCIIString, ind, nameind...) = getindex(img.data, coords(img, dimname, ind, nameind...)...)
+getindex(img::AbstractImage, dimname::String, ind, nameind...) = getindex(img.data, coords(img, dimname, ind, nameind...)...)
 
-getindex(img::AbstractImage, propname::ASCIIString) = getindex(img.properties, propname)
+getindex(img::AbstractImage, propname::String) = getindex(img.properties, propname)
 
 typealias Indexable{T<:Real} Union{Int, AbstractVector{T}, Colon}  # for ambiguity resolution
 sub(img::AbstractImage, I::Indexable...) = sub(img.data, I...)
 sub(img::AbstractImage, I::RealIndex...) = sub(img.data, I...)
 
-sub(img::AbstractImage, dimname::ASCIIString, ind::RealIndex, nameind...) = sub(img.data, coords(img, dimname, ind, nameind...)...)
+sub(img::AbstractImage, dimname::String, ind::RealIndex, nameind...) = sub(img.data, coords(img, dimname, ind, nameind...)...)
 
 slice(img::AbstractImage, I::Indexable...) = slice(img.data, I...)
 slice(img::AbstractImage, I::RealIndex...) = slice(img.data, I...)
 
-slice(img::AbstractImage, dimname::ASCIIString, ind::RealIndex, nameind...) = slice(img.data, coords(img, dimname, ind, nameind...)...)
+slice(img::AbstractImage, dimname::String, ind::RealIndex, nameind...) = slice(img.data, coords(img, dimname, ind, nameind...)...)
 
 """
 ```
@@ -555,7 +555,7 @@ _length(indx, A, d) = length(indx)
 _length(indx::Colon, A, d) = size(A,d)
 
 
-getindexim(img::AbstractImage, dimname::ASCIIString, ind::RealIndex, nameind...) = getindexim(img, coords(img, dimname, ind, nameind...)...)
+getindexim(img::AbstractImage, dimname::String, ind::RealIndex, nameind...) = getindexim(img, coords(img, dimname, ind, nameind...)...)
 
 """
 ```
@@ -567,7 +567,7 @@ returns an `Image` with `SubArray` data, with indexing semantics similar to `sub
 subim(img::AbstractImage, I::RealIndex...) = _subim(img, I)
 _subim{TT}(img, I::TT) = shareproperties(img, sub(img.data, I...))  # work around #8504
 
-subim(img::AbstractImage, dimname::ASCIIString, ind::RealIndex, nameind...) = subim(img, coords(img, dimname, ind, nameind...)...)
+subim(img::AbstractImage, dimname::String, ind::RealIndex, nameind...) = subim(img, coords(img, dimname, ind, nameind...)...)
 
 """
 ```
@@ -907,7 +907,7 @@ csinfer{C<:Colorant}(::Type{C}) = ColorTypes.colorant_string(C)
 csinfer(C) = "Unknown"
 colorspace(img::AbstractImage) = get(img.properties, "colorspace", "Unknown")
 
-colorspacedict = Dict{ASCIIString,Any}()
+colorspacedict = Dict{Compat.ASCIIString,Any}()
 for ACV in (Color, AbstractRGB)
     for CV in subtypes(ACV)
         (length(CV.parameters) == 1 && !(CV.abstract)) || continue
@@ -915,7 +915,7 @@ for ACV in (Color, AbstractRGB)
         colorspacedict[str] = CV
     end
 end
-function getcolortype{T}(str::ASCIIString, ::Type{T})
+function getcolortype{T}(str::String, ::Type{T})
     if haskey(colorspacedict, str)
         CV = colorspacedict[str]
         return CV{T}
@@ -1045,7 +1045,7 @@ and `"color"` for color.
 See also: `spatialorder`, `colordim`, `timedim`.
 """
 function storageorder(img::AbstractArray)
-    so = Array(ASCIIString, ndims(img))
+    so = Array(Compat.ASCIIString, ndims(img))
     so[coords_spatial(img)] = spatialorder(img)
     cd = colordim(img)
     if cd != 0
@@ -1363,7 +1363,7 @@ function spatialproperties(img::AbstractImage)
     if haskey(img, "spatialproperties")
         return img.properties["spatialproperties"]
     end
-    spatialprops = ASCIIString[]
+    spatialprops = Compat.ASCIIString[]
     if haskey(img, "spatialorder")
         push!(spatialprops, "spatialorder")
     end
@@ -1375,7 +1375,7 @@ function spatialproperties(img::AbstractImage)
     end
     spatialprops
 end
-spatialproperties(img::AbstractVector) = ASCIIString[]  # these are not mutable
+spatialproperties(img::AbstractVector) = Compat.ASCIIString[]  # these are not mutable
 
 
 #### Low-level utilities ####
@@ -1424,7 +1424,7 @@ end
 # Support indexing via
 #    img["t", 32, "x", 100:400]
 # where anything not mentioned by name is assumed to include the whole range
-function coords(img::AbstractImage, dimname::ASCIIString, ind, nameind...)
+function coords(img::AbstractImage, dimname::String, ind, nameind...)
     c = Any[1:d for d in size(img)]
     so = spatialorder(img)
     c[require_dimindex(img, dimname, so)] = ind
@@ -1446,7 +1446,7 @@ function coords(img::AbstractImage; kwargs...)
 end
 
 
-function dimindex(img::AbstractImage, dimname::ASCIIString, so = spatialorder(img))
+function dimindex(img::AbstractImage, dimname::String, so = spatialorder(img))
     n::Int = 0
     if dimname == "color"
         n = colordim(img)
@@ -1482,7 +1482,7 @@ to_vector(v::Tuple) = [v...]
 
 # converts keyword argument to a dictionary
 function kwargs2dict(kwargs)
-    d = Dict{ASCIIString,Any}()
+    d = Dict{Compat.ASCIIString,Any}()
     for (k, v) in kwargs
         d[string(k)] = v
     end
