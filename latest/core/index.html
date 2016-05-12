@@ -283,7 +283,7 @@
 <p>In practice, it is assumed that <code>AbstractImages</code> have at least two fields, called <code>data</code> and <code>properties</code>. (In code, you should not use these directly, instead using the functions <code>data</code> and <code>properties</code> to extract these.)  These are the only two fields in the first concrete image type, called <code>Image</code>:</p>
 <pre><code class="julia">type Image{T,N,A&lt;:AbstractArray} &lt;: AbstractImageDirect{T,N}
     data::A
-    properties::Dict{ASCIIString,Any}
+    properties::Dict{String,Any}
 end
 </code></pre>
 
@@ -293,7 +293,7 @@ end
 <pre><code class="julia">type ImageCmap{T,N,A&lt;:AbstractArray,C&lt;:AbstractArray} &lt;: AbstractImageIndexed{T,N}
     data::A
     cmap::C
-    properties::Dict{ASCIIString,Any}
+    properties::Dict{String,Any}
 end
 </code></pre>
 
