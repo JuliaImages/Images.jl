@@ -1,4 +1,5 @@
 using FactCheck, Images, Colors, FixedPointNumbers
+using Compat
 
 facts("Overlay") do
     gray = linspace(0.0, 1.0, 5)
@@ -52,7 +53,7 @@ facts("Overlay") do
     end
 
     context("Four") do
-        img1 = Images.Image(gray, Dict{ASCIIString, Any}([("colorspace", "Gray"), ("spatialorder",["x"])]))
+        img1 = Images.Image(gray, Dict{Compat.ASCIIString, Any}([("colorspace", "Gray"), ("spatialorder",["x"])]))
         ovr = Images.OverlayImage((2gray, img1), (RGB{Float32}(1, 0, 1), RGB{Float32}(0, 1, 0)), ((0, 1),(0, 1)))
         @fact isa(ovr, Images.Image) --> true
         @fact haskey(ovr, "colorspace") --> false

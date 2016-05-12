@@ -51,7 +51,7 @@ function label_components!(Albl::AbstractArray{Int}, A::Array, region::Union{Dim
         # Need to generate the function
         N = length(uregion)
         ND = ndims(A)
-        iregion = [symbol(string("i_",d)) for d in uregion]
+        iregion = [Symbol("i_", d) for d in uregion]
         f! = eval(quote
             local lc!
             function lc!(Albl::AbstractArray{Int}, sets, A::Array, bkg)

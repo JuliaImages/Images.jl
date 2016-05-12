@@ -58,7 +58,7 @@ are the only two fields in the first concrete image type, called `Image`:
 ```julia
 type Image{T,N,A<:AbstractArray} <: AbstractImageDirect{T,N}
     data::A
-    properties::Dict{ASCIIString,Any}
+    properties::Dict{String,Any}
 end
 ```
 
@@ -82,7 +82,7 @@ The only other concrete image type is for indexed images:
 type ImageCmap{T,N,A<:AbstractArray,C<:AbstractArray} <: AbstractImageIndexed{T,N}
     data::A
     cmap::C
-    properties::Dict{ASCIIString,Any}
+    properties::Dict{String,Any}
 end
 ```
 
