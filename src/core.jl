@@ -1417,9 +1417,13 @@ end
 printdictval(io::IO, v) = print(io, v)
 function printdictval(io::IO, v::Vector)
     for i = 1:length(v)
-        print(io, " ", v[i])
+        print(io, " ")
+        showdictelem(io, v[i])
     end
 end
+
+showdictelem(io::IO, v::AbstractString) = print(io, v)
+showdictelem(io::IO, v) = showcompact(io, v)
 
 # Support indexing via
 #    img["t", 32, "x", 100:400]
