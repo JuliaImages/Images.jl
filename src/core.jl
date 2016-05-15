@@ -31,7 +31,7 @@ along one of the dimensions of the array (as opposed to using a
 """
 type Image{T,N,A<:AbstractArray} <: AbstractImageDirect{T,N}
     data::A
-    properties::Dict{Compat.ASCIIString,Any}
+    properties::Dict{String,Any}
 end
 Image(data::AbstractArray, props::Dict) = Image{eltype(data),ndims(data),typeof(data)}(data,props)
 Image{T,N}(data::AbstractArray{T,N}, props::Dict) = Image{T,N,typeof(data)}(data,props)
@@ -46,7 +46,7 @@ creates an indexed (colormap) image.
 type ImageCmap{T<:Colorant,N,A<:AbstractArray} <: AbstractImageIndexed{T,N}
     data::A
     cmap::Vector{T}
-    properties::Dict{Compat.ASCIIString,Any}
+    properties::Dict{String,Any}
 end
 ImageCmap{_,N}(data::AbstractArray{_,N}, cmap::AbstractVector, props::Dict) = ImageCmap{eltype(cmap),N,typeof(data)}(data, cmap, props)
 ImageCmap(data::AbstractArray, cmap::AbstractVector; kwargs...) = ImageCmap(data, cmap, kwargs2dict(kwargs))
@@ -157,7 +157,7 @@ if VERSION < v"0.5.0-dev"
     function dictcopy(dct)
         newkeys = [copy(key) for key in keys(dct)]
         newvals = [copy(val) for val in values(dct)]
-        Dict{Compat.ASCIIString,Any}(zip(newkeys,newvals))
+        Dict{String,Any}(zip(newkeys,newvals))
     end
 else
     dictcopy(dct) = deepcopy(dct)
@@ -907,7 +907,7 @@ csinfer{C<:Colorant}(::Type{C}) = ColorTypes.colorant_string(C)
 csinfer(C) = "Unknown"
 colorspace(img::AbstractImage) = get(img.properties, "colorspace", "Unknown")
 
-colorspacedict = Dict{Compat.ASCIIString,Any}()
+colorspacedict = Dict{String,Any}()
 for ACV in (Color, AbstractRGB)
     for CV in subtypes(ACV)
         (length(CV.parameters) == 1 && !(CV.abstract)) || continue
@@ -1045,7 +1045,7 @@ and `"color"` for color.
 See also: `spatialorder`, `colordim`, `timedim`.
 """
 function storageorder(img::AbstractArray)
-    so = Array(Compat.ASCIIString, ndims(img))
+    so = Array(String, ndims(img))
     so[coords_spatial(img)] = spatialorder(img)
     cd = colordim(img)
     if cd != 0
@@ -1363,7 +1363,7 @@ function spatialproperties(img::AbstractImage)
     if haskey(img, "spatialproperties")
         return img.properties["spatialproperties"]
     end
-    spatialprops = Compat.ASCIIString[]
+    spatialprops = String[]
     if haskey(img, "spatialorder")
         push!(spatialprops, "spatialorder")
     end
@@ -1375,7 +1375,7 @@ function spatialproperties(img::AbstractImage)
     end
     spatialprops
 end
-spatialproperties(img::AbstractVector) = Compat.ASCIIString[]  # these are not mutable
+spatialproperties(img::AbstractVector) = String[]  # these are not mutable
 
 
 #### Low-level utilities ####
@@ -1482,7 +1482,7 @@ to_vector(v::Tuple) = [v...]
 
 # converts keyword argument to a dictionary
 function kwargs2dict(kwargs)
-    d = Dict{Compat.ASCIIString,Any}()
+    d = Dict{String,Any}()
     for (k, v) in kwargs
         d[string(k)] = v
     end
