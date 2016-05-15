@@ -1,5 +1,5 @@
 using FactCheck, Images, Colors, FixedPointNumbers
-using Compat
+using Compat; import Compat.String
 
 macro chk(a, b)
     :(@fact ($a == $b && typeof($a) == typeof($b)) --> true)
@@ -266,7 +266,7 @@ facts("Map") do
         gray = collect(linspace(0.0,1.0,5)) # a 1-dimensional image
         gray8 = round(UInt8, 255*gray)
         gray32 = UInt32[convert(UInt32, g)<<16 | convert(UInt32, g)<<8 | convert(UInt32, g) for g in gray8]
-        imgray = Images.Image(gray, Dict{Compat.ASCIIString,Any}([("colordim",0), ("colorspace","Gray")]))
+        imgray = Images.Image(gray, Dict{String,Any}([("colordim",0), ("colorspace","Gray")]))
         buf = map(Images.mapinfo(UInt32, imgray), imgray) # Images.uint32color(imgray)
         @fact buf --> gray32
         rgb = RGB{Float64}[RGB(g, g, g) for g in gray]
@@ -278,13 +278,13 @@ facts("Map") do
         buf = map(Images.mapinfo(UInt32, img), img) # Images.uint32color(img)
         @fact buf --> gray32
         rgb = repeat(gray, outer=[1,3])
-        img = Images.Image(rgb, Dict{Compat.ASCIIString,Any}([("colordim",2), ("colorspace","RGB"), ("spatialorder",["x"])]))
+        img = Images.Image(rgb, Dict{String,Any}([("colordim",2), ("colorspace","RGB"), ("spatialorder",["x"])]))
         buf = map(Images.mapinfo(UInt32, img), img) # Images.uint32color(img)
         @fact buf --> gray32
         g = green(img)
         @fact g --> gray
         rgb = repeat(gray', outer=[3,1])
-        img = Images.Image(rgb, Dict{Compat.ASCIIString,Any}([("colordim",1), ("colorspace","RGB"), ("spatialorder",["x"])]))
+        img = Images.Image(rgb, Dict{String,Any}([("colordim",1), ("colorspace","RGB"), ("spatialorder",["x"])]))
         buf = map(Images.mapinfo(UInt32, img), img) # Images.uint32color(img)
         @fact buf --> gray32
         b = blue(img)

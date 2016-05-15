@@ -1,5 +1,5 @@
 using FactCheck, Images, Colors, FixedPointNumbers
-using Compat
+using Compat; import String
 
 testing_units = Int == Int64
 if testing_units
@@ -16,7 +16,7 @@ facts("Core") do
     # img, imgd, and imgds will be used in many more tests
     # Thus, these must be defined as local if reassigned in any context() blocks
     cmap = reinterpret(RGB, repmat(reinterpret(UFixed8, round(UInt8, linspace(12, 255, 20)))', 3, 1))
-    img = ImageCmap(copy(B), cmap, Dict{Compat.ASCIIString, Any}([("pixelspacing", [2.0, 3.0]), ("spatialorder", Images.yx)]))
+    img = ImageCmap(copy(B), cmap, Dict{String, Any}([("pixelspacing", [2.0, 3.0]), ("spatialorder", Images.yx)]))
     imgd = convert(Image, img)
     if testing_units
         imgd["pixelspacing"] = [2.0mm, 3.0mm]
@@ -85,7 +85,7 @@ facts("Core") do
 
     context("Indexed color") do
         let cmap = linspace(RGB(0x0cuf8, 0x00uf8, 0x00uf8), RGB(0xffuf8, 0x00uf8, 0x00uf8), 20)
-            img_ = ImageCmap(copy(B), cmap, Dict{Compat.ASCIIString, Any}([("spatialorder", Images.yx)]))
+            img_ = ImageCmap(copy(B), cmap, Dict{String, Any}([("spatialorder", Images.yx)]))
             @fact colorspace(img_) --> "RGB"
             img_ = ImageCmap(copy(B), cmap, spatialorder=Images.yx)
             @fact colorspace(img_) --> "RGB"
@@ -194,9 +194,9 @@ facts("Core") do
         @fact coords_spatial(img) --> coords_spatial(imgd)
         @fact size_spatial(img) --> size_spatial(imgd)
         A = randn(3,5,3)
-        tmp = Image(A, Dict{Compat.ASCIIString,Any}())
+        tmp = Image(A, Dict{String,Any}())
         copy!(tmp, imgd, "spatialorder")
-        @fact properties(tmp) --> Dict{Compat.ASCIIString,Any}([("spatialorder",Images.yx)])
+        @fact properties(tmp) --> Dict{String,Any}([("spatialorder",Images.yx)])
         copy!(tmp, imgd, "spatialorder", "pixelspacing")
         if testing_units
             @fact tmp["pixelspacing"] --> [2.0mm, 3.0mm]
