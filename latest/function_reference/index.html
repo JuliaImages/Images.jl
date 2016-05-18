@@ -43,7 +43,7 @@
       	font-style: normal;
       }
     </style>
-    <link rel="stylesheet" href="../assets/stylesheets/application-54f87043f3.css">
+    <link rel="stylesheet" href="../assets/stylesheets/application-0dac3e5884.css">
     
       <link rel="stylesheet" href="../assets/stylesheets/palettes-05ab2406df.css">
     
@@ -624,7 +624,7 @@ map!(mapi, dest, img)
 <p>You can perform arithmetic with <code>Image</code>s and <code>Color</code>s. Algorithms also include the following functions:</p>
 <p><a id='Linear-filtering-and-padding-1'></a></p>
 <h1 id="linear-filtering-and-padding">Linear filtering and padding</h1>
-<pre><code>{docs}
+<p>```@docs
 imfilter
 imfilter!
 imfilter_fft
@@ -641,185 +641,380 @@ forwarddiffx
 forwarddiffy
 backdiffx
 backdiffy
-padarray
+padarray</p>
+<pre><code>
+
+&lt;a id='Feature-Extraction-1'&gt;&lt;/a&gt;
+
+# Feature Extraction
+
+&lt;a id='Images.blob_LoG' href='#Images.blob_LoG'&gt;#&lt;/a&gt;
+**`Images.blob_LoG`** &amp;mdash; *Function*.
+
+
+
+`blob_LoG(img, sigmas) -&gt; Vector{Tuple}`
+
+Find &quot;blobs&quot; in an N-D image using Lapacian of Gaussians at the specifed sigmas.  Returned are the local maxima's heights, radii, and spatial coordinates.
+
+See Lindeberg T (1998), &quot;Feature Detection with Automatic Scale Selection&quot;, International Journal of Computer Vision, 30(2), 79–116.
+
+Note that only 2-D images are currently supported due to a limitation of `imfilter_LoG`.
+
+&lt;a id='Images.findlocalmaxima' href='#Images.findlocalmaxima'&gt;#&lt;/a&gt;
+**`Images.findlocalmaxima`** &amp;mdash; *Function*.
+
+
+
+`findlocalmaxima(img, [region, edges]) -&gt; Vector{Tuple}`
+
+Returns the coordinates of elements whose value is larger than all of their immediate neighbors.  `region` is a list of dimensions to consider.  `edges` is a boolean specifying whether to include the first and last elements of each dimension.
+
+&lt;a id='Images.findlocalminima' href='#Images.findlocalminima'&gt;#&lt;/a&gt;
+**`Images.findlocalminima`** &amp;mdash; *Function*.
+
+
+
+Like `findlocalmaxima`, but returns the coordinates of the smallest elements.
+
+
+&lt;a id='Exposure-1'&gt;&lt;/a&gt;
+
+# Exposure
+
+&lt;a id='Images.imhist' href='#Images.imhist'&gt;#&lt;/a&gt;
+**`Images.imhist`** &amp;mdash; *Function*.
+
+
+
 </code></pre>
 
-<p><a id='Feature-Extraction-1'></a></p>
-<h1 id="feature-extraction">Feature Extraction</h1>
-<p><a id='Images.blob_LoG' href='#Images.blob_LoG'>#</a>
-<strong><code>Images.blob_LoG</code></strong> &mdash; <em>Function</em>.</p>
-<p><code>blob_LoG(img, sigmas) -&gt; Vector{Tuple}</code></p>
-<p>Find "blobs" in an N-D image using Lapacian of Gaussians at the specifed sigmas.  Returned are the local maxima's heights, radii, and spatial coordinates.</p>
-<p>See Lindeberg T (1998), "Feature Detection with Automatic Scale Selection", International Journal of Computer Vision, 30(2), 79–116.</p>
-<p>Note that only 2-D images are currently supported due to a limitation of <code>imfilter_LoG</code>.</p>
-<p><a id='Images.findlocalmaxima' href='#Images.findlocalmaxima'>#</a>
-<strong><code>Images.findlocalmaxima</code></strong> &mdash; <em>Function</em>.</p>
-<p><code>findlocalmaxima(img, [region, edges]) -&gt; Vector{Tuple}</code></p>
-<p>Returns the coordinates of elements whose value is larger than all of their immediate neighbors.  <code>region</code> is a list of dimensions to consider.  <code>edges</code> is a boolean specifying whether to include the first and last elements of each dimension.</p>
-<p><a id='Images.findlocalminima' href='#Images.findlocalminima'>#</a>
-<strong><code>Images.findlocalminima</code></strong> &mdash; <em>Function</em>.</p>
-<p>Like <code>findlocalmaxima</code>, but returns the coordinates of the smallest elements.</p>
-<p><a id='Exposure-1'></a></p>
-<h1 id="exposure">Exposure</h1>
-<p><a id='Images.imhist' href='#Images.imhist'>#</a>
-<strong><code>Images.imhist</code></strong> &mdash; <em>Function</em>.</p>
-<pre><code>range, histogram = imhist(img, nbins)
-range, histogram = imhist(img, nbins, minval, maxval)
+<p>range, histogram = imhist(img, nbins)
+range, histogram = imhist(img, nbins, minval, maxval)</p>
+<pre><code>
+Generates a histogram for the image over nbins spread between (minval, maxval). If minval and maxval are not given, then the minimum and maximum values present in the image are taken.
+
+
+&lt;a id='Filtering-kernels-1'&gt;&lt;/a&gt;
+
+# Filtering kernels
+
+&lt;a id='Images.gaussian2d' href='#Images.gaussian2d'&gt;#&lt;/a&gt;
+**`Images.gaussian2d`** &amp;mdash; *Function*.
+
+
+
+`kern = gaussian2d(sigma, filtersize)` returns a kernel for FIR-based Gaussian filtering.
+
+See also: `imfilter_gaussian`.
+
+&lt;a id='Images.imaverage' href='#Images.imaverage'&gt;#&lt;/a&gt;
+**`Images.imaverage`** &amp;mdash; *Function*.
+
+
+
+`kern = imaverage(filtersize)` constructs a boxcar-filter of the specified size.
+
+&lt;a id='Images.imdog' href='#Images.imdog'&gt;#&lt;/a&gt;
+**`Images.imdog`** &amp;mdash; *Function*.
+
+
+
+`kern = imdog(sigma)` creates a difference-of-gaussians kernel (`sigma`s differing by a factor of `sqrt(2)`).
+
+&lt;a id='Images.imlaplacian' href='#Images.imlaplacian'&gt;#&lt;/a&gt;
+**`Images.imlaplacian`** &amp;mdash; *Function*.
+
+
+
+`kern = imlaplacian(filtersize)` returns a kernel for laplacian filtering.
+
+&lt;a id='Images.imlog' href='#Images.imlog'&gt;#&lt;/a&gt;
+**`Images.imlog`** &amp;mdash; *Function*.
+
+
+
+`kern = imlog(sigma)` returns a laplacian-of-gaussian kernel.
+
+&lt;a id='Images.sobel' href='#Images.sobel'&gt;#&lt;/a&gt;
+**`Images.sobel`** &amp;mdash; *Function*.
+
+
+
+`kern1, kern2 = sobel()` returns Sobel filters for dimensions 1 and 2 of your image
+
+&lt;a id='Images.prewitt' href='#Images.prewitt'&gt;#&lt;/a&gt;
+**`Images.prewitt`** &amp;mdash; *Function*.
+
+
+
+`kern1, kern2 = prewitt()` returns Prewitt filters for dimensions 1 and 2 of your image
+
+&lt;a id='Images.ando3' href='#Images.ando3'&gt;#&lt;/a&gt;
+**`Images.ando3`** &amp;mdash; *Function*.
+
+
+
+`kern1, kern2 = ando3()` returns optimal 3x3 filters for dimensions 1 and 2 of your image, as defined in Ando Shigeru, IEEE Trans. Pat. Anal. Mach. Int., vol. 22 no 3, March 2000.
+
+See also: `ando4`, `ando5`.
+
+&lt;a id='Images.ando4' href='#Images.ando4'&gt;#&lt;/a&gt;
+**`Images.ando4`** &amp;mdash; *Function*.
+
+
+
+`kern1, kern2 = ando4()` returns optimal 4x4 filters for dimensions 1 and 2 of your image, as defined in Ando Shigeru, IEEE Trans. Pat. Anal. Mach. Int., vol. 22 no 3, March 2000.
+
+See also: `ando4_sep`, `ando3`, `ando5`.
+
+&lt;a id='Images.ando5' href='#Images.ando5'&gt;#&lt;/a&gt;
+**`Images.ando5`** &amp;mdash; *Function*.
+
+
+
+`kern1, kern2 = ando5()` returns optimal 5x5 filters for dimensions 1 and 2 of your image, as defined in Ando Shigeru, IEEE Trans. Pat. Anal. Mach. Int., vol. 22 no 3, March 2000.
+
+See also: `ando5_sep`, `ando3`, `ando4`.
+
+
+&lt;a id='Nonlinear-filtering-and-transformation-1'&gt;&lt;/a&gt;
+
+# Nonlinear filtering and transformation
+
+&lt;a id='Images.imROF' href='#Images.imROF'&gt;#&lt;/a&gt;
+**`Images.imROF`** &amp;mdash; *Function*.
+
+
+
 </code></pre>
 
-<p>Generates a histogram for the image over nbins spread between (minval, maxval). If minval and maxval are not given, then the minimum and maximum values present in the image are taken.</p>
-<p><a id='Filtering-kernels-1'></a></p>
-<h1 id="filtering-kernels">Filtering kernels</h1>
-<p><a id='Images.gaussian2d' href='#Images.gaussian2d'>#</a>
-<strong><code>Images.gaussian2d</code></strong> &mdash; <em>Function</em>.</p>
-<p><code>kern = gaussian2d(sigma, filtersize)</code> returns a kernel for FIR-based Gaussian filtering.</p>
-<p>See also: <code>imfilter_gaussian</code>.</p>
-<p><a id='Images.imaverage' href='#Images.imaverage'>#</a>
-<strong><code>Images.imaverage</code></strong> &mdash; <em>Function</em>.</p>
-<p><code>kern = imaverage(filtersize)</code> constructs a boxcar-filter of the specified size.</p>
-<p><a id='Images.imdog' href='#Images.imdog'>#</a>
-<strong><code>Images.imdog</code></strong> &mdash; <em>Function</em>.</p>
-<p><code>kern = imdog(sigma)</code> creates a difference-of-gaussians kernel (<code>sigma</code>s differing by a factor of <code>sqrt(2)</code>).</p>
-<p><a id='Images.imlaplacian' href='#Images.imlaplacian'>#</a>
-<strong><code>Images.imlaplacian</code></strong> &mdash; <em>Function</em>.</p>
-<p><code>kern = imlaplacian(filtersize)</code> returns a kernel for laplacian filtering.</p>
-<p><a id='Images.imlog' href='#Images.imlog'>#</a>
-<strong><code>Images.imlog</code></strong> &mdash; <em>Function</em>.</p>
-<p><code>kern = imlog(sigma)</code> returns a laplacian-of-gaussian kernel.</p>
-<p><a id='Images.sobel' href='#Images.sobel'>#</a>
-<strong><code>Images.sobel</code></strong> &mdash; <em>Function</em>.</p>
-<p><code>kern1, kern2 = sobel()</code> returns Sobel filters for dimensions 1 and 2 of your image</p>
-<p><a id='Images.prewitt' href='#Images.prewitt'>#</a>
-<strong><code>Images.prewitt</code></strong> &mdash; <em>Function</em>.</p>
-<p><code>kern1, kern2 = prewitt()</code> returns Prewitt filters for dimensions 1 and 2 of your image</p>
-<p><a id='Images.ando3' href='#Images.ando3'>#</a>
-<strong><code>Images.ando3</code></strong> &mdash; <em>Function</em>.</p>
-<p><code>kern1, kern2 = ando3()</code> returns optimal 3x3 filters for dimensions 1 and 2 of your image, as defined in Ando Shigeru, IEEE Trans. Pat. Anal. Mach. Int., vol. 22 no 3, March 2000.</p>
-<p>See also: <code>ando4</code>, <code>ando5</code>.</p>
-<p><a id='Images.ando4' href='#Images.ando4'>#</a>
-<strong><code>Images.ando4</code></strong> &mdash; <em>Function</em>.</p>
-<p><code>kern1, kern2 = ando4()</code> returns optimal 4x4 filters for dimensions 1 and 2 of your image, as defined in Ando Shigeru, IEEE Trans. Pat. Anal. Mach. Int., vol. 22 no 3, March 2000.</p>
-<p>See also: <code>ando4_sep</code>, <code>ando3</code>, <code>ando5</code>.</p>
-<p><a id='Images.ando5' href='#Images.ando5'>#</a>
-<strong><code>Images.ando5</code></strong> &mdash; <em>Function</em>.</p>
-<p><code>kern1, kern2 = ando5()</code> returns optimal 5x5 filters for dimensions 1 and 2 of your image, as defined in Ando Shigeru, IEEE Trans. Pat. Anal. Mach. Int., vol. 22 no 3, March 2000.</p>
-<p>See also: <code>ando5_sep</code>, <code>ando3</code>, <code>ando4</code>.</p>
-<p><a id='Nonlinear-filtering-and-transformation-1'></a></p>
-<h1 id="nonlinear-filtering-and-transformation">Nonlinear filtering and transformation</h1>
-<p><a id='Images.imROF' href='#Images.imROF'>#</a>
-<strong><code>Images.imROF</code></strong> &mdash; <em>Function</em>.</p>
-<pre><code>imgr = imROF(img, lambda, iterations)
+<p>imgr = imROF(img, lambda, iterations)</p>
+<pre><code>
+Perform Rudin-Osher-Fatemi (ROF) filtering, more commonly known as Total Variation (TV) denoising or TV regularization. `lambda` is the regularization coefficient for the derivative, and `iterations` is the number of relaxation iterations taken. 2d only.
+
+&lt;a id='Images.imcorner' href='#Images.imcorner'&gt;#&lt;/a&gt;
+**`Images.imcorner`** &amp;mdash; *Function*.
+
+
+
 </code></pre>
 
-<p>Perform Rudin-Osher-Fatemi (ROF) filtering, more commonly known as Total Variation (TV) denoising or TV regularization. <code>lambda</code> is the regularization coefficient for the derivative, and <code>iterations</code> is the number of relaxation iterations taken. 2d only.</p>
-<p><a id='Images.imcorner' href='#Images.imcorner'>#</a>
-<strong><code>Images.imcorner</code></strong> &mdash; <em>Function</em>.</p>
-<pre><code>imge = imcorner(img; [method], [border], [blockSize], [k])
+<p>imge = imcorner(img; [method], [border], [blockSize], [k])</p>
+<pre><code>
+Performs corner detection, using either the Harris method or the Shi-Tomasi method. `method` is `'harris'` (default) or `'shi-tomasi'`. `'border'` is the border  mode used in computing the gradient (default is `'replicate'`). `'blockSize'` is the size of the box filter kernel (default of `3`). `k` is the Harris free parameter  (default of `0.04`). It is only used when method is set to `'harris'`.
+
+
+&lt;a id='Resizing-1'&gt;&lt;/a&gt;
+
+# Resizing
+
+&lt;a id='Images.restrict' href='#Images.restrict'&gt;#&lt;/a&gt;
+**`Images.restrict`** &amp;mdash; *Function*.
+
+
+
+`imgr = restrict(img[, region])` performs two-fold reduction in size along the dimensions listed in `region`, or all spatial coordinates if `region` is not specified.  It anti-aliases the image as it goes, so is better than a naive summation over 2x2 blocks.
+
+
+&lt;a id='Image-statistics-1'&gt;&lt;/a&gt;
+
+# Image statistics
+
+&lt;a id='Images.minfinite' href='#Images.minfinite'&gt;#&lt;/a&gt;
+**`Images.minfinite`** &amp;mdash; *Function*.
+
+
+
+`m = minfinite(A)` calculates the minimum value in `A`, ignoring any values that are not finite (Inf or NaN).
+
+&lt;a id='Images.maxfinite' href='#Images.maxfinite'&gt;#&lt;/a&gt;
+**`Images.maxfinite`** &amp;mdash; *Function*.
+
+
+
+`m = maxfinite(A)` calculates the maximum value in `A`, ignoring any values that are not finite (Inf or NaN).
+
+&lt;a id='Images.maxabsfinite' href='#Images.maxabsfinite'&gt;#&lt;/a&gt;
+**`Images.maxabsfinite`** &amp;mdash; *Function*.
+
+
+
+`m = maxabsfinite(A)` calculates the maximum absolute value in `A`, ignoring any values that are not finite (Inf or NaN).
+
+&lt;a id='Images.meanfinite' href='#Images.meanfinite'&gt;#&lt;/a&gt;
+**`Images.meanfinite`** &amp;mdash; *Function*.
+
+
+
+`M = meanfinite(img, region)` calculates the mean value along the dimensions listed in `region`, ignoring any non-finite values.
+
+&lt;a id='Images.ssd' href='#Images.ssd'&gt;#&lt;/a&gt;
+**`Images.ssd`** &amp;mdash; *Function*.
+
+
+
+`s = ssd(A, B)` computes the sum-of-squared differences over arrays/images A and B
+
+&lt;a id='Images.ssdn' href='#Images.ssdn'&gt;#&lt;/a&gt;
+**`Images.ssdn`** &amp;mdash; *Function*.
+
+
+
+`s = ssdn(A, B)` computes the sum-of-squared differences over arrays/images A and B, normalized by array size
+
+&lt;a id='Images.sad' href='#Images.sad'&gt;#&lt;/a&gt;
+**`Images.sad`** &amp;mdash; *Function*.
+
+
+
+`s = sad(A, B)` computes the sum-of-absolute differences over arrays/images A and B
+
+&lt;a id='Images.sadn' href='#Images.sadn'&gt;#&lt;/a&gt;
+**`Images.sadn`** &amp;mdash; *Function*.
+
+
+
+`s = sadn(A, B)` computes the sum-of-absolute differences over arrays/images A and B, normalized by array size
+
+
+&lt;a id='Morphological-operations-1'&gt;&lt;/a&gt;
+
+# Morphological operations
+
+&lt;a id='Images.dilate' href='#Images.dilate'&gt;#&lt;/a&gt;
+**`Images.dilate`** &amp;mdash; *Function*.
+
+
+
 </code></pre>
 
-<p>Performs corner detection, using either the Harris method or the Shi-Tomasi method. <code>method</code> is <code>'harris'</code> (default) or <code>'shi-tomasi'</code>. <code>'border'</code> is the border  mode used in computing the gradient (default is <code>'replicate'</code>). <code>'blockSize'</code> is the size of the box filter kernel (default of <code>3</code>). <code>k</code> is the Harris free parameter  (default of <code>0.04</code>). It is only used when method is set to <code>'harris'</code>.</p>
-<p><a id='Resizing-1'></a></p>
-<h1 id="resizing">Resizing</h1>
-<p><a id='Images.restrict' href='#Images.restrict'>#</a>
-<strong><code>Images.restrict</code></strong> &mdash; <em>Function</em>.</p>
-<p><code>imgr = restrict(img[, region])</code> performs two-fold reduction in size along the dimensions listed in <code>region</code>, or all spatial coordinates if <code>region</code> is not specified.  It anti-aliases the image as it goes, so is better than a naive summation over 2x2 blocks.</p>
-<p><a id='Image-statistics-1'></a></p>
-<h1 id="image-statistics">Image statistics</h1>
-<p><a id='Images.minfinite' href='#Images.minfinite'>#</a>
-<strong><code>Images.minfinite</code></strong> &mdash; <em>Function</em>.</p>
-<p><code>m = minfinite(A)</code> calculates the minimum value in <code>A</code>, ignoring any values that are not finite (Inf or NaN).</p>
-<p><a id='Images.maxfinite' href='#Images.maxfinite'>#</a>
-<strong><code>Images.maxfinite</code></strong> &mdash; <em>Function</em>.</p>
-<p><code>m = maxfinite(A)</code> calculates the maximum value in <code>A</code>, ignoring any values that are not finite (Inf or NaN).</p>
-<p><a id='Images.maxabsfinite' href='#Images.maxabsfinite'>#</a>
-<strong><code>Images.maxabsfinite</code></strong> &mdash; <em>Function</em>.</p>
-<p><code>m = maxabsfinite(A)</code> calculates the maximum absolute value in <code>A</code>, ignoring any values that are not finite (Inf or NaN).</p>
-<p><a id='Images.meanfinite' href='#Images.meanfinite'>#</a>
-<strong><code>Images.meanfinite</code></strong> &mdash; <em>Function</em>.</p>
-<p><code>M = meanfinite(img, region)</code> calculates the mean value along the dimensions listed in <code>region</code>, ignoring any non-finite values.</p>
-<p><a id='Images.ssd' href='#Images.ssd'>#</a>
-<strong><code>Images.ssd</code></strong> &mdash; <em>Function</em>.</p>
-<p><code>s = ssd(A, B)</code> computes the sum-of-squared differences over arrays/images A and B</p>
-<p><a id='Images.ssdn' href='#Images.ssdn'>#</a>
-<strong><code>Images.ssdn</code></strong> &mdash; <em>Function</em>.</p>
-<p><code>s = ssdn(A, B)</code> computes the sum-of-squared differences over arrays/images A and B, normalized by array size</p>
-<p><a id='Images.sad' href='#Images.sad'>#</a>
-<strong><code>Images.sad</code></strong> &mdash; <em>Function</em>.</p>
-<p><code>s = sad(A, B)</code> computes the sum-of-absolute differences over arrays/images A and B</p>
-<p><a id='Images.sadn' href='#Images.sadn'>#</a>
-<strong><code>Images.sadn</code></strong> &mdash; <em>Function</em>.</p>
-<p><code>s = sadn(A, B)</code> computes the sum-of-absolute differences over arrays/images A and B, normalized by array size</p>
-<p><a id='Morphological-operations-1'></a></p>
-<h1 id="morphological-operations">Morphological operations</h1>
-<p><a id='Images.dilate' href='#Images.dilate'>#</a>
-<strong><code>Images.dilate</code></strong> &mdash; <em>Function</em>.</p>
-<pre><code>imgd = dilate(img, [region])
+<p>imgd = dilate(img, [region])</p>
+<pre><code>
+perform a max-filter over nearest-neighbors. The default is 8-connectivity in 2d, 27-connectivity in 3d, etc. You can specify the list of dimensions that you want to include in the connectivity, e.g., `region = [1,2]` would exclude the third dimension from filtering.
+
+&lt;a id='Images.erode' href='#Images.erode'&gt;#&lt;/a&gt;
+**`Images.erode`** &amp;mdash; *Function*.
+
+
+
 </code></pre>
 
-<p>perform a max-filter over nearest-neighbors. The default is 8-connectivity in 2d, 27-connectivity in 3d, etc. You can specify the list of dimensions that you want to include in the connectivity, e.g., <code>region = [1,2]</code> would exclude the third dimension from filtering.</p>
-<p><a id='Images.erode' href='#Images.erode'>#</a>
-<strong><code>Images.erode</code></strong> &mdash; <em>Function</em>.</p>
-<pre><code>imge = erode(img, [region])
+<p>imge = erode(img, [region])</p>
+<pre><code>
+perform a min-filter over nearest-neighbors. The default is 8-connectivity in 2d, 27-connectivity in 3d, etc. You can specify the list of dimensions that you want to include in the connectivity, e.g., `region = [1,2]` would exclude the third dimension from filtering.
+
+&lt;a id='Images.opening' href='#Images.opening'&gt;#&lt;/a&gt;
+**`Images.opening`** &amp;mdash; *Function*.
+
+
+
+`imgo = opening(img, [region])` performs the `opening` morphology operation, equivalent to `dilate(erode(img))`. `region` allows you to control the dimensions over which this operation is performed.
+
+&lt;a id='Images.closing' href='#Images.closing'&gt;#&lt;/a&gt;
+**`Images.closing`** &amp;mdash; *Function*.
+
+
+
+`imgc = closing(img, [region])` performs the `closing` morphology operation, equivalent to `erode(dilate(img))`. `region` allows you to control the dimensions over which this operation is performed.
+
+&lt;a id='Images.tophat' href='#Images.tophat'&gt;#&lt;/a&gt;
+**`Images.tophat`** &amp;mdash; *Function*.
+
+
+
+`imgth = tophat(img, [region])` performs `top hat` of an image, which is defined as the image minus its morphological opening. `region` allows you to control the dimensions over which this operation is performed.
+
+&lt;a id='Images.bothat' href='#Images.bothat'&gt;#&lt;/a&gt;
+**`Images.bothat`** &amp;mdash; *Function*.
+
+
+
+`imgbh = bothat(img, [region])` performs `bottom hat` of an image, which is defined as its morphological closing minus the original image. `region` allows you to control the dimensions over which this operation is performed.
+
+&lt;a id='Images.morphogradient' href='#Images.morphogradient'&gt;#&lt;/a&gt;
+**`Images.morphogradient`** &amp;mdash; *Function*.
+
+
+
+`imgmg = morphogradient(img, [region])` returns morphological gradient of the image, which is the difference between the dilation and the erosion of a given image. `region` allows you to control the dimensions over which this operation is performed.
+
+&lt;a id='Images.morpholaplace' href='#Images.morpholaplace'&gt;#&lt;/a&gt;
+**`Images.morpholaplace`** &amp;mdash; *Function*.
+
+
+
+`imgml = morpholaplace(img, [region])` performs `Morphological Laplacian` of an image, which is defined as the arithmetic difference between the internal and the external gradient. `region` allows you to control the dimensions over which this operation is performed.
+
+&lt;a id='Images.label_components' href='#Images.label_components'&gt;#&lt;/a&gt;
+**`Images.label_components`** &amp;mdash; *Function*.
+
+
+
 </code></pre>
 
-<p>perform a min-filter over nearest-neighbors. The default is 8-connectivity in 2d, 27-connectivity in 3d, etc. You can specify the list of dimensions that you want to include in the connectivity, e.g., <code>region = [1,2]</code> would exclude the third dimension from filtering.</p>
-<p><a id='Images.opening' href='#Images.opening'>#</a>
-<strong><code>Images.opening</code></strong> &mdash; <em>Function</em>.</p>
-<p><code>imgo = opening(img, [region])</code> performs the <code>opening</code> morphology operation, equivalent to <code>dilate(erode(img))</code>. <code>region</code> allows you to control the dimensions over which this operation is performed.</p>
-<p><a id='Images.closing' href='#Images.closing'>#</a>
-<strong><code>Images.closing</code></strong> &mdash; <em>Function</em>.</p>
-<p><code>imgc = closing(img, [region])</code> performs the <code>closing</code> morphology operation, equivalent to <code>erode(dilate(img))</code>. <code>region</code> allows you to control the dimensions over which this operation is performed.</p>
-<p><a id='Images.tophat' href='#Images.tophat'>#</a>
-<strong><code>Images.tophat</code></strong> &mdash; <em>Function</em>.</p>
-<p><code>imgth = tophat(img, [region])</code> performs <code>top hat</code> of an image, which is defined as the image minus its morphological opening. <code>region</code> allows you to control the dimensions over which this operation is performed.</p>
-<p><a id='Images.bothat' href='#Images.bothat'>#</a>
-<strong><code>Images.bothat</code></strong> &mdash; <em>Function</em>.</p>
-<p><code>imgbh = bothat(img, [region])</code> performs <code>bottom hat</code> of an image, which is defined as its morphological closing minus the original image. <code>region</code> allows you to control the dimensions over which this operation is performed.</p>
-<p><a id='Images.morphogradient' href='#Images.morphogradient'>#</a>
-<strong><code>Images.morphogradient</code></strong> &mdash; <em>Function</em>.</p>
-<p><code>imgmg = morphogradient(img, [region])</code> returns morphological gradient of the image, which is the difference between the dilation and the erosion of a given image. <code>region</code> allows you to control the dimensions over which this operation is performed.</p>
-<p><a id='Images.morpholaplace' href='#Images.morpholaplace'>#</a>
-<strong><code>Images.morpholaplace</code></strong> &mdash; <em>Function</em>.</p>
-<p><code>imgml = morpholaplace(img, [region])</code> performs <code>Morphological Laplacian</code> of an image, which is defined as the arithmetic difference between the internal and the external gradient. <code>region</code> allows you to control the dimensions over which this operation is performed.</p>
-<p><a id='Images.label_components' href='#Images.label_components'>#</a>
-<strong><code>Images.label_components</code></strong> &mdash; <em>Function</em>.</p>
-<pre><code>label = label_components(tf, [connectivity])
-label = label_components(tf, [region])
+<p>label = label_components(tf, [connectivity])
+label = label_components(tf, [region])</p>
+<pre><code>
+Find the connected components in a binary array `tf`. There are two forms that `connectivity` can take:
+
+  * It can be a boolean array of the same dimensionality as `tf`, of size 1 or 3 along each dimension. Each entry in the array determines whether a given neighbor is used for connectivity analyses. For example, `connectivity = trues(3,3)` would use 8-connectivity and test all pixels that touch the current one, even the corners.
+
+  * You can provide a list indicating which dimensions are used to determine connectivity. For example, `region = [1,3]` would not test neighbors along dimension 2 for connectivity. This corresponds to just the nearest neighbors, i.e., 4-connectivity in 2d and 6-connectivity in 3d.
+
+The default is `region = 1:ndims(A)`.
+
+The output `label` is an integer array, where 0 is used for background pixels, and each connected region gets a different integer index.
+
+&lt;a id='Images.component_boxes' href='#Images.component_boxes'&gt;#&lt;/a&gt;
+**`Images.component_boxes`** &amp;mdash; *Function*.
+
+
+
+`component_boxes(labeled_array)` -&gt; an array of bounding boxes for each label, including the background label 0
+
+&lt;a id='Images.component_lengths' href='#Images.component_lengths'&gt;#&lt;/a&gt;
+**`Images.component_lengths`** &amp;mdash; *Function*.
+
+
+
+`component_lengths(labeled_array)` -&gt; an array of areas (2D), volumes (3D), etc. for each label, including the background label 0
+
+&lt;a id='Images.component_indices' href='#Images.component_indices'&gt;#&lt;/a&gt;
+**`Images.component_indices`** &amp;mdash; *Function*.
+
+
+
+`component_indices(labeled_array)` -&gt; an array of pixels for each label, including the background label 0
+
+&lt;a id='Images.component_subscripts' href='#Images.component_subscripts'&gt;#&lt;/a&gt;
+**`Images.component_subscripts`** &amp;mdash; *Function*.
+
+
+
+`component_subscripts(labeled_array)` -&gt; an array of pixels for each label, including the background label 0
+
+&lt;a id='Images.component_centroids' href='#Images.component_centroids'&gt;#&lt;/a&gt;
+**`Images.component_centroids`** &amp;mdash; *Function*.
+
+
+
+`component_centroids(labeled_array)` -&gt; an array of centroids for each label, including the background label 0
+
+
+&lt;a id='Phantoms-1'&gt;&lt;/a&gt;
+
+# Phantoms
+
+&lt;a id='Images.shepp_logan' href='#Images.shepp_logan'&gt;#&lt;/a&gt;
+**`Images.shepp_logan`** &amp;mdash; *Function*.
+
+
+
 </code></pre>
 
-<p>Find the connected components in a binary array <code>tf</code>. There are two forms that <code>connectivity</code> can take:</p>
-<ul>
-<li>
-<p>It can be a boolean array of the same dimensionality as <code>tf</code>, of size 1 or 3 along each dimension. Each entry in the array determines whether a given neighbor is used for connectivity analyses. For example, <code>connectivity = trues(3,3)</code> would use 8-connectivity and test all pixels that touch the current one, even the corners.</p>
-</li>
-<li>
-<p>You can provide a list indicating which dimensions are used to determine connectivity. For example, <code>region = [1,3]</code> would not test neighbors along dimension 2 for connectivity. This corresponds to just the nearest neighbors, i.e., 4-connectivity in 2d and 6-connectivity in 3d.</p>
-</li>
-</ul>
-<p>The default is <code>region = 1:ndims(A)</code>.</p>
-<p>The output <code>label</code> is an integer array, where 0 is used for background pixels, and each connected region gets a different integer index.</p>
-<p><a id='Images.component_boxes' href='#Images.component_boxes'>#</a>
-<strong><code>Images.component_boxes</code></strong> &mdash; <em>Function</em>.</p>
-<p><code>component_boxes(labeled_array)</code> -&gt; an array of bounding boxes for each label, including the background label 0</p>
-<p><a id='Images.component_lengths' href='#Images.component_lengths'>#</a>
-<strong><code>Images.component_lengths</code></strong> &mdash; <em>Function</em>.</p>
-<p><code>component_lengths(labeled_array)</code> -&gt; an array of areas (2D), volumes (3D), etc. for each label, including the background label 0</p>
-<p><a id='Images.component_indices' href='#Images.component_indices'>#</a>
-<strong><code>Images.component_indices</code></strong> &mdash; <em>Function</em>.</p>
-<p><code>component_indices(labeled_array)</code> -&gt; an array of pixels for each label, including the background label 0</p>
-<p><a id='Images.component_subscripts' href='#Images.component_subscripts'>#</a>
-<strong><code>Images.component_subscripts</code></strong> &mdash; <em>Function</em>.</p>
-<p><code>component_subscripts(labeled_array)</code> -&gt; an array of pixels for each label, including the background label 0</p>
-<p><a id='Images.component_centroids' href='#Images.component_centroids'>#</a>
-<strong><code>Images.component_centroids</code></strong> &mdash; <em>Function</em>.</p>
-<p><code>component_centroids(labeled_array)</code> -&gt; an array of centroids for each label, including the background label 0</p>
-<p><a id='Phantoms-1'></a></p>
-<h1 id="phantoms">Phantoms</h1>
-<p><a id='Images.shepp_logan' href='#Images.shepp_logan'>#</a>
-<strong><code>Images.shepp_logan</code></strong> &mdash; <em>Function</em>.</p>
-<pre><code>phantom = shepp_logan(N,[M]; highContrast=true)
-</code></pre>
-
+<p>phantom = shepp_logan(N,[M]; highContrast=true)
+```</p>
 <p>output the NxM Shepp-Logan phantom, which is a standard test image usually used for comparing image reconstruction algorithms in the field of computed tomography (CT) and magnetic resonance imaging (MRI). If the argument M is omitted, the phantom is of size NxN. When setting the keyword argument <code>`highConstrast</code> to false, the CT version of the phantom is created. Otherwise, the high contrast MRI version is calculated.</p>
           <aside class="copyright" role="note">
             
