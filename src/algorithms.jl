@@ -1239,6 +1239,77 @@ end
 
 imhist{T<:Union{Gray,Number}}(img::AbstractArray{T}, nbins, minval, maxval) = imhist(img, nbins, convert(T, minval), convert(T, maxval))
 
+"""
+```
+hist_equalised_img = histeq(img, nbins)
+hist_equalised_img = histeq(img, nbins, minval, maxval)
+```
+
+Returns a grayscale histogram equalised image with a granularity of `nbins` number of bins. If minval and maxval are specified then
+only the intensities in the range (minval, maxval) are equalised.
+
+"""
+
+RET_TYPE = Dict("8bit" => Gray{U8}, "16bit" => Gray{FixedPointNumbers.UFixed{UInt16,16}})
+Y_MIN = 16
+Y_MAX = 235
+
+function _prep_image_for_histeq(img::AbstractArray, dtype)
+    img_shape = size(img)
+    if dtype == "8bit"
+        img = [convert(base_colorant_type(c){FixedPointNumbers.UFixed{UInt8,8}}, c) for c in img]
+    elseif dtype == "16bit"
+        img = [convert(base_colorant_type(c){FixedPointNumbers.UFixed{UInt16,16}}, c) for c in img]
+    end
+    img = reshape(img, img_shape)
+    img
+end
+
+histeq{T<:Colorant}(img::AbstractArray{T}, nbins, dtype = "8bit") = histeq(_prep_image_for_histeq(img, dtype), nbins, zero(YCbCr), zero(YCbCr))
+histeq{T<:Colorant}(img::AbstractArray{T}, nbins, minval, maxval, dtype = "8bit") = histeq(_prep_image_for_histeq(img, dtype), nbins, minval, maxval)
+
+function histeq{T<:Colorant}(img::AbstractArray{T}, nbins, minval, maxval)
+    img_ycbcr = convert(Array{YCbCr}, data(img))
+    colons = ntuple(d->Colon(), ndims(img))
+    Y = separate(img_ycbcr)[colons..., 1]
+    if maxval == zero(YCbCr{Float32})
+        eq_Y = histeq(Y, nbins, Y_MIN, Y_MAX)
+    else
+        eq_Y = histeq(Y, nbins, minval, maxval)
+    end
+    hist_equalised_img = [YCbCr(eq_Y[i], col.cb, col.cr) for (i,col) in enumerate(img_ycbcr)]
+    hist_equalised_img = reshape(hist_equalised_img, size(img_ycbcr))
+    hist_equalised_img = convert(Array{T}, hist_equalised_img)
+end
+
+function histeq(img::AbstractImage, nbins, dtype = "8bit")
+    hist_equalised_img = histeq(data(img), nbins, dtype)
+    hist_equalised_img = shareproperties(img, hist_equalised_img)
+    hist_equalised_img
+end
+
+function histeq(img::AbstractImage, nbins, minval, maxval, dtype = "8bit")
+    hist_equalised_img = histeq(data(img), nbins, minval, maxval, dtype)
+    hist_equalised_img = shareproperties(img, hist_equalised_img)
+    hist_equalised_img
+end
+
+histeq{T<:Gray}(img::AbstractArray{T}, nbins, dtype = "8bit") = histeq(_prep_image_for_histeq(img, dtype), nbins, ColorVectorSpace.typemin(RET_TYPE[dtype]), ColorVectorSpace.typemax(RET_TYPE[dtype]))
+
+function histeq{T<:Union{Gray,Number}}(img::AbstractArray{T}, nbins::Int, minval::T, maxval::T)
+    bins, histogram = imhist(img, nbins, minval, maxval)
+    cdf = cumsum(histogram[2:end-1])
+    img_shape = size(img)
+    cdf_length = size(cdf)[1]
+    hist_equalised_img = [max(1,Int(ceil((x-minval)*cdf_length/(maxval-minval)))) for x in img]
+    hist_equalised_img = [minval + ((cdf[x]-cdf[1])*(maxval-minval)/(cdf[end]-cdf[1])) for x in hist_equalised_img]
+    hist_equalised_img = reshape(hist_equalised_img, img_shape)
+    hist_equalised_img
+end
+
+histeq{T<:Number}(img::AbstractArray{T}, nbins) = histeq(img, nbins, minfinite(img), maxfinite(img))
+
+histeq{T<:Union{Gray,Number}}(img::AbstractArray{T}, nbins, minval, maxval) = histeq(img, Int(nbins), convert(T, minval), convert(T, maxval))
 
 """
 `imgr = restrict(img[, region])` performs two-fold reduction in size
