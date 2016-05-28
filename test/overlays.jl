@@ -29,10 +29,10 @@ facts("Overlay") do
     end
 
     context("Two") do
-        local ovr = Images.Overlay((gray, 0*gray), (RGB{UFixed8}(1, 0, 1), RGB{UFixed8}(0, 1, 0)), ((0, 1), (0, 1)))
+        ovr = Images.Overlay((gray, 0*gray), (RGB{UFixed8}(1, 0, 1), RGB{UFixed8}(0, 1, 0)), ((0, 1), (0, 1)))
         @fact eltype(ovr) --> RGB{UFixed8}
         s = similar(ovr)
-        @fact isa(s, Vector{RGB{UFixed8}}) --> true
+        @fact typeof(s) --> Vector{RGB{UFixed8}}
         @fact length(s) --> 5
         s = similar(ovr, RGB{Float32})
         @fact isa(s, Vector{RGB{Float32}}) --> true

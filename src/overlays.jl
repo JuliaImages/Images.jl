@@ -13,9 +13,9 @@ Alternatively, you can supply a list of `MapInfo` objects.
 
 See also: `OverlayImage`.
 """
-immutable Overlay{T,N,NC,AT<:Tuple{Vararg{AbstractArray}},MITypes<:Tuple{Vararg{MapInfo}}} <: AbstractArray{RGB{T},N}
+immutable Overlay{C<:RGB,N,NC,AT<:Tuple{Vararg{AbstractArray}},MITypes<:Tuple{Vararg{MapInfo}}} <: AbstractArray{C,N}
     channels::AT   # this holds the grayscale arrays
-    colors::NTuple{NC,RGB{T}}
+    colors::NTuple{NC,C}
     mapi::MITypes
 
     function Overlay(channels::Tuple{Vararg{AbstractArray}}, colors, mapi::Tuple{Vararg{MapInfo}})
@@ -29,8 +29,8 @@ immutable Overlay{T,N,NC,AT<:Tuple{Vararg{AbstractArray}},MITypes<:Tuple{Vararg{
 end
 Overlay(channels::Tuple{Vararg{AbstractArray}}, colors::AbstractVector, mapi::Tuple{Vararg{MapInfo}}) =
     Overlay(channels,tuple(colors...),mapi)
-Overlay{NC,T}(channels::Tuple{Vararg{AbstractArray}}, colors::NTuple{NC,RGB{T}}, mapi::Tuple{Vararg{MapInfo}}) =
-    Overlay{T,ndims(channels[1]),NC,typeof(channels),typeof(mapi)}(channels,colors,mapi)
+Overlay{NC,C<:RGB}(channels::Tuple{Vararg{AbstractArray}}, colors::NTuple{NC,C}, mapi::Tuple{Vararg{MapInfo}}) =
+    Overlay{C,ndims(channels[1]),NC,typeof(channels),typeof(mapi)}(channels,colors,mapi)
 
 function Overlay(channels::Tuple{Vararg{AbstractArray}}, colors,
                  clim = ntuple(i->(zero(eltype(channels[i])), one(eltype(channels[i]))), length(channels)))
@@ -89,17 +89,11 @@ setindex!(O::Overlay, val, I::Real...) = error("Overlays are read-only. Convert 
 
 
 #### Other Overlay support functions ####
-eltype{T}(o::Overlay{T}) = RGB{T}
 length(o::Overlay) = isempty(o.channels) ? 0 : length(o.channels[1])
 size(o::Overlay) = isempty(o.channels) ? (0,) : size(o.channels[1])
 size(o::Overlay, d::Integer) = isempty(o.channels) ? 0 : size(o.channels[1],d)
 nchannels(o::Overlay) = length(o.channels)
 
-similar(o::Overlay) = Array(eltype(o), size(o))
-similar(o::Overlay, ::NTuple{0}) = Array(eltype(o), size(o))
-similar{T}(o::Overlay, ::Type{T}) = Array(T, size(o))
-similar{T}(o::Overlay, ::Type{T}, sz::Int64) = Array(T, sz)
-similar{T}(o::Overlay, ::Type{T}, sz::Int64...) = Array(T, sz)
-similar{T}(o::Overlay, ::Type{T}, sz) = Array(T, sz)
+similar{T}(o::Overlay, ::Type{T}, sz::Dims) = Array(T, sz)
 
 showcompact(io::IO, o::Overlay) = print(io, summary(o), " with colors ", o.colors)
