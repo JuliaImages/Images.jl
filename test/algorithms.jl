@@ -159,21 +159,36 @@ facts("Algorithms") do
     end
 
     context("Exposure") do
-        img = 1:1:10
+        # Many of these test integer values, but of course most images
+        # should have pixel values between 0 and 1.  Still, it doesn't
+        # hurt to get the integer case right too.
+        img = 1:10
         bins, hist = Images.imhist(img, 10)
-        @fact bins --> 1.0:1.0:10.0
+        @fact length(hist) --> length(bins)+1
+        @fact bins --> 1.0:1.0:11.0
         @fact hist --> [0,1, 1, 1, 1, 1, 1, 1, 1, 1, 1,0]
         bins, hist = Images.imhist(img, 5, 2, 6)
-        @fact bins --> 2.0:1.0:6.0
+        @fact length(hist) --> length(bins)+1
+        @fact bins --> 2.0:1.0:7.0
         @fact hist --> [1, 1, 1, 1, 1, 1, 4]
 
-        img = reshape(0:1:99, 10, 10)
+        img = reshape(0:99, 10, 10)
         bins, hist = Images.imhist(img, 10)
-        @fact bins --> 0.0:10.0:90.0
+        @fact length(hist) --> length(bins)+1
+        @fact bins --> 0.0:10.0:100.0
         @fact hist --> [0, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 0]
         bins, hist = Images.imhist(img, 7, 25, 59)
-        @fact bins --> 25.0:5.0:55.0
+        @fact length(hist) --> length(bins)+1
+        @fact bins --> 25.0:5.0:60.0
         @fact hist --> [25, 5, 5, 5, 5, 5, 5, 5, 40]
+
+        # Test the more typical case
+        img = reinterpret(Gray{U8}, [0x20,0x40,0x80,0xd0])
+        @fact imhist(img, 5) --> (0.0:0.2:1.0,[0,1,1,1,0,1,0])
+        img = reinterpret(Gray{U8}, [0x00,0x40,0x80,0xd0])
+        @fact imhist(img, 5) --> (0.0:0.2:1.0,[0,1,1,1,0,1,0])
+        img = reinterpret(Gray{U8}, [0x00,0x40,0x80,0xff])
+        @fact imhist(img, 6) --> (0.0:0.2:1.2,[0,1,1,1,0,0,1,0])
     end
 
     context("Array padding") do

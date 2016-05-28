@@ -1199,12 +1199,19 @@ end
 
 """
 ```
-range, histogram = imhist(img, nbins)
-range, histogram = imhist(img, nbins, minval, maxval)
+edges, count = imhist(img, nbins)
+edges, count = imhist(img, nbins, minval, maxval)
 ```
 
-Generates a histogram for the image over nbins spread between (minval, maxval). If minval and maxval are not given, then the
-minimum and maximum values present in the image are taken.
+Generates a histogram for the image over nbins spread between `(minval, maxval]`.
+If `minval` and `maxval` are not given, then the minimum and
+maximum values present in the image are taken.
+
+`edges` is a vector that specifies how the range is divided;
+`count[i+1]` is the number of values `x` that satisfy `edges[i] <= x < edges[i+1]`.
+`count[1]` is the number satisfying `x < edges[1]`, and
+`count[end]` is the number satisfying `x >= edges[end]`. Consequently,
+`length(count) == length(edges)+1`.
 """
 
 imhist{T<:Colorant}(img::AbstractArray{T}, nbins=400) = imhist(convert(Array{Gray}, data(img)), nbins)
@@ -1217,17 +1224,17 @@ function imhist{T<:Union{Gray,Number}}(img::AbstractArray{T}, nbins = 400)
 end
 
 function imhist{T<:Union{Gray,Number}}(img::AbstractArray{T}, nbins, minval::T, maxval::T)
-    bins = minval:(maxval-minval+1)/(nbins):maxval
-    histogram = zeros(Integer,nbins+2)
+    edges = StatsBase.histrange([Float64(minval), Float64(maxval)], nbins, :left)
+    histogram = zeros(Int, length(edges)+1)
     for val in img
-        if val>maxval
+        if val>=edges[end]
             histogram[end] += 1
             continue
         end
-        index = searchsortedlast(bins, val)
+        index = searchsortedlast(edges, val)
         histogram[index+1] += 1
     end
-    bins, histogram
+    edges, histogram
 end
 
 imhist{T<:Union{Gray,Number}}(img::AbstractArray{T}, nbins, minval, maxval) = imhist(img, nbins, convert(T, minval), convert(T, maxval))
