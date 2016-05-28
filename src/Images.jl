@@ -14,7 +14,7 @@ import Base: atan2, clamp, convert, copy, copy!, ctranspose, delete!, done,
              start, strides, sub, sum, write, writemime, zero
 # "deprecated imports" are below
 
-using Colors, ColorVectorSpace, FixedPointNumbers, FileIO
+using Colors, ColorVectorSpace, FixedPointNumbers, FileIO, StatsBase
 import Colors: Fractional, red, green, blue
 typealias AbstractGray{T}                    Color{T,1}
 typealias TransparentRGB{C<:AbstractRGB,T}   TransparentColor{C,T,4}

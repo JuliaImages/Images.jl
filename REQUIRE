@@ -7,3 +7,4 @@ Zlib
 Graphics 0.1
 FileIO
 Compat 0.7.15
+StatsBase   # for histrange

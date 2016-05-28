@@ -149,24 +149,25 @@ The base b of the logarithm (a.k.a. entropy unit) is one of the following:
   `:hartley` (log base 10)
 """
 function entropy(img::AbstractArray; kind=:shannon)
-  logᵦ = _log(kind)
+    logᵦ = _log(kind)
 
-  _, counts = hist(img[:], 256)
-  p = counts / length(img)
-  logp = logᵦ(p)
+    hist = StatsBase.fit(Histogram, vec(img), nbins=256)
+    counts = hist.weights
+    p = counts / length(img)
+    logp = logᵦ(p)
 
-  # take care of empty bins
-  logp[isinf(logp)] = 0
+    # take care of empty bins
+    logp[isinf(logp)] = 0
 
-  -sum(p.*logp)
+    -sum(p.*logp)
 end
 
 function entropy(img::AbstractArray{Bool}; kind=:shannon)
-  logᵦ = _log(kind)
+    logᵦ = _log(kind)
 
-  p = sum(img) / length(img)
+    p = sum(img) / length(img)
 
-  (0 < p < 1) ? - p*logᵦ(p) - (1-p)*logᵦ(1-p) : zero(p)
+    (0 < p < 1) ? - p*logᵦ(p) - (1-p)*logᵦ(1-p) : zero(p)
 end
 
 entropy{C<:AbstractGray}(img::AbstractArray{C}; kind=:shannon) = entropy(raw(img), kind=kind)
