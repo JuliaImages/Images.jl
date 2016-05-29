@@ -149,24 +149,25 @@ The base b of the logarithm (a.k.a. entropy unit) is one of the following:
   `:hartley` (log base 10)
 """
 function entropy(img::AbstractArray; kind=:shannon)
-  logᵦ = _log(kind)
+    logᵦ = _log(kind)
 
-  _, counts = hist(img[:], 256)
-  p = counts / length(img)
-  logp = logᵦ(p)
+    hist = StatsBase.fit(Histogram, vec(img), nbins=256)
+    counts = hist.weights
+    p = counts / length(img)
+    logp = logᵦ(p)
 
-  # take care of empty bins
-  logp[isinf(logp)] = 0
+    # take care of empty bins
+    logp[isinf(logp)] = 0
 
-  -sum(p.*logp)
+    -sum(p.*logp)
 end
 
 function entropy(img::AbstractArray{Bool}; kind=:shannon)
-  logᵦ = _log(kind)
+    logᵦ = _log(kind)
 
-  p = sum(img) / length(img)
+    p = sum(img) / length(img)
 
-  (0 < p < 1) ? - p*logᵦ(p) - (1-p)*logᵦ(1-p) : zero(p)
+    (0 < p < 1) ? - p*logᵦ(p) - (1-p)*logᵦ(1-p) : zero(p)
 end
 
 entropy{C<:AbstractGray}(img::AbstractArray{C}; kind=:shannon) = entropy(raw(img), kind=kind)
@@ -1198,12 +1199,19 @@ end
 
 """
 ```
-range, histogram = imhist(img, nbins)
-range, histogram = imhist(img, nbins, minval, maxval)
+edges, count = imhist(img, nbins)
+edges, count = imhist(img, nbins, minval, maxval)
 ```
 
-Generates a histogram for the image over nbins spread between (minval, maxval). If minval and maxval are not given, then the
-minimum and maximum values present in the image are taken.
+Generates a histogram for the image over nbins spread between `(minval, maxval]`.
+If `minval` and `maxval` are not given, then the minimum and
+maximum values present in the image are taken.
+
+`edges` is a vector that specifies how the range is divided;
+`count[i+1]` is the number of values `x` that satisfy `edges[i] <= x < edges[i+1]`.
+`count[1]` is the number satisfying `x < edges[1]`, and
+`count[end]` is the number satisfying `x >= edges[end]`. Consequently,
+`length(count) == length(edges)+1`.
 """
 
 imhist{T<:Colorant}(img::AbstractArray{T}, nbins=400) = imhist(convert(Array{Gray}, data(img)), nbins)
@@ -1216,17 +1224,17 @@ function imhist{T<:Union{Gray,Number}}(img::AbstractArray{T}, nbins = 400)
 end
 
 function imhist{T<:Union{Gray,Number}}(img::AbstractArray{T}, nbins, minval::T, maxval::T)
-    bins = minval:(maxval-minval+1)/(nbins):maxval
-    histogram = zeros(Integer,nbins+2)
+    edges = StatsBase.histrange([Float64(minval), Float64(maxval)], nbins, :left)
+    histogram = zeros(Int, length(edges)+1)
     for val in img
-        if val>maxval
+        if val>=edges[end]
             histogram[end] += 1
             continue
         end
-        index = searchsortedlast(bins, val)
+        index = searchsortedlast(edges, val)
         histogram[index+1] += 1
     end
-    bins, histogram
+    edges, histogram
 end
 
 imhist{T<:Union{Gray,Number}}(img::AbstractArray{T}, nbins, minval, maxval) = imhist(img, nbins, convert(T, minval), convert(T, maxval))
