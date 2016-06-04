@@ -1241,12 +1241,24 @@ imhist{T<:Union{Gray,Number}}(img::AbstractArray{T}, nbins, minval, maxval) = im
 
 """
 ```
-hist_equalised_img = histeq(img, nbins)
-hist_equalised_img = histeq(img, nbins, minval, maxval)
+hist_equalised_img = histeq(img, nbins, dtype = "8bit")
+hist_equalised_img = histeq(img, nbins, minval, maxval, dtype = "8bit")
 ```
 
-Returns a grayscale histogram equalised image with a granularity of `nbins` number of bins. If minval and maxval are specified then
-only the intensities in the range (minval, maxval) are equalised.
+Returns a histogram equalised image with a granularity of approximately `nbins` 
+number of bins. An optional `dtype` argument (defaulting to 8bit) can be specified
+to choose the number of bits of the returned image. 
+
+The `histeq` function can handle a variety of input types. The returned image depends 
+on the input type. If the input is an `Image` then the resulting image is of the same type
+and has the same properties. 
+
+For coloured images, the input is converted to YCbCr type and the Y channel is equalised. This
+is the combined with the Cb and Cr channels and the resulting image converted to the same type 
+as the input.
+
+If minval and maxval are specified then only the intensities in the range 
+(minval, maxval) are equalised.
 
 """
 
