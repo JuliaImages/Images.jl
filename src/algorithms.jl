@@ -1280,18 +1280,27 @@ end
 histeq{T<:Colorant}(img::AbstractArray{T}, nbins, dtype = "8bit") = histeq(_prep_image_for_histeq(img, dtype), nbins, zero(YCbCr), zero(YCbCr))
 histeq{T<:Colorant}(img::AbstractArray{T}, nbins, minval, maxval, dtype = "8bit") = histeq(_prep_image_for_histeq(img, dtype), nbins, minval, maxval)
 
+function recompose_y(c::Color, eq_Y::Float32)
+    c_ycbcr = convert(YCbCr, color(c))
+    ret_c = YCbCr(eq_Y, c_ycbcr.cb, c_ycbcr.cr)
+    ret_c
+end
+
+function recompose_y(c::TransparentColor, eq_Y::Float32)
+    c_ycbcr = convert(YCbCrA, color(c))
+    ret_c = YCbCrA(eq_Y, c_ycbcr.cb, c_ycbcr.cr, c_ycbcr.alpha)
+    ret_c
+end
+
 function histeq{T<:Colorant}(img::AbstractArray{T}, nbins, minval, maxval)
-    img_ycbcr = convert(Array{YCbCr}, data(img))
-    colons = ntuple(d->Colon(), ndims(img))
-    Y = separate(img_ycbcr)[colons..., 1]
+    Y = [convert(YCbCr, color(c)).y for c in img]
     if maxval == zero(YCbCr{Float32})
         eq_Y = histeq(Y, nbins, Y_MIN, Y_MAX)
     else
         eq_Y = histeq(Y, nbins, minval, maxval)
     end
-    hist_equalised_img = [YCbCr(eq_Y[i], col.cb, col.cr) for (i,col) in enumerate(img_ycbcr)]
-    hist_equalised_img = reshape(hist_equalised_img, size(img_ycbcr))
-    hist_equalised_img = convert(Array{T}, hist_equalised_img)
+    hist_equalised_img = reshape([convert(T, recompose_y(c, eq_Y[i])) for (i, c) in enumerate(img)], size(img))
+    hist_equalised_img
 end
 
 function histeq(img::AbstractImage, nbins, dtype = "8bit")
@@ -1304,6 +1313,13 @@ function histeq(img::AbstractImage, nbins, minval, maxval, dtype = "8bit")
     hist_equalised_img = histeq(data(img), nbins, minval, maxval, dtype)
     hist_equalised_img = shareproperties(img, hist_equalised_img)
     hist_equalised_img
+end
+
+function histeq{T<:TransparentGray}(img::AbstractArray{T}, args...)
+    opaque_img = [color(c) for c in img]
+    hist_equalised_img = histeq(opaque_img, args...)
+    hist_equalised_img = reshape([convert(T, AGray(hist_equalised_img[i], alpha(c))) for (i, c) in enumerate(img)], size(img))
+    hist_equalised_img    
 end
 
 histeq{T<:Gray}(img::AbstractArray{T}, nbins, dtype = "8bit") = histeq(_prep_image_for_histeq(img, dtype), nbins, ColorVectorSpace.typemin(RET_TYPE[dtype]), ColorVectorSpace.typemax(RET_TYPE[dtype]))
