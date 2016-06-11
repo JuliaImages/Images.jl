@@ -263,6 +263,7 @@ orientation
 magnitude_phase
 imedge
 thin_edges
+canny
 forwarddiffx
 forwarddiffy
 backdiffx

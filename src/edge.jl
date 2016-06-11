@@ -525,3 +525,46 @@ function thin_edges_nonmaxsup_subpix{T}(img::AbstractArray{T}, gradientangles::A
 
     copyproperties(img, out), copyproperties(img, location)
 end
+
+"""
+```
+canny_edges = canny(img, sigma = 1.4, upperThreshold = 0.80, lowerThreshold = 0.20)
+```
+
+Performs Canny Edge Detection on the input image.
+"""
+
+function canny{T}(img::AbstractArray{T, 2}, sigma::Float64=1.4, upperThreshold::Float64=0.80, lowerThreshold::Float64=0.20)
+    img_gray = convert(Image{Images.Gray},img)
+    img_grayf = imfilter_gaussian(img_gray,[sigma,sigma])
+    img_grad_x, img_grad_y = imgradients(img_grayf,"sobel")
+    img_mag,img_phase = magnitude_phase(img_grad_x,img_grad_y)
+    img_nonMaxSup = thin_edges_nonmaxsup(img_mag,img_phase)
+    img_nonMaxSup[img_nonMaxSup .< lowerThreshold] = 0.0
+    img_nonMaxSup[lowerThreshold .< img_nonMaxSup .< upperThreshold] = 0.5
+    img_nonMaxSup[img_nonMaxSup .> upperThreshold] = 1.0
+    queue = CartesianIndex{2}[]
+    
+    R = CartesianRange(size(img_nonMaxSup))
+    I1, Iend = first(R), last(R)
+    for I in R
+      if img_nonMaxSup[I] == 1.0
+        img_nonMaxSup[I] = 0.9
+        push!(queue, I)
+        while !isempty(queue)
+          q_top = shift!(queue)
+          for J in CartesianRange(max(I1, q_top - I1), min(Iend, q_top + I1))
+            if img_nonMaxSup[J] == 1.0 || img_nonMaxSup[J] == 0.5
+              img_nonMaxSup[J] = 0.9
+              push!(queue, J)
+            end
+          end
+        end
+      end
+    end
+
+    img_nonMaxSup[img_nonMaxSup .== 0.9] = 1.0
+    img_nonMaxSup[img_nonMaxSup .< 0.9] = 0.0
+    edges = convert(Images.Image{Gray{U8}}, img_nonMaxSup)
+    return edges
+end 
