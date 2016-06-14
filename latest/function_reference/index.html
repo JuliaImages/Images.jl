@@ -660,14 +660,10 @@ padarray
 <p>Like <code>findlocalmaxima</code>, but returns the coordinates of the smallest elements.</p>
 <p><a id='Exposure-1'></a></p>
 <h1 id="exposure">Exposure</h1>
-<p><a id='Images.imhist' href='#Images.imhist'>#</a>
-<strong><code>Images.imhist</code></strong> &mdash; <em>Function</em>.</p>
-<pre><code>edges, count = imhist(img, nbins)
-edges, count = imhist(img, nbins, minval, maxval)
+<pre><code>imhist
+histeq
 </code></pre>
 
-<p>Generates a histogram for the image over nbins spread between <code>(minval, maxval]</code>. If <code>minval</code> and <code>maxval</code> are not given, then the minimum and maximum values present in the image are taken.</p>
-<p><code>edges</code> is a vector that specifies how the range is divided; <code>count[i+1]</code> is the number of values <code>x</code> that satisfy <code>edges[i] &lt;= x &lt; edges[i+1]</code>. <code>count[1]</code> is the number satisfying <code>x &lt; edges[1]</code>, and <code>count[end]</code> is the number satisfying <code>x &gt;= edges[end]</code>. Consequently, <code>length(count) == length(edges)+1</code>.</p>
 <p><a id='Filtering-kernels-1'></a></p>
 <h1 id="filtering-kernels">Filtering kernels</h1>
 <p><a id='Images.gaussian2d' href='#Images.gaussian2d'>#</a>
