@@ -465,5 +465,11 @@ facts("Core") do
             @fact typeof(raw(imgdata)) --> typeof(imgdata)  # check array fallback
             @fact all(raw(imgdata) .== imgdata) --> true
         end
+        # Issue #497
+        let img = colorim(rand(3, 5, 5))
+            img["colorspace"] = "sRGB"
+            imgg = convert(Image{Gray}, img)
+            @fact haskey(imgg, "colorspace") --> false
+        end
     end
 end

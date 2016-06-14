@@ -369,8 +369,9 @@ function convert(::Type{Image}, img::ImageCmap)
 end
 
 convert{C<:Colorant}(::Type{Image{C}}, img::Image{C}) = img
-convert{Cdest<:Colorant,Csrc<:Colorant}(::Type{Image{Cdest}}, img::Image{Csrc}) = copyproperties(img, convert(Array{ccolor(Cdest,Csrc)}, data(img)))
-convert{Cdest<:Colorant,Csrc<:Colorant}(::Type{Image{Cdest}}, img::AbstractArray{Csrc}) = Image(convert(Array{Cdest}, data(img)), properties(img))
+convert{Cdest<:Colorant,Csrc<:Colorant}(::Type{Image{Cdest}}, img::Image{Csrc}) = deletecs!(copyproperties(img, convert(Array{ccolor(Cdest,Csrc)}, data(img))))
+convert{Cdest<:Colorant,Csrc<:Colorant}(::Type{Image{Cdest}}, img::AbstractArray{Csrc}) = deletecs!(Image(convert(Array{Cdest}, data(img)), properties(img)))
+deletecs!(img) = (delete!(img, "colorspace"); img)
 
 # Convert an Image to an array. We convert the image into the canonical storage order convention for arrays.
 # We restrict this to 2d images because for plain arrays this convention exists only for 2d.
