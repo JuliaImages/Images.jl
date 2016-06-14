@@ -282,6 +282,7 @@ findlocalminima
 
 ```@docs
 imhist
+histeq
 ```
 
 # Filtering kernels
