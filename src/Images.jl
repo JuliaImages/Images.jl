@@ -2,16 +2,22 @@ __precompile__(true)
 
 module Images
 
-VERSION >= v"0.4.0" && import Base.take
+import Base.take
 import Base.Order: Ordering, ForwardOrdering, ReverseOrdering
 import Base: ==, .==, +, -, *, /, .+, .-, .*, ./, .^, .<, .>
 import Base: atan2, clamp, convert, copy, copy!, ctranspose, delete!, done,
-             eltype, fft, float32, float64, get, getindex, haskey, hypot,
+             eltype, fft, get, getindex, haskey, hypot,
              ifft, length, linearindexing, map, map!, maximum, mimewritable,
              minimum, next, ndims, one, parent, permutedims, reinterpret,
              reshape, resize!,
              setindex!, show, showcompact, similar, size, slice, sqrt, squeeze,
              start, strides, sub, sum, write, writemime, zero
+if VERSION < v"0.5.0-dev+4490"
+    import Base: float32, float64
+else
+    export float32, float64
+end
+
 # "deprecated imports" are below
 
 using Colors, ColorVectorSpace, FixedPointNumbers, FileIO, StatsBase
