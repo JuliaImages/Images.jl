@@ -3,6 +3,7 @@ using Images, FactCheck, Base.Test, Colors
 global checkboard
 
 facts("Edge") do
+
     EPS = 1e-14
 
     ## Checkerboard array, used to test image gradients
@@ -23,6 +24,42 @@ facts("Edge") do
     end
 
     checkerboard(sq_width::Integer, count::Integer) = checkerboard(UInt8, sq_width, count)
+
+    #Canny Edge Detection
+    context("Canny Edge Detection") do
+        #General Checks
+        img = zeros(10, 10)
+        edges = canny(img)
+        @fact all(edges .== 0.0) --> true
+        img[2:end-1, 2:end-1] = 1
+        edges = canny(img)
+        @fact all(edges[2:end-1, 2] .== 1.0) --> true
+        @fact all(edges[2:end-1, end-1] .== 1.0) --> true
+        @fact all(edges[2, 2:end-1] .== 1.0) --> true
+        @fact all(edges[end-1, 2:end-1] .== 1.0) --> true
+        
+        #Checkerboard - Corners are not detected as Edges!
+        img = checkerboard(Gray, 5, 3)
+        edges = canny(img)
+        id = [1,2,3,4,6,7,8,9,10,12,13,14,15]
+        @fact all(edges[id, id] .== zero(Gray)) --> true
+        id = [5, 11]
+        id2 = [1,2,3,4,7,8,9,12,13,14,15]
+        id3 = [5,6,10,11]
+        @fact all(edges[id, id2] .== one(Gray)) --> true
+        @fact all(edges[id2, id] .== one(Gray)) --> true
+        @fact all(edges[id, id3] .== zero(Gray)) --> true
+        @fact all(edges[id3, id] .== zero(Gray)) --> true
+
+        #Diagonal Edge
+        img = zeros(10,10)
+        img[diagind(img)] = 1
+        img[diagind(img, 1)] = 1
+        img[diagind(img, -1)] = 1
+        edges = canny(img)
+        @fact all(edges[diagind(edges, 2)] .== 1.0) --> true
+        @fact all(edges[diagind(edges, -2)] .== 1.0) --> true
+    end
 
     SZ=5
     cb_array    = checkerboard(SZ,3)
