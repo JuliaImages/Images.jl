@@ -1326,6 +1326,7 @@ function histeq{T<:Union{Gray,Number}}(img::AbstractArray{T}, nbins::Int, minval
     hist_equalised_img = [max(1,Int(ceil((x-minval)*cdf_length/(maxval-minval)))) for x in img]
     hist_equalised_img = [minval + ((cdf[x]-cdf[1])*(maxval-minval)/(cdf[end]-cdf[1])) for x in hist_equalised_img]
     hist_equalised_img = reshape(hist_equalised_img, img_shape)
+    hist_equalised_img = convert(Array{T}, hist_equalised_img)
     hist_equalised_img
 end
 
