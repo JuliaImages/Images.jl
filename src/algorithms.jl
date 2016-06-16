@@ -1242,11 +1242,11 @@ imhist{T<:Union{Gray,Number}}(img::AbstractArray{T}, nbins, minval, maxval) = im
 """
 ```
 hist_equalised_img = histeq(img, nbins, dtype = "8bit")
-hist_equalised_img = histeq(img, nbins, minval, maxval, dtype = "8bit")
+hist_equalised_img = histeq(img, nbins, minval, maxval, dtype = U8)
 ```
 
 Returns a histogram equalised image with a granularity of approximately `nbins` 
-number of bins. An optional `dtype` argument (defaulting to 8bit) can be specified
+number of bins. An optional `dtype` argument (defaulting to U8) can be specified
 to choose the number of bits of the returned image. 
 
 The `histeq` function can handle a variety of input types. The returned image depends 
@@ -1267,13 +1267,12 @@ Y_MAX = 235
 
 function _prep_image_for_histeq(img::AbstractArray, dtype)
     img_shape = size(img)
-    img = [convert(base_colorant_type(c){dtype}, c) for c in img]
-    img = reshape(img, img_shape)
+    img = convert(Array{base_colorant_type(eltype(img)){dtype}}, img)
     img
 end
 
-histeq{T<:Colorant, D<:Union{U8, UFixed16}}(img::AbstractArray{T}, nbins, dtype::Type{D} = U8) = histeq(_prep_image_for_histeq(img, dtype), nbins, zero(YCbCr), zero(YCbCr))
-histeq{T<:Colorant, D<:Union{U8, UFixed16}}(img::AbstractArray{T}, nbins, minval, maxval, dtype::Type{D} = U8) = histeq(_prep_image_for_histeq(img, dtype), nbins, minval, maxval)
+histeq{T<:Colorant, D<:Union{U8, U16}}(img::AbstractArray{T}, nbins, dtype::Type{D} = U8) = histeq(_prep_image_for_histeq(img, dtype), nbins, zero(YCbCr), zero(YCbCr))
+histeq{T<:Colorant, D<:Union{U8, U16}}(img::AbstractArray{T}, nbins, minval, maxval, dtype::Type{D} = U8) = histeq(_prep_image_for_histeq(img, dtype), nbins, minval, maxval)
 
 function recompose_y(c::Color, eq_Y::Float32)
     c_ycbcr = convert(YCbCr, color(c))
@@ -1298,26 +1297,26 @@ function histeq{T<:Colorant}(img::AbstractArray{T}, nbins, minval, maxval)
     hist_equalised_img
 end
 
-function histeq{D<:Union{U8, UFixed16}}(img::AbstractImage, nbins, dtype::Type{D} = U8)
+function histeq{D<:Union{U8, U16}}(img::AbstractImage, nbins, dtype::Type{D} = U8)
     hist_equalised_img = histeq(data(img), nbins, dtype)
     hist_equalised_img = shareproperties(img, hist_equalised_img)
     hist_equalised_img
 end
 
-function histeq{D<:Union{U8, UFixed16}}(img::AbstractImage, nbins, minval, maxval, dtype::Type{D} = U8)
+function histeq{D<:Union{U8, U16}}(img::AbstractImage, nbins, minval, maxval, dtype::Type{D} = U8)
     hist_equalised_img = histeq(data(img), nbins, minval, maxval, dtype)
     hist_equalised_img = shareproperties(img, hist_equalised_img)
     hist_equalised_img
 end
 
 function histeq{T<:TransparentGray}(img::AbstractArray{T}, args...)
-    opaque_img = [color(c) for c in img]
+    opaque_img = convert(Array{base_color_type(eltype(img))}, img)
     hist_equalised_img = histeq(opaque_img, args...)
     hist_equalised_img = reshape([convert(T, AGray(hist_equalised_img[i], alpha(c))) for (i, c) in enumerate(img)], size(img))
-    hist_equalised_img    
+    hist_equalised_img
 end
 
-histeq{T<:Gray, D<:Union{U8, UFixed16}}(img::AbstractArray{T}, nbins, dtype::Type{D} = U8) = histeq(_prep_image_for_histeq(img, dtype), nbins, ColorVectorSpace.typemin(Gray{dtype}), ColorVectorSpace.typemax(Gray{dtype}))
+histeq{T<:Gray, D<:Union{U8, U16}}(img::AbstractArray{T}, nbins, dtype::Type{D} = U8) = histeq(_prep_image_for_histeq(img, dtype), nbins, ColorVectorSpace.typemin(Gray{dtype}), ColorVectorSpace.typemax(Gray{dtype}))
 
 function histeq{T<:Union{Gray,Number}}(img::AbstractArray{T}, nbins::Int, minval::T, maxval::T)
     bins, histogram = imhist(img, nbins, minval, maxval)
