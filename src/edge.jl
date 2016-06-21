@@ -534,7 +534,7 @@ canny_edges = canny(img, sigma = 1.4, upperThreshold = 0.80, lowerThreshold = 0.
 Performs Canny Edge Detection on the input image.
 """
 
-function canny{T}(img::AbstractArray{T, 2}, sigma::Float64=1.4, upperThreshold::Float64=0.80, lowerThreshold::Float64=0.20)
+function canny{T}(img::AbstractArray{T, 2}, sigma::Number = 1.4, upperThreshold::Number = 0.80, lowerThreshold::Number = 0.20)
     img_gray = convert(Image{Images.Gray},img)
     img_grayf = imfilter_gaussian(img_gray,[sigma,sigma])
     img_grad_x, img_grad_y = imgradients(img_grayf,"sobel")
