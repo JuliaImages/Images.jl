@@ -284,5 +284,5 @@ function component_centroids(img::AbstractArray{Int})
         end
         vsum[end] += 1
     end
-    map(x->tuple(x[1]/x[3],x[2]/x[3]),n)
+    map(x->tuple((x[1:nd]./x[nd+1])...),n)
 end
