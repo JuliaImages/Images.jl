@@ -255,6 +255,7 @@ export # types
     thin_edges_subpix,
     thin_edges_nonmaxsup,
     thin_edges_nonmaxsup_subpix,
+    canny,
 
     # distances
     hausdorff_distance,
@@ -289,7 +290,7 @@ Algorithms:
     - Filtering kernels: `ando[345]`, `guassian2d`, `imaverage`, `imdog`, `imlaplacian`, `prewitt`, `sobel`
     - Exposure : `imhist`, `histeq`
     - Gradients: `backdiffx`, `backdiffy`, `forwarddiffx`, `forwarddiffy`, `imgradients`
-    - Edge detection: `imedge`, `imgradients`, `thin_edges`, `magnitude`, `phase`, `magnitudephase`, `orientation`
+    - Edge detection: `imedge`, `imgradients`, `thin_edges`, `magnitude`, `phase`, `magnitudephase`, `orientation`, `canny`
     - Corner detection: `imcorner`
     - Blob detection: `blob_LoG`, `findlocalmaxima`, `findlocalminima`
     - Morphological operations: `dilate`, `erode`, `closing`, `opening`, `tophat`, `bothat`, `morphogradient`, `morpholaplace`

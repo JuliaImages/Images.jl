@@ -287,7 +287,7 @@ g = rgb2gray(rgb_image)
 gx, gy = imgradients(g)
 mag, grad_angle = magnitude_phase(gx,gy)
 mag[mag .< 0.5] = 0.0  # Threshold magnitude image
-thinned, subpix =  thin_edges_subpix(mag, grad_angle)
+thinned, subpix =  thin_edges_subpix(mag, gradient)
 ```
 """
 thin_edges{T}(img::AbstractArray{T,2}, gradientangles::AbstractArray, border::AbstractString="replicate") =
@@ -524,4 +524,19 @@ function thin_edges_nonmaxsup_subpix{T}(img::AbstractArray{T}, gradientangles::A
     thin_edges_nonmaxsup_core!(out, location, img, gradientangles, radius, border, theta)
 
     copyproperties(img, out), copyproperties(img, location)
+end
+
+function canny{T}(img::AbstractArray{T}, gamma::Float64=1.4, upperThreshold::Float64=0.80, lowerThreshold::Float64=0.20)
+    img_gray = convert(Image{Images.Gray},img)
+    img_grayf = imfilter_gaussian(img_gray,[gamma,gamma])
+    img_grad_x, img_grad_y = imgradients(img_grayf,"sobel")
+    img_mag,img_phase = magnitude_phase(img_grad_x,img_grad_y)
+    img_nonMaxSup = thin_edges_nonmaxsup(img_mag,img_phase)
+    #double thresholding
+    img_nonMaxSup[img_nonMaxSup .<lowerThreshold] = 0.0
+    img_nonMaxSup[img_nonMaxSup .>upperThreshold] = 1.0
+    #hysteris
+    labels = label_components(img_nonMaxSup,trues(3,3))
+    img_out = transpose(labels)
+    return img_out
 end
