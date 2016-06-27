@@ -194,7 +194,6 @@ export # types
     ando5,
     backdiffx,
     backdiffy,
-    canny,
     dilate,
     erode,
     extrema_filter,
@@ -256,6 +255,7 @@ export # types
     thin_edges_subpix,
     thin_edges_nonmaxsup,
     thin_edges_nonmaxsup_subpix,
+    canny,
 
     # distances
     hausdorff_distance,

@@ -532,18 +532,38 @@ canny_edges = canny(img, sigma = 1.4, upperThreshold = 0.80, lowerThreshold = 0.
 ```
 
 Performs Canny Edge Detection on the input image.
-"""
 
-function canny{T}(img::AbstractArray{T, 2}, sigma::Number = 1.4, upperThreshold::Number = 0.80, lowerThreshold::Number = 0.20)
-    img_gray = convert(Image{Images.Gray}, img)
+Parameters :
+  
+  sigma :           Specifies the standard deviation of the gaussian filter
+  upperThreshold :  Upper bound for hysteresis thresholding
+  lowerThreshold :  Lower bound for hysteresis thresholding
+  astype :          Specifies return type of result
+  percentile :      Specifies if upperThreshold and lowerThreshold should be used 
+                    as quantiles or absolute values
+
+"""
+function canny{T}(img::AbstractArray{T, 2}, sigma::Number = 1.4, upperThreshold::Number = 0.90, lowerThreshold::Number = 0.10; percentile::Bool = true)
+    img_gray = convert(Image{Images.Gray{U8}}, img)
     img_grayf = imfilter_gaussian(img_gray, [sigma,sigma])
     img_grad_x, img_grad_y = imgradients(img_grayf, "sobel")
-    img_mag,img_phase = magnitude_phase(img_grad_x, img_grad_y)
+    img_mag, img_phase = magnitude_phase(img_grad_x, img_grad_y)
     img_nonMaxSup = thin_edges_nonmaxsup(img_mag, img_phase)
-    img_thresholded = map(i -> i > lowerThreshold ? i > upperThreshold ? one(Gray{U8}) : Gray{U8}(0.5) : zero(Gray{U8}), img_nonMaxSup)
+    if percentile == true
+        upperThreshold = StatsBase.percentile(img_nonMaxSup[:], upperThreshold * 100)
+        lowerThreshold = StatsBase.percentile(img_nonMaxSup[:], lowerThreshold * 100)
+    end
+    img_thresholded = hysteresis_thresholding(img_nonMaxSup, upperThreshold, lowerThreshold)
+    edges = map(i -> i < 0.9 ? zero(Gray{U8}) : one(Gray{U8}), img_thresholded)
+    edges
+end
+
+
+function hysteresis_thresholding{T}(img_nonMaxSup::AbstractArray{T, 2}, upperThreshold::Number, lowerThreshold::Number)
+    img_thresholded = map(i -> i > lowerThreshold ? i > upperThreshold ? 1.0 : 0.5 : 0.0, img_nonMaxSup)
     queue = CartesianIndex{2}[]
     R = CartesianRange(size(img_thresholded)) 
-    
+        
     I1, Iend = first(R), last(R)
     for I in R
       if img_thresholded[I] == 1.0
@@ -560,7 +580,6 @@ function canny{T}(img::AbstractArray{T, 2}, sigma::Number = 1.4, upperThreshold:
         end
       end
     end
-
-    edges = map(i -> i < 0.9 ? zero(Gray{U8}) : one(Gray{U8}), img_thresholded)
-    return edges
-end 
+    img_thresholded
+end
+0
