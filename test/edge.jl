@@ -99,7 +99,7 @@ facts("Edge") do
         @fact all(thresholded[3:7, 3] .== 0.0) --> true
         @fact all(thresholded[3:7, 7] .== 0.0) --> true
         @fact all(thresholded[7, 3:7] .== 0.0) --> true
-        @fact all(thresholded[3, 3:7] .== [0.0, 0.0, 0.9, 0.0, 0.0]) --> true
+        @fact all(vec(thresholded[3, 3:7]) .== [0.0, 0.0, 0.9, 0.0, 0.0]) --> true
         @fact all(thresholded[1:2, :] .== 0.9) --> true
         @fact all(thresholded[:, 1:2] .== 0.9) --> true
         @fact all(thresholded[8:10, :] .== 0.9) --> true
