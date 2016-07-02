@@ -146,6 +146,19 @@ facts("Algorithms") do
 
         @fact Images.test_approx_eq_sigma_eps(a[:,1:end-1], a[1:end-1,:], [3,3], 0.1) --> less_than(0.1)
         @fact_throws Images.test_approx_eq_sigma_eps(a[:,1:end-1], a[1:end-1,:], [3,3], 0.01)
+
+        a = zeros(10, 10)
+        int_img = integral_image(a)
+        @fact all(int_img == a) --> true
+
+        a = ones(10,10)
+        int_img = integral_image(a)
+        chk = Array(1:10)
+        @fact all([int_img[i, :] == chk * i for i in 1:10]) --> true
+
+        a = reshape(1:100, 10, 10)
+        int_img = integral_image(a)
+        @fact int_img[diagind(int_img)] == Array([1, 26,  108,  280,  575, 1026, 1666, 2528, 3645, 5050]) --> true
     end
 
     context("fft and ifft") do
