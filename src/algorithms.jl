@@ -1955,3 +1955,20 @@ function shepp_logan(M,N; highContrast=true)
 end
 
 shepp_logan(N;highContrast=true) = shepp_logan(N,N;highContrast=highContrast)
+
+"""
+```
+integral_img = integral_image(img)
+```
+
+Returns the integral image of an image. The integral image is calculated by assigning
+to each pixel the sum of all pixels above it and to its left, i.e. the rectangle from 
+(1, 1) to the pixel. 
+"""
+function integral_image(img::AbstractArray)
+    integral_img = convert(Array{UInt}, raw(img))
+    for i in 1:ndims(img)
+        integral_img = cumsum(integral_img, i)
+    end 
+    integral_img
+end
