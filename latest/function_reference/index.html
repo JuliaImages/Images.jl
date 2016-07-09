@@ -479,17 +479,17 @@ size(img, &quot;t&quot;)
 <p>See also: <code>nimages</code>, <code>width</code>, <code>height</code>, <code>widthheight</code>.</p>
 <p><a id='Images.spatialorder' href='#Images.spatialorder'>#</a>
 <strong><code>Images.spatialorder</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>order = spatialorder(img)
+order = spatialorder(ImageType)
+</code></pre>
+
+<p>Returns the storage order of the <em>spatial</em> coordinates of the image, e.g., <code>["y", "x"]</code>. The second version works on a type, e.g., <code>Matrix</code>. See <code>storageorder</code>, <code>timedim</code>, and <code>colordim</code> for related properties.</p>
 <pre><code>so = spatialorder(img)
 so = spatialorder(ImageType)
 </code></pre>
 
 <p>Returns the storage order of the <em>spatial</em> coordinates of the image, e.g., <code>["y", "x"]</code>. The second version works on a type, e.g., <code>Matrix</code>.</p>
 <p>See also: <code>storageorder</code>, <code>coords_spatial</code>, <code>timedim</code>, and <code>colordim</code>.</p>
-<pre><code>order = spatialorder(img)
-order = spatialorder(ImageType)
-</code></pre>
-
-<p>Returns the storage order of the <em>spatial</em> coordinates of the image, e.g., <code>["y", "x"]</code>. The second version works on a type, e.g., <code>Matrix</code>. See <code>storageorder</code>, <code>timedim</code>, and <code>colordim</code> for related properties.</p>
 <p><a id='Images.spatialpermutation' href='#Images.spatialpermutation'>#</a>
 <strong><code>Images.spatialpermutation</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>p = spatialpermutation(to, img)
@@ -624,26 +624,121 @@ map!(mapi, dest, img)
 <p>You can perform arithmetic with <code>Image</code>s and <code>Color</code>s. Algorithms also include the following functions:</p>
 <p><a id='Linear-filtering-and-padding-1'></a></p>
 <h1 id="linear-filtering-and-padding">Linear filtering and padding</h1>
-<pre><code>imfilter
-imfilter!
-imfilter_fft
-imfilter_gaussian
-imfilter_LoG
-imgradients
-magnitude
-phase
-orientation
-magnitude_phase
-imedge
-thin_edges
-canny
-forwarddiffx
-forwarddiffy
-backdiffx
-backdiffy
-padarray
+<p><a id='Images.imfilter' href='#Images.imfilter'>#</a>
+<strong><code>Images.imfilter</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>imgf = imfilter(img, kernel, [border, value])
 </code></pre>
 
+<p>filters the array <code>img</code> with the given <code>kernel</code>, using boundary conditions specified by <code>border</code> and <code>value</code>. See <code>padarray</code> for an explanation of the boundary conditions. Default is to use <code>"replicate"</code> boundary conditions. This uses finite-impulse-response (FIR) filtering, and is fast only for relatively small <code>kernel</code>s.</p>
+<p>See also: <code>imfilter_fft</code>, <code>imfilter_gaussian</code>.</p>
+<p><a id='Images.imfilter!' href='#Images.imfilter!'>#</a>
+<strong><code>Images.imfilter!</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>imfilter!(dest, img, kernel)
+</code></pre>
+
+<p>filters the image with the given <code>kernel</code>, storing the output in the pre-allocated output <code>dest</code>. The size of <code>dest</code> must not be greater than the size of the result of <code>imfilter</code> with <code>border = "inner"</code>, and it behaves identically.  This uses finite-impulse-response (FIR) filtering, and is fast only for relatively small <code>kernel</code>s.</p>
+<p>No padding is performed; see <code>padarray</code> for options if you want to do this manually.</p>
+<p>See also: <code>imfilter</code>, <code>padarray</code>.</p>
+<p><a id='Images.imfilter_fft' href='#Images.imfilter_fft'>#</a>
+<strong><code>Images.imfilter_fft</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>imgf = imfilter_fft(img, kernel, [border, value])
+</code></pre>
+
+<p>filters <code>img</code> with the given <code>kernel</code> using an FFT algorithm.  This is slower than <code>imfilter</code> for small kernels, but much faster for large kernels. For Gaussian blur, an even faster choice is <code>imfilter_gaussian</code>.</p>
+<p>See also: <code>imfilter</code>, <code>imfilter_gaussian</code>.</p>
+<p><a id='Images.imfilter_gaussian' href='#Images.imfilter_gaussian'>#</a>
+<strong><code>Images.imfilter_gaussian</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>imgf = imfilter_gaussian(img, sigma)
+</code></pre>
+
+<p>filters <code>img</code> with a Gaussian of the specified width. <code>sigma</code> should have one value per array dimension (any number of dimensions are supported), 0 indicating that no filtering is to occur along that dimension. Uses the Young, van Vliet, and van Ginkel IIR-based algorithm to provide fast gaussian filtering even with large <code>sigma</code>. Edges are handled by "NA" conditions, meaning the result is normalized by the number and weighting of available pixels, and missing data (NaNs) are handled likewise.</p>
+<p><a id='Images.imfilter_LoG' href='#Images.imfilter_LoG'>#</a>
+<strong><code>Images.imfilter_LoG</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>imgf = imfilter_LoG(img, sigma, [border])
+</code></pre>
+
+<p>filters a 2D image with a Laplacian of Gaussian of the specified width. <code>sigma</code> may be a vector with one value per array dimension, or may be a single scalar value for uniform filtering in both dimensions.  Uses the Huertas and Medioni separable algorithm.</p>
+<p><a id='Images.imgradients' href='#Images.imgradients'>#</a>
+<strong><code>Images.imgradients</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>grad_x, grad_y = imgradients(img, [method], [border])
+</code></pre>
+
+<p>performs edge-detection filtering. <code>method</code> is one of <code>"sobel"</code>, <code>"prewitt"</code>, <code>"ando3"</code>, <code>"ando4"</code>, <code>"ando4_sep"</code>, <code>"ando5"</code>, or <code>"ando5_sep"</code>, defaulting to <code>"ando3"</code> (see the functions of the same name for more information).  <code>border</code> is any of the boundary conditions specified in <code>padarray</code>.</p>
+<p>Returns a tuple containing <code>x</code> (horizontal) and <code>y</code> (vertical) gradient images of the same size as <code>img</code>, calculated using the requested method and border.</p>
+<p><a id='Images.magnitude' href='#Images.magnitude'>#</a>
+<strong><code>Images.magnitude</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>m = magnitude(grad_x, grad_y)
+</code></pre>
+
+<p>Calculates the magnitude of the gradient images given by <code>grad_x</code> and <code>grad_y</code>. Equivalent to <code>sqrt(grad_x.^2 + grad_y.^2)</code>.</p>
+<p>Returns a magnitude image the same size as <code>grad_x</code> and <code>grad_y</code>.</p>
+<p><a id='Images.phase' href='#Images.phase'>#</a>
+<strong><code>Images.phase</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>p = phase(grad_x, grad_y)
+</code></pre>
+
+<p>Calculates the rotation angle of the gradient images given by <code>grad_x</code> and <code>grad_y</code>. Equivalent to <code>atan2(-grad_y, grad_x)</code>.  When both <code>grad_x[i]</code> and <code>grad_y[i]</code> are zero, the corresponding angle is set to zero.</p>
+<p>Returns a phase image the same size as <code>grad_x</code> and <code>grad_y</code>, with values in [-pi,pi].</p>
+<p><a id='Images.orientation' href='#Images.orientation'>#</a>
+<strong><code>Images.orientation</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>orient = orientation(grad_x, grad_y)
+</code></pre>
+
+<p>Calculates the orientation angle of the strongest edge from gradient images given by <code>grad_x</code> and <code>grad_y</code>.  Equivalent to <code>atan2(grad_x, grad_y)</code>.  When both <code>grad_x[i]</code> and <code>grad_y[i]</code> are zero, the corresponding angle is set to zero.</p>
+<p>Returns a phase image the same size as <code>grad_x</code> and <code>grad_y</code>, with values in [-pi,pi].</p>
+<p><a id='Images.magnitude_phase' href='#Images.magnitude_phase'>#</a>
+<strong><code>Images.magnitude_phase</code></strong> &mdash; <em>Function</em>.</p>
+<p><code>m, p = magnitude_phase(grad_x, grad_y)</code></p>
+<p>Convenience function for calculating the magnitude and phase of the gradient images given in <code>grad_x</code> and <code>grad_y</code>.  Returns a tuple containing the magnitude and phase images.  See <code>magnitude</code> and <code>phase</code> for details.</p>
+<p><a id='Images.imedge' href='#Images.imedge'>#</a>
+<strong><code>Images.imedge</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>grad_x, grad_y, mag, orient = imedge(img, [method], [border])
+</code></pre>
+
+<p>Edge-detection filtering. <code>method</code> is one of <code>"sobel"</code>, <code>"prewitt"</code>, <code>"ando3"</code>, <code>"ando4"</code>, <code>"ando4_sep"</code>, <code>"ando5"</code>, or <code>"ando5_sep"</code>, defaulting to <code>"ando3"</code> (see the functions of the same name for more information).  <code>border</code> is any of the boundary conditions specified in <code>padarray</code>.</p>
+<p>Returns a tuple <code>(grad_x, grad_y, mag, orient)</code>, which are the horizontal gradient, vertical gradient, and the magnitude and orientation of the strongest edge, respectively.</p>
+<p><a id='Images.thin_edges' href='#Images.thin_edges'>#</a>
+<strong><code>Images.thin_edges</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>thinned = thin_edges(img, gradientangle, [border])
+thinned, subpix = thin_edges_subpix(img, gradientangle, [border])
+thinned, subpix = thin_edges_nonmaxsup(img, gradientangle, [border]; [radius::Float64=1.35], [theta=pi/180])
+thinned, subpix = thin_edges_nonmaxsup_subpix(img, gradientangle, [border]; [radius::Float64=1.35], [theta=pi/180])
+</code></pre>
+
+<p>Edge thinning for 2D edge images.  Currently the only algorithm available is non-maximal suppression, which takes an edge image and its gradient angle, and checks each edge point for local maximality in the direction of the gradient. The returned image is non-zero only at maximal edge locations.</p>
+<p><code>border</code> is any of the boundary conditions specified in <code>padarray</code>.</p>
+<p>In addition to the maximal edge image, the <code>_subpix</code> versions of these functions also return an estimate of the subpixel location of each local maxima, as a 2D array or image of <code>Graphics.Point</code> objects.  Additionally, each local maxima is adjusted to the estimated value at the subpixel location.</p>
+<p>Currently, the <code>_nonmaxsup</code> functions are identical to the first two function calls, except that they also accept additional keyword arguments.  <code>radius</code> indicates the step size to use when searching in the direction of the gradient; values between 1.2 and 1.5 are suggested (default 1.35).  <code>theta</code> indicates the step size to use when discretizing angles in the <code>gradientangle</code> image, in radians (default: 1 degree in radians = pi/180).</p>
+<p>Example:</p>
+<pre><code>g = rgb2gray(rgb_image)
+gx, gy = imgradients(g)
+mag, grad_angle = magnitude_phase(gx,gy)
+mag[mag .&lt; 0.5] = 0.0  # Threshold magnitude image
+thinned, subpix =  thin_edges_subpix(mag, grad_angle)
+</code></pre>
+
+<p><a id='Images.canny' href='#Images.canny'>#</a>
+<strong><code>Images.canny</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>canny_edges = canny(img, sigma = 1.4, upperThreshold = 0.80, lowerThreshold = 0.20)
+</code></pre>
+
+<p>Performs Canny Edge Detection on the input image.</p>
+<p>Parameters :</p>
+<p>sigma :           Specifies the standard deviation of the gaussian filter   upperThreshold :  Upper bound for hysteresis thresholding   lowerThreshold :  Lower bound for hysteresis thresholding   astype :          Specifies return type of result   percentile :      Specifies if upperThreshold and lowerThreshold should be used                      as quantiles or absolute values</p>
+<p><a id='Images.forwarddiffx' href='#Images.forwarddiffx'>#</a>
+<strong><code>Images.forwarddiffx</code></strong> &mdash; <em>Function</em>.</p>
+<p><a id='Images.forwarddiffy' href='#Images.forwarddiffy'>#</a>
+<strong><code>Images.forwarddiffy</code></strong> &mdash; <em>Function</em>.</p>
+<p><a id='Images.backdiffx' href='#Images.backdiffx'>#</a>
+<strong><code>Images.backdiffx</code></strong> &mdash; <em>Function</em>.</p>
+<p><a id='Images.backdiffy' href='#Images.backdiffy'>#</a>
+<strong><code>Images.backdiffy</code></strong> &mdash; <em>Function</em>.</p>
+<p><a id='Images.padarray' href='#Images.padarray'>#</a>
+<strong><code>Images.padarray</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>imgpad = padarray(img, prepad, postpad, border, value)
+</code></pre>
+
+<p>For an <code>N</code>-dimensional array <code>img</code>, apply padding on both edges. <code>prepad</code> and <code>postpad</code> are vectors of length <code>N</code> specifying the number of pixels used to pad each dimension. <code>border</code> is a string, one of <code>"value"</code> (to pad with a specific pixel value), <code>"replicate"</code> (to repeat the edge value), <code>"circular"</code> (periodic boundary conditions), <code>"reflect"</code> (reflecting boundary conditions, where the reflection is centered on edge), and <code>"symmetric"</code> (reflecting boundary conditions, where the reflection is centered a half-pixel spacing beyond the edge, so the edge value gets repeated). Arrays are automatically padded before filtering. Use <code>"inner"</code> to avoid padding altogether; the output array will be smaller than the input.</p>
 <p><a id='Feature-Extraction-1'></a></p>
 <h1 id="feature-extraction">Feature Extraction</h1>
 <p><a id='Images.blob_LoG' href='#Images.blob_LoG'>#</a>
@@ -661,10 +756,16 @@ padarray
 <p>Like <code>findlocalmaxima</code>, but returns the coordinates of the smallest elements.</p>
 <p><a id='Exposure-1'></a></p>
 <h1 id="exposure">Exposure</h1>
-<pre><code>imhist
-histeq
+<p><a id='Images.imhist' href='#Images.imhist'>#</a>
+<strong><code>Images.imhist</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>edges, count = imhist(img, nbins)
+edges, count = imhist(img, nbins, minval, maxval)
 </code></pre>
 
+<p>Generates a histogram for the image over nbins spread between <code>(minval, maxval]</code>. If <code>minval</code> and <code>maxval</code> are not given, then the minimum and maximum values present in the image are taken.</p>
+<p><code>edges</code> is a vector that specifies how the range is divided; <code>count[i+1]</code> is the number of values <code>x</code> that satisfy <code>edges[i] &lt;= x &lt; edges[i+1]</code>. <code>count[1]</code> is the number satisfying <code>x &lt; edges[1]</code>, and <code>count[end]</code> is the number satisfying <code>x &gt;= edges[end]</code>. Consequently, <code>length(count) == length(edges)+1</code>.</p>
+<p><a id='Images.histeq' href='#Images.histeq'>#</a>
+<strong><code>Images.histeq</code></strong> &mdash; <em>Function</em>.</p>
 <p><a id='Filtering-kernels-1'></a></p>
 <h1 id="filtering-kernels">Filtering kernels</h1>
 <p><a id='Images.gaussian2d' href='#Images.gaussian2d'>#</a>
