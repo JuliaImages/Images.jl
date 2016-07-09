@@ -766,6 +766,14 @@ edges, count = imhist(img, nbins, minval, maxval)
 <p><code>edges</code> is a vector that specifies how the range is divided; <code>count[i+1]</code> is the number of values <code>x</code> that satisfy <code>edges[i] &lt;= x &lt; edges[i+1]</code>. <code>count[1]</code> is the number satisfying <code>x &lt; edges[1]</code>, and <code>count[end]</code> is the number satisfying <code>x &gt;= edges[end]</code>. Consequently, <code>length(count) == length(edges)+1</code>.</p>
 <p><a id='Images.histeq' href='#Images.histeq'>#</a>
 <strong><code>Images.histeq</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>hist_equalised_img = histeq(img, nbins, dtype = U8)
+hist_equalised_img = histeq(img, nbins, minval, maxval, dtype = U8)
+</code></pre>
+
+<p>Returns a histogram equalised image with a granularity of approximately <code>nbins</code>  number of bins. An optional <code>dtype</code> argument (defaulting to U8) can be specified to choose the number of bits of the returned image. </p>
+<p>The <code>histeq</code> function can handle a variety of input types. The returned image depends  on the input type. If the input is an <code>Image</code> then the resulting image is of the same type and has the same properties. </p>
+<p>For coloured images, the input is converted to YCbCr type and the Y channel is equalised. This is the combined with the Cb and Cr channels and the resulting image converted to the same type  as the input.</p>
+<p>If minval and maxval are specified then only the intensities in the range  (minval, maxval) are equalised.</p>
 <p><a id='Filtering-kernels-1'></a></p>
 <h1 id="filtering-kernels">Filtering kernels</h1>
 <p><a id='Images.gaussian2d' href='#Images.gaussian2d'>#</a>
