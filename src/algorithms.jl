@@ -1265,7 +1265,7 @@ If minval and maxval are specified then only the intensities in the range
 Y_MIN = 16
 Y_MAX = 235
 
-function _prep_image_for_histeq(img::AbstractArray, dtype)
+function _prep_image_for_histeq{D<:Union{U8, U16}}(img::AbstractArray, dtype::Type{D})
     img_shape = size(img)
     img = convert(Array{base_colorant_type(eltype(img)){dtype}}, img)
     img
@@ -1287,13 +1287,13 @@ function recompose_y(c::TransparentColor, eq_Y::Float32)
 end
 
 function histeq{T<:Colorant}(img::AbstractArray{T}, nbins, minval, maxval)
-    Y = [convert(YCbCr, color(c)).y for c in img]
+    Y = map(c -> convert(YCbCr, color(c)).y, img)
     if maxval == zero(YCbCr{Float32})
         eq_Y = histeq(Y, nbins, Y_MIN, Y_MAX)
     else
         eq_Y = histeq(Y, nbins, minval, maxval)
     end
-    hist_equalised_img = reshape([convert(T, recompose_y(c, eq_Y[i])) for (i, c) in enumerate(img)], size(img))
+    hist_equalised_img = map((eq, c) -> convert(T, recompose_y(c, eq)), eq_Y, img)
     hist_equalised_img
 end
 
@@ -1312,21 +1312,24 @@ end
 function histeq{T<:TransparentGray}(img::AbstractArray{T}, args...)
     opaque_img = convert(Array{base_color_type(eltype(img))}, img)
     hist_equalised_img = histeq(opaque_img, args...)
-    hist_equalised_img = reshape([convert(T, AGray(hist_equalised_img[i], alpha(c))) for (i, c) in enumerate(img)], size(img))
-    hist_equalised_img
+    converted_img = map((eq, o) -> convert(T, AGray(eq, alpha(o))), hist_equalised_img, img)
+    converted_img
 end
 
 histeq{T<:Gray, D<:Union{U8, U16}}(img::AbstractArray{T}, nbins, dtype::Type{D} = U8) = histeq(_prep_image_for_histeq(img, dtype), nbins, ColorVectorSpace.typemin(Gray{dtype}), ColorVectorSpace.typemax(Gray{dtype}))
+
+function _histeq_pixel_rescale{T<:Union{Gray,Number}}(pixel::T, cdf, minval::T, maxval::T, cdf_length::Integer)
+    bin_pixel = max(1,Int(ceil((pixel-minval)*cdf_length/(maxval-minval))))
+    rescaled_pixel = minval + ((cdf[bin_pixel]-cdf[1])*(maxval-minval)/(cdf[end]-cdf[1]))
+    converted_pixel = convert(T, rescaled_pixel)
+end
 
 function histeq{T<:Union{Gray,Number}}(img::AbstractArray{T}, nbins::Int, minval::T, maxval::T)
     bins, histogram = imhist(img, nbins, minval, maxval)
     cdf = cumsum(histogram[2:end-1])
     img_shape = size(img)
     cdf_length = size(cdf)[1]
-    hist_equalised_img = [max(1,Int(ceil((x-minval)*cdf_length/(maxval-minval)))) for x in img]
-    hist_equalised_img = [minval + ((cdf[x]-cdf[1])*(maxval-minval)/(cdf[end]-cdf[1])) for x in hist_equalised_img]
-    hist_equalised_img = reshape(hist_equalised_img, img_shape)
-    hist_equalised_img = convert(Array{T}, hist_equalised_img)
+    hist_equalised_img = map(p -> _histeq_pixel_rescale(p, cdf, minval, maxval, cdf_length), img)
     hist_equalised_img
 end
 
