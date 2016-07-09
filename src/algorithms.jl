@@ -1197,6 +1197,15 @@ if isdefined(:restrict)
     import Grid.restrict
 end
 
+imhist{T<:Colorant}(img::AbstractArray{T}, nbins=400) = imhist(convert(Array{Gray}, data(img)), nbins)
+imhist{T<:Colorant}(img::AbstractArray{T}, nbins, minval, maxval) = imhist(convert(Array{Gray}, data(img)), nbins, minval, maxval)
+
+function imhist{T<:Union{Gray,Number}}(img::AbstractArray{T}, nbins = 400)
+    minval = minfinite(img)
+    maxval = maxfinite(img)
+    imhist(img, nbins, minval, maxval)
+end
+
 """
 ```
 edges, count = imhist(img, nbins)
@@ -1213,16 +1222,6 @@ maximum values present in the image are taken.
 `count[end]` is the number satisfying `x >= edges[end]`. Consequently,
 `length(count) == length(edges)+1`.
 """
-
-imhist{T<:Colorant}(img::AbstractArray{T}, nbins=400) = imhist(convert(Array{Gray}, data(img)), nbins)
-imhist{T<:Colorant}(img::AbstractArray{T}, nbins, minval, maxval) = imhist(convert(Array{Gray}, data(img)), nbins, minval, maxval)
-
-function imhist{T<:Union{Gray,Number}}(img::AbstractArray{T}, nbins = 400)
-    minval = minfinite(img)
-    maxval = maxfinite(img)
-    imhist(img, nbins, minval, maxval)
-end
-
 function imhist{T<:Union{Gray,Number}}(img::AbstractArray{T}, nbins, minval::T, maxval::T)
     edges = StatsBase.histrange([Float64(minval), Float64(maxval)], nbins, :left)
     histogram = zeros(Int, length(edges)+1)
@@ -1238,29 +1237,6 @@ function imhist{T<:Union{Gray,Number}}(img::AbstractArray{T}, nbins, minval::T, 
 end
 
 imhist{T<:Union{Gray,Number}}(img::AbstractArray{T}, nbins, minval, maxval) = imhist(img, nbins, convert(T, minval), convert(T, maxval))
-
-"""
-```
-hist_equalised_img = histeq(img, nbins, dtype = "8bit")
-hist_equalised_img = histeq(img, nbins, minval, maxval, dtype = U8)
-```
-
-Returns a histogram equalised image with a granularity of approximately `nbins` 
-number of bins. An optional `dtype` argument (defaulting to U8) can be specified
-to choose the number of bits of the returned image. 
-
-The `histeq` function can handle a variety of input types. The returned image depends 
-on the input type. If the input is an `Image` then the resulting image is of the same type
-and has the same properties. 
-
-For coloured images, the input is converted to YCbCr type and the Y channel is equalised. This
-is the combined with the Cb and Cr channels and the resulting image converted to the same type 
-as the input.
-
-If minval and maxval are specified then only the intensities in the range 
-(minval, maxval) are equalised.
-
-"""
 
 Y_MIN = 16
 Y_MAX = 235
@@ -1324,6 +1300,28 @@ function _histeq_pixel_rescale{T<:Union{Gray,Number}}(pixel::T, cdf, minval::T, 
     converted_pixel = convert(T, rescaled_pixel)
 end
 
+"""
+```
+hist_equalised_img = histeq(img, nbins, dtype = U8)
+hist_equalised_img = histeq(img, nbins, minval, maxval, dtype = U8)
+```
+
+Returns a histogram equalised image with a granularity of approximately `nbins` 
+number of bins. An optional `dtype` argument (defaulting to U8) can be specified
+to choose the number of bits of the returned image. 
+
+The `histeq` function can handle a variety of input types. The returned image depends 
+on the input type. If the input is an `Image` then the resulting image is of the same type
+and has the same properties. 
+
+For coloured images, the input is converted to YCbCr type and the Y channel is equalised. This
+is the combined with the Cb and Cr channels and the resulting image converted to the same type 
+as the input.
+
+If minval and maxval are specified then only the intensities in the range 
+(minval, maxval) are equalised.
+
+"""
 function histeq{T<:Union{Gray,Number}}(img::AbstractArray{T}, nbins::Int, minval::T, maxval::T)
     bins, histogram = imhist(img, nbins, minval, maxval)
     cdf = cumsum(histogram[2:end-1])
