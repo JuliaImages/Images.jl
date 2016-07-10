@@ -154,7 +154,7 @@ facts("Algorithms") do
         a = ones(10,10)
         int_img = integral_image(a)
         chk = Array(1:10)
-        @fact all([int_img[i, :] == chk * i for i in 1:10]) --> true
+        @fact all([vec(int_img[i, :]) == chk * i for i in 1:10]) --> true
 
         a = reshape(1:100, 10, 10)
         int_img = integral_image(a)

@@ -435,6 +435,8 @@ difftype{CV<:AbstractRGB}(::Type{CV}, ::Type{Float64}) = RGB{Float64}
 accum{T<:Integer}(::Type{T}) = Int
 accum(::Type{Float32})    = Float32
 accum{T<:Real}(::Type{T}) = Float64
+accum{C<:Colorant}(::Type{C}) = base_colorant_type(C){accum(eltype(C))}
+
 
 # normalized by Array size
 "`s = ssdn(A, B)` computes the sum-of-squared differences over arrays/images A and B, normalized by array size"
@@ -1966,9 +1968,11 @@ to each pixel the sum of all pixels above it and to its left, i.e. the rectangle
 (1, 1) to the pixel. 
 """
 function integral_image(img::AbstractArray)
-    integral_img = convert(Array{UInt}, raw(img))
-    for i in 1:ndims(img)
-        integral_img = cumsum(integral_img, i)
-    end 
+    integral_img = Array{accum(eltype(img))}(size(img))
+    sd = coords_spatial(img)
+    cumsum!(integral_img, img, sd[1])
+    for i = 2:length(sd)
+        cumsum!(integral_img, integral_img, sd[i])
+    end
     integral_img
 end
