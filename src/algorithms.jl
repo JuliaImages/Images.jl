@@ -435,6 +435,8 @@ difftype{CV<:AbstractRGB}(::Type{CV}, ::Type{Float64}) = RGB{Float64}
 accum{T<:Integer}(::Type{T}) = Int
 accum(::Type{Float32})    = Float32
 accum{T<:Real}(::Type{T}) = Float64
+accum{C<:Colorant}(::Type{C}) = base_colorant_type(C){accum(eltype(C))}
+
 
 # normalized by Array size
 "`s = ssdn(A, B)` computes the sum-of-squared differences over arrays/images A and B, normalized by array size"
@@ -1956,3 +1958,22 @@ function shepp_logan(M,N; highContrast=true)
 end
 
 shepp_logan(N;highContrast=true) = shepp_logan(N,N;highContrast=highContrast)
+
+"""
+```
+integral_img = integral_image(img)
+```
+
+Returns the integral image of an image. The integral image is calculated by assigning
+to each pixel the sum of all pixels above it and to its left, i.e. the rectangle from 
+(1, 1) to the pixel. 
+"""
+function integral_image(img::AbstractArray)
+    integral_img = Array{accum(eltype(img))}(size(img))
+    sd = coords_spatial(img)
+    cumsum!(integral_img, img, sd[1])
+    for i = 2:length(sd)
+        cumsum!(integral_img, integral_img, sd[i])
+    end
+    integral_img
+end

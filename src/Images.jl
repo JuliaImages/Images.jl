@@ -256,6 +256,7 @@ export # types
     thin_edges_nonmaxsup,
     thin_edges_nonmaxsup_subpix,
     canny,
+    integral_image,
 
     # distances
     hausdorff_distance,
@@ -284,7 +285,7 @@ Contrast/coloration:
 
 Algorithms:
 
-    - Reductions: `maxfinite`, `maxabsfinite`, `minfinite`, `meanfinite`, `sad`, `ssd`
+    - Reductions: `maxfinite`, `maxabsfinite`, `minfinite`, `meanfinite`, `sad`, `ssd`, `integral_image`
     - Resizing: `restrict`, `imresize` (not yet exported)
     - Filtering: `imfilter`, `imfilter_fft`, `imfilter_gaussian`, `imfilter_LoG`, `imROF`, `ncc`, `padarray`
     - Filtering kernels: `ando[345]`, `guassian2d`, `imaverage`, `imdog`, `imlaplacian`, `prewitt`, `sobel`
