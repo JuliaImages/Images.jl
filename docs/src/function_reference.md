@@ -285,6 +285,7 @@ findlocalminima
 imhist
 histeq
 adjust_gamma
+histmatch
 ```
 
 # Filtering kernels
