@@ -274,6 +274,7 @@ facts("Algorithms") do
         for i in 1:(size(cdf)[1]-1)
             @fact all(ret[cdf[i] + 1 : cdf[i + 1]] .== (cdf[i + 1] - cdf[1]) * 99.0 / (cdf[end] - cdf[1])) --> true
         end
+
     end
 
     context("Array padding") do
