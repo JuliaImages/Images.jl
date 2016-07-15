@@ -11,7 +11,7 @@ import Base: atan2, clamp, convert, copy, copy!, ctranspose, delete!, done,
              minimum, next, ndims, one, parent, permutedims, reinterpret,
              reshape, resize!,
              setindex!, show, showcompact, similar, size, slice, sqrt, squeeze,
-             start, strides, sub, sum, write, writemime, zero
+             start, strides, sub, sum, write, zero
 if VERSION < v"0.5.0-dev+4490"
     import Base: float32, float64
 else

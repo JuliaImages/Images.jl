@@ -731,9 +731,9 @@ function showim(io::IO, img::AbstractImageIndexed)
     showdictlines(io, img.properties, get(img, "suppress", emptyset))
 end
 show(io::IO, img::AbstractImageDirect) = showim(io, img)
-writemime(io::IO, ::MIME"text/plain", img::AbstractImageDirect) = showim(io, img)
+@compat Base.show(io::IO, ::MIME"text/plain", img::AbstractImageDirect) = showim(io, img)
 show(io::IO, img::AbstractImageIndexed) = showim(io, img)
-writemime(io::IO, ::MIME"text/plain", img::AbstractImageIndexed) = showim(io, img)
+@compat Base.show(io::IO, ::MIME"text/plain", img::AbstractImageIndexed) = showim(io, img)
 
 """
 ```
