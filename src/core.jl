@@ -239,7 +239,7 @@ reinterpret{CV1<:Colorant,CV2<:Colorant}(::Type{CV1}, A::Array{CV2,1}) = _reinte
 reinterpret{CV1<:Colorant,CV2<:Colorant}(::Type{CV1}, A::Array{CV2})   = _reinterpret_cvarray(CV1, A)
 reinterpret{T,CV<:Colorant}(::Type{T}, A::Array{CV,1}) = _reinterpret_cvarray(T, A)
 reinterpret{T,CV<:Colorant}(::Type{T}, A::Array{CV})   = _reinterpret_cvarray(T, A)
-reinterpret{T,CV<:Colorant}(::Type{T}, A::StridedArray{CV})   = slice(_reinterpret_cvarray(T, A.parent), A.indexes...)
+reinterpret{T,CV<:Colorant}(::Type{T}, A::StridedArray{CV})   = view(_reinterpret_cvarray(T, A.parent), A.indexes...)
 function _reinterpret_cvarray{T,CV<:Colorant}(::Type{T}, A::Array{CV})
     if sizeof(T) == sizeof(CV)
         return reinterpret(T, A, size(A))
@@ -510,15 +510,10 @@ getindex(img::AbstractImage, dimname::String, ind, nameind...) = getindex(img.da
 getindex(img::AbstractImage, propname::String) = getindex(img.properties, propname)
 
 typealias Indexable{T<:Real} Union{Int, AbstractVector{T}, Colon}  # for ambiguity resolution
-sub(img::AbstractImage, I::Indexable...) = sub(img.data, I...)
-sub(img::AbstractImage, I::RealIndex...) = sub(img.data, I...)
+view(img::AbstractImage, I::Indexable...) = view(img.data, I...)
+view(img::AbstractImage, I::RealIndex...) = view(img.data, I...)
 
-sub(img::AbstractImage, dimname::String, ind::RealIndex, nameind...) = sub(img.data, coords(img, dimname, ind, nameind...)...)
-
-slice(img::AbstractImage, I::Indexable...) = slice(img.data, I...)
-slice(img::AbstractImage, I::RealIndex...) = slice(img.data, I...)
-
-slice(img::AbstractImage, dimname::String, ind::RealIndex, nameind...) = slice(img.data, coords(img, dimname, ind, nameind...)...)
+view(img::AbstractImage, dimname::String, ind::RealIndex, nameind...) = view(img.data, coords(img, dimname, ind, nameind...)...)
 
 """
 ```
@@ -566,7 +561,13 @@ imgs = subim(img, "x", 100:200, "y", 400:600)
 returns an `Image` with `SubArray` data, with indexing semantics similar to `sub`.
 """
 subim(img::AbstractImage, I::RealIndex...) = _subim(img, I)
-_subim{TT}(img, I::TT) = shareproperties(img, sub(img.data, I...))  # work around #8504
+_subim{TT}(img, I::TT) = shareproperties(img, viewsub(img.data, I...))  # work around #8504
+
+@inline viewsub(A::AbstractArray, I...) = view(A, _viewsub(I...)...)
+_viewsub() = ()
+_viewsub(i,       I::RealIndex...) = (i, _viewsub(I...)...)
+_viewsub(i::Real, I::RealIndex...) = (i:i, _viewsub(I...)...)
+_viewsub(I::Real...) = I
 
 subim(img::AbstractImage, dimname::String, ind::RealIndex, nameind...) = subim(img, coords(img, dimname, ind, nameind...)...)
 
@@ -585,7 +586,7 @@ function _sliceim{IT}(img::AbstractImage, I::IT)
         if !isa(I[j], Real); n += 1; end;
         dimmap[j] = n
     end
-    S = slice(img.data, I...)
+    S = view(img.data, I...)
     ret = copyproperties(img, S)
     cd = colordim(img)
     if cd > 0

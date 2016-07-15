@@ -1,5 +1,6 @@
 using FactCheck, Images, Colors, FixedPointNumbers
 using Compat
+using Compat.view
 
 testing_units = Int == Int64
 if testing_units
@@ -212,11 +213,11 @@ facts("Core") do
     end
 
     context("Sub / slice") do
-        s = sub(img, 2, 1:4)
+        s = view(img, 2:2, 1:4)
         @fact ndims(s) --> 2
         @fact sdims(s) --> 2
         @fact size(s) --> (1,4)
-        @fact data(s) --> sub(B, 2, 1:4)
+        @fact data(s) --> view(B, 2:2, 1:4)
         if scalar_getindex_new
             s = getindexim(img, 2, 1:4)
             @fact ndims(s) --> 1
@@ -282,11 +283,11 @@ facts("Core") do
         @fact colordim(s) --> 3
         @fact colorspace(s) --> "Unknown"
         @fact spatialorder(s) --> ["y","x"]
-        s = sub(img, "y", 2)
+        s = view(img, "y", 2:2)
         @fact ndims(s) --> 2
         @fact sdims(s) --> 2
         @fact size(s) --> (1,5)
-        s = slice(img, "y", 2)
+        s = view(img, "y", 2)
         @fact ndims(s) --> 1
         @fact size(s) --> (5,)
         @fact size(getindexim(imgds, :, 1:2, :)) --> (size(imgds,1), 2, 3)

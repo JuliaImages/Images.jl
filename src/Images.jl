@@ -18,6 +18,8 @@ else
     export float32, float64
 end
 
+import Compat.view
+
 # "deprecated imports" are below
 
 using Colors, ColorVectorSpace, FixedPointNumbers, FileIO, StatsBase
