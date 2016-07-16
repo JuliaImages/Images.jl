@@ -1442,12 +1442,13 @@ maximum values present in the image are taken.
 function imhist{T<:Union{Gray,Number}}(img::AbstractArray{T}, nbins, minval::T, maxval::T)
     edges = StatsBase.histrange([Float64(minval), Float64(maxval)], nbins, :left)
     histogram = zeros(Int, length(edges)+1)
+    o = Base.Order.Forward
     for val in img
         if val>=edges[end]
             histogram[end] += 1
             continue
         end
-        index = searchsortedlast(edges, val)
+        index = searchsortedlast(edges, val, o)
         histogram[index+1] += 1
     end
     edges, histogram
