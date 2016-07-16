@@ -1199,144 +1199,6 @@ if isdefined(:restrict)
     import Grid.restrict
 end
 
-imhist{T<:Colorant}(img::AbstractArray{T}, nbins=400) = imhist(convert(Array{Gray}, data(img)), nbins)
-imhist{T<:Colorant}(img::AbstractArray{T}, nbins, minval, maxval) = imhist(convert(Array{Gray}, data(img)), nbins, minval, maxval)
-
-function imhist{T<:Union{Gray,Number}}(img::AbstractArray{T}, nbins = 400)
-    minval = minfinite(img)
-    maxval = maxfinite(img)
-    imhist(img, nbins, minval, maxval)
-end
-
-"""
-```
-edges, count = imhist(img, nbins)
-edges, count = imhist(img, nbins, minval, maxval)
-```
-
-Generates a histogram for the image over nbins spread between `(minval, maxval]`.
-If `minval` and `maxval` are not given, then the minimum and
-maximum values present in the image are taken.
-
-`edges` is a vector that specifies how the range is divided;
-`count[i+1]` is the number of values `x` that satisfy `edges[i] <= x < edges[i+1]`.
-`count[1]` is the number satisfying `x < edges[1]`, and
-`count[end]` is the number satisfying `x >= edges[end]`. Consequently,
-`length(count) == length(edges)+1`.
-"""
-function imhist{T<:Union{Gray,Number}}(img::AbstractArray{T}, nbins, minval::T, maxval::T)
-    edges = StatsBase.histrange([Float64(minval), Float64(maxval)], nbins, :left)
-    histogram = zeros(Int, length(edges)+1)
-    for val in img
-        if val>=edges[end]
-            histogram[end] += 1
-            continue
-        end
-        index = searchsortedlast(edges, val)
-        histogram[index+1] += 1
-    end
-    edges, histogram
-end
-
-imhist{T<:Union{Gray,Number}}(img::AbstractArray{T}, nbins, minval, maxval) = imhist(img, nbins, convert(T, minval), convert(T, maxval))
-
-Y_MIN = 16
-Y_MAX = 235
-
-function _prep_image_for_histeq{D<:Union{U8, U16}}(img::AbstractArray, dtype::Type{D})
-    img_shape = size(img)
-    img = convert(Array{base_colorant_type(eltype(img)){dtype}}, img)
-    img
-end
-
-histeq{T<:Colorant, D<:Union{U8, U16}}(img::AbstractArray{T}, nbins, dtype::Type{D} = U8) = histeq(_prep_image_for_histeq(img, dtype), nbins, zero(YCbCr), zero(YCbCr))
-histeq{T<:Colorant, D<:Union{U8, U16}}(img::AbstractArray{T}, nbins, minval, maxval, dtype::Type{D} = U8) = histeq(_prep_image_for_histeq(img, dtype), nbins, minval, maxval)
-
-function recompose_y(c::Color, eq_Y::Float32)
-    c_ycbcr = convert(YCbCr, color(c))
-    ret_c = YCbCr(eq_Y, c_ycbcr.cb, c_ycbcr.cr)
-    ret_c
-end
-
-function recompose_y(c::TransparentColor, eq_Y::Float32)
-    c_ycbcr = convert(YCbCrA, color(c))
-    ret_c = YCbCrA(eq_Y, c_ycbcr.cb, c_ycbcr.cr, c_ycbcr.alpha)
-    ret_c
-end
-
-function histeq{T<:Colorant}(img::AbstractArray{T}, nbins, minval, maxval)
-    Y = map(c -> convert(YCbCr, color(c)).y, img)
-    if maxval == zero(YCbCr{Float32})
-        eq_Y = histeq(Y, nbins, Y_MIN, Y_MAX)
-    else
-        eq_Y = histeq(Y, nbins, minval, maxval)
-    end
-    hist_equalised_img = map((eq, c) -> convert(T, recompose_y(c, eq)), eq_Y, img)
-    hist_equalised_img
-end
-
-function histeq{D<:Union{U8, U16}}(img::AbstractImage, nbins, dtype::Type{D} = U8)
-    hist_equalised_img = histeq(data(img), nbins, dtype)
-    hist_equalised_img = shareproperties(img, hist_equalised_img)
-    hist_equalised_img
-end
-
-function histeq{D<:Union{U8, U16}}(img::AbstractImage, nbins, minval, maxval, dtype::Type{D} = U8)
-    hist_equalised_img = histeq(data(img), nbins, minval, maxval, dtype)
-    hist_equalised_img = shareproperties(img, hist_equalised_img)
-    hist_equalised_img
-end
-
-function histeq{T<:TransparentGray}(img::AbstractArray{T}, args...)
-    opaque_img = convert(Array{base_color_type(eltype(img))}, img)
-    hist_equalised_img = histeq(opaque_img, args...)
-    converted_img = map((eq, o) -> convert(T, AGray(eq, alpha(o))), hist_equalised_img, img)
-    converted_img
-end
-
-histeq{T<:Gray, D<:Union{U8, U16}}(img::AbstractArray{T}, nbins, dtype::Type{D} = U8) = histeq(_prep_image_for_histeq(img, dtype), nbins, ColorVectorSpace.typemin(Gray{dtype}), ColorVectorSpace.typemax(Gray{dtype}))
-
-function _histeq_pixel_rescale{T<:Union{Gray,Number}}(pixel::T, cdf, minval::T, maxval::T, cdf_length::Integer)
-    bin_pixel = max(1,Int(ceil((pixel-minval)*cdf_length/(maxval-minval))))
-    rescaled_pixel = minval + ((cdf[bin_pixel]-cdf[1])*(maxval-minval)/(cdf[end]-cdf[1]))
-    converted_pixel = convert(T, rescaled_pixel)
-end
-
-"""
-```
-hist_equalised_img = histeq(img, nbins, dtype = U8)
-hist_equalised_img = histeq(img, nbins, minval, maxval, dtype = U8)
-```
-
-Returns a histogram equalised image with a granularity of approximately `nbins` 
-number of bins. An optional `dtype` argument (defaulting to U8) can be specified
-to choose the number of bits of the returned image. 
-
-The `histeq` function can handle a variety of input types. The returned image depends 
-on the input type. If the input is an `Image` then the resulting image is of the same type
-and has the same properties. 
-
-For coloured images, the input is converted to YCbCr type and the Y channel is equalised. This
-is the combined with the Cb and Cr channels and the resulting image converted to the same type 
-as the input.
-
-If minval and maxval are specified then only the intensities in the range 
-(minval, maxval) are equalised.
-
-"""
-function histeq{T<:Union{Gray,Number}}(img::AbstractArray{T}, nbins::Int, minval::T, maxval::T)
-    bins, histogram = imhist(img, nbins, minval, maxval)
-    cdf = cumsum(histogram[2:end-1])
-    img_shape = size(img)
-    cdf_length = size(cdf)[1]
-    hist_equalised_img = map(p -> _histeq_pixel_rescale(p, cdf, minval, maxval, cdf_length), img)
-    hist_equalised_img
-end
-
-histeq{T<:Number}(img::AbstractArray{T}, nbins) = histeq(img, nbins, minfinite(img), maxfinite(img))
-
-histeq{T<:Union{Gray,Number}}(img::AbstractArray{T}, nbins, minval, maxval) = histeq(img, Int(nbins), convert(T, minval), convert(T, maxval))
-
 """
 `imgr = restrict(img[, region])` performs two-fold reduction in size
 along the dimensions listed in `region`, or all spatial coordinates if
@@ -1551,6 +1413,144 @@ intensity is `1/(1+(m/(p+eps))^slope)`.
 This assumes the input `img` has intensities between 0 and 1.
 """
 imstretch(img::AbstractArray, m::Number, slope::Number) = _imstretch(float(img), m, slope)
+
+imhist{T<:Colorant}(img::AbstractArray{T}, nbins=400) = imhist(convert(Array{Gray}, data(img)), nbins)
+imhist{T<:Colorant}(img::AbstractArray{T}, nbins, minval, maxval) = imhist(convert(Array{Gray}, data(img)), nbins, minval, maxval)
+
+function imhist{T<:Union{Gray,Number}}(img::AbstractArray{T}, nbins = 400)
+    minval = minfinite(img)
+    maxval = maxfinite(img)
+    imhist(img, nbins, minval, maxval)
+end
+
+"""
+```
+edges, count = imhist(img, nbins)
+edges, count = imhist(img, nbins, minval, maxval)
+```
+
+Generates a histogram for the image over nbins spread between `(minval, maxval]`.
+If `minval` and `maxval` are not given, then the minimum and
+maximum values present in the image are taken.
+
+`edges` is a vector that specifies how the range is divided;
+`count[i+1]` is the number of values `x` that satisfy `edges[i] <= x < edges[i+1]`.
+`count[1]` is the number satisfying `x < edges[1]`, and
+`count[end]` is the number satisfying `x >= edges[end]`. Consequently,
+`length(count) == length(edges)+1`.
+"""
+function imhist{T<:Union{Gray,Number}}(img::AbstractArray{T}, nbins, minval::T, maxval::T)
+    edges = StatsBase.histrange([Float64(minval), Float64(maxval)], nbins, :left)
+    histogram = zeros(Int, length(edges)+1)
+    for val in img
+        if val>=edges[end]
+            histogram[end] += 1
+            continue
+        end
+        index = searchsortedlast(edges, val)
+        histogram[index+1] += 1
+    end
+    edges, histogram
+end
+
+imhist{T<:Union{Gray,Number}}(img::AbstractArray{T}, nbins, minval, maxval) = imhist(img, nbins, convert(T, minval), convert(T, maxval))
+
+Y_MIN = 16
+Y_MAX = 235
+
+function _prep_image_for_histeq{D<:Union{U8, U16}}(img::AbstractArray, dtype::Type{D})
+    img_shape = size(img)
+    img = convert(Array{base_colorant_type(eltype(img)){dtype}}, img)
+    img
+end
+
+histeq{T<:Colorant, D<:Union{U8, U16}}(img::AbstractArray{T}, nbins, dtype::Type{D} = U8) = histeq(_prep_image_for_histeq(img, dtype), nbins, zero(YCbCr), zero(YCbCr))
+histeq{T<:Colorant, D<:Union{U8, U16}}(img::AbstractArray{T}, nbins, minval, maxval, dtype::Type{D} = U8) = histeq(_prep_image_for_histeq(img, dtype), nbins, minval, maxval)
+
+function recompose_y(c::Color, eq_Y::Float32)
+    c_ycbcr = convert(YCbCr, color(c))
+    ret_c = YCbCr(eq_Y, c_ycbcr.cb, c_ycbcr.cr)
+    ret_c
+end
+
+function recompose_y(c::TransparentColor, eq_Y::Float32)
+    c_ycbcr = convert(YCbCrA, color(c))
+    ret_c = YCbCrA(eq_Y, c_ycbcr.cb, c_ycbcr.cr, c_ycbcr.alpha)
+    ret_c
+end
+
+function histeq{T<:Colorant}(img::AbstractArray{T}, nbins, minval, maxval)
+    Y = map(c -> convert(YCbCr, color(c)).y, img)
+    if maxval == zero(YCbCr{Float32})
+        eq_Y = histeq(Y, nbins, Y_MIN, Y_MAX)
+    else
+        eq_Y = histeq(Y, nbins, minval, maxval)
+    end
+    hist_equalised_img = map((eq, c) -> convert(T, recompose_y(c, eq)), eq_Y, img)
+    hist_equalised_img
+end
+
+function histeq{D<:Union{U8, U16}}(img::AbstractImage, nbins, dtype::Type{D} = U8)
+    hist_equalised_img = histeq(data(img), nbins, dtype)
+    hist_equalised_img = shareproperties(img, hist_equalised_img)
+    hist_equalised_img
+end
+
+function histeq{D<:Union{U8, U16}}(img::AbstractImage, nbins, minval, maxval, dtype::Type{D} = U8)
+    hist_equalised_img = histeq(data(img), nbins, minval, maxval, dtype)
+    hist_equalised_img = shareproperties(img, hist_equalised_img)
+    hist_equalised_img
+end
+
+function histeq{T<:TransparentGray}(img::AbstractArray{T}, args...)
+    opaque_img = convert(Array{base_color_type(eltype(img))}, img)
+    hist_equalised_img = histeq(opaque_img, args...)
+    converted_img = map((eq, o) -> convert(T, AGray(eq, alpha(o))), hist_equalised_img, img)
+    converted_img
+end
+
+histeq{T<:Gray, D<:Union{U8, U16}}(img::AbstractArray{T}, nbins, dtype::Type{D} = U8) = histeq(_prep_image_for_histeq(img, dtype), nbins, ColorVectorSpace.typemin(Gray{dtype}), ColorVectorSpace.typemax(Gray{dtype}))
+
+function _histeq_pixel_rescale{T<:Union{Gray,Number}}(pixel::T, cdf, minval::T, maxval::T, cdf_length::Integer)
+    bin_pixel = max(1,Int(ceil((pixel-minval)*cdf_length/(maxval-minval))))
+    rescaled_pixel = minval + ((cdf[bin_pixel]-cdf[1])*(maxval-minval)/(cdf[end]-cdf[1]))
+    converted_pixel = convert(T, rescaled_pixel)
+end
+
+"""
+```
+hist_equalised_img = histeq(img, nbins, dtype = U8)
+hist_equalised_img = histeq(img, nbins, minval, maxval, dtype = U8)
+```
+
+Returns a histogram equalised image with a granularity of approximately `nbins`
+number of bins. An optional `dtype` argument (defaulting to U8) can be specified
+to choose the number of bits of the returned image.
+
+The `histeq` function can handle a variety of input types. The returned image depends
+on the input type. If the input is an `Image` then the resulting image is of the same type
+and has the same properties.
+
+For coloured images, the input is converted to YCbCr type and the Y channel is equalised. This
+is the combined with the Cb and Cr channels and the resulting image converted to the same type
+as the input.
+
+If minval and maxval are specified then only the intensities in the range
+(minval, maxval) are equalised.
+
+"""
+function histeq{T<:Union{Gray,Number}}(img::AbstractArray{T}, nbins::Int, minval::T, maxval::T)
+    bins, histogram = imhist(img, nbins, minval, maxval)
+    cdf = cumsum(histogram[2:end-1])
+    img_shape = size(img)
+    cdf_length = size(cdf)[1]
+    hist_equalised_img = map(p -> _histeq_pixel_rescale(p, cdf, minval, maxval, cdf_length), img)
+    hist_equalised_img
+end
+
+histeq{T<:Number}(img::AbstractArray{T}, nbins) = histeq(img, nbins, minfinite(img), maxfinite(img))
+
+histeq{T<:Union{Gray,Number}}(img::AbstractArray{T}, nbins, minval, maxval) = histeq(img, Int(nbins), convert(T, minval), convert(T, maxval))
 
 # image gradients
 
@@ -1965,8 +1965,8 @@ integral_img = integral_image(img)
 ```
 
 Returns the integral image of an image. The integral image is calculated by assigning
-to each pixel the sum of all pixels above it and to its left, i.e. the rectangle from 
-(1, 1) to the pixel. 
+to each pixel the sum of all pixels above it and to its left, i.e. the rectangle from
+(1, 1) to the pixel.
 """
 function integral_image(img::AbstractArray)
     integral_img = Array{accum(eltype(img))}(size(img))
