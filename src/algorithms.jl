@@ -437,6 +437,9 @@ accum(::Type{Float32})    = Float32
 accum{T<:Real}(::Type{T}) = Float64
 accum{C<:Colorant}(::Type{C}) = base_colorant_type(C){accum(eltype(C))}
 
+graytype{T<:Number}(::Type{T}) = T
+graytype{C<:AbstractGray}(::Type{C}) = C
+graytype{C<:Colorant}(::Type{C}) = Gray{eltype(C)}
 
 # normalized by Array size
 "`s = ssdn(A, B)` computes the sum-of-squared differences over arrays/images A and B, normalized by array size"
@@ -1414,8 +1417,8 @@ This assumes the input `img` has intensities between 0 and 1.
 """
 imstretch(img::AbstractArray, m::Number, slope::Number) = _imstretch(float(img), m, slope)
 
+
 imhist{T<:Colorant}(img::AbstractArray{T}, nbins=400) = imhist(convert(Array{Gray}, data(img)), nbins)
-imhist{T<:Colorant}(img::AbstractArray{T}, nbins, minval, maxval) = imhist(convert(Array{Gray}, data(img)), nbins, minval, maxval)
 
 function imhist{T<:Union{Gray,Number}}(img::AbstractArray{T}, nbins = 400)
     minval = minfinite(img)
@@ -1439,11 +1442,13 @@ maximum values present in the image are taken.
 `count[end]` is the number satisfying `x >= edges[end]`. Consequently,
 `length(count) == length(edges)+1`.
 """
-function imhist{T<:Union{Gray,Number}}(img::AbstractArray{T}, nbins, minval::T, maxval::T)
+function imhist(img::AbstractArray, nbins, minval::Union{Gray,Real}, maxval::Union{Gray,Real})
     edges = StatsBase.histrange([Float64(minval), Float64(maxval)], nbins, :left)
     histogram = zeros(Int, length(edges)+1)
     o = Base.Order.Forward
-    for val in img
+    G = graytype(eltype(img))
+    for v in img
+        val = convert(G, v)
         if val>=edges[end]
             histogram[end] += 1
             continue
@@ -1454,7 +1459,6 @@ function imhist{T<:Union{Gray,Number}}(img::AbstractArray{T}, nbins, minval::T, 
     edges, histogram
 end
 
-imhist{T<:Union{Gray,Number}}(img::AbstractArray{T}, nbins, minval, maxval) = imhist(img, nbins, convert(T, minval), convert(T, maxval))
 
 Y_MIN = 16
 Y_MAX = 235
