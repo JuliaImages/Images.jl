@@ -1528,6 +1528,7 @@ function histeq(img::AbstractImage, nbins::Integer, minval::Union{Number,Gray}, 
     newimg = histeq(data(img), nbins, minval, maxval)
     shareproperties(img, newimg)
 end
+
 histeq(img::AbstractImage, nbins::Integer) = shareproperties(img, histeq(data(img), nbins))
 
 # image gradients
