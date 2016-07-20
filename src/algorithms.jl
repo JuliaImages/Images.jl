@@ -1216,64 +1216,6 @@ if isdefined(:restrict)
     import Grid.restrict
 end
 
-function adjust_gamma{T<:Color}(img::AbstractArray{T}, gamma::Number, dtype = U8)
-    Y = map(c -> convert(YCbCr, color(c)).y, img)
-    eq_Y = adjust_gamma(Y, gamma, Y_MIN, Y_MAX, dtype)
-    gamma_corrected_img = map((eq, c) -> convert(T, recompose_y(c, eq)), eq_Y, img)
-    gamma_corrected_img
-end
-
-function adjust_gamma(img::AbstractImage, gamma::Number, dtype = U8)
-    gamma_corrected_img = adjust_gamma(data(img), gamma, dtype)
-    gamma_corrected_img = shareproperties(img, gamma_corrected_img)
-    gamma_corrected_img
-end
-
-function adjust_gamma{T<:TransparentGray}(img::AbstractArray{T}, gamma::Number, dtype = U8)
-    opaque_img = [color(c) for c in img]
-    gamma_corrected_img = adjust_gamma(opaque_img, gamma, dtype)
-    converted_img = map((gc, o) -> convert(T, AGray(gc, alpha(o))), gamma_corrected_img, img)
-    converted_img    
-end
-
-function adjust_gamma{T<:Number}(img::AbstractArray{T}, gamma::Number, minval::Number, maxval::Number, dtype = U8)
-    rescaled_img = convert(Array{RET_TYPE[dtype]}, [((x-minval) / (maxval-minval)) for x in img])
-    gamma_corrected_img = adjust_gamma(rescaled_img, gamma)
-    gamma_corrected_img = reshape([Float32(minval + (maxval - minval) * x) for x in gamma_corrected_img], size(img))
-    gamma_corrected_img
-end
-
-"""
-```
-gamma_corrected_img = adjust_gamma(img, gamma, dtype = "8bit")
-```
-
-Returns a gamma corrected image. An optional `dtype` argument (defaulting to 8bit) can be 
-specified to choose the number of bits of the returned image. 
-
-The `adjust_gamma` function can handle a variety of input types. The returned image depends 
-on the input type. If the input is an `Image` then the resulting image is of the same type
-and has the same properties. 
-
-For coloured images, the input is converted to YCbCr type and the Y channel is gamma corrected. 
-This is the combined with the Cb and Cr channels and the resulting image converted to the same 
-type as the input.
-
-"""
-function adjust_gamma{T<:FixedPointNumbers.UFixed}(img::AbstractArray{Gray{T}}, gamma::Number, dtype = U8)
-    raw_type = FixedPointNumbers.rawtype(T)
-    img_shape = size(img)
-    gamma_inv = 1.0 / gamma
-    table = [T((i / typemax(raw_type)) ^ gamma_inv) for i in 0:typemax(raw_type)]
-    gamma_corrected_img = map(x -> Gray(table[x.val.i+1]), img)
-    gamma_corrected_img
-end
-
-function adjust_gamma{T<:AbstractFloat}(img::AbstractArray{Gray{T}}, gamma::Number, dtype = U8)
-    gamma_corrected_img = map(x -> Gray(x.val^gamma), img)
-    gamma_corrected_img
-end
-
 """
 `imgr = restrict(img[, region])` performs two-fold reduction in size
 along the dimensions listed in `region`, or all spatial coordinates if
@@ -1588,6 +1530,51 @@ function histeq(img::AbstractImage, nbins::Integer, minval::Union{Number,Gray}, 
 end
 
 histeq(img::AbstractImage, nbins::Integer) = shareproperties(img, histeq(data(img), nbins))
+
+adjust_gamma(img::AbstractImage, gamma::Number) = shareproperties(img, adjust_gamma(data(img), gamma))
+
+_gamma_pixel_rescale{T<:Union{Gray, Number}}(pixel::T, gamma::Number) = pixel ^ gamma
+
+function _gamma_pixel_rescale{C<:Color}(pixel::C, gamma::Number)
+    yiq = convert(YIQ, pixel)
+    y = _gamma_pixel_rescale(yiq.y, gamma)
+    convert(C, YIQ(y, yiq.i, yiq.q))
+end
+
+function _gamma_pixel_rescale{C<:TransparentColor}(pixel::C, gamma::Number)
+    base_colorant_type(C)(_gamma_pixel_rescale(color(pixel), gamma), alpha(pixel))
+end
+
+function _gamma_pixel_rescale(original_val::Number, gamma::Number, minval::Number, maxval::Number)
+    Float32(minval + (maxval - minval) * ((original_val - minval) / (maxval - minval)) ^ gamma)
+end
+
+"""
+```
+gamma_corrected_img = adjust_gamma(img, gamma)
+```
+
+Returns a gamma corrected image. 
+
+The `adjust_gamma` function can handle a variety of input types. The returned image depends 
+on the input type. If the input is an `Image` then the resulting image is of the same type
+and has the same properties. 
+
+For coloured images, the input is converted to YCbCr type and the Y channel is gamma corrected. 
+This is the combined with the Cb and Cr channels and the resulting image converted to the same 
+type as the input.
+
+"""
+adjust_gamma(img::AbstractArray, gamma::Number) = map(i -> _gamma_pixel_rescale(i, gamma), img)
+
+function adjust_gamma{T<:FixedPointNumbers.UFixed}(img::AbstractArray{Gray{T}}, gamma::Number)
+    raw_type = FixedPointNumbers.rawtype(T)
+    gamma_inv = 1.0 / gamma
+    table = [T((i / typemax(raw_type)) ^ gamma_inv) for i in zero(raw_type):typemax(raw_type)]
+    map(x -> Gray(table[convert(base_colorant_type(typeof(x)){T}, x).val.i + 1]), img)
+end
+
+adjust_gamma{T<:Number}(img::AbstractArray{T}, gamma::Number, minval::Number, maxval::Number) = map(i -> _gamma_pixel_rescale(i, gamma, minval, maxval), img)
 
 # image gradients
 
