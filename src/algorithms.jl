@@ -1519,10 +1519,12 @@ function histeq(img::AbstractArray, nbins::Integer, minval::Union{Number,Gray}, 
     hist_equalised_img
 end
 
-function histeq(img::AbstractArray, nbins::Integer)
+function histeq{T<:Colorant}(img::AbstractArray{T}, nbins::Integer)
     T = graytype(eltype(img))
     histeq(img, nbins, zero(T), one(T))
 end
+
+histeq{T<:Number}(img::AbstractArray{T}, nbins) = histeq(img, nbins, minfinite(img), maxfinite(img))
 
 function histeq(img::AbstractImage, nbins::Integer, minval::Union{Number,Gray}, maxval::Union{Number,Gray})
     newimg = histeq(data(img), nbins, minval, maxval)
