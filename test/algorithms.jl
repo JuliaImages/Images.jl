@@ -274,6 +274,75 @@ facts("Algorithms") do
         for i in 1:(size(cdf)[1]-1)
             @fact all(ret[cdf[i] + 1 : cdf[i + 1]] .== (cdf[i + 1] - cdf[1]) * 99.0 / (cdf[end] - cdf[1])) --> true
         end
+
+        #Gamma Correction
+
+        img = ones(Images.Gray{Float64}, 10, 10)
+        ret = adjust_gamma(img, 1)
+        @fact img == ret --> true
+        @fact eltype(ret) == eltype(img) --> true
+
+        img = ones(Images.Gray{Images.U8}, 10, 10)
+        ret = adjust_gamma(img, 1)
+        @fact img == ret --> true
+        @fact eltype(ret) == eltype(img) --> true
+
+        img = ones(Images.Gray{Images.U16}, 10, 10)
+        ret = adjust_gamma(img, 1)
+        @fact eltype(ret) == eltype(img) --> true
+
+        img = ones(Images.AGray{Images.U8}, 10, 10)
+        ret = adjust_gamma(img, 1)
+        @fact img == ret --> true
+        @fact eltype(ret) == eltype(img) --> true
+
+        img = ones(Images.RGB{Images.U8}, 10, 10)
+        ret = adjust_gamma(img, 1)
+        @fact img == ret --> true
+        @fact eltype(ret) == eltype(img) --> true
+
+        img = ones(Images.RGB{Images.U16}, 10, 10)
+        ret = adjust_gamma(img, 1)
+        @fact img == ret --> true
+        @fact eltype(ret) == eltype(img) --> true
+
+        img = ones(Images.RGB{Float64}, 10, 10)
+        ret = adjust_gamma(img, 1)
+        @fact all(map((i, r) -> isapprox(i, r), img, ret)) --> true
+        @fact eltype(ret) == eltype(img) --> true
+
+        img = ones(Images.ARGB{Images.U8}, 10, 10)
+        ret = adjust_gamma(img, 1)
+        @fact img == ret --> true
+        @fact eltype(ret) == eltype(img) --> true
+
+        #Working
+
+        img = reshape(1:1:100, 10, 10)
+        ret = Images.adjust_gamma(img, 2)
+        @fact ret == img .^ 2 --> true
+        ret = Images.adjust_gamma(img, 0.3)
+        @fact ret == img .^ 0.3 --> true
+        ret = Images.adjust_gamma(img, 1, 1, 100)
+        @fact ret == img --> true
+
+        img = zeros(10, 10)
+        ret = Images.adjust_gamma(img, 2)
+        @fact all(ret .== 0) --> true
+
+        a = ARGB(0.2, 0.3, 0.4, 0.5)    
+        r = Images._gamma_pixel_rescale(a, 1)
+        @fact isapprox(a, r, rtol = 0.0001) --> true
+        r = Images._gamma_pixel_rescale(a, 2)
+        @fact alpha(r) --> alpha(a)
+
+        b = AGray(0.2, 0.6)    
+        r = Images._gamma_pixel_rescale(b, 1)
+        @fact b --> r
+        r = Images._gamma_pixel_rescale(b, 2)
+        @fact alpha(r) --> alpha(b)
+        @fact isapprox(r.val, b.val ^ 2) --> true
+
     end
 
     context("Array padding") do
