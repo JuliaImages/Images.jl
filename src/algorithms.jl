@@ -1432,9 +1432,9 @@ This assumes the input `img` has intensities between 0 and 1.
 imstretch(img::AbstractArray, m::Number, slope::Number) = _imstretch(float(img), m, slope)
 
 
-imhist{T<:Colorant}(img::AbstractArray{T}, nbins=400) = imhist(convert(Array{Gray}, data(img)), nbins)
+imhist{T<:Colorant}(img::AbstractArray{T}, nbins::Integer = 400) = imhist(convert(Array{Gray}, data(img)), nbins)
 
-function imhist{T<:Union{Gray,Number}}(img::AbstractArray{T}, nbins = 400)
+function imhist{T<:Union{Gray,Number}}(img::AbstractArray{T}, nbins::Integer = 400)
     minval = minfinite(img)
     maxval = maxfinite(img)
     imhist(img, nbins, minval, maxval)
@@ -1456,8 +1456,12 @@ maximum values present in the image are taken.
 `count[end]` is the number satisfying `x >= edges[end]`. Consequently,
 `length(count) == length(edges)+1`.
 """
-function imhist(img::AbstractArray, nbins, minval::Union{Gray,Real}, maxval::Union{Gray,Real})
+function imhist(img::AbstractArray, nbins::Integer, minval::Union{Gray,Real}, maxval::Union{Gray,Real})
     edges = StatsBase.histrange([Float64(minval), Float64(maxval)], nbins, :left)
+    imhist(img, edges)
+end
+
+function imhist(img::AbstractArray, edges::Range)
     histogram = zeros(Int, length(edges)+1)
     o = Base.Order.Forward
     G = graytype(eltype(img))
@@ -1472,7 +1476,6 @@ function imhist(img::AbstractArray, nbins, minval::Union{Gray,Real}, maxval::Uni
     end
     edges, histogram
 end
-
 
 function _histeq_pixel_rescale{T<:Union{Gray,Number}}(pixel::T, cdf, minval, maxval)
     n = length(cdf)
