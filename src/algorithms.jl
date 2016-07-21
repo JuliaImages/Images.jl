@@ -1502,8 +1502,8 @@ The `histeq` function can handle a variety of input types. The returned image de
 on the input type. If the input is an `Image` then the resulting image is of the same type
 and has the same properties.
 
-For coloured images, the input is converted to YCbCr type and the Y channel is equalised. This
-is the combined with the Cb and Cr channels and the resulting image converted to the same type
+For coloured images, the input is converted to YIQ type and the Y channel is equalised. This
+is the combined with the I and Q channels and the resulting image converted to the same type
 as the input.
 
 If minval and maxval are specified then intensities are equalized to the range
@@ -1560,8 +1560,8 @@ The `adjust_gamma` function can handle a variety of input types. The returned im
 on the input type. If the input is an `Image` then the resulting image is of the same type
 and has the same properties. 
 
-For coloured images, the input is converted to YCbCr type and the Y channel is gamma corrected. 
-This is the combined with the Cb and Cr channels and the resulting image converted to the same 
+For coloured images, the input is converted to YIQ type and the Y channel is gamma corrected. 
+This is the combined with the I and Q channels and the resulting image converted to the same 
 type as the input.
 
 """
