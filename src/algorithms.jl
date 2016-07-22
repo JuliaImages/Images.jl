@@ -1432,9 +1432,9 @@ This assumes the input `img` has intensities between 0 and 1.
 imstretch(img::AbstractArray, m::Number, slope::Number) = _imstretch(float(img), m, slope)
 
 
-imhist{T<:Colorant}(img::AbstractArray{T}, nbins=400) = imhist(convert(Array{Gray}, data(img)), nbins)
+imhist{T<:Colorant}(img::AbstractArray{T}, nbins::Integer = 400) = imhist(convert(Array{Gray}, data(img)), nbins)
 
-function imhist{T<:Union{Gray,Number}}(img::AbstractArray{T}, nbins = 400)
+function imhist{T<:Union{Gray,Number}}(img::AbstractArray{T}, nbins::Integer = 400)
     minval = minfinite(img)
     maxval = maxfinite(img)
     imhist(img, nbins, minval, maxval)
@@ -1456,8 +1456,12 @@ maximum values present in the image are taken.
 `count[end]` is the number satisfying `x >= edges[end]`. Consequently,
 `length(count) == length(edges)+1`.
 """
-function imhist(img::AbstractArray, nbins, minval::Union{Gray,Real}, maxval::Union{Gray,Real})
+function imhist(img::AbstractArray, nbins::Integer, minval::Union{Gray,Real}, maxval::Union{Gray,Real})
     edges = StatsBase.histrange([Float64(minval), Float64(maxval)], nbins, :left)
+    imhist(img, edges)
+end
+
+function imhist(img::AbstractArray, edges::Range)
     histogram = zeros(Int, length(edges)+1)
     o = Base.Order.Forward
     G = graytype(eltype(img))
@@ -1472,7 +1476,6 @@ function imhist(img::AbstractArray, nbins, minval::Union{Gray,Real}, maxval::Uni
     end
     edges, histogram
 end
-
 
 function _histeq_pixel_rescale{T<:Union{Gray,Number}}(pixel::T, cdf, minval, maxval)
     n = length(cdf)
@@ -1575,6 +1578,47 @@ function adjust_gamma{T<:FixedPointNumbers.UFixed}(img::AbstractArray{Gray{T}}, 
 end
 
 adjust_gamma{T<:Number}(img::AbstractArray{T}, gamma::Number, minval::Number, maxval::Number) = map(i -> _gamma_pixel_rescale(i, gamma, minval, maxval), img)
+
+"""
+```
+hist_matched_img = histmatch(img, oimg, nbins)
+```
+
+Returns a grayscale histogram matched image with a granularity of `nbins` number of bins. `img` is the image to be 
+matched and `oimg` is the image having the desired histogram to be matched to. 
+
+"""
+histmatch(img::AbstractImage, oimg::AbstractArray, nbins::Integer = 400) = shareproperties(img, histmatch(data(img), oimg, nbins))
+
+_hist_match_pixel{T<:Union{Gray, Number}}(pixel::T, bins, lookup_table) = T(bins[lookup_table[searchsortedlast(bins, pixel)]])
+
+function _hist_match_pixel{T<:Color}(pixel::T, bins, lookup_table)
+    yiq = convert(YIQ, pixel)
+    y = _hist_match_pixel(yiq.y, bins, lookup_table)
+    convert(T, YIQ(y, yiq.i, yiq.q))
+end
+
+_hist_match_pixel{T<:TransparentColor}(pixel::T, bins, lookup_table) = base_colorant_type(T)(_hist_match_pixel(color(pixel), bins, lookup_table), alpha(pixel))
+
+function histmatch{T<:Colorant}(img::AbstractArray{T}, oimg::AbstractArray, nbins::Integer = 400)
+    el_gray = graytype(eltype(img))
+    oedges, ohist = imhist(oimg, nbins, zero(el_gray), one(el_gray))
+    _histmatch(img, oedges, ohist)
+end
+
+function _histmatch(img::AbstractArray, oedges::Range, ohist::AbstractArray{Int})
+    bins, histogram = imhist(img, oedges)
+    ohist[1] = 0
+    ohist[end] = 0
+    histogram[1] = 0 
+    histogram[end] = 0
+    cdf = cumsum(histogram)
+    cdf /= cdf[end]
+    ocdf = cumsum(ohist)
+    ocdf /= ocdf[end]
+    lookup_table = [indmin(abs(ocdf-val)) for val in cdf]
+    map(i -> _hist_match_pixel(i, bins, lookup_table), img)
+end
 
 # image gradients
 

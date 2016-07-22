@@ -229,6 +229,11 @@ facts("Algorithms") do
         @fact img == ret --> true
         @fact eltype(ret) == eltype(img) --> true
 
+        img = ones(Images.RGB{Images.U16}, 10, 10)
+        ret = histeq(img, 100)
+        @fact img == ret --> true
+        @fact eltype(ret) == eltype(img) --> true
+
         img = ones(Images.RGB{Float64}, 10, 10)
         ret = histeq(img, 100)
         @fact all(map((i, r) -> isapprox(i, r), img, ret)) --> true
@@ -314,7 +319,6 @@ facts("Algorithms") do
         img = ones(Images.ARGB{Images.U8}, 10, 10)
         ret = adjust_gamma(img, 1)
         @fact img == ret --> true
-        @fact eltype(ret) == eltype(img) --> true
 
         #Working
 
@@ -343,6 +347,50 @@ facts("Algorithms") do
         @fact alpha(r) --> alpha(b)
         @fact isapprox(r.val, b.val ^ 2) --> true
 
+        #Histogram Matching
+        #DataTypes
+        img = ones(Images.Gray{Float64}, 10, 10)
+        ret = histmatch(img, img)
+        @fact all(ret .== zero(eltype(img))) --> true
+        @fact eltype(ret) == eltype(img) --> true
+
+        img = ones(Images.Gray{Images.U8}, 10, 10)
+        ret = histmatch(img, img)
+        @fact all(ret .== zero(eltype(img))) --> true
+        @fact eltype(ret) == eltype(img) --> true
+
+        img = ones(Images.Gray{Images.U16}, 10, 10)
+        ret = histmatch(img, img)
+        @fact eltype(ret) == eltype(img) --> true
+
+        img = ones(Images.AGray{Images.U8}, 10, 10)
+        ret = histmatch(img, img)
+        @fact eltype(ret) == eltype(img) --> true
+
+        img = ones(Images.RGB{Images.U8}, 10, 10)
+        ret = histmatch(img, img)
+        @fact eltype(ret) == eltype(img) --> true
+
+        img = ones(Images.RGB{Images.U16}, 10, 10)
+        ret = histmatch(img, img)
+        @fact eltype(ret) == eltype(img) --> true
+
+        img = ones(Images.RGB{Float64}, 10, 10)
+        ret = histmatch(img, img)
+        @fact all(map((i, r) -> isapprox(zero(RGB), r, atol = 0.001), img, ret)) --> true
+        @fact eltype(ret) == eltype(img) --> true
+
+        img = ones(Images.ARGB{Images.U8}, 10, 10)
+        ret = histmatch(img, img)
+        @fact eltype(ret) == eltype(img) --> true
+
+        img = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+        edges, hist = imhist(img, 2)
+        himg = Images._histmatch(img, edges, hist)
+        @fact himg == [0, 0, 0, 0, 0, 5, 5, 5, 5, 5] --> true
+        edges, hist = imhist(img, 5)
+        himg = Images._histmatch(img, edges, hist)
+        @fact himg == [0, 0, 2, 2, 4, 4, 6, 6, 8, 8] --> true
     end
 
     context("Array padding") do

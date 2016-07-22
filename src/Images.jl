@@ -227,6 +227,7 @@ export # types
     imhist,
     histeq,
     adjust_gamma,
+    histmatch,
     imlaplacian,
     imlineardiffusion,
     imlog,
@@ -292,7 +293,7 @@ Algorithms:
     - Resizing: `restrict`, `imresize` (not yet exported)
     - Filtering: `imfilter`, `imfilter_fft`, `imfilter_gaussian`, `imfilter_LoG`, `imROF`, `ncc`, `padarray`
     - Filtering kernels: `ando[345]`, `guassian2d`, `imaverage`, `imdog`, `imlaplacian`, `prewitt`, `sobel`
-    - Exposure : `imhist`, `histeq`, `adjust_gamma`
+    - Exposure : `imhist`, `histeq`, `adjust_gamma`, `histmatch`
     - Gradients: `backdiffx`, `backdiffy`, `forwarddiffx`, `forwarddiffy`, `imgradients`
     - Edge detection: `imedge`, `imgradients`, `thin_edges`, `magnitude`, `phase`, `magnitudephase`, `orientation`, `canny`
     - Corner detection: `imcorner`
