@@ -1579,6 +1579,47 @@ end
 
 adjust_gamma{T<:Number}(img::AbstractArray{T}, gamma::Number, minval::Number, maxval::Number) = map(i -> _gamma_pixel_rescale(i, gamma, minval, maxval), img)
 
+"""
+```
+hist_matched_img = histmatch(img, oimg, nbins)
+```
+
+Returns a grayscale histogram matched image with a granularity of `nbins` number of bins. `img` is the image to be 
+matched and `oimg` is the image having the desired histogram to be matched to. 
+
+"""
+histmatch(img::AbstractImage, oimg::AbstractArray, nbins::Integer = 400) = shareproperties(img, histmatch(data(img), oimg, nbins))
+
+_hist_match_pixel{T<:Union{Gray, Number}}(pixel::T, bins, lookup_table) = T(bins[lookup_table[searchsortedlast(bins, pixel)]])
+
+function _hist_match_pixel{T<:Color}(pixel::T, bins, lookup_table)
+    yiq = convert(YIQ, pixel)
+    y = _hist_match_pixel(yiq.y, bins, lookup_table)
+    convert(T, YIQ(y, yiq.i, yiq.q))
+end
+
+_hist_match_pixel{T<:TransparentColor}(pixel::T, bins, lookup_table) = base_colorant_type(T)(_hist_match_pixel(color(pixel), bins, lookup_table), alpha(pixel))
+
+function histmatch{T<:Colorant}(img::AbstractArray{T}, oimg::AbstractArray, nbins::Integer = 400)
+    el_gray = graytype(eltype(img))
+    oedges, ohist = imhist(oimg, nbins, zero(el_gray), one(el_gray))
+    _histmatch(img, oedges, ohist)
+end
+
+function _histmatch(img::AbstractArray, oedges::Range, ohist::AbstractArray{Int})
+    bins, histogram = imhist(img, oedges)
+    ohist[1] = 0
+    ohist[end] = 0
+    histogram[1] = 0 
+    histogram[end] = 0
+    cdf = cumsum(histogram)
+    cdf /= cdf[end]
+    ocdf = cumsum(ohist)
+    ocdf /= ocdf[end]
+    lookup_table = [indmin(abs(ocdf-val)) for val in cdf]
+    map(i -> _hist_match_pixel(i, bins, lookup_table), img)
+end
+
 # image gradients
 
 # forward and backward differences
