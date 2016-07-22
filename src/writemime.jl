@@ -9,7 +9,7 @@ mimewritable{C<:Colorant}(::MIME"image/png", img::AbstractArray{C}) = sdims(img)
 # This is used for output by IJulia. Really large images can make
 # display very slow, so we shrink big images.  Conversely, tiny images
 # don't show up well, so in such cases we repeat pixels.
-@compat function Base.show(io::IO, mime::MIME"image/png", img::AbstractImage; mapi=mapinfo_writemime(img), minpixels=10^4, maxpixels=10^6)
+@compat function Base.show{C<:Colorant}(io::IO, mime::MIME"image/png", img::AbstractImage{C}; mapi=mapinfo_writemime(img), minpixels=10^4, maxpixels=10^6)
     assert2d(img)
     A = data(img)
     nc = ncolorelem(img)
