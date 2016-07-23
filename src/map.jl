@@ -543,7 +543,7 @@ end
 const bitshiftto8 = ((UFixed10, 2), (UFixed12, 4), (UFixed14, 6), (UFixed16, 8))
 
 # typealias GrayType{T<:Fractional} Union{T, Gray{T}}
-typealias GrayArray{T<:Fractional} Union{AbstractArray{T}, AbstractArray{Gray{T}}}
+typealias GrayArray{T<:Union{Fractional,Bool}} Union{AbstractArray{T}, AbstractArray{Gray{T}}}
 # note, though, that we need to override for AbstractImage in case the
 # "colorspace" property is defined differently
 
@@ -563,6 +563,7 @@ mapinfo{T<:UFixed}(::Type{T}, img::AbstractArray{T}) = MapNone(img)
 mapinfo{T<:AbstractFloat}(::Type{T}, img::AbstractArray{T}) = MapNone(img)
 
 # Grayscale methods
+mapinfo(::Type{UFixed8}, img::GrayArray{Bool}) = MapNone{UFixed8}()
 mapinfo(::Type{UFixed8}, img::GrayArray{UFixed8}) = MapNone{UFixed8}()
 mapinfo(::Type{Gray{UFixed8}}, img::GrayArray{UFixed8}) = MapNone{Gray{UFixed8}}()
 mapinfo(::Type{GrayA{UFixed8}}, img::AbstractArray{GrayA{UFixed8}}) = MapNone{GrayA{UFixed8}}()
