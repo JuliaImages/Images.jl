@@ -832,12 +832,42 @@ hist_equalised_img = histeq(img, nbins, minval, maxval)
 </code></pre>
 
 <p>Perform Rudin-Osher-Fatemi (ROF) filtering, more commonly known as Total Variation (TV) denoising or TV regularization. <code>lambda</code> is the regularization coefficient for the derivative, and <code>iterations</code> is the number of relaxation iterations taken. 2d only.</p>
+<p><a id='Corner-Detection-1'></a></p>
+<h1 id="corner-detection">Corner Detection</h1>
 <p><a id='Images.imcorner' href='#Images.imcorner'>#</a>
 <strong><code>Images.imcorner</code></strong> &mdash; <em>Function</em>.</p>
-<pre><code>imge = imcorner(img; [method], [border], [blockSize], [k])
+<pre><code>corners = imcorner(img, threshold, percentile; [method])
 </code></pre>
 
-<p>Performs corner detection, using either the Harris method or the Shi-Tomasi method. <code>method</code> is <code>'harris'</code> (default) or <code>'shi-tomasi'</code>. <code>'border'</code> is the border  mode used in computing the gradient (default is <code>'replicate'</code>). <code>'blockSize'</code> is the size of the box filter kernel (default of <code>3</code>). <code>k</code> is the Harris free parameter  (default of <code>0.04</code>). It is only used when method is set to <code>'harris'</code>.</p>
+<p>Performs corner detection using one of the following methods - </p>
+<pre><code>1. harris
+2. shi_tomasi
+3. kitchen_rosenfeld
+</code></pre>
+
+<p>The parameters of the individual methods are described in their documentation. If a threshold is specified, the values of the responses are thresholded to give the  corner pixels. The threshold is assumed to be a percentile value unless <code>percentile</code> is set to false. </p>
+<p><a id='Images.harris' href='#Images.harris'>#</a>
+<strong><code>Images.harris</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>harris_response = harris(img; [k], [border], [weights])
+</code></pre>
+
+<p>Performs Harris corner detection. The covariances can be taken using either a mean weighted filter or a gamma kernel.</p>
+<p><a id='Images.shi_tomasi' href='#Images.shi_tomasi'>#</a>
+<strong><code>Images.shi_tomasi</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>shi_tomasi_response = shi_tomasi(img; [border], [weights])
+</code></pre>
+
+<p>Performs Shi Tomasi corner detection. The covariances can be taken using either a mean weighted filter or a gamma kernel.</p>
+<p><a id='Images.kitchen_rosenfeld' href='#Images.kitchen_rosenfeld'>#</a>
+<strong><code>Images.kitchen_rosenfeld</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>kitchen_rosenfeld_response = kitchen_rosenfeld(img; [border])
+</code></pre>
+
+<p>Performs Kitchen Rosenfeld corner detection. The covariances can be taken using either a mean weighted filter or a gamma kernel.</p>
+<p><a id='Images.meancovs' href='#Images.meancovs'>#</a>
+<strong><code>Images.meancovs</code></strong> &mdash; <em>Function</em>.</p>
+<p><a id='Images.gammacovs' href='#Images.gammacovs'>#</a>
+<strong><code>Images.gammacovs</code></strong> &mdash; <em>Function</em>.</p>
 <p><a id='Resizing-1'></a></p>
 <h1 id="resizing">Resizing</h1>
 <p><a id='Images.restrict' href='#Images.restrict'>#</a>
