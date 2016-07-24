@@ -46,6 +46,7 @@ facts("Corner") do
 		@fact Ac[16,26] --> 1.0
 		@fact Ac[26,16] --> 1.0
 		@fact Ac[26,26] --> 1.0
+
 		@fact all(Ac[1:14, :] .== 0.0) --> true
 		@fact all(Ac[:, 1:14] .== 0.0) --> true
 		@fact all(Ac[28:end, :] .== 0.0) --> true
@@ -86,6 +87,78 @@ facts("Corner") do
 		@fact all(Ac[:, 1:13] .== 0.0) --> true
 		@fact all(Ac[27:end, :] .== 0.0) --> true
 		@fact all(Ac[:, 27:end] .== 0.0) --> true
+	end
+
+	context("Fast Corners") do 
+
+		img = reshape(1:1:49, 7, 7)
+
+		for i in 1:8
+			corners = Images.fastcorners(img, i)
+			@fact all(corners) --> true
+		end
+
+		corners = Images.fastcorners(img, 9)
+		@fact all(corners[4, 1:end - 1]) --> false
+		corners[4, 1:end - 1] = true
+		@fact all(corners) --> true
+
+		corners = Images.fastcorners(img, 10)
+		@fact all(corners[3:4, 1:end - 2]) --> false
+		@fact corners[4, end - 1] --> false
+		corners[3:4, 1:end - 2] = true
+		corners[4, end - 1] = true
+		@fact all(corners) --> true
+
+		corners = Images.fastcorners(img, 11)
+		@fact all(corners[2:5, 1:end - 3]) --> false
+		@fact all(corners[3:5, end - 2]) --> false
+		@fact corners[4, end - 1] --> false
+		corners[2:5, 1:end - 3] = true
+		corners[3:5, 1:end - 2] = true
+		corners[4, end - 1] = true
+		@fact all(corners) --> true
+
+		corners = Images.fastcorners(img, 12)
+		@fact all(corners[1:6, 1:end - 3]) --> false
+		@fact all(corners[3:5, end - 2]) --> false
+		@fact corners[4, end - 1] --> false
+		corners[1:6, 1:end - 3] = true
+		corners[3:5, 1:end - 2] = true
+		corners[4, end - 1] = true
+		@fact all(corners) --> true
+
+		img = gaussian2d(1.4)
+		img = vcat(img, img)
+		img = hcat(img, img)
+		corners = Images.fastcorners(img, 12, 0.05)
+
+		@fact corners[5, 5] --> true
+		@fact corners[5, 14] --> true
+		@fact corners[14, 5] --> true
+		@fact corners[14, 14] --> true
+		
+		@fact all(corners[:, 1:3] .== false) --> true
+		@fact all(corners[1:3, :] .== false) --> true
+		@fact all(corners[:, 16:end] .== false) --> true
+		@fact all(corners[16:end, :] .== false) --> true
+		@fact all(corners[6:12, 6:12] .== false) --> true
+
+		img = 1 - img
+
+		corners = Images.fastcorners(img, 12, 0.05)
+
+		@fact corners[5, 5] --> true
+		@fact corners[5, 14] --> true
+		@fact corners[14, 5] --> true
+		@fact corners[14, 14] --> true
+
+		@fact all(corners[:, 1:3] .== false) --> true
+		@fact all(corners[1:3, :] .== false) --> true
+		@fact all(corners[:, 16:end] .== false) --> true
+		@fact all(corners[16:end, :] .== false) --> true
+		@fact all(corners[6:12, 6:12] .== false) --> true
+
 	end
 
 end

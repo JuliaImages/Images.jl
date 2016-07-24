@@ -72,6 +72,64 @@ function kitchen_rosenfeld(img::AbstractArray; border::AbstractString = "replica
     corner
 end
 
+"""
+```
+corners = fastcorners(img, n, threshold)
+```
+
+Performs FAST Corner Detection. `n` is the number of contiguous pixels
+which need to be greater (lesser) than intensity + threshold (intensity - threshold)
+for a pixel to be marked as a corner. The default value for n is 12.
+"""
+function fastcorners{T}(img::AbstractArray{T}, n::Int = 12, threshold::Float64 = 0.15)
+    img_padded = padarray(img, [3,3], [3,3], "value", 0)
+    corner = falses(size(img))
+    h, w = size(img)
+    R = CartesianRange(CartesianIndex((4, 4)), CartesianIndex((h + 3, w + 3)))
+    idx = map(CartesianIndex{2}, [(0, 3), (1, 3), (2, 2), (3, 1), (3, 0), (3, -1), (2, -2), (1, -3), 
+            (0, -3), (-1, -3), (-2, -2), (-3, -1), (-3, 0), (-3, 1), (-2, 2), (-1, 3)])
+    
+    for I in R
+        bright_threshold = img_padded[I] + threshold
+        dark_threshold = img_padded[I] - threshold
+        if n >= 12
+            sum_bright = 0
+            sum_dark = 0
+            for k in [1, 5, 9, 13]
+                pixel = img_padded[I + idx[k]]
+                if pixel > bright_threshold
+                    sum_bright += 1
+                elseif pixel < dark_threshold
+                    sum_dark += 1
+                end
+            end
+            if sum_bright < 3 && sum_dark < 3
+                continue
+            end
+        end
+        consecutive_bright = 0
+        consecutive_dark = 0
+
+        for i in 1:15 + n 
+            k = mod1(i, 16)
+            pixel = img_padded[I + idx[k]]
+            if pixel > bright_threshold
+                consecutive_dark = 0
+                consecutive_bright += 1
+            elseif pixel < dark_threshold
+                consecutive_bright = 0
+                consecutive_dark += 1
+            end
+
+            if consecutive_dark == n || consecutive_bright == n
+                corner[I - CartesianIndex((3, 3))] = true
+                break
+            end
+        end
+    end
+    corner
+end
+
 function gradcovs(img::AbstractArray, border::AbstractString = "replicate"; weights::Function = meancovs, args...)
     (grad_x, grad_y) = imgradients(img, "sobel", border)
 
