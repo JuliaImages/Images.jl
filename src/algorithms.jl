@@ -2047,3 +2047,42 @@ function integral_image(img::AbstractArray)
     end
     integral_img
 end
+
+"""
+```
+P = bilinear_interpolation(img, r, c)
+```
+
+Bilinear Interpolation is used to interpolate functions of two variables
+on a rectilinear 2D grid.
+
+The interpolation is done in one direction first and then the values obtained
+are used to do the interpolation in the second direction.
+
+"""
+function bilinear_interpolation{T}(img::AbstractArray{T, 2}, y::Number, x::Number)
+    y_min = floor(Int, y)
+    x_min = floor(Int, x)
+    y_max = ceil(Int, y)
+    x_max = ceil(Int, x)
+
+    topleft = try checkbounds(img, y_min, x_min); img[y_min, x_min] catch; zero(T) end
+    bottomleft = try checkbounds(img, y_max, x_min); img[y_max, x_min] catch; zero(T) end
+    topright = try checkbounds(img, y_min, x_max); img[y_min, x_max] catch; zero(T) end
+    bottomright = try checkbounds(img, y_max, x_max); img[y_max, x_max] catch; zero(T) end
+
+    if x_max == x_min
+        if y_max == y_min
+            return topleft
+        end
+        return ((y_max - y) * topleft + (y - y_min) * bottomleft) / (y_max - y_min)
+    elseif y_max == y_min
+        return ((x_max - x) * topleft + (x - x_min) * topright) / (x_max - x_min)
+    end
+
+    r1 = ((x_max - x) * topleft + (x - x_min) * topright) / (x_max - x_min)
+    r2 = ((x_max - x) * bottomleft + (x - x_min) * bottomright) / (x_max - x_min)
+
+    ((y_max - y) * r1 + (y - y_min) * r2) / (y_max - y_min)
+
+end
