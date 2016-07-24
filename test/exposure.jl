@@ -233,6 +233,12 @@ facts("Exposure") do
         @fact himg == [0, 0, 2, 2, 4, 4, 6, 6, 8, 8] --> true
     end
 
+    context("CLAHE") do 
+
+        
+
+    end
+
     context("Other") do 
 
         # Issue #282

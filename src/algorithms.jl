@@ -1375,7 +1375,7 @@ function imresize!(resized, original)
     resized
 end
 
-imresize(original, new_size) = imresize!(similar(original, new_size), original)
+imresize(original, new_size) = size(original) == new_size ? copy!(similar(original), original) : imresize!(similar(original, new_size), original)
 
 convertsafely{T<:AbstractFloat}(::Type{T}, val) = convert(T, val)
 convertsafely{T<:Integer}(::Type{T}, val::Integer) = convert(T, val)
@@ -1863,3 +1863,4 @@ function bilinear_interpolation{T}(img::AbstractArray{T, 2}, y::Number, x::Numbe
     ((y_max - y) * r1 + (y - y_min) * r2) / (y_max - y_min)
 
 end
+

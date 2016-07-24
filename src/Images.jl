@@ -169,7 +169,6 @@ export # types
     parent,
 
     # color-related functions
-    imadjustintensity,
     indexedcolor,
     lut,
     separate,
@@ -210,7 +209,6 @@ export # types
     forwarddiffy,
     gaussian2d,
     imaverage,
-    imcomplement,
     imcorner,
     harris,
     shi_tomasi,
@@ -235,13 +233,17 @@ export # types
     imlineardiffusion,
     imlog,
     imROF,
-    imstretch,
 
     #Exposure
     imhist,
     histeq,
     adjust_gamma,
     histmatch,
+    clahe,
+    imcomplement,
+    imadjustintensity,
+    imstretch,
+    
 
 #     imthresh,
     label_components,
@@ -302,7 +304,7 @@ Algorithms:
     - Resizing: `restrict`, `imresize` (not yet exported)
     - Filtering: `imfilter`, `imfilter_fft`, `imfilter_gaussian`, `imfilter_LoG`, `imROF`, `ncc`, `padarray`
     - Filtering kernels: `ando[345]`, `guassian2d`, `imaverage`, `imdog`, `imlaplacian`, `prewitt`, `sobel`
-    - Exposure : `imhist`, `histeq`, `adjust_gamma`, `histmatch`, `imadjustintensity`, `imstretch`, `imcomplement`
+    - Exposure : `imhist`, `histeq`, `adjust_gamma`, `histmatch`, `imadjustintensity`, `imstretch`, `imcomplement`, `clahe`
     - Gradients: `backdiffx`, `backdiffy`, `forwarddiffx`, `forwarddiffy`, `imgradients`
     - Edge detection: `imedge`, `imgradients`, `thin_edges`, `magnitude`, `phase`, `magnitudephase`, `orientation`, `canny`
     - Corner detection: `imcorner`, `harris`, `shi_tomasi`, `kitchen_rosenfeld`, `meancovs`, `gammacovs`, `fastcorners`
