@@ -48,6 +48,7 @@ include("map.jl")
 include("overlays.jl")
 include("labeledarrays.jl")
 include("algorithms.jl")
+include("exposure.jl")
 include("connected.jl")
 include("edge.jl")
 include("writemime.jl")
@@ -230,15 +231,18 @@ export # types
     findlocalminima,
     imgaussiannoise,
     imgradients,
-    imhist,
-    histeq,
-    adjust_gamma,
-    histmatch,
     imlaplacian,
     imlineardiffusion,
     imlog,
     imROF,
     imstretch,
+
+    #Exposure
+    imhist,
+    histeq,
+    adjust_gamma,
+    histmatch,
+
 #     imthresh,
     label_components,
     label_components!,
@@ -290,9 +294,7 @@ Constructors, conversions, and traits:
 
 Contrast/coloration:
 
-    - `MapInfo`: `MapNone`, `BitShift`, `ClampMinMax`, `ScaleMinMax`, `ScaleAutoMinMax`, etc.
-    - `imadjustintensity`, `sc`, `imstretch`, `imcomplement`
-
+    - `MapInfo`: `MapNone`, `BitShift`, `ClampMinMax`, `ScaleMinMax`, `ScaleAutoMinMax`, `sc`, etc.
 
 Algorithms:
 
@@ -300,7 +302,7 @@ Algorithms:
     - Resizing: `restrict`, `imresize` (not yet exported)
     - Filtering: `imfilter`, `imfilter_fft`, `imfilter_gaussian`, `imfilter_LoG`, `imROF`, `ncc`, `padarray`
     - Filtering kernels: `ando[345]`, `guassian2d`, `imaverage`, `imdog`, `imlaplacian`, `prewitt`, `sobel`
-    - Exposure : `imhist`, `histeq`, `adjust_gamma`, `histmatch`
+    - Exposure : `imhist`, `histeq`, `adjust_gamma`, `histmatch`, `imadjustintensity`, `imstretch`, `imcomplement`
     - Gradients: `backdiffx`, `backdiffy`, `forwarddiffx`, `forwarddiffy`, `imgradients`
     - Edge detection: `imedge`, `imgradients`, `thin_edges`, `magnitude`, `phase`, `magnitudephase`, `orientation`, `canny`
     - Corner detection: `imcorner`, `harris`, `shi_tomasi`, `kitchen_rosenfeld`, `meancovs`, `gammacovs`, `fastcorners`
