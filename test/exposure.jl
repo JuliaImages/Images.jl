@@ -233,10 +233,6 @@ facts("Exposure") do
         @fact himg == [0, 0, 2, 2, 4, 4, 6, 6, 8, 8] --> true
     end
 
-    context("CLAHE") do
-
-    end
-
     context("Other") do 
 
         # Issue #282
@@ -247,6 +243,11 @@ facts("Exposure") do
         img = convert(Images.Image{Gray{UFixed16}}, [0.01164 0.01118; 0.01036 0.01187])
         @fact data(imadjustintensity(img,[0.0103761, 0.0252166]))[2,1] --> 0.0
         @fact eltype(imadjustintensity(img)) --> Gray{UFixed16}
+
+        img = convert(Images.Image{Gray{UFixed16}}, [0.01164 0.01118; 0.01036 0.01187])
+        @fact Images.complement(Gray(0.5)) == Gray(0.5) --> true
+        @fact Images.complement(Gray(0.2)) == Gray(0.8) --> true
+        @fact all(imcomplement(img) .== 1 - img) --> true
 
     end
 
