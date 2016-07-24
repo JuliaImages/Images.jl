@@ -8,9 +8,7 @@
 imadjustintensity{T}(img::AbstractArray{T}, range) = map(ScaleMinMax(T, range...), img)
 imadjustintensity{T}(img::AbstractArray{T}) = map(ScaleAutoMinMax(T), img)
 
-function _imstretch{T}(img::AbstractArray{T}, m::Number, slope::Number)
-    shareproperties(img, 1./(1 + (m./(data(img) .+ eps(T))).^slope))
-end
+_imstretch{T}(img::AbstractArray{T}, m::Number, slope::Number) = shareproperties(img, map(i -> 1 / (1 + (m / (i + eps(T))) ^ slope), img))
 
 """
 `imgs = imstretch(img, m, slope)` enhances or reduces (for
