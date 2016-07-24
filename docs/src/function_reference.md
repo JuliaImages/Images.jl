@@ -316,6 +316,7 @@ imcorner
 harris
 shi_tomasi
 kitchen_rosenfeld
+fastcorners
 meancovs
 gammacovs
 ```
