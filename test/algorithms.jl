@@ -787,15 +787,47 @@ facts("Algorithms") do
         @fact length(img2) --> 25
     end
 
-context("Contrast") do
-    # Issue #282
-    img = convert(Images.Image{Gray{UFixed8}}, eye(2,2))
-    imgs = Images.imstretch(img, 0.3, 0.4)
-    @fact data(imgs) --> roughly(1./(1 + (0.3./(eye(2,2) + eps())).^0.4))
+    context("Contrast") do
+        # Issue #282
+        img = convert(Images.Image{Gray{UFixed8}}, eye(2,2))
+        imgs = Images.imstretch(img, 0.3, 0.4)
+        @fact data(imgs) --> roughly(1./(1 + (0.3./(eye(2,2) + eps())).^0.4))
 
-    img = convert(Images.Image{Gray{UFixed16}}, [0.01164 0.01118; 0.01036 0.01187])
-    @fact data(imadjustintensity(img,[0.0103761, 0.0252166]))[2,1] --> 0.0
-    @fact eltype(imadjustintensity(img)) --> Gray{UFixed16}
-end
+        img = convert(Images.Image{Gray{UFixed16}}, [0.01164 0.01118; 0.01036 0.01187])
+        @fact data(imadjustintensity(img,[0.0103761, 0.0252166]))[2,1] --> 0.0
+        @fact eltype(imadjustintensity(img)) --> Gray{UFixed16}
+    end
+
+    context("Interpolations") do
+
+        img = zeros(5, 5)
+        @fact bilinear_interpolation(img, 4.5, 5.5) --> 0.0
+        @fact bilinear_interpolation(img, 4.5, 3.5) --> 0.0
+
+        for i in [1.0, 2.0, 5.0, 7.0, 9.0]
+            img = ones(5, 5) * i
+            @fact (bilinear_interpolation(img, 3.5, 4.5) == i) --> true
+            @fact (bilinear_interpolation(img, 3.2, 4) == i) --> true # X_MAX == X_MIN
+            @fact (bilinear_interpolation(img, 3.2, 4) == i) --> true # Y_MAX == Y_MIN
+            @fact (bilinear_interpolation(img, 3.2, 4) == i) --> true # BOTH EQUAL
+            @fact (bilinear_interpolation(img, 2.8, 1.9) == i) --> true
+            # One dim out of bounds
+            @fact isapprox(bilinear_interpolation(img, 0.5, 1.5), 0.5 * i) --> true
+            @fact isapprox(bilinear_interpolation(img, 0.5, 1.6), 0.5 * i) --> true
+            @fact isapprox(bilinear_interpolation(img, 0.5, 1.8), 0.5 * i) --> true
+            # Both out of bounds (corner)
+            @fact isapprox(bilinear_interpolation(img, 0.5, 0.5), 0.25 * i) --> true
+        end
+
+        img = reshape(1:25, 5, 5)
+        @fact bilinear_interpolation(img, 1.5, 2) --> 6.5
+        @fact bilinear_interpolation(img, 2, 1.5) --> 4.5
+        @fact bilinear_interpolation(img, 2, 1) --> 2.0
+        @fact bilinear_interpolation(img, 1.5, 2.5) --> 9.0
+        @fact bilinear_interpolation(img, 1.5, 3.5) --> 14.0
+        @fact bilinear_interpolation(img, 1.5, 4.5) --> 19.0
+        @fact bilinear_interpolation(img, 1.5, 5.5) --> 10.75
+
+    end
 
 end

@@ -358,6 +358,11 @@ component_indices
 component_subscripts
 component_centroids
 ```
+# Interpolation
+
+```@docs
+bilinear_interpolation
+```
 
 # Phantoms
 
