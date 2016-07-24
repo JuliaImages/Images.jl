@@ -864,6 +864,12 @@ hist_equalised_img = histeq(img, nbins, minval, maxval)
 </code></pre>
 
 <p>Performs Kitchen Rosenfeld corner detection. The covariances can be taken using either a mean weighted filter or a gamma kernel.</p>
+<p><a id='Images.fastcorners' href='#Images.fastcorners'>#</a>
+<strong><code>Images.fastcorners</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>corners = fastcorners(img, n, threshold)
+</code></pre>
+
+<p>Performs FAST Corner Detection. <code>n</code> is the number of contiguous pixels which need to be greater (lesser) than intensity + threshold (intensity - threshold) for a pixel to be marked as a corner. The default value for n is 12.</p>
 <p><a id='Images.meancovs' href='#Images.meancovs'>#</a>
 <strong><code>Images.meancovs</code></strong> &mdash; <em>Function</em>.</p>
 <p><a id='Images.gammacovs' href='#Images.gammacovs'>#</a>
