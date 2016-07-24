@@ -211,6 +211,11 @@ export # types
     imaverage,
     imcomplement,
     imcorner,
+    harris,
+    shi_tomasi,
+    kitchen_rosenfeld,
+    meancovs,
+    gammacovs,
     imdog,
     imedge,
     imfilter,
@@ -296,7 +301,7 @@ Algorithms:
     - Exposure : `imhist`, `histeq`, `adjust_gamma`, `histmatch`
     - Gradients: `backdiffx`, `backdiffy`, `forwarddiffx`, `forwarddiffy`, `imgradients`
     - Edge detection: `imedge`, `imgradients`, `thin_edges`, `magnitude`, `phase`, `magnitudephase`, `orientation`, `canny`
-    - Corner detection: `imcorner`
+    - Corner detection: `imcorner`, `harris`, `shi_tomasi`, `kitchen_rosenfeld`, `meancovs`, `gammacovs`
     - Blob detection: `blob_LoG`, `findlocalmaxima`, `findlocalminima`
     - Morphological operations: `dilate`, `erode`, `closing`, `opening`, `tophat`, `bothat`, `morphogradient`, `morpholaplace`
     - Connected components: `label_components`, `component_boxes`, `component_lengths`, `component_indices`, `component_subscripts`, `component_centroids`

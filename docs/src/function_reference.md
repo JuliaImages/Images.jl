@@ -307,7 +307,17 @@ ando5
 
 ```@docs
 imROF
+```
+
+# Corner Detection
+
+```@docs
 imcorner
+harris
+shi_tomasi
+kitchen_rosenfeld
+meancovs
+gammacovs
 ```
 
 # Resizing
