@@ -969,6 +969,15 @@ label = label_components(tf, [region])
 <p><a id='Images.component_centroids' href='#Images.component_centroids'>#</a>
 <strong><code>Images.component_centroids</code></strong> &mdash; <em>Function</em>.</p>
 <p><code>component_centroids(labeled_array)</code> -&gt; an array of centroids for each label, including the background label 0</p>
+<p><a id='Interpolation-1'></a></p>
+<h1 id="interpolation">Interpolation</h1>
+<p><a id='Images.bilinear_interpolation' href='#Images.bilinear_interpolation'>#</a>
+<strong><code>Images.bilinear_interpolation</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>P = bilinear_interpolation(img, r, c)
+</code></pre>
+
+<p>Bilinear Interpolation is used to interpolate functions of two variables on a rectilinear 2D grid.</p>
+<p>The interpolation is done in one direction first and then the values obtained are used to do the interpolation in the second direction.</p>
 <p><a id='Phantoms-1'></a></p>
 <h1 id="phantoms">Phantoms</h1>
 <p><a id='Images.shepp_logan' href='#Images.shepp_logan'>#</a>
