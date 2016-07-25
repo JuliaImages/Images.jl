@@ -554,7 +554,7 @@ smaller than the input.
 function padarray{T,n}(img::AbstractArray{T,n}, prepad::Union{Vector{Int},Dims}, postpad::Union{Vector{Int},Dims}, border::AbstractString)
     img[padindexes(img, prepad, postpad, border)...]::Array{T,n}
 end
-function padarray{n}(img::BitArray{n}, prepad::Union{Vector{Int},Dims}, postpad::Union{Vector{Int},Dims}, border::AbstractString)
+function padarray{n}(img::Union{BitArray{n}, SubArray{Bool,n,BitArray{n}}}, prepad::Union{Vector{Int},Dims}, postpad::Union{Vector{Int},Dims}, border::AbstractString)
     img[padindexes(img, prepad, postpad, border)...]::BitArray{n}
 end
 function padarray{n,A<:BitArray}(img::Image{Bool,n,A}, prepad::Union{Vector{Int},Dims}, postpad::Union{Vector{Int},Dims}, border::AbstractString)
@@ -1557,14 +1557,14 @@ end
 gamma_corrected_img = adjust_gamma(img, gamma)
 ```
 
-Returns a gamma corrected image. 
+Returns a gamma corrected image.
 
-The `adjust_gamma` function can handle a variety of input types. The returned image depends 
+The `adjust_gamma` function can handle a variety of input types. The returned image depends
 on the input type. If the input is an `Image` then the resulting image is of the same type
-and has the same properties. 
+and has the same properties.
 
-For coloured images, the input is converted to YIQ type and the Y channel is gamma corrected. 
-This is the combined with the I and Q channels and the resulting image converted to the same 
+For coloured images, the input is converted to YIQ type and the Y channel is gamma corrected.
+This is the combined with the I and Q channels and the resulting image converted to the same
 type as the input.
 
 """
@@ -1584,8 +1584,8 @@ adjust_gamma{T<:Number}(img::AbstractArray{T}, gamma::Number, minval::Number, ma
 hist_matched_img = histmatch(img, oimg, nbins)
 ```
 
-Returns a grayscale histogram matched image with a granularity of `nbins` number of bins. `img` is the image to be 
-matched and `oimg` is the image having the desired histogram to be matched to. 
+Returns a grayscale histogram matched image with a granularity of `nbins` number of bins. `img` is the image to be
+matched and `oimg` is the image having the desired histogram to be matched to.
 
 """
 histmatch(img::AbstractImage, oimg::AbstractArray, nbins::Integer = 400) = shareproperties(img, histmatch(data(img), oimg, nbins))
@@ -1610,7 +1610,7 @@ function _histmatch(img::AbstractArray, oedges::Range, ohist::AbstractArray{Int}
     bins, histogram = imhist(img, oedges)
     ohist[1] = 0
     ohist[end] = 0
-    histogram[1] = 0 
+    histogram[1] = 0
     histogram[end] = 0
     cdf = cumsum(histogram)
     cdf /= cdf[end]

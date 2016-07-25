@@ -1,4 +1,5 @@
 using FactCheck, Base.Test, Images, Colors, FixedPointNumbers
+using Compat.view
 
 srand(1234)
 
@@ -251,11 +252,11 @@ facts("Algorithms") do
             img[i, :] = 10 * (i - 1)
         end
         @fact img == Images.histeq(img, 10, 0, 90) --> true
-        
+
         ret = Images.histeq(img, 2, 0, 90)
         @fact all(ret[1:5, :] .== 0) --> true
         @fact all(ret[6:10, :] .== 90) --> true
-        
+
         ret = Images.histeq(img, 5, 0, 90)
         for i in 1:2:10
             @fact all(ret[i:i+1, :] .== 22.5 * floor(i / 2)) --> true
@@ -334,13 +335,13 @@ facts("Algorithms") do
         ret = Images.adjust_gamma(img, 2)
         @fact all(ret .== 0) --> true
 
-        a = ARGB(0.2, 0.3, 0.4, 0.5)    
+        a = ARGB(0.2, 0.3, 0.4, 0.5)
         r = Images._gamma_pixel_rescale(a, 1)
         @fact isapprox(a, r, rtol = 0.0001) --> true
         r = Images._gamma_pixel_rescale(a, 2)
         @fact alpha(r) --> alpha(a)
 
-        b = AGray(0.2, 0.6)    
+        b = AGray(0.2, 0.6)
         r = Images._gamma_pixel_rescale(b, 1)
         @fact b --> r
         r = Images._gamma_pixel_rescale(b, 2)
@@ -424,6 +425,11 @@ facts("Algorithms") do
         A = trues(3,3)
         @fact typeof(Images.padarray(A, (1,2), (2,1), "replicate")) --> BitArray{2}
         @fact typeof(Images.padarray(Images.grayim(A), (1,2), (2,1), "replicate")) --> BitArray{2}
+        # issue #525
+        A = falses(10,10,10)
+        B = view(A,1:8,1:8,1:8)
+        @fact isa(padarray(A, ones(Int,3), ones(Int,3), "replicate"), BitArray{3}) --> true
+        @fact isa(padarray(B, ones(Int,3), ones(Int,3), "replicate"), BitArray{3}) --> true
     end
 
     context("Filtering") do
