@@ -779,15 +779,15 @@ hist_equalised_img = histeq(img, nbins, minval, maxval)
 <pre><code>gamma_corrected_img = adjust_gamma(img, gamma)
 </code></pre>
 
-<p>Returns a gamma corrected image. </p>
-<p>The <code>adjust_gamma</code> function can handle a variety of input types. The returned image depends  on the input type. If the input is an <code>Image</code> then the resulting image is of the same type and has the same properties. </p>
-<p>For coloured images, the input is converted to YIQ type and the Y channel is gamma corrected.  This is the combined with the I and Q channels and the resulting image converted to the same  type as the input.</p>
+<p>Returns a gamma corrected image.</p>
+<p>The <code>adjust_gamma</code> function can handle a variety of input types. The returned image depends on the input type. If the input is an <code>Image</code> then the resulting image is of the same type and has the same properties.</p>
+<p>For coloured images, the input is converted to YIQ type and the Y channel is gamma corrected. This is the combined with the I and Q channels and the resulting image converted to the same type as the input.</p>
 <p><a id='Images.histmatch' href='#Images.histmatch'>#</a>
 <strong><code>Images.histmatch</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>hist_matched_img = histmatch(img, oimg, nbins)
 </code></pre>
 
-<p>Returns a grayscale histogram matched image with a granularity of <code>nbins</code> number of bins. <code>img</code> is the image to be  matched and <code>oimg</code> is the image having the desired histogram to be matched to. </p>
+<p>Returns a grayscale histogram matched image with a granularity of <code>nbins</code> number of bins. <code>img</code> is the image to be matched and <code>oimg</code> is the image having the desired histogram to be matched to.</p>
 <p><a id='Filtering-kernels-1'></a></p>
 <h1 id="filtering-kernels">Filtering kernels</h1>
 <p><a id='Images.gaussian2d' href='#Images.gaussian2d'>#</a>
