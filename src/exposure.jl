@@ -220,7 +220,20 @@ hist_equalised_img = clahe(img, nbins, xblocks = 8, yblocks = 8, clip = 3)
 
 ```
 
-Performs Contrast Limited Adaptive Histogram Equalisation (CLAHE) on the input image. 
+Performs Contrast Limited Adaptive Histogram Equalisation (CLAHE) on the input image. It differs from ordinary histogram 
+equalization in the respect that the adaptive method computes several histograms, each corresponding to a distinct section
+of the image, and uses them to redistribute the lightness values of the image. It is therefore suitable for improving the 
+local contrast and enhancing the definitions of edges in each region of an image.
+
+In the straightforward form, CLAHE is done by calculation a histogram of a window around each pixel and using the transformation
+function of the equalised histogram to rescale the pixel. Since this is computationally expensive, we use interpolation which gives
+a significant rise in efficiency without compromising the result. The image is divided into a grid and equalised histograms are 
+calculated for each block. Then, each pixel is interpolated using the closest histograms.
+
+The `xblocks` and `yblocks` specify the number of blocks to divide the input image into in each direction. `nbins` specifies
+the granularity of histogram calculation of each local region. `clip` specifies the value at which the histogram is clipped. 
+The excess in the histogram bins with value exceeding `clip` is redistributed among the other bins. 
+
 """
 function clahe{C}(img::AbstractArray{C, 2}, nbins::Integer = 100; xblocks::Integer = 8, yblocks::Integer = 8, clip::Number = 3)
     h, w = size(img)
@@ -237,21 +250,28 @@ function clahe(img::AbstractImage, nbins::Integer = 100; xblocks::Integer = 8, y
     shareproperties(clahe(data(img), nbins, xblocks = xblocks, yblocks = yblocks, clip = clip), img)
 end
 
-function _clahe{C}(img::AbstractArray{C, 2}, nbins::Integer, xblocks::Integer = 8, yblocks::Integer = 8, clip::Number = 3)
+function _clahe{C}(img::AbstractArray{C, 2}, nbins::Integer = 100, xblocks::Integer = 8, yblocks::Integer = 8, clip::Number = 3)
     h, w = size(img)
     xb = 0:1:xblocks - 1
     yb = 0:1:yblocks - 1
     blockw = Int(w / xblocks)
     blockh = Int(h / yblocks)
-
+    temp_cdf = Array{Float64, 1}[]
     T = graytype(eltype(img))
-    
-    blocks = [img[j * blockh + 1 : (j + 1) * blockh, i * blockw + 1 : (i + 1) * blockw] for i in xb, j in yb]
-    histograms = map(b -> imhist(b, nbins, zero(T), one(T)), blocks)
-    clipped_histograms = map(h -> cliphist(h[2][2:end - 1], clip), histograms)
-    cdfs = map(ch -> cumsum(ch), clipped_histograms)
-    norm_cdf = map(c -> c / c[end], cdfs)
-    edges = histograms[1][1]
+    edges = StatsBase.histrange([Float64(zero(T)), Float64(one(T))], nbins, :left)
+
+    for i in xb
+        for j in yb
+            temp_block = img[j * blockh + 1 : (j + 1) * blockh, i * blockw + 1 : (i + 1) * blockw]
+            _, histogram = imhist(temp_block, edges)
+            clipped_hist = cliphist(histogram[2:end - 1], clip)
+            cdf = cumsum(clipped_hist)
+            n_cdf = cdf / cdf[end]
+            push!(temp_cdf, n_cdf)
+        end
+    end
+
+    norm_cdf = reshape(temp_cdf, yblocks, xblocks)
     res_img = zeros(C, size(img))
     
     #Interpolations
@@ -339,7 +359,7 @@ function _clahe_pixel_rescale{T<:Union{Gray, Number}}(pixel::T, first, second, e
     id = searchsortedlast(edges, pixel, Base.Order.Forward)
     f = first[id]
     s = second[id]
-    T(((length - pos) * f + (pos - 1) * s) / length)
+    T(((length - pos) * f + (pos - 1) * s) / (length - 1))
 end
 
 function _clahe_pixel_rescale{T<:Union{Gray, Number}}(pixel::T, top_left, top_right, bot_left, bot_right, edges, i, j, w, h)
@@ -348,9 +368,9 @@ function _clahe_pixel_rescale{T<:Union{Gray, Number}}(pixel::T, top_left, top_ri
     tr = top_right[id]
     bl = bot_left[id]
     br = bot_right[id]
-    r1 = ((w - i) * tl + (i - 1) * tr) / w
-    r2 = ((w - i) * bl + (i - 1) * br) / w
-    T(((h - j) * r1 + (j - 1) * r2) / h)
+    r1 = ((w - i) * tl + (i - 1) * tr) / (w - 1)
+    r2 = ((w - i) * bl + (i - 1) * br) / (w - 1)
+    T(((h - j) * r1 + (j - 1) * r2) / (h - 1))
 end
 
 function _clahe_pixel_rescale{C<:Color}(pixel::C, args...)
@@ -363,17 +383,25 @@ function _clahe_pixel_rescale{C<:TransparentColor}(pixel::C, args...)
     base_colorant_type(C)(_clahe_pixel_rescale(color(pixel), args...), alpha(pixel))
 end
 
+"""
+```
+clipped_hist = cliphist(hist, clip)
+```
+
+Clips the histogram above a certain value `clip`. The excess left in the bins
+exceeding `clip` is redistributed among the remaining bins.
+"""
 function cliphist{T}(hist::AbstractArray{T, 1}, clip::Number)
     hist_length = length(hist)
     excess = sum(map(i -> i > clip ? i - clip : zero(i - clip), hist))
     increase = excess / hist_length
     clipped_hist = zeros(Float64, hist_length)
     removed_sum = zero(Float64)
-
+   
     for i in 1:hist_length
         if hist[i] > clip - increase
             clipped_hist[i] = Float64(clip)
-            if hist[i] <= clip
+            if hist[i] < clip
                 removed_sum += hist[i] - (clip - increase)
             end 
         else 
@@ -383,7 +411,7 @@ function cliphist{T}(hist::AbstractArray{T, 1}, clip::Number)
     end
 
     leftover = excess - removed_sum
-
+   
     while true
         oleftover = leftover
         for i in 1:hist_length
@@ -391,9 +419,13 @@ function cliphist{T}(hist::AbstractArray{T, 1}, clip::Number)
             step = ceil(Int, max(1, hist_length / leftover))
             for h in i:step:hist_length
                 leftover <= 0 && break
-                if clipped_hist[h] < clip
+                diff = clip - clipped_hist[h]
+                if diff > 1
                     clipped_hist[h] += 1
                     leftover -= 1
+                elseif diff > 0 
+                    clipped_hist[h] = clip
+                    leftover -= diff
                 end
             end
         end 
