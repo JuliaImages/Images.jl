@@ -554,7 +554,7 @@ smaller than the input.
 function padarray{T,n}(img::AbstractArray{T,n}, prepad::Union{Vector{Int},Dims}, postpad::Union{Vector{Int},Dims}, border::AbstractString)
     img[padindexes(img, prepad, postpad, border)...]::Array{T,n}
 end
-function padarray{n}(img::BitArray{n}, prepad::Union{Vector{Int},Dims}, postpad::Union{Vector{Int},Dims}, border::AbstractString)
+function padarray{n}(img::Union{BitArray{n}, SubArray{Bool,n,BitArray{n}}}, prepad::Union{Vector{Int},Dims}, postpad::Union{Vector{Int},Dims}, border::AbstractString)
     img[padindexes(img, prepad, postpad, border)...]::BitArray{n}
 end
 function padarray{n,A<:BitArray}(img::Image{Bool,n,A}, prepad::Union{Vector{Int},Dims}, postpad::Union{Vector{Int},Dims}, border::AbstractString)

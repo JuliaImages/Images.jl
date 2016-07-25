@@ -424,6 +424,11 @@ facts("Algorithms") do
         A = trues(3,3)
         @fact typeof(Images.padarray(A, (1,2), (2,1), "replicate")) --> BitArray{2}
         @fact typeof(Images.padarray(Images.grayim(A), (1,2), (2,1), "replicate")) --> BitArray{2}
+        # issue #525
+        A = falses(10,10,10)
+        B = view(A,1:8,1:8,1:8)
+        @fact isa(padarray(A, ones(Int,3), ones(Int,3), "replicate"), BitArray{3}) --> true
+        @fact isa(padarray(B, ones(Int,3), ones(Int,3), "replicate"), BitArray{3}) --> true
     end
 
     context("Filtering") do
