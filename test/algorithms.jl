@@ -571,17 +571,6 @@ facts("Algorithms") do
         @fact length(img2) --> 25
     end
 
-    context("Contrast") do
-        # Issue #282
-        img = convert(Images.Image{Gray{UFixed8}}, eye(2,2))
-        imgs = Images.imstretch(img, 0.3, 0.4)
-        @fact data(imgs) --> roughly(1./(1 + (0.3./(eye(2,2) + eps())).^0.4))
-
-        img = convert(Images.Image{Gray{UFixed16}}, [0.01164 0.01118; 0.01036 0.01187])
-        @fact data(imadjustintensity(img,[0.0103761, 0.0252166]))[2,1] --> 0.0
-        @fact eltype(imadjustintensity(img)) --> Gray{UFixed16}
-    end
-
     context("Interpolations") do
 
         img = zeros(5, 5)
