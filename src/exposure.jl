@@ -56,7 +56,7 @@ function imhist(img::AbstractArray, nbins::Integer, minval::Union{Gray,Real}, ma
 end
 
 function imhist(img::AbstractArray, edges::Range)
-    histogram = zeros(Int, length(edges)+1)
+    histogram = zeros(Int, length(edges) + 1)
     o = Base.Order.Forward
     G = graytype(eltype(img))
     for v in img
@@ -66,15 +66,15 @@ function imhist(img::AbstractArray, edges::Range)
             continue
         end
         index = searchsortedlast(edges, val, o)
-        histogram[index+1] += 1
+        histogram[index + 1] += 1
     end
     edges, histogram
 end
 
 function _histeq_pixel_rescale{T<:Union{Gray,Number}}(pixel::T, cdf, minval, maxval)
     n = length(cdf)
-    bin_pixel = clamp(ceil(Int, (pixel-minval)*length(cdf)/(maxval-minval)), 1, n)
-    rescaled_pixel = minval + ((cdf[bin_pixel]-cdf[1])*(maxval-minval)/(cdf[end]-cdf[1]))
+    bin_pixel = clamp(ceil(Int, (pixel - minval) * length(cdf) / (maxval - minval)), 1, n)
+    rescaled_pixel = minval + ((cdf[bin_pixel] - cdf[1]) * (maxval - minval) / (cdf[end] - cdf[1]))
     convert(T, rescaled_pixel)
 end
 function _histeq_pixel_rescale{C<:Color}(pixel::C, cdf, minval, maxval)
@@ -166,16 +166,38 @@ This is the combined with the I and Q channels and the resulting image converted
 type as the input.
 
 """
-adjust_gamma(img::AbstractArray, gamma::Number) = map(i -> _gamma_pixel_rescale(i, gamma), img)
-
 function adjust_gamma{T<:FixedPointNumbers.UFixed}(img::AbstractArray{Gray{T}}, gamma::Number)
     raw_type = FixedPointNumbers.rawtype(T)
     gamma_inv = 1.0 / gamma
-    table = [T((i / typemax(raw_type)) ^ gamma_inv) for i in zero(raw_type):typemax(raw_type)]
-    map(x -> Gray(table[convert(base_colorant_type(typeof(x)){T}, x).val.i + 1]), img)
+    table = zeros(T, typemax(raw_type) + 1)
+    for i in zero(raw_type):typemax(raw_type)
+        table[i + 1] = T((i / typemax(raw_type)) ^ gamma_inv)
+    end
+    gamma_corrected_img = similar(img)
+    for I in eachindex(img)
+        gamma_corrected_img[I] = Gray(table[convert(base_colorant_type(typeof(img[I])){T}, img[I]).val.i + 1])
+    end
+    gamma_corrected_img
 end
 
-adjust_gamma{T<:Number}(img::AbstractArray{T}, gamma::Number, minval::Number, maxval::Number) = map(i -> _gamma_pixel_rescale(i, gamma, minval, maxval), img)
+adjust_gamma{T<:Number}(img::AbstractArray{T}, gamma::Number) = _adjust_gamma(img, gamma, Float64)
+adjust_gamma{T<:Colorant}(img::AbstractArray{T}, gamma::Number) = _adjust_gamma(img, gamma, T)
+
+function _adjust_gamma(img::AbstractArray, gamma::Number, C::Type)
+    gamma_corrected_img = zeros(C, size(img))
+    for I in eachindex(img)
+        gamma_corrected_img[I] = _gamma_pixel_rescale(img[I], gamma)
+    end
+    gamma_corrected_img
+end
+
+function adjust_gamma{T<:Number}(img::AbstractArray{T}, gamma::Number, minval::Number, maxval::Number)
+    gamma_corrected_img = zeros(Float64, size(img))
+    for I in eachindex(img)
+        gamma_corrected_img[I] = _gamma_pixel_rescale(img[I], gamma, minval, maxval)
+    end
+    gamma_corrected_img
+end
 
 """
 ```
@@ -206,16 +228,23 @@ end
 
 function _histmatch(img::AbstractArray, oedges::Range, ohist::AbstractArray{Int})
     bins, histogram = imhist(img, oedges)
-    ohist[1] = 0
-    ohist[end] = 0
-    histogram[1] = 0
-    histogram[end] = 0
+    ohist[1] = zero(eltype(ohist))
+    ohist[end] = zero(eltype(ohist))
+    histogram[1] = zero(eltype(histogram))
+    histogram[end] = zero(eltype(histogram))
     cdf = cumsum(histogram)
-    cdf /= cdf[end]
+    norm_cdf = cdf / cdf[end]
     ocdf = cumsum(ohist)
-    ocdf /= ocdf[end]
-    lookup_table = [indmin(abs(ocdf-val)) for val in cdf]
-    map(i -> _hist_match_pixel(i, bins, lookup_table), img)
+    norm_ocdf = ocdf / ocdf[end]
+    lookup_table = zeros(Int, length(norm_cdf))
+    for I in eachindex(cdf)
+        lookup_table[I] = indmin(abs(norm_ocdf - norm_cdf[I]))
+    end
+    hist_matched_img = similar(img)
+    for I in eachindex(img)
+        hist_matched_img[I] = _hist_match_pixel(img[I], bins, lookup_table)
+    end
+    hist_matched_img
 end
 
 
