@@ -235,7 +235,100 @@ facts("Exposure") do
 
     context("CLAHE") do 
 
-        
+        #DataTypes
+        img = ones(Images.Gray{Float64}, 10, 10)
+        ret = clahe(img, 100)
+        @fact size(ret) == size(img) --> true
+        @fact eltype(ret) == eltype(img) --> true
+
+        img = ones(Images.Gray{Images.U8}, 10, 10)
+        ret = clahe(img, 100)
+        @fact size(ret) == size(img) --> true
+        @fact eltype(ret) == eltype(img) --> true
+
+        img = ones(Images.Gray{Images.U16}, 10, 10)
+        ret = clahe(img, 100)
+        @fact size(ret) == size(img) --> true
+        @fact eltype(ret) == eltype(img) --> true
+
+        img = ones(Images.AGray{Images.U8}, 10, 10)
+        ret = clahe(img, 100)
+        @fact size(ret) == size(img) --> true
+        @fact eltype(ret) == eltype(img) --> true
+
+        img = ones(Images.RGB{Images.U8}, 10, 10)
+        ret = clahe(img, 100)
+        @fact size(ret) == size(img) --> true
+        @fact eltype(ret) == eltype(img) --> true
+
+        img = ones(Images.RGB{Images.U16}, 10, 10)
+        ret = clahe(img, 100)
+        @fact size(ret) == size(img) --> true
+        @fact eltype(ret) == eltype(img) --> true
+
+        img = ones(Images.RGB{Float64}, 10, 10)
+        ret = clahe(img, 100)
+        @fact size(ret) == size(img) --> true
+        @fact eltype(ret) == eltype(img) --> true
+
+        img = ones(Images.ARGB{Images.U8}, 10, 10)
+        ret = clahe(img, 100)
+        @fact size(ret) == size(img) --> true
+        @fact eltype(ret) == eltype(img) --> true
+
+        #Working
+
+        cdf = Array(0.1:0.1:1.0)
+        res_pix = Images._clahe_pixel_rescale(0.5654, cdf, cdf, cdf, cdf, 0.1:0.1:1.0, 1, 4, 10, 10)
+        @fact isapprox(res_pix, 0.5) --> true
+        res_pix = Images._clahe_pixel_rescale(0.2344, cdf, cdf, cdf, cdf, 0.1:0.1:1.0, 1, 4, 10, 10)
+        @fact isapprox(res_pix, 0.2) --> true
+        res_pix = Images._clahe_pixel_rescale(0.8123, cdf, cdf, cdf, cdf, 0.1:0.1:1.0, 1, 4, 10, 10)
+        @fact isapprox(res_pix, 0.8) --> true
+
+        cdf2 = [0.0, 0.0, 0.1, 0.1, 0.2, 0.3, 0.5, 0.6, 0.8, 1.0]
+
+        res_pix = Images._clahe_pixel_rescale(0.3, cdf2, cdf, 0.1:0.1:1, 3, 10)
+        @fact isapprox(res_pix, 0.144444444) --> true
+
+        res_pix = Images._clahe_pixel_rescale(0.3, cdf2, cdf, 0.1:0.1:1, 6, 10)
+        @fact isapprox(res_pix, 0.211111111) --> true
+
+        res_pix = Images._clahe_pixel_rescale(0.5654, cdf2, 0.1:0.1:1.0)
+        @fact isapprox(res_pix, 0.2) --> true
+
+        cdf3 = [0.0, 0.0, 0.1, 0.3, 0.5, 0.5, 0.6, 0.9, 1.0, 1.0]
+        cdf4 = [0.0, 0.1, 0.3, 0.4, 0.5, 0.6, 0.6, 0.6, 0.8, 1.0]
+
+        res_pix = Images._clahe_pixel_rescale(0.8123, cdf, cdf2, cdf3, cdf4, 0.1:0.1:1.0, 3, 4, 10, 10)
+        @fact isapprox(res_pix, 0.781481481) --> true
+        res_pix = Images._clahe_pixel_rescale(0.3, cdf, cdf2, cdf3, cdf4, 0.1:0.1:1.0, 5, 4, 10, 10)
+        @fact isapprox(res_pix, 0.2037037037) --> true
+
+        img = [ 0.907976  0.0601377   0.747873   0.938683   0.935189  0.49492    0.508545  0.394573   0.991136   0.210218 
+                0.219737  0.727806    0.606995   0.25272    0.279777  0.584529   0.708244  0.958645   0.979217   0.418678 
+                0.793384  0.314803    0.324222   0.840858   0.49438   0.102003   0.724399  0.133663   0.312085   0.662211 
+                0.905336  0.423511    0.564616   0.692544   0.367656  0.630386   0.133439  0.529039   0.0175596  0.644065 
+                0.255092  0.00242822  0.723724   0.673323   0.244508  0.518068   0.204353  0.34222    0.106092   0.0331161
+                0.432963  0.383491    0.903465   0.579605   0.719874  0.571533   0.728544  0.1864     0.950187   0.470226 
+                0.877475  0.554114    0.987133   0.947148   0.710115  0.131948   0.711611  0.0221843  0.470008   0.952806 
+                0.231911  0.177463    0.742054   0.0333307  0.481319  0.716638   0.332057  0.978177   0.0610481  0.439462 
+                0.935457  0.159602    0.178357   0.163585   0.275052  0.0557963  0.066368  0.199349   0.9238     0.85161  
+                0.692148  0.503563    0.0918827  0.0206237  0.702344  0.546088   0.04163   0.174103   0.45499    0.90019  
+                ]
+        hist_eq_img = Images.clahe(img, xblocks = 2, yblocks = 2, clip = 5)
+        ret_expected = [ 0.972222  0.154261  0.672734  0.962918  0.960518  0.603715  0.559332  0.684868  0.919632  0.11213  
+                        0.26227   0.577172  0.615628  0.420623  0.356921  0.581208  0.845865  0.888908  0.908469  0.518953 
+                        0.79315   0.398521  0.454306  0.692093  0.404984  0.287649  0.619472  0.47354   0.442781  0.826681 
+                        0.875951  0.325109  0.561585  0.746554  0.355356  0.542615  0.308523  0.303799  0.12818   0.662404 
+                        0.218908  0.145377  0.627466  0.703423  0.255746  0.543485  0.270196  0.240487  0.119202  0.0762326
+                        0.443491  0.419296  0.857736  0.778583  0.78256   0.660936  0.66722   0.420796  0.793904  0.50695  
+                        0.765105  0.583873  0.870947  0.825773  0.755839  0.346564  0.598017  0.329962  0.564487  0.897893 
+                        0.512372  0.328346  0.50314   0.339795  0.493125  0.476082  0.45704   0.597256  0.385295  0.814294 
+                        0.866771  0.256846  0.140199  0.118129  0.287474  0.175723  0.115673  0.343809  0.735832  0.928661 
+                        0.833503  0.481259  0.135795  0.116606  0.737954  0.57691   0.103692  0.132731  0.539984  0.999525 
+                        ]
+        @fact all(map((i, j) -> isapprox(i, j, rtol = 0.00001), hist_eq_img, ret_expected)) --> true 
 
     end
 
@@ -255,6 +348,26 @@ facts("Exposure") do
         @fact Images.complement(Gray(0.2)) == Gray(0.8) --> true
         @fact all(imcomplement(img) .== 1 - img) --> true
 
+        hist = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+        clipped_hist = cliphist(hist, 2)
+        @fact all(clipped_hist .== 2.0) --> true
+        clipped_hist = cliphist(hist, 3)
+        @fact all(clipped_hist .== 3.0) --> true
+        clipped_hist = cliphist(hist, 4)
+        @fact all(clipped_hist .== 4.0) --> true
+        clipped_hist = cliphist(hist, 5)
+        @fact all(clipped_hist .== 5.0) --> true
+        clipped_hist = cliphist(hist, 6)
+        @fact clipped_hist == vec([3, 4, 6, 6, 6, 6, 6, 6, 6, 6]) --> true
+        clipped_hist = cliphist(hist, 7)
+        @fact clipped_hist == vec([2.6, 3.6, 3.6, 4.6, 5.6, 7, 7, 7, 7, 7]) --> true
+        clipped_hist = cliphist(hist, 8)
+        @fact clipped_hist == vec([2.3, 2.3, 3.3, 4.3, 5.3, 6.3, 7.3, 8, 8, 8]) --> true
+        clipped_hist = cliphist(hist, 9)
+        @fact clipped_hist == vec([2.1, 2.1, 3.1, 4.1, 5.1, 6.1, 7.1, 8.1, 9, 9]) --> true
+        clipped_hist = cliphist(hist, 10)
+        @fact clipped_hist == hist --> true
     end
 
 end
