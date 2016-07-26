@@ -112,7 +112,11 @@ function histeq(img::AbstractArray, nbins::Integer, minval::Union{Number,Gray}, 
     cdf = cumsum(histogram[2:end-1])
     img_shape = size(img)
     minval == maxval && return map(identity, img)
-    hist_equalised_img = map(p -> _histeq_pixel_rescale(p, cdf, minval, maxval), img)
+    # Would like to use `map` here, but see https://github.com/timholy/Images.jl/pull/523#issuecomment-235236460
+    hist_equalised_img = similar(img)
+    for I in eachindex(img)
+        hist_equalised_img[I] = _histeq_pixel_rescale(img[I], cdf, minval, maxval)
+    end
     hist_equalised_img
 end
 
@@ -151,14 +155,14 @@ end
 gamma_corrected_img = adjust_gamma(img, gamma)
 ```
 
-Returns a gamma corrected image. 
+Returns a gamma corrected image.
 
-The `adjust_gamma` function can handle a variety of input types. The returned image depends 
+The `adjust_gamma` function can handle a variety of input types. The returned image depends
 on the input type. If the input is an `Image` then the resulting image is of the same type
-and has the same properties. 
+and has the same properties.
 
-For coloured images, the input is converted to YIQ type and the Y channel is gamma corrected. 
-This is the combined with the I and Q channels and the resulting image converted to the same 
+For coloured images, the input is converted to YIQ type and the Y channel is gamma corrected.
+This is the combined with the I and Q channels and the resulting image converted to the same
 type as the input.
 
 """
@@ -178,8 +182,8 @@ adjust_gamma{T<:Number}(img::AbstractArray{T}, gamma::Number, minval::Number, ma
 hist_matched_img = histmatch(img, oimg, nbins)
 ```
 
-Returns a grayscale histogram matched image with a granularity of `nbins` number of bins. `img` is the image to be 
-matched and `oimg` is the image having the desired histogram to be matched to. 
+Returns a grayscale histogram matched image with a granularity of `nbins` number of bins. `img` is the image to be
+matched and `oimg` is the image having the desired histogram to be matched to.
 
 """
 histmatch(img::AbstractImage, oimg::AbstractArray, nbins::Integer = 400) = shareproperties(img, histmatch(data(img), oimg, nbins))
@@ -204,7 +208,7 @@ function _histmatch(img::AbstractArray, oedges::Range, ohist::AbstractArray{Int}
     bins, histogram = imhist(img, oedges)
     ohist[1] = 0
     ohist[end] = 0
-    histogram[1] = 0 
+    histogram[1] = 0
     histogram[end] = 0
     cdf = cumsum(histogram)
     cdf /= cdf[end]
@@ -214,25 +218,26 @@ function _histmatch(img::AbstractArray, oedges::Range, ohist::AbstractArray{Int}
     map(i -> _hist_match_pixel(i, bins, lookup_table), img)
 end
 
+
 """
 ```
 hist_equalised_img = clahe(img, nbins, xblocks = 8, yblocks = 8, clip = 3)
 
 ```
 
-Performs Contrast Limited Adaptive Histogram Equalisation (CLAHE) on the input image. It differs from ordinary histogram 
+Performs Contrast Limited Adaptive Histogram Equalisation (CLAHE) on the input image. It differs from ordinary histogram
 equalization in the respect that the adaptive method computes several histograms, each corresponding to a distinct section
-of the image, and uses them to redistribute the lightness values of the image. It is therefore suitable for improving the 
+of the image, and uses them to redistribute the lightness values of the image. It is therefore suitable for improving the
 local contrast and enhancing the definitions of edges in each region of an image.
 
 In the straightforward form, CLAHE is done by calculation a histogram of a window around each pixel and using the transformation
 function of the equalised histogram to rescale the pixel. Since this is computationally expensive, we use interpolation which gives
-a significant rise in efficiency without compromising the result. The image is divided into a grid and equalised histograms are 
+a significant rise in efficiency without compromising the result. The image is divided into a grid and equalised histograms are
 calculated for each block. Then, each pixel is interpolated using the closest histograms.
 
 The `xblocks` and `yblocks` specify the number of blocks to divide the input image into in each direction. `nbins` specifies
-the granularity of histogram calculation of each local region. `clip` specifies the value at which the histogram is clipped. 
-The excess in the histogram bins with value exceeding `clip` is redistributed among the other bins. 
+the granularity of histogram calculation of each local region. `clip` specifies the value at which the histogram is clipped.
+The excess in the histogram bins with value exceeding `clip` is redistributed among the other bins.
 
 """
 function clahe{C}(img::AbstractArray{C, 2}, nbins::Integer = 100; xblocks::Integer = 8, yblocks::Integer = 8, clip::Number = 3)
@@ -273,7 +278,7 @@ function _clahe{C}(img::AbstractArray{C, 2}, nbins::Integer = 100, xblocks::Inte
 
     norm_cdf = reshape(temp_cdf, yblocks, xblocks)
     res_img = zeros(C, size(img))
-    
+
     #Interpolations
     xb = 1:2:xblocks * 2 - 2
     yb = 1:2:yblocks * 2 - 2
@@ -397,21 +402,21 @@ function cliphist{T}(hist::AbstractArray{T, 1}, clip::Number)
     increase = excess / hist_length
     clipped_hist = zeros(Float64, hist_length)
     removed_sum = zero(Float64)
-   
+
     for i in 1:hist_length
         if hist[i] > clip - increase
             clipped_hist[i] = Float64(clip)
             if hist[i] < clip
                 removed_sum += hist[i] - (clip - increase)
-            end 
-        else 
+            end
+        else
             clipped_hist[i] = hist[i] + Float64(increase)
             removed_sum += increase
         end
     end
 
     leftover = excess - removed_sum
-   
+
     while true
         oleftover = leftover
         for i in 1:hist_length
@@ -423,12 +428,12 @@ function cliphist{T}(hist::AbstractArray{T, 1}, clip::Number)
                 if diff > 1
                     clipped_hist[h] += 1
                     leftover -= 1
-                elseif diff > 0 
+                elseif diff > 0
                     clipped_hist[h] = clip
                     leftover -= diff
                 end
             end
-        end 
+        end
         (leftover <= 0 || leftover >= oleftover) && break
     end
     clipped_hist
