@@ -112,7 +112,11 @@ function histeq(img::AbstractArray, nbins::Integer, minval::Union{Number,Gray}, 
     cdf = cumsum(histogram[2:end-1])
     img_shape = size(img)
     minval == maxval && return map(identity, img)
-    hist_equalised_img = map(p -> _histeq_pixel_rescale(p, cdf, minval, maxval), img)
+    # Would like to use `map` here, but see https://github.com/timholy/Images.jl/pull/523#issuecomment-235236460
+    hist_equalised_img = similar(img)
+    for I in eachindex(img)
+        hist_equalised_img[I] = _histeq_pixel_rescale(img[I], cdf, minval, maxval)
+    end
     hist_equalised_img
 end
 
