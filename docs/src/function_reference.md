@@ -214,7 +214,6 @@ Here is how to directly construct the major concrete `MapInfo` types:
 There are also convenience functions:
 
 ```@docs
-imstretch
 sc
 MapInfo
 mapinfo
@@ -283,9 +282,14 @@ findlocalminima
 
 ```@docs
 imhist
+cliphist
 histeq
 adjust_gamma
+imstretch
+imadjustintensity
+imcomplement
 histmatch
+clahe
 ```
 
 # Filtering kernels
