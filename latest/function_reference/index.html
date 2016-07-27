@@ -575,10 +575,6 @@ julia&gt; spatialpermutation([&quot;x&quot;,&quot;y&quot;], Ap)
 </li>
 </ul>
 <p>There are also convenience functions:</p>
-<p><a id='Images.imstretch' href='#Images.imstretch'>#</a>
-<strong><code>Images.imstretch</code></strong> &mdash; <em>Function</em>.</p>
-<p><code>imgs = imstretch(img, m, slope)</code> enhances or reduces (for slope &gt; 1 or &lt; 1, respectively) the contrast near saturation (0 and 1). This is essentially a symmetric gamma-correction. For a pixel of brightness <code>p</code>, the new intensity is <code>1/(1+(m/(p+eps))^slope)</code>.</p>
-<p>This assumes the input <code>img</code> has intensities between 0 and 1.</p>
 <p><a id='Images.sc' href='#Images.sc'>#</a>
 <strong><code>Images.sc</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>imgsc = sc(img)
@@ -764,6 +760,12 @@ edges, count = imhist(img, nbins, minval, maxval)
 
 <p>Generates a histogram for the image over nbins spread between <code>(minval, maxval]</code>. If <code>minval</code> and <code>maxval</code> are not given, then the minimum and maximum values present in the image are taken.</p>
 <p><code>edges</code> is a vector that specifies how the range is divided; <code>count[i+1]</code> is the number of values <code>x</code> that satisfy <code>edges[i] &lt;= x &lt; edges[i+1]</code>. <code>count[1]</code> is the number satisfying <code>x &lt; edges[1]</code>, and <code>count[end]</code> is the number satisfying <code>x &gt;= edges[end]</code>. Consequently, <code>length(count) == length(edges)+1</code>.</p>
+<p><a id='Images.cliphist' href='#Images.cliphist'>#</a>
+<strong><code>Images.cliphist</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>clipped_hist = cliphist(hist, clip)
+</code></pre>
+
+<p>Clips the histogram above a certain value <code>clip</code>. The excess left in the bins exceeding <code>clip</code> is redistributed among the remaining bins.</p>
 <p><a id='Images.histeq' href='#Images.histeq'>#</a>
 <strong><code>Images.histeq</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>hist_equalised_img = histeq(img, nbins)
@@ -782,12 +784,35 @@ hist_equalised_img = histeq(img, nbins, minval, maxval)
 <p>Returns a gamma corrected image.</p>
 <p>The <code>adjust_gamma</code> function can handle a variety of input types. The returned image depends on the input type. If the input is an <code>Image</code> then the resulting image is of the same type and has the same properties.</p>
 <p>For coloured images, the input is converted to YIQ type and the Y channel is gamma corrected. This is the combined with the I and Q channels and the resulting image converted to the same type as the input.</p>
+<p><a id='Images.imstretch' href='#Images.imstretch'>#</a>
+<strong><code>Images.imstretch</code></strong> &mdash; <em>Function</em>.</p>
+<p><code>imgs = imstretch(img, m, slope)</code> enhances or reduces (for slope &gt; 1 or &lt; 1, respectively) the contrast near saturation (0 and 1). This is essentially a symmetric gamma-correction. For a pixel of brightness <code>p</code>, the new intensity is <code>1/(1+(m/(p+eps))^slope)</code>.</p>
+<p>This assumes the input <code>img</code> has intensities between 0 and 1.</p>
+<p><a id='Images.imadjustintensity' href='#Images.imadjustintensity'>#</a>
+<strong><code>Images.imadjustintensity</code></strong> &mdash; <em>Function</em>.</p>
+<p><code>imadjustintensity(img [, (minval,maxval)]) -&gt; Image</code></p>
+<p>Map intensities over the interval <code>(minval,maxval)</code> to the interval    <code>[0,1]</code>. This is equivalent to <code>map(ScaleMinMax(eltype(img), minval,    maxval), img)</code>.  (minval,maxval) defaults to <code>extrema(img)</code>.</p>
+<p><a id='Images.imcomplement' href='#Images.imcomplement'>#</a>
+<strong><code>Images.imcomplement</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>complement_img = imcomplement(img)
+</code></pre>
+
+<p>Returns the complement of an image.</p>
 <p><a id='Images.histmatch' href='#Images.histmatch'>#</a>
 <strong><code>Images.histmatch</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>hist_matched_img = histmatch(img, oimg, nbins)
 </code></pre>
 
 <p>Returns a grayscale histogram matched image with a granularity of <code>nbins</code> number of bins. <code>img</code> is the image to be matched and <code>oimg</code> is the image having the desired histogram to be matched to.</p>
+<p><a id='Images.clahe' href='#Images.clahe'>#</a>
+<strong><code>Images.clahe</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>hist_equalised_img = clahe(img, nbins, xblocks = 8, yblocks = 8, clip = 3)
+
+</code></pre>
+
+<p>Performs Contrast Limited Adaptive Histogram Equalisation (CLAHE) on the input image. It differs from ordinary histogram equalization in the respect that the adaptive method computes several histograms, each corresponding to a distinct section of the image, and uses them to redistribute the lightness values of the image. It is therefore suitable for improving the local contrast and enhancing the definitions of edges in each region of an image.</p>
+<p>In the straightforward form, CLAHE is done by calculation a histogram of a window around each pixel and using the transformation function of the equalised histogram to rescale the pixel. Since this is computationally expensive, we use interpolation which gives a significant rise in efficiency without compromising the result. The image is divided into a grid and equalised histograms are calculated for each block. Then, each pixel is interpolated using the closest histograms.</p>
+<p>The <code>xblocks</code> and <code>yblocks</code> specify the number of blocks to divide the input image into in each direction. <code>nbins</code> specifies the granularity of histogram calculation of each local region. <code>clip</code> specifies the value at which the histogram is clipped. The excess in the histogram bins with value exceeding <code>clip</code> is redistributed among the other bins.</p>
 <p><a id='Filtering-kernels-1'></a></p>
 <h1 id="filtering-kernels">Filtering kernels</h1>
 <p><a id='Images.gaussian2d' href='#Images.gaussian2d'>#</a>
