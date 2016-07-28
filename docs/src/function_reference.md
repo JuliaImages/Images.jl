@@ -368,6 +368,13 @@ component_centroids
 bilinear_interpolation
 ```
 
+# Integral Images
+
+```@docs
+integral_image
+boxdiff
+```
+
 # Phantoms
 
 ```@docs
