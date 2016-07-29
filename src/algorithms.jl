@@ -1850,17 +1850,17 @@ function bilinear_interpolation{T}(img::AbstractArray{T, 2}, y::Number, x::Numbe
 
     if x_max == x_min
         if y_max == y_min
-            return topleft
+            return T(topleft)
         end
-        return ((y_max - y) * topleft + (y - y_min) * bottomleft) / (y_max - y_min)
+        return T(((y_max - y) * topleft + (y - y_min) * bottomleft) / (y_max - y_min))
     elseif y_max == y_min
-        return ((x_max - x) * topleft + (x - x_min) * topright) / (x_max - x_min)
+        return T(((x_max - x) * topleft + (x - x_min) * topright) / (x_max - x_min))
     end
 
     r1 = ((x_max - x) * topleft + (x - x_min) * topright) / (x_max - x_min)
     r2 = ((x_max - x) * bottomleft + (x - x_min) * bottomright) / (x_max - x_min)
 
-    ((y_max - y) * r1 + (y - y_min) * r2) / (y_max - y_min)
+    T(((y_max - y) * r1 + (y - y_min) * r2) / (y_max - y_min))
 
 end
 

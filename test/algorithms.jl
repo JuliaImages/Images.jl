@@ -573,12 +573,12 @@ facts("Algorithms") do
 
     context("Interpolations") do
 
-        img = zeros(5, 5)
+        img = zeros(Float64, 5, 5)
         @fact bilinear_interpolation(img, 4.5, 5.5) --> 0.0
         @fact bilinear_interpolation(img, 4.5, 3.5) --> 0.0
 
         for i in [1.0, 2.0, 5.0, 7.0, 9.0]
-            img = ones(5, 5) * i
+            img = ones(Float64, 5, 5) * i
             @fact (bilinear_interpolation(img, 3.5, 4.5) == i) --> true
             @fact (bilinear_interpolation(img, 3.2, 4) == i) --> true # X_MAX == X_MIN
             @fact (bilinear_interpolation(img, 3.2, 4) == i) --> true # Y_MAX == Y_MIN
@@ -592,7 +592,7 @@ facts("Algorithms") do
             @fact isapprox(bilinear_interpolation(img, 0.5, 0.5), 0.25 * i) --> true
         end
 
-        img = reshape(1:25, 5, 5)
+        img = reshape(1.0:1.0:25.0, 5, 5)
         @fact bilinear_interpolation(img, 1.5, 2) --> 6.5
         @fact bilinear_interpolation(img, 2, 1.5) --> 4.5
         @fact bilinear_interpolation(img, 2, 1) --> 2.0
