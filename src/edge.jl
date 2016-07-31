@@ -109,35 +109,108 @@ function ando5_sep()
     return f', f
 end
 
-# Image gradients in the X and Y direction
+# Auxiliary functions for computing N-dimensional gradients
+function _gradientpad(img::AbstractArray, border::AbstractString="replicate")
+  border ∈ ["replicate", "circular", "reflect", "symmetric"] || error("border option not supported")
+  padding = map(Int, [size(img)...] .> 1)
+
+  padarray(img, padding, padding, border)
+end
+
+function _directional_kernel(dir::Int, extent::Dims, method::AbstractString)
+  extent[dir] > 1 || error("invalid gradient direction")
+
+  ndirs = length(extent)
+
+  # smoothing weights
+  weights = (method == "sobel" ? [1.,2.,1.] :
+             method == "ando3" ? [.112737,.274526,.112737] :
+             error("Unknown gradient method: $method"))
+
+  # centered difference
+  idx = ones(Int, ndirs); idx[dir] = 3
+  kern = reshape([-1.,0.,1.], idx...)
+  # perpendicular smoothing
+  for j in [1:dir-1;dir+1:ndirs]
+    if extent[j] > 1
+      idx = ones(Int, ndirs); idx[j] = 3
+      kern = broadcast(*, kern, reshape(weights, idx...))
+    end
+  end
+
+  kern
+end
+
+
+# N-dimensional gradients
 """
 ```
-grad_x, grad_y = imgradients(img, [method], [border])
+G = imgradients(img, [points], [method], [border])
 ```
 
-performs edge-detection filtering. `method` is one of `"sobel"`, `"prewitt"`, `"ando3"`,
-`"ando4"`, `"ando4_sep"`, `"ando5"`, or `"ando5_sep"`, defaulting to `"ando3"`
-(see the functions of the same name for more information).  `border` is any of
-the boundary conditions specified in `padarray`.
+Performs edge detection filtering in the N-dimensional array `img`.
+Gradients are computed at specified `points` (or indexes) in the
+array or everywhere. Available methods: `"sobel"` and `"ando3"`.
+Border options:`"replicate"`, `"circular"`, `"reflect"`, `"symmetric"`.
 
-Returns a tuple containing `x` (horizontal) and `y` (vertical) gradient images
-of the same size as `img`, calculated using the requested method and border.
+Returns a 2D array `G` with the gradients as rows. The number of rows
+is the number of points at which the gradient was computed and the
+number of columns is the dimensionality of the array.
 """
-function imgradients(img::AbstractArray, method::AbstractString="ando3", border::AbstractString="replicate")
-    sx,sy = spatialorder(img)[1] == "x" ? (1,2) : (2,1)
-    s = (method == "sobel"     ? sobel() :
-         method == "prewitt"   ? prewitt() :
-         method == "ando3"     ? ando3() :
-         method == "ando4"     ? ando4() :
-         method == "ando5"     ? ando5() :
-         method == "ando4_sep" ? ando4_sep() :
-         method == "ando5_sep" ? ando5_sep() :
-         error("Unknown gradient method: $method"))
+function imgradients(img::AbstractArray, points::AbstractVector;
+                     method::AbstractString="ando3", border::AbstractString="replicate")
+  extent = size(img)
+  ndirs = length(extent)
+  npoints = length(points)
 
-    grad_x = imfilter(img, s[sx], border)
-    grad_y = imfilter(img, s[sy], border)
+  # pad input image only on appropriate directions
+  imgpad = _gradientpad(img, border)
 
-    return grad_x, grad_y
+  # gradient matrix
+  G = zeros(npoints, ndirs)
+
+  for dir in 1:ndirs
+    # kernel = centered difference + perpendicular smoothing
+    if extent[dir] > 1
+      kern = _directional_kernel(dir, extent, method)
+
+      # compute gradient at specified points
+      A = zeros(kern)
+      shape = size(kern)
+      for (k, p) in enumerate(points)
+        icenter = CartesianIndex(ind2sub(extent, p))
+        i1 = CartesianIndex(tuple(ones(Int, ndirs)...))
+        for ii in CartesianRange(shape)
+          A[ii] = imgpad[ii + icenter - i1]
+        end
+
+        G[k,dir] = sum(kern .* A)
+      end
+    end
+  end
+
+  G
+end
+
+function imgradients(img::AbstractArray; method::AbstractString="ando3", border::AbstractString="replicate")
+  extent = size(img)
+  ndirs = length(extent)
+
+  # pad input image only on appropriate directions
+  imgpad = _gradientpad(img, border)
+
+  # gradient tuple
+  G = fill(zeros(extent), ndirs)
+
+  for dir in 1:ndirs
+    # kernel = centered difference + perpendicular smoothing
+    if extent[dir] > 1
+      kern = _directional_kernel(dir, extent, method)
+      G[dir] = imfilter(imgpad, kern, "inner")
+    end
+  end
+
+  G
 end
 
 function imgradients{T<:Color}(img::AbstractArray{T}, method::AbstractString="ando3", border::AbstractString="replicate")
@@ -534,12 +607,12 @@ canny_edges = canny(img, sigma = 1.4, upperThreshold = 0.80, lowerThreshold = 0.
 Performs Canny Edge Detection on the input image.
 
 Parameters :
-  
+
   sigma :           Specifies the standard deviation of the gaussian filter
   upperThreshold :  Upper bound for hysteresis thresholding
   lowerThreshold :  Lower bound for hysteresis thresholding
   astype :          Specifies return type of result
-  percentile :      Specifies if upperThreshold and lowerThreshold should be used 
+  percentile :      Specifies if upperThreshold and lowerThreshold should be used
                     as quantiles or absolute values
 
 """
@@ -562,8 +635,8 @@ end
 function hysteresis_thresholding{T}(img_nonMaxSup::AbstractArray{T, 2}, upperThreshold::Number, lowerThreshold::Number)
     img_thresholded = map(i -> i > lowerThreshold ? i > upperThreshold ? 1.0 : 0.5 : 0.0, img_nonMaxSup)
     queue = CartesianIndex{2}[]
-    R = CartesianRange(size(img_thresholded)) 
-        
+    R = CartesianRange(size(img_thresholded))
+
     I1, Iend = first(R), last(R)
     for I in R
       if img_thresholded[I] == 1.0
