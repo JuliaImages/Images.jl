@@ -1004,6 +1004,33 @@ label = label_components(tf, [region])
 
 <p>Bilinear Interpolation is used to interpolate functions of two variables on a rectilinear 2D grid.</p>
 <p>The interpolation is done in one direction first and then the values obtained are used to do the interpolation in the second direction.</p>
+<p><a id='Integral-Images-1'></a></p>
+<h1 id="integral-images">Integral Images</h1>
+<p><a id='Images.integral_image' href='#Images.integral_image'>#</a>
+<strong><code>Images.integral_image</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>integral_img = integral_image(img)
+</code></pre>
+
+<p>Returns the integral image of an image. The integral image is calculated by assigning to each pixel the sum of all pixels above it and to its left, i.e. the rectangle from (1, 1) to the pixel. An integral image is a data structure which helps in efficient  calculation of sum of pixels in a rectangular subset of an image. See <code>boxdiff</code> for more information.</p>
+<p><a id='Images.boxdiff' href='#Images.boxdiff'>#</a>
+<strong><code>Images.boxdiff</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>sum = boxdiff(integral_image, ytop:ybot, xtop:xbot)
+sum = boxdiff(integral_image, CartesianIndex(tl_y, tl_x), CartesianIndex(br_y, br_x))
+sum = boxdiff(integral_image, tl_y, tl_x, br_y, br_x)
+</code></pre>
+
+<p>An integral image is a data structure which helps in efficient calculation of sum of pixels in  a rectangular subset of an image. It stores at each pixel the sum of all pixels above it and to  its left. The sum of a window in an image can be directly calculated using four array  references of the integral image, irrespective of the size of the window, given the <code>yrange</code> and <code>xrange</code> of the window. Given an integral image - </p>
+<pre><code>    A - - - - - - B -
+    - * * * * * * * -
+    - * * * * * * * -
+    - * * * * * * * -
+    - * * * * * * * -
+    - * * * * * * * -
+    C * * * * * * D - 
+    - - - - - - - - -
+</code></pre>
+
+<p>The sum of pixels in the area denoted by * is given by S = D + A - B - C.</p>
 <p><a id='Phantoms-1'></a></p>
 <h1 id="phantoms">Phantoms</h1>
 <p><a id='Images.shepp_logan' href='#Images.shepp_logan'>#</a>
