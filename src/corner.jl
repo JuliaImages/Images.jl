@@ -1,5 +1,6 @@
 """
 ```
+corners = imcorner(img; [method])
 corners = imcorner(img, threshold, percentile; [method])
 ```
 
@@ -9,12 +10,21 @@ Performs corner detection using one of the following methods -
     2. shi_tomasi
     3. kitchen_rosenfeld
 
-The parameters of the individual methods are described in their documentation. If
-a threshold is specified, the values of the responses are thresholded to give the 
-corner pixels. The threshold is assumed to be a percentile value unless `percentile`
-is set to false. 
+The parameters of the individual methods are described in their documentation. The 
+maxima values of the resultant responses are taken as corners. If a threshold is 
+specified, the values of the responses are thresholded to give the corner pixels. 
+The threshold is assumed to be a percentile value unless `percentile` is set to false. 
 """
-function imcorner(img::AbstractArray, threshold = 0.99, percentile = true; method::Function = harris, args...)
+function imcorner(img::AbstractArray; method::Function = harris, args...)
+    img_gray = convert(Array{Gray}, img)
+    responses = method(img_gray; args...)
+    corners = falses(size(img))
+    maxima = map(CartesianIndex{2}, findlocalmaxima(responses))
+    for m in maxima corners[m] = true end
+    corners
+end
+
+function imcorner(img::AbstractArray, threshold, percentile; method::Function = harris, args...)
     img_gray = convert(Array{Gray}, img)
     responses = method(img_gray; args...)
     
@@ -22,7 +32,7 @@ function imcorner(img::AbstractArray, threshold = 0.99, percentile = true; metho
         threshold = StatsBase.percentile(responses[:], threshold * 100)
     end
 
-    corners = map(i -> i < threshold ? zero(Gray{U8}) : one(Gray{U8}), responses)
+    corners = map(i -> i > threshold, responses)
     corners
 end
 
@@ -68,7 +78,7 @@ function kitchen_rosenfeld(img::AbstractArray; border::AbstractString = "replica
     (grad_yx, grad_yy) = imgradients(grad_y, "sobel", border)
     numerator = map((x, y, xx, xy, yy) -> xx * (y ^ 2) + yy * (x ^ 2) - 2 * xy * x * y, grad_x, grad_y, grad_xx, grad_xy, grad_yy)
     denominator = map((x, y) -> x ^ 2 + y ^ 2, grad_x, grad_y)
-    corner = map((n, d) -> d == 0.0 ? 0.0 : n/d, numerator, denominator)
+    corner = map((n, d) -> d == 0.0 ? 0.0 : -n / d, numerator, denominator)
     corner
 end
 
