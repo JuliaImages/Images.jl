@@ -157,9 +157,47 @@ facts("Algorithms") do
         chk = Array(1:10)
         @fact all([vec(int_img[i, :]) == chk * i for i in 1:10]) --> true
 
+        int_sum = boxdiff(int_img, 1, 1, 5, 2)
+        @fact int_sum --> 10.0
+        int_sum = boxdiff(int_img, 1:5, 1:2)
+        @fact int_sum --> 10.0
+        int_sum = boxdiff(int_img, CartesianIndex((1, 1)), CartesianIndex((5, 2)))
+        @fact int_sum --> 10.0
+        int_sum = boxdiff(int_img, 1, 1, 2, 5)
+        @fact int_sum --> 10.0
+        int_sum = boxdiff(int_img, 1:2, 1:5)
+        @fact int_sum --> 10.0
+        int_sum = boxdiff(int_img, CartesianIndex((1, 1)), CartesianIndex((2, 5)))
+        @fact int_sum --> 10.0
+        int_sum = boxdiff(int_img, 4, 4, 8, 8)
+        @fact int_sum --> 25.0
+        int_sum = boxdiff(int_img, 4:8, 4:8)
+        @fact int_sum --> 25.0
+        int_sum = boxdiff(int_img, CartesianIndex((4, 4)), CartesianIndex((8, 8)))
+        @fact int_sum --> 25.0
+
         a = reshape(1:100, 10, 10)
         int_img = integral_image(a)
         @fact int_img[diagind(int_img)] == Array([1, 26,  108,  280,  575, 1026, 1666, 2528, 3645, 5050]) --> true
+
+        int_sum = boxdiff(int_img, 1, 1, 3, 3)
+        @fact int_sum --> 108
+        int_sum = boxdiff(int_img, 1:3, 1:3)
+        @fact int_sum --> 108
+        int_sum = boxdiff(int_img, CartesianIndex((1, 1)), CartesianIndex((3, 3)))
+        @fact int_sum --> 108
+        int_sum = boxdiff(int_img, 1, 1, 5, 2)
+        @fact int_sum --> 80
+        int_sum = boxdiff(int_img, 1:5, 1:2)
+        @fact int_sum --> 80
+        int_sum = boxdiff(int_img, CartesianIndex((1, 1)), CartesianIndex((5, 2)))
+        @fact int_sum --> 80
+        int_sum = boxdiff(int_img, 4, 4, 8, 8)
+        @fact int_sum --> 1400
+        int_sum = boxdiff(int_img, 4:8, 4:8)
+        @fact int_sum --> 1400
+        int_sum = boxdiff(int_img, CartesianIndex((4, 4)), CartesianIndex((8, 8)))
+        @fact int_sum --> 1400
     end
 
     context("fft and ifft") do

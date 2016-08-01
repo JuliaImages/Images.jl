@@ -1813,7 +1813,9 @@ integral_img = integral_image(img)
 
 Returns the integral image of an image. The integral image is calculated by assigning
 to each pixel the sum of all pixels above it and to its left, i.e. the rectangle from
-(1, 1) to the pixel.
+(1, 1) to the pixel. An integral image is a data structure which helps in efficient 
+calculation of sum of pixels in a rectangular subset of an image. See `boxdiff` for more
+information.
 """
 function integral_image(img::AbstractArray)
     integral_img = Array{accum(eltype(img))}(size(img))
@@ -1823,6 +1825,41 @@ function integral_image(img::AbstractArray)
         cumsum!(integral_img, integral_img, sd[i])
     end
     integral_img
+end
+
+"""
+```
+sum = boxdiff(integral_image, ytop:ybot, xtop:xbot)
+sum = boxdiff(integral_image, CartesianIndex(tl_y, tl_x), CartesianIndex(br_y, br_x))
+sum = boxdiff(integral_image, tl_y, tl_x, br_y, br_x)
+```
+
+An integral image is a data structure which helps in efficient calculation of sum of pixels in 
+a rectangular subset of an image. It stores at each pixel the sum of all pixels above it and to 
+its left. The sum of a window in an image can be directly calculated using four array 
+references of the integral image, irrespective of the size of the window, given the `yrange` and
+`xrange` of the window. Given an integral image - 
+        
+        A - - - - - - B -
+        - * * * * * * * -
+        - * * * * * * * -
+        - * * * * * * * -
+        - * * * * * * * -
+        - * * * * * * * -
+        C * * * * * * D - 
+        - - - - - - - - -
+
+The sum of pixels in the area denoted by * is given by S = D + A - B - C.
+"""
+boxdiff{T}(int_img::AbstractArray{T, 2}, y::UnitRange, x::UnitRange) = boxdiff(int_img, y.start, x.start, y.stop, x.stop)
+boxdiff{T}(int_img::AbstractArray{T, 2}, tl::CartesianIndex, br::CartesianIndex) = boxdiff(int_img, tl[1], tl[2], br[1], br[2])
+
+function boxdiff{T}(int_img::AbstractArray{T, 2}, tl_y::Integer, tl_x::Integer, br_y::Integer, br_x::Integer)
+    sum = int_img[br_y, br_x]
+    sum -= tl_x > 1 ? int_img[br_y, tl_x - 1] : zero(T)
+    sum -= tl_y > 1 ? int_img[tl_y - 1, br_x] : zero(T)
+    sum += tl_y > 1 && tl_x > 1 ? int_img[tl_y - 1, tl_x - 1] : zero(T)
+    sum
 end
 
 """
