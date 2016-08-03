@@ -1880,10 +1880,10 @@ function bilinear_interpolation{T}(img::AbstractArray{T, 2}, y::Number, x::Numbe
     y_max = ceil(Int, y)
     x_max = ceil(Int, x)
 
-    topleft = try checkbounds(img, y_min, x_min); img[y_min, x_min] catch; zero(T) end
-    bottomleft = try checkbounds(img, y_max, x_min); img[y_max, x_min] catch; zero(T) end
-    topright = try checkbounds(img, y_min, x_max); img[y_min, x_max] catch; zero(T) end
-    bottomright = try checkbounds(img, y_max, x_max); img[y_max, x_max] catch; zero(T) end
+    topleft = chkbounds(Bool, img, y_min, x_min) ? img[y_min, x_min] : zero(T) 
+    bottomleft = chkbounds(Bool, img, y_max, x_min) ? img[y_max, x_min] : zero(T) 
+    topright = chkbounds(Bool, img, y_min, x_max) ? img[y_min, x_max] : zero(T) 
+    bottomright = chkbounds(Bool, img, y_max, x_max) ? img[y_max, x_max] : zero(T) 
 
     if x_max == x_min
         if y_max == y_min
@@ -1901,3 +1901,8 @@ function bilinear_interpolation{T}(img::AbstractArray{T, 2}, y::Number, x::Numbe
 
 end
 
+if VERSION < v"0.5.0-dev"
+    chkbounds(::Type{Bool}, img, x, y)  = checkbounds(Bool, size(img, 1), y) && checkbounds(Bool, size(img, 2), x)
+else
+    chkbounds(::Type{Bool}, img, x, y) = checkbounds(Bool, img, x, y)
+end
