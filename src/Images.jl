@@ -276,6 +276,7 @@ export # types
     integral_image,
     boxdiff,
     bilinear_interpolation,
+    gaussian_pyramid,
     
     # distances
     hausdorff_distance,
@@ -302,7 +303,7 @@ Contrast/coloration:
 
 Algorithms:
 
-    - Reductions: `maxfinite`, `maxabsfinite`, `minfinite`, `meanfinite`, `sad`, `ssd`, `integral_image`, `boxdiff`
+    - Reductions: `maxfinite`, `maxabsfinite`, `minfinite`, `meanfinite`, `sad`, `ssd`, `integral_image`, `boxdiff`, `gaussian_pyramid`
     - Resizing: `restrict`, `imresize` (not yet exported)
     - Filtering: `imfilter`, `imfilter_fft`, `imfilter_gaussian`, `imfilter_LoG`, `imROF`, `ncc`, `padarray`
     - Filtering kernels: `ando[345]`, `guassian2d`, `imaverage`, `imdog`, `imlaplacian`, `prewitt`, `sobel`

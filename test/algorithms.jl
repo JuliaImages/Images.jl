@@ -198,6 +198,26 @@ facts("Algorithms") do
         @fact int_sum --> 1400
         int_sum = boxdiff(int_img, CartesianIndex((4, 4)), CartesianIndex((8, 8)))
         @fact int_sum --> 1400
+
+        img = zeros(40, 40)
+        img[10:30, 10:30] = 1
+        pyramid = gaussian_pyramid(img, 3, 2, 1.0)
+        @fact size(pyramid[1]) == (40, 40) --> true
+        @fact size(pyramid[2]) == (20, 20) --> true
+        @fact size(pyramid[3]) == (10, 10) --> true
+        @fact size(pyramid[4]) == (5, 5) --> true
+        @fact isapprox(pyramid[1][20, 20], 1.0, atol = 0.01) --> true
+        @fact isapprox(pyramid[2][10, 10], 1.0, atol = 0.01) --> true
+        @fact isapprox(pyramid[3][5, 5], 1.0, atol = 0.05) --> true
+        @fact isapprox(pyramid[4][3, 3], 0.9, atol = 0.025) --> true
+        
+        for p in pyramid
+            h, w = size(p)
+            @fact all([isapprox(v, 0, atol = 0.06) for v in p[1, :]]) --> true
+            @fact all([isapprox(v, 0, atol = 0.06) for v in p[:, 1]]) --> true
+            @fact all([isapprox(v, 0, atol = 0.06) for v in p[h, :]]) --> true
+            @fact all([isapprox(v, 0, atol = 0.06) for v in p[:, w]]) --> true
+        end 
     end
 
     context("fft and ifft") do

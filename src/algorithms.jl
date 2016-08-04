@@ -1906,3 +1906,29 @@ if VERSION < v"0.5.0-dev+4754"
 else
     chkbounds(::Type{Bool}, img, x, y) = checkbounds(Bool, img, x, y)
 end
+
+"""
+```
+pyramid = gaussian_pyramid(img, n_scales, downsample, sigma)
+```
+
+Returns a  gaussian pyramid of scales `n_scales`, each downsampled
+by a factor `downsample` and `sigma` for the gaussian kernel. 
+
+"""
+function gaussian_pyramid{T}(img::AbstractArray{T, 2}, n_scales::Int, downsample::Real, sigma::Real)
+    prev = img
+    pyramid = typeof(img)[]
+    push!(pyramid, img)
+    prev_h, prev_w = size(img)
+    for i in 1:n_scales
+        next_h = ceil(Int, prev_h / downsample)
+        next_w = ceil(Int, prev_w / downsample)
+        img_smoothed = imfilter_gaussian(prev, [sigma, sigma])
+        img_scaled = imresize(img_smoothed, (next_h, next_w))
+        push!(pyramid, img_scaled)
+        prev = img_scaled
+        prev_h, prev_w = size(img_scaled)
+    end
+    pyramid
+end
