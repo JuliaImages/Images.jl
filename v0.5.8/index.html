@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<!--[if lt IE 7 ]><html class="no-js ie6"><![endif]-->
+<!--[if IE 7 ]><html class="no-js ie7"><![endif]-->
+<!--[if IE 8 ]><html class="no-js ie8"><![endif]-->
+<!--[if IE 9 ]><html class="no-js ie9"><![endif]-->
+<!--[if (gt IE 9)|!(IE)]><!--> <html class="no-js"> <!--<![endif]-->
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,maximum-scale=1">
+    
+      
+        <title>Images.jl - An image processing library for Julia</title>
+      
+      
+        <meta name="description" content="An image processing library for Julia">
+      
+      
+      
+        <meta name="author" content="Tim Holy">
+      
+    
+    <meta property="og:url" content="None">
+    <meta property="og:title" content="Images.jl">
+    <meta property="og:image" content="None/./">
+    <meta name="apple-mobile-web-app-title" content="Images.jl">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
+    
+    <link rel="shortcut icon" type="image/x-icon" href="./assets/images/favicon-e565ddfa3b.ico">
+    <link rel="icon" type="image/x-icon" href="./assets/images/favicon-e565ddfa3b.ico">
+    <style>
+      @font-face {
+      	font-family: 'Icon';
+      	src: url('./assets/fonts/icon.eot?52m981');
+      	src: url('./assets/fonts/icon.eot?#iefix52m981')
+               format('embedded-opentype'),
+      		   url('./assets/fonts/icon.woff?52m981')
+               format('woff'),
+      		   url('./assets/fonts/icon.ttf?52m981')
+               format('truetype'),
+      		   url('./assets/fonts/icon.svg?52m981#icon')
+               format('svg');
+      	font-weight: normal;
+      	font-style: normal;
+      }
+    </style>
+    <link rel="stylesheet" href="./assets/stylesheets/application-a422ff04cc.css">
+    
+      <link rel="stylesheet" href="./assets/stylesheets/palettes-05ab2406df.css">
+    
+    
+      
+      
+      
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source Pro:400,700|Source+Code+Pro">
+      <style>
+        body, input {
+          font-family: 'Source Pro', Helvetica, Arial, sans-serif;
+        }
+        pre, code {
+          font-family: 'Source Code Pro', 'Courier New', 'Courier', monospace;
+        }
+      </style>
+    
+    
+      <link rel="stylesheet" href="./assets/Documenter.css">
+    
+    <script src="./assets/javascripts/modernizr-4ab42b99fd.js"></script>
+    
+  </head>
+  
+  
+  
+  <body class="palette-primary-indigo palette-accent-light-blue">
+    
+      
+      
+    
+    <div class="backdrop">
+      <div class="backdrop-paper"></div>
+    </div>
+    <input class="toggle" type="checkbox" id="toggle-drawer">
+    <input class="toggle" type="checkbox" id="toggle-search">
+    <label class="toggle-button overlay" for="toggle-drawer"></label>
+    <header class="header">
+      <nav aria-label="Header">
+  <div class="bar default">
+    <div class="button button-menu" role="button" aria-label="Menu">
+      <label class="toggle-button icon icon-menu" for="toggle-drawer">
+        <span></span>
+      </label>
+    </div>
+    <div class="stretch">
+      <div class="title">
+        
+          <span class="path">
+            
+          </span>
+        
+        Images.jl
+      </div>
+    </div>
+    
+    
+    <div class="button button-search" role="button" aria-label="Search">
+      <label class="toggle-button icon icon-search" title="Search" for="toggle-search"></label>
+    </div>
+  </div>
+  <div class="bar search">
+    <div class="button button-close" role="button" aria-label="Close">
+      <label class="toggle-button icon icon-back" for="toggle-search"></label>
+    </div>
+    <div class="stretch">
+      <div class="field">
+        <input class="query" type="text" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck>
+      </div>
+    </div>
+    <div class="button button-reset" role="button" aria-label="Search">
+      <button class="toggle-button icon icon-close" id="reset-search"></button>
+    </div>
+  </div>
+</nav>
+    </header>
+    <main class="main">
+      
+      <div class="drawer">
+        <nav aria-label="Navigation">
+  
+  <a href="https://github.com/timholy/Images.jl.git" class="project">
+    <div class="banner">
+      
+      <div class="name">
+        <strong>
+          Images.jl
+          <span class="version">
+            
+          </span>
+        </strong>
+        
+          <br>
+          timholy/Images.jl.git
+        
+      </div>
+    </div>
+  </a>
+  <div class="scrollable">
+    <div class="wrapper">
+      
+        <ul class="repo">
+          <li class="repo-download">
+            
+            <a href="https://github.com/timholy/Images.jl.git/archive/master.zip" target="_blank" title="Download" data-action="download">
+              <i class="icon icon-download"></i> Download
+            </a>
+          </li>
+          <li class="repo-stars">
+            <a href="https://github.com/timholy/Images.jl.git/stargazers" target="_blank" title="Stargazers" data-action="star">
+              <i class="icon icon-star"></i> Stars
+              <span class="count">&ndash;</span>
+            </a>
+          </li>
+        </ul>
+        <hr>
+      
+      <div class="toc">
+        <ul>
+          
+            
+  <li>
+    <a class="current" title="Home" href=".">
+      Home
+    </a>
+    
+      
+        
+      
+      
+        <ul>
+          
+            <li class="anchor">
+              <a title="Installation" href="#installation">
+                Installation
+              </a>
+            </li>
+          
+            <li class="anchor">
+              <a title="Package interactions" href="#package-interactions">
+                Package interactions
+              </a>
+            </li>
+          
+            <li class="anchor">
+              <a title="Image viewing" href="#image-viewing">
+                Image viewing
+              </a>
+            </li>
+          
+            <li class="anchor">
+              <a title="TestImages" href="#testimages">
+                TestImages
+              </a>
+            </li>
+          
+            <li class="anchor">
+              <a title="Getting started" href="#getting-started">
+                Getting started
+              </a>
+            </li>
+          
+            <li class="anchor">
+              <a title="Further documentation" href="#further-documentation">
+                Further documentation
+              </a>
+            </li>
+          
+            <li class="anchor">
+              <a title="Credits" href="#credits">
+                Credits
+              </a>
+            </li>
+          
+        </ul>
+      
+    
+  </li>
+
+          
+            
+  <li>
+    <span class="section">User Guide</span>
+    <ul>
+      
+        
+  <li>
+    <a class="" title="Aims" href="aims/">
+      Aims
+    </a>
+    
+  </li>
+
+      
+        
+  <li>
+    <a class="" title="Core Concepts" href="core/">
+      Core Concepts
+    </a>
+    
+  </li>
+
+      
+        
+  <li>
+    <a class="" title="Overlays" href="overlays/">
+      Overlays
+    </a>
+    
+  </li>
+
+      
+    </ul>
+  </li>
+
+          
+            
+  <li>
+    <a class="" title="Function Reference" href="function_reference/">
+      Function Reference
+    </a>
+    
+  </li>
+
+          
+        </ul>
+        
+      </div>
+    </div>
+  </div>
+</nav>
+      </div>
+      <article class="article">
+        <div class="wrapper">
+          
+          <p><a id='Images.jl-1'></a></p>
+<h1 id="imagesjl">Images.jl</h1>
+<p>An image processing library for <a href="http://julialang.org/">Julia</a>.</p>
+<p><a id='Installation-1'></a></p>
+<h2 id="installation">Installation</h2>
+<p>Install via the package manager,</p>
+<pre><code class="julia">Pkg.add(&quot;Images&quot;)
+</code></pre>
+
+<p>It's helpful to have ImageMagick installed on your system, as Images relies on it for reading and writing many common image types.  ImageMagick <em>should</em> be installed for you automatically. In case of trouble, more details about manual installation and troubleshooting can be found in the <a href="./install.html">installation help</a>. Mac users in particular seem to have trouble; you may find <a href="https://github.com/JuliaLang/Homebrew.jl/wiki/Debugging-Homebrew.jl">debugging Homebrew</a> useful.</p>
+<p><a id='Package-interactions-1'></a></p>
+<h2 id="package-interactions">Package interactions</h2>
+<p>A few other packages define overlapping functions or types (<a href="https://github.com/stevengj/PyPlot.jl">PyPlot</a> defines <code>imread</code>, and <a href="https://github.com/nolta/Winston.jl">Winston</a> defines <code>Image</code>).  When using both Images and these packages, you can always specify which version you want with <code>Images.imread("myimage.png")</code>.</p>
+<p><a id='Image-viewing-1'></a></p>
+<h2 id="image-viewing">Image viewing</h2>
+<p>If you're using the <a href="https://github.com/JuliaLang/IJulia.jl">IJulia</a> notebook, images will be displayed <a href="http://htmlpreview.github.com/?https://github.com/timholy/Images.jl/blob/master/ImagesDemo.html">automatically</a>.</p>
+<p>Julia code for the display of images can be found in <a href="https://github.com/timholy/ImageView.jl">ImageView</a>.  Installation of this package is recommended but not required.</p>
+<p><a id='TestImages-1'></a></p>
+<h2 id="testimages">TestImages</h2>
+<p>When testing ideas or just following along with the documentation, it can be useful to have some images to work with.  The <a href="https://github.com/timholy/TestImages.jl">TestImages</a> package bundles several "standard" images for you.  To load one of the images from this package, say</p>
+<pre><code class="julia">using TestImages
+img = testimage(&quot;mandrill&quot;)
+</code></pre>
+
+<p>The examples below will assume you're loading a particular file from your disk, but you can substitute those commands with <code>testimage</code>.</p>
+<p><a id='Getting-started-1'></a></p>
+<h2 id="getting-started">Getting started</h2>
+<p>For these examples you'll need to install both <code>Images</code> and <code>ImageView</code>. Depending on your task, it's also very useful to have two other packages loaded, <a href="https://github.com/JuliaGraphics/Colors.jl">Colors</a> and <a href="https://github.com/JeffBezanson/FixedPointNumbers.jl">FixedPointNumbers</a>.  Load the code for all of these packages with</p>
+<pre><code class="julia">using Images, Colors, FixedPointNumbers, ImageView
+</code></pre>
+
+<p><a id='Loading-your-first-image:-how-images-are-represented-1'></a></p>
+<h3 id="loading-your-first-image-how-images-are-represented">Loading your first image: how images are represented</h3>
+<p>You likely have a number of images already at your disposal, and you can use these, TestImages.jl, or run <code>readremote.jl</code> in the <code>test/</code> directory.  (This requires an internet connection.)  These will be deposited inside an <code>Images</code> directory inside your temporary directory (e.g., <code>/tmp</code> on Linux systems). The <code>"rose.png"</code> image in this example comes from the latter.</p>
+<p>Let's begin by reading an image from a file:</p>
+<pre><code class="julia">julia&gt; img = imread(&quot;rose.png&quot;)
+RGB Image with:
+  data: 70x46 Array{RGB{UFixed{Uint8,8}},2}
+  properties:
+    IMcs: sRGB
+    spatialorder:  x y
+    pixelspacing:  1 1
+</code></pre>
+
+<p>If you're using Images through IJulia, rather than this text output you probably see the image itself.  This is nice, but often it's quite helpful to see the structure of these Image objects.  This happens automatically at the REPL; within IJulia you can call</p>
+<pre><code class="julia">show(img)
+</code></pre>
+
+<p>to see the output above.</p>
+<p>The first line tells you that this is an RGB image. It is stored as a two-dimensional <code>Array</code> of <code>RGB{UFixed{Uint8,8}}</code>. To see what this pixel type is, we can do the following:</p>
+<pre><code class="julia">julia&gt; img[1,1]
+RGB{UFixed8}(0.188,0.184,0.176)
+</code></pre>
+
+<p>This extracts the first pixel, the one visually at the upper-left of the image. You can see that an <code>RGB</code> (which comes from the <a href="https://github.com/JuliaGraphics/Colors.jl">Colors</a> package) is a triple of values. The <code>UFixed8</code> number type (which comes from the <a href="https://github.com/JeffBezanson/FixedPointNumbers.jl">FixedPointNumbers</a> package), and whose long name is <code>UFixed{Uint8,8}</code>) represents fractional numbers, those that can encode values that lie between 0 and 1, using just 1 byte (8 bits).  If you've previously used other image processing libraries, you may be used to thinking of two basic image types, floating point-valued and integer-valued. In those libraries, "saturated" (the color white for an RGB image) would be represented by <code>1.0</code> for floating point-valued images, 255 for a <code>Uint8</code> image, and <code>0x0fff</code> for an image collected by a 12-bit camera. <code>Images.jl</code>, via Colors and FixedPointNumbers, unifies these so that <code>1</code> always means saturated, no matter whether the element type is <code>Float64</code>, <code>UFixed8</code>, or <code>UFixed12</code>.  This makes it easier to write generic algorithms and visualization code, while still allowing one to use efficient (and C-compatible) raw representations.</p>
+<p>You can see that this image has <code>properties</code>, of which there are three: <code>"IMcs"</code>, <code>"spatialorder"</code> and <code>"pixelspacing"</code>.  We'll talk more about the latter two in the next section.  The <code>"IMcs"</code> is really for internal use by ImageMagick; it says that the colorspace is <code>"sRGB"</code>, although (depending on which version of the library you have) you may see it say <code>"RGB"</code>.  Such differences are due to <a href="http://www.imagemagick.org/script/color-management.php">changes</a> in how ImageMagick handles colorspaces, and the fact that both older and newer versions of the library are still widespread.</p>
+<p>You can retrieve the properties using <code>props = properties(img)</code>. This returns the dictionary used by <code>img</code>; any modifications you make to <code>props</code> will update the properties of <code>img</code>.</p>
+<p>Likewise, given an Image <code>img</code>, you can access the underlying array with</p>
+<pre><code class="julia">A = data(img)
+</code></pre>
+
+<p>This is handy for those times when you want to call an algorithm that is implemented only for <code>Array</code>s. At the end, however, you may want to restore the contextual information available in an Image. While you can use the <code>Image</code> constructor directly, two alternatives can be convenient:</p>
+<pre><code class="julia">imgc = copyproperties(img, A)
+imgs = shareproperties(img, A)
+</code></pre>
+
+<p><code>imgc</code> has its own properties dictionary, initialized to be a copy of the one used by <code>img</code>.  In contrast, <code>imgs</code> shares a properties dictionary with <code>img</code>; any modification to the properties of <code>img</code> will also modify them for <code>imgs</code>. Use either as appropriate to your circumstance.</p>
+<p>The Images package is designed to work with either plain arrays or with Image types–-in general, though, you're probably best off leaving things as an Image, particularly if you work with movies, 3d images, or other more complex objects.</p>
+<p><a id='Storage-order-and-changing-the-representation-of-images-1'></a></p>
+<h3 id="storage-order-and-changing-the-representation-of-images">Storage order and changing the representation of images</h3>
+<p>In the example above, the <code>"spatialorder"</code> property has value <code>["x", "y"]</code>. This indicates that the image data are in "horizontal-major" order, meaning that a pixel at spatial location <code>(x,y)</code> would be addressed as <code>img[x,y]</code> rather than <code>img[y,x]</code>. <code>["y", "x"]</code> would indicate vertical-major.  Consequently, this image is 70 pixels wide and 46 pixels high.</p>
+<p>Images returns this image in horizontal-major order because this is how it was stored on disk.  Because the Images package is designed to scale to terabyte-sized images, a general philosophy is to work with whatever format users provide without forcing changes to the raw array representation. Consequently, when you load an image, its representation will match that used in the file.</p>
+<p>Of course, if you prefer to work with plain arrays, you can convert it:</p>
+<pre><code class="julia">julia&gt; imA = convert(Array, img);
+
+julia&gt; summary(imA)
+&quot;46x70 Array{RGB{UFixed{Uint8,8}},2}&quot;
+</code></pre>
+
+<p>You can see that this permuted the dimensions into vertical-major order, consistent with the column-major order with which Julia stores <code>Arrays</code>. Note that this preserved the element type, returning an <code>Array{RGB}</code>.  If you prefer to extract into an array of plain numbers in color-last order (typical of Matlab), you can use</p>
+<pre><code class="julia">julia&gt; imsep = separate(img)
+RGB Image with:
+  data: 46x70x3 Array{UFixed{Uint8,8},3}
+  properties:
+    IMcs: sRGB
+    colorspace: RGB
+    colordim: 3
+    spatialorder:  y x
+    pixelspacing:  1 1
+</code></pre>
+
+<p>You can see that <code>"spatialorder"</code> was changed to reflect the new layout, and that two new properties were added: <code>"colordim"</code>, which specifies which dimension of the array is used to encode color, and <code>"colorspace"</code> so you know how to interpret these colors.</p>
+<p>Compare this to</p>
+<pre><code class="julia">julia&gt; imr = reinterpret(UFixed8, img)
+RGB Image with:
+  data: 3x70x46 Array{UFixed{Uint8,8},3}
+  properties:
+    IMcs: sRGB
+    colorspace: RGB
+    colordim: 1
+    spatialorder:  x y
+    pixelspacing:  1 1
+</code></pre>
+
+<p><code>reinterpret</code> gives you a new view of the same underlying memory as <code>img</code>, whereas <code>convert(Array, img)</code> and <code>separate(img)</code> create new arrays if the memory-layout needs alteration.</p>
+<p>You can go back to using Colors to encode your image this way:</p>
+<pre><code class="julia">julia&gt; imcomb = convert(Image{RGB}, imsep)
+RGB Image with:
+  data: 46x70 Array{RGB{UFixed{Uint8,8}},2}
+  properties:
+    IMcs: sRGB
+    spatialorder:  y x
+    pixelspacing:  1 1
+</code></pre>
+
+<p>or even change to a new colorspace like this:</p>
+<pre><code class="julia">julia&gt; imhsv = convert(Image{HSV}, float32(img))
+HSV Image with:
+  data: 70x46 Array{HSV{Float32},2}
+  properties:
+    IMcs: sRGB
+    spatialorder:  x y
+    pixelspacing:  1 1
+</code></pre>
+
+<p>Many of the colorspaces supported by Colors (or rather its base package, ColorTypes) need a wider range of values than <code>[0,1]</code>, so it's necessary to convert to floating point.</p>
+<p>If you say <code>view(imhsv)</code>, you may be surprised to see something that looks like the original RGB image. Since the colorspace is known, it converts to RGB before rendering it. If, for example, you wanted to see what a "pure-V" image looks like, you can do this:</p>
+<pre><code class="julia">imv = shareproperties(imhsv, [HSV(0, 0, imhsv[i,j].v) for i = 1:size(imhsv,1),j = 1:size(imhsv,2)])
+view(imv)
+</code></pre>
+
+<p>and a pure-H image like this:</p>
+<pre><code class="julia">imh = shareproperties(imhsv, [HSV(imhsv[i,j].h, 0.5, 0.5) for i = 1:size(imhsv,1),j = 1:size(imhsv,2)])
+view(imh)
+</code></pre>
+
+<p>(Hue without saturation or value generates gray or black, so we used a constant different from zero for these parameters.)</p>
+<!– use standard html instead of markdown, to set resize behavior –> <img class="img-responsive" src="img/rose_hsv.png" />
+
+<p>Of course, you can combine these commands, for example</p>
+<pre><code class="julia">A = reinterpret(Uint8, data(img))
+</code></pre>
+
+<p>will, for a <code>RGB{UFixed8}</code> image, return a raw 3d array.  This can be useful if you want to interact with external code (a C-library, for example).  Assuming you don't want to lose orientation information, you can wrap a returned array <code>B</code> as <code>shareproperties(img, B)</code>.</p>
+<p><a id='Other-properties,-and-usage-of-Units-1'></a></p>
+<h3 id="other-properties-and-usage-of-units">Other properties, and usage of Units</h3>
+<p>The <code>"pixelspacing"</code> property informs ImageView that this image has an aspect ratio 1.  In scientific or medical imaging, you can use actual units to encode this property, for example through the <a href="https://github.com/Keno/SIUnits.jl">SIUnits</a> package.  For example, if you're doing microscopy you might specify</p>
+<pre><code class="julia">using SIUnits
+img[&quot;pixelspacing&quot;] = [0.32Micro*Meter,0.32Micro*Meter]
+</code></pre>
+
+<p>If you're performing three-dimensional imaging, you might set different values for the different axes:</p>
+<pre><code class="julia">using SIUnits.ShortUnits
+mriscan[&quot;pixelspacing&quot;] = [0.2mm, 0.2mm, 2mm]
+</code></pre>
+
+<p>ImageView includes facilities for scale bars, and by supplying your pixel spacing you can ensure that the scale bars are accurate.</p>
+<p><a id='A-brief-demonstration-of-image-processing-1'></a></p>
+<h3 id="a-brief-demonstration-of-image-processing">A brief demonstration of image processing</h3>
+<p>Now let's work through a more sophisticated example:</p>
+<pre><code class="julia">using Images, TestImages, ImageView
+img = testimage(&quot;mandrill&quot;)
+view(img)
+# Let's do some blurring
+kern = ones(Float32,7,7)/49
+imgf = imfilter(img, kern)
+view(imgf)
+# Let's make an oversaturated image
+imgs = 2imgf
+view(imgs)
+</code></pre>
+
+<!– use standard html instead of markdown, to set resize behavior –> <img class="img-responsive" src="img/mandrill.jpg" />
+
+<p><a id='Further-documentation-1'></a></p>
+<h2 id="further-documentation">Further documentation</h2>
+<p>Detailed documentation about the design of the library and the available functions can be found in the navigation list to the right. Here are some of the topics available:</p>
+<ul>
+<li>The <a href="./core.html">core</a> representation of images</li>
+<li><a href="./function_reference.html">Function reference</a></li>
+<li><a href="./overlays.html">Overlays</a>, a type for combining multiple grayscale arrays   into a single color array</li>
+</ul>
+<p><a id='Credits-1'></a></p>
+<h2 id="credits">Credits</h2>
+<p>Elements of this package descend from "image.jl" that once lived in Julia's <code>extras/</code> directory.  That file had several authors, of which the primary were Jeff Bezanson, Stefan Kroboth, Tim Holy, Mike Nolta, and Stefan Karpinski.  This repository has been quite heavily reworked; the current package maintainer is Tim Holy, and important contributions have been made by Ron Rock, Kevin Squire, Lucas Beyer, Elliot Saba, Isaiah Norton, Daniel Perry, Waldir Pimenta, Tobias Knopp, Jason Merrill, Dahua Lin, and several others.</p>
+          <aside class="copyright" role="note">
+            
+            Documentation built with
+            <a href="http://www.mkdocs.org" target="_blank">MkDocs</a>
+            using the
+            <a href="http://squidfunk.github.io/mkdocs-material/" target="_blank">
+              Material
+            </a>
+            theme.
+          </aside>
+          
+            <footer class="footer">
+              
+  <nav class="pagination" aria-label="Footer">
+    <div class="previous">
+      
+    </div>
+    <div class="next">
+      
+        <a href="aims/" title="Aims">
+          <span class="direction">
+            Next
+          </span>
+          <div class="page">
+            <div class="stretch">
+              <div class="title">
+                Aims
+              </div>
+            </div>
+            <div class="button button-next" role="button" aria-label="Next">
+              <i class="icon icon-forward"></i>
+            </div>
+          </div>
+        </a>
+      
+    </div>
+  </nav>
+
+            </footer>
+          
+        </div>
+      </article>
+      <div class="results" role="status" aria-live="polite">
+        <div class="scrollable">
+          <div class="wrapper">
+            <div class="meta"></div>
+            <div class="list"></div>
+          </div>
+        </div>
+      </div>
+    </main>
+    <script>
+      var base_url = '.';
+      var repo_id  = 'timholy/Images.jl.git';
+    </script>
+    <script src="./assets/javascripts/application-997097ee0c.js"></script>
+    
+      <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+      <script src="./assets/mathjaxhelper.js"></script>
+    
+    
+  </body>
+</html>
