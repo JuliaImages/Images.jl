@@ -1901,7 +1901,7 @@ function bilinear_interpolation{T}(img::AbstractArray{T, 2}, y::Number, x::Numbe
 
 end
 
-if VERSION < v"0.5.0-dev"
+if VERSION < v"0.5.0-dev+4754"
     chkbounds(::Type{Bool}, img, x, y)  = checkbounds(Bool, size(img, 1), y) && checkbounds(Bool, size(img, 2), x)
 else
     chkbounds(::Type{Bool}, img, x, y) = checkbounds(Bool, img, x, y)
