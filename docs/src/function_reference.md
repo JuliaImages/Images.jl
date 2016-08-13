@@ -375,6 +375,12 @@ integral_image
 boxdiff
 ```
 
+# Pyramids
+
+```@docs
+gaussian_pyramid
+```
+
 # Phantoms
 
 ```@docs
