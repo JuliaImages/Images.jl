@@ -904,6 +904,14 @@ sum = boxdiff(integral_image, tl_y, tl_x, br_y, br_x)
 </code></pre>
 
 <p>The sum of pixels in the area denoted by * is given by S = D + A - B - C.</p>
+<p><a id='Pyramids-1'></a></p>
+<h1 id="pyramids">Pyramids</h1>
+<p><a id='Images.gaussian_pyramid' href='#Images.gaussian_pyramid'>#</a>
+<strong><code>Images.gaussian_pyramid</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>pyramid = gaussian_pyramid(img, n_scales, downsample, sigma)
+</code></pre>
+
+<p>Returns a  gaussian pyramid of scales <code>n_scales</code>, each downsampled by a factor <code>downsample</code> and <code>sigma</code> for the gaussian kernel. </p>
 <p><a id='Phantoms-1'></a></p>
 <h1 id="phantoms">Phantoms</h1>
 <p><a id='Images.shepp_logan' href='#Images.shepp_logan'>#</a>
