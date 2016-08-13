@@ -1918,8 +1918,9 @@ by a factor `downsample` and `sigma` for the gaussian kernel.
 """
 function gaussian_pyramid{T}(img::AbstractArray{T, 2}, n_scales::Int, downsample::Real, sigma::Real)
     prev = img
-    pyramid = typeof(img)[]
-    push!(pyramid, img)
+    img_smoothed_main = imfilter_gaussian(prev, [sigma, sigma])
+    pyramid = typeof(img_smoothed_main)[]
+    push!(pyramid, img_smoothed_main)
     prev_h, prev_w = size(img)
     for i in 1:n_scales
         next_h = ceil(Int, prev_h / downsample)
