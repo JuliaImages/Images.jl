@@ -32,7 +32,7 @@ facts("Edge") do
         edges = canny(img)
         @fact eltype(edges.data) --> Gray{U8}
         @fact all(edges .== 0.0) --> true
-        
+
         #Box Edges
 
         img[2:end-1, 2:end-1] = 1
@@ -42,7 +42,7 @@ facts("Edge") do
         @fact all(edges[2, 2:end-1] .== 1.0) --> true
         @fact all(edges[end-1, 2:end-1] .== 1.0) --> true
         @fact all(edges[3:end-2, 3:end-2] .== 0.0) --> true
-        
+
         edges = canny(img, 1.4, 0.9, 0.2, percentile = false)
         @fact all(edges[2:end-1, 2] .== 1.0) --> true
         @fact all(edges[2:end-1, end-1] .== 1.0) --> true
@@ -73,7 +73,7 @@ facts("Edge") do
         @fact all(edges[diagind(edges, -2)] .== 1.0) --> true
         nondiags = setdiff(1:1:100, union(diagind(edges, 2), diagind(edges, -2)))
         @fact all(edges[nondiags] .== 0.0) --> true
-        
+
         #Checks Hysteresis Thresholding
         img = ones(Gray{U8}, (10, 10))
         img[3:7, 3:7] = 0.0
@@ -120,7 +120,7 @@ facts("Edge") do
         for method in ["sobel", "prewitt", "ando3", "ando4", "ando5", "ando4_sep", "ando5_sep"]
             ## Checkerboard array
 
-            (agx, agy) = imgradients(cb_array, method)
+            (agx, agy) = imgradients(cb_array, method=method)
             amag = magnitude(agx, agy)
             agphase = phase(agx, agy)
             @fact (amag, agphase) --> magnitude_phase(agx, agy)
@@ -144,7 +144,7 @@ facts("Edge") do
 
             ## Checkerboard Image with row major order
 
-            (gx, gy) = imgradients(cb_image_xy, method)
+            (gx, gy) = imgradients(cb_image_xy, method=method)
             mag = magnitude(gx, gy)
             gphase = phase(gx, gy)
             @fact (mag, gphase) --> magnitude_phase(gx, gy)
@@ -167,7 +167,7 @@ facts("Edge") do
 
             ## Checkerboard Image with column-major order
 
-            (gx, gy) = imgradients(cb_image_yx, method)
+            (gx, gy) = imgradients(cb_image_yx, method=method)
             mag = magnitude(gx, gy)
             gphase = phase(gx, gy)
             @fact (mag, gphase) --> magnitude_phase(gx, gy)
@@ -191,7 +191,7 @@ facts("Edge") do
 
             ## Checkerboard Image with Gray pixels
 
-            (gxg, gyg) = imgradients(cb_image_gray, method)
+            (gxg, gyg) = imgradients(cb_image_gray, method=method)
             magg = magnitude(gxg, gyg)
             gphaseg = phase(gxg, gyg)
             @fact (magg, gphaseg) --> magnitude_phase(gxg, gyg)
@@ -214,7 +214,7 @@ facts("Edge") do
 
             ## Checkerboard Image with RBG pixels
 
-            (gx_rgb, gy_rgb) = imgradients(cb_image_rgb, method)
+            (gx_rgb, gy_rgb) = imgradients(cb_image_rgb, method=method)
             mag_rgb = magnitude(gx_rgb, gy_rgb)
             gphase_rgb = phase(gx_rgb, gy_rgb)
             @fact (mag_rgb, gphase_rgb) --> magnitude_phase(gx_rgb, gy_rgb)
@@ -237,7 +237,7 @@ facts("Edge") do
 
             ## Checkerboard Image with RBG{Float64} pixels
 
-            (gx_rgb, gy_rgb) = imgradients(cb_image_rgb2, method)
+            (gx_rgb, gy_rgb) = imgradients(cb_image_rgb2, method=method)
             mag_rgb = magnitude(gx_rgb, gy_rgb)
             gphase_rgb = phase(gx_rgb, gy_rgb)
             @fact (mag_rgb, gphase_rgb) --> magnitude_phase(gx_rgb, gy_rgb)
@@ -272,7 +272,7 @@ facts("Edge") do
         for method in ["sobel", "prewitt", "ando3", "ando4", "ando5", "ando4_sep", "ando5_sep"]
             ## Diagonal array
 
-            (agx, agy) = imgradients(m, method)
+            (agx, agy) = imgradients(m, method=method)
             amag = magnitude(agx, agy)
             agphase = phase(agx, agy)
             @fact (amag, agphase) --> magnitude_phase(agx, agy)
@@ -294,7 +294,7 @@ facts("Edge") do
 
             ## Diagonal Image, row-major order
 
-            (gx, gy) = imgradients(m_xy, method)
+            (gx, gy) = imgradients(m_xy, method=method)
             mag = magnitude(gx, gy)
             gphase = phase(gx, gy)
             @fact (mag, gphase) --> magnitude_phase(gx, gy)
@@ -316,7 +316,7 @@ facts("Edge") do
 
             ## Diagonal Image, column-major order
 
-            (gx, gy) = imgradients(m_yx, method)
+            (gx, gy) = imgradients(m_yx, method=method)
             mag = magnitude(gx, gy)
             gphase = phase(gx, gy)
             @fact (mag, gphase) --> magnitude_phase(gx, gy)

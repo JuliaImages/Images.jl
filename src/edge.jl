@@ -209,12 +209,14 @@ function imgradients(img::AbstractArray; method::AbstractString="ando3", border:
         end
     end
 
-    G
+    (G...,)
 end
+
+@deprecate imgradients(img::AbstractArray, method::AbstractString, border::AbstractString) imgradients(img; method=method, border=border)
 
 function imgradients{T<:Color}(img::AbstractArray{T}, method::AbstractString="ando3", border::AbstractString="replicate")
     # Remove Color information
-    imgradients(reinterpret(eltype(eltype(img)), img), method, border)
+    imgradients(reinterpret(eltype(eltype(img)), img), method=method, border=border)
 end
 
 # Magnitude of gradient, calculated from X and Y image gradients
@@ -298,7 +300,7 @@ magnitude_phase(grad_x::AbstractArray, grad_y::AbstractArray) = (magnitude(grad_
 
 # Return the magnituded and phase of the gradients in an image
 function magnitude_phase(img::AbstractArray, method::AbstractString="ando3", border::AbstractString="replicate")
-    grad_x, grad_y = imgradients(img, method, border)
+    grad_x, grad_y = imgradients(img, method=method, border=border)
     return magnitude_phase(grad_x, grad_y)
 end
 
@@ -318,7 +320,7 @@ gradient, vertical gradient, and the magnitude and orientation of the strongest
 edge, respectively.
 """
 function imedge(img::AbstractArray, method::AbstractString="ando3", border::AbstractString="replicate")
-    grad_x, grad_y = imgradients(img, method, border)
+    grad_x, grad_y = imgradients(img, method=method, border=border)
     mag = magnitude(grad_x, grad_y)
     orient = orientation(grad_x, grad_y)
     return (grad_x, grad_y, mag, orient)
@@ -618,7 +620,7 @@ Parameters :
 function canny{T}(img::AbstractArray{T, 2}, sigma::Number = 1.4, upperThreshold::Number = 0.90, lowerThreshold::Number = 0.10; percentile::Bool = true)
     img_gray = convert(Image{Images.Gray{U8}}, img)
     img_grayf = imfilter_gaussian(img_gray, [sigma,sigma])
-    img_grad_x, img_grad_y = imgradients(img_grayf, "sobel")
+    img_grad_x, img_grad_y = imgradients(img_grayf, method="sobel")
     img_mag, img_phase = magnitude_phase(img_grad_x, img_grad_y)
     img_nonMaxSup = thin_edges_nonmaxsup(img_mag, img_phase)
     if percentile == true
