@@ -111,36 +111,35 @@ end
 
 # Auxiliary functions for computing N-dimensional gradients
 function _gradientpad(img::AbstractArray, border::AbstractString="replicate")
-  border ∈ ["replicate", "circular", "reflect", "symmetric"] || error("border option not supported")
-  padding = map(Int, [size(img)...] .> 1)
+    border ∈ ["replicate", "circular", "reflect", "symmetric"] || error("border option not supported")
+    padding = map(Int, [size(img)...] .> 1)
 
-  padarray(img, padding, padding, border)
+    padarray(img, padding, padding, border)
 end
 
 function _directional_kernel(dir::Int, extent::Dims, method::AbstractString)
-  extent[dir] > 1 || error("invalid gradient direction")
+    extent[dir] > 1 || error("invalid gradient direction")
 
-  ndirs = length(extent)
+    ndirs = length(extent)
 
-  # smoothing weights
-  weights = (method == "sobel" ? [1.,2.,1.] :
-             method == "ando3" ? [.112737,.274526,.112737] :
-             error("Unknown gradient method: $method"))
+    # smoothing weights
+    weights = (method == "sobel" ? [1.,2.,1.] :
+               method == "ando3" ? [.112737,.274526,.112737] :
+               error("Unknown gradient method: $method"))
 
-  # centered difference
-  idx = ones(Int, ndirs); idx[dir] = 3
-  kern = reshape([-1.,0.,1.], idx...)
-  # perpendicular smoothing
-  for j in [1:dir-1;dir+1:ndirs]
-    if extent[j] > 1
-      idx = ones(Int, ndirs); idx[j] = 3
-      kern = broadcast(*, kern, reshape(weights, idx...))
+    # centered difference
+    idx = ones(Int, ndirs); idx[dir] = 3
+    kern = reshape([-1.,0.,1.], idx...)
+    # perpendicular smoothing
+    for j in [1:dir-1;dir+1:ndirs]
+        if extent[j] > 1
+            idx = ones(Int, ndirs); idx[j] = 3
+            kern = broadcast(*, kern, reshape(weights, idx...))
+        end
     end
-  end
 
-  kern
+    kern
 end
-
 
 # N-dimensional gradients
 """
@@ -159,58 +158,58 @@ number of columns is the dimensionality of the array.
 """
 function imgradients(img::AbstractArray, points::AbstractVector;
                      method::AbstractString="ando3", border::AbstractString="replicate")
-  extent = size(img)
-  ndirs = length(extent)
-  npoints = length(points)
+    extent = size(img)
+    ndirs = length(extent)
+    npoints = length(points)
 
-  # pad input image only on appropriate directions
-  imgpad = _gradientpad(img, border)
+    # pad input image only on appropriate directions
+    imgpad = _gradientpad(img, border)
 
-  # gradient matrix
-  G = zeros(npoints, ndirs)
+    # gradient matrix
+    G = zeros(npoints, ndirs)
 
-  for dir in 1:ndirs
-    # kernel = centered difference + perpendicular smoothing
-    if extent[dir] > 1
-      kern = _directional_kernel(dir, extent, method)
+    for dir in 1:ndirs
+        # kernel = centered difference + perpendicular smoothing
+        if extent[dir] > 1
+            kern = _directional_kernel(dir, extent, method)
 
-      # compute gradient at specified points
-      A = zeros(kern)
-      shape = size(kern)
-      for (k, p) in enumerate(points)
-        icenter = CartesianIndex(ind2sub(extent, p))
-        i1 = CartesianIndex(tuple(ones(Int, ndirs)...))
-        for ii in CartesianRange(shape)
-          A[ii] = imgpad[ii + icenter - i1]
+            # compute gradient at specified points
+            A = zeros(kern)
+            shape = size(kern)
+            for (k, p) in enumerate(points)
+                icenter = CartesianIndex(ind2sub(extent, p))
+                i1 = CartesianIndex(tuple(ones(Int, ndirs)...))
+                for ii in CartesianRange(shape)
+                    A[ii] = imgpad[ii + icenter - i1]
+                end
+
+                G[k,dir] = sum(kern .* A)
+            end
         end
-
-        G[k,dir] = sum(kern .* A)
-      end
     end
-  end
 
-  G
+    G
 end
 
 function imgradients(img::AbstractArray; method::AbstractString="ando3", border::AbstractString="replicate")
-  extent = size(img)
-  ndirs = length(extent)
+    extent = size(img)
+    ndirs = length(extent)
 
-  # pad input image only on appropriate directions
-  imgpad = _gradientpad(img, border)
+    # pad input image only on appropriate directions
+    imgpad = _gradientpad(img, border)
 
-  # gradient tuple
-  G = fill(zeros(extent), ndirs)
+    # gradient tuple
+    G = fill(zeros(extent), ndirs)
 
-  for dir in 1:ndirs
-    # kernel = centered difference + perpendicular smoothing
-    if extent[dir] > 1
-      kern = _directional_kernel(dir, extent, method)
-      G[dir] = imfilter(imgpad, kern, "inner")
+    for dir in 1:ndirs
+        # kernel = centered difference + perpendicular smoothing
+        if extent[dir] > 1
+            kern = _directional_kernel(dir, extent, method)
+            G[dir] = imfilter(imgpad, kern, "inner")
+        end
     end
-  end
 
-  G
+    G
 end
 
 function imgradients{T<:Color}(img::AbstractArray{T}, method::AbstractString="ando3", border::AbstractString="replicate")
