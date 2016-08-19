@@ -30,7 +30,7 @@ facts("Edge") do
         #General Checks
         img = zeros(10, 10)
         edges = canny(img)
-        @fact eltype(edges.data) --> Gray{U8}
+        @fact eltype(data(edges)) --> Gray{U8}
         @fact all(edges .== 0.0) --> true
 
         #Box Edges
