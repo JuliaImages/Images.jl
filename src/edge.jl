@@ -156,8 +156,8 @@ Returns a 2D array `G` with the gradients as rows. The number of rows
 is the number of points at which the gradient was computed and the
 number of columns is the dimensionality of the array.
 """
-function imgradients(img::AbstractArray, points::AbstractVector;
-                     method::AbstractString="ando3", border::AbstractString="replicate")
+function imgradients{T,N}(img::AbstractArray{T,N}, points::AbstractVector;
+                          method::AbstractString="ando3", border::AbstractString="replicate")
     extent = size(img)
     ndirs = length(extent)
     npoints = length(points)
@@ -166,7 +166,8 @@ function imgradients(img::AbstractArray, points::AbstractVector;
     imgpad = _gradientpad(img, border)
 
     # gradient matrix
-    G = zeros(npoints, ndirs)
+    Tret = typeof(zero(T)*zero(Float64))
+    G = zeros(Tret, npoints, ndirs)
 
     for dir in 1:ndirs
         # kernel = centered difference + perpendicular smoothing
@@ -191,7 +192,7 @@ function imgradients(img::AbstractArray, points::AbstractVector;
     G
 end
 
-function imgradients(img::AbstractArray; method::AbstractString="ando3", border::AbstractString="replicate")
+function imgradients{T,N}(img::AbstractArray{T,N}; method::AbstractString="ando3", border::AbstractString="replicate")
     extent = size(img)
     ndirs = length(extent)
 
@@ -199,7 +200,8 @@ function imgradients(img::AbstractArray; method::AbstractString="ando3", border:
     imgpad = _gradientpad(img, border)
 
     # gradient tuple
-    G = fill(zeros(extent), ndirs)
+    Tret = typeof(zero(T)*zero(Float64))
+    G = Array(Array{Tret,N}, ndirs)
 
     for dir in 1:ndirs
         # kernel = centered difference + perpendicular smoothing
