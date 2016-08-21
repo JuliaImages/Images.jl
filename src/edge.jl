@@ -209,7 +209,12 @@ function imgradients(img::AbstractArray; method::AbstractString="ando3", border:
         end
     end
 
-    (G...,)
+    result = (G...,)
+    if ndims(img) == 2 && spatialorder(img) == yx
+      result = (result[2], result[1])
+    end
+
+    result
 end
 
 @deprecate imgradients(img::AbstractArray, method::AbstractString, border::AbstractString) imgradients(img; method=method, border=border)
