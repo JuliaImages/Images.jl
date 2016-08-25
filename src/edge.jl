@@ -123,17 +123,22 @@ function _directional_kernel(dir::Int, extent::Dims, method::AbstractString)
     ndirs = length(extent)
 
     # smoothing weights
-    weights = (method == "sobel" ? [1.,2.,1.] :
-               method == "ando3" ? [.112737,.274526,.112737] :
+    weights = (method == "sobel"   ? [1.,2.,1.] :
+               method == "prewitt" ? [1.,1.,1.] :
+               method == "ando3"   ? [.112737,.274526,.112737] :
                error("Unknown gradient method: $method"))
 
+    # finite difference scheme
+    finitediff = (method ∈ ["sobel","prewitt","ando3"] ? [-1.,0.,1.] :
+                  error("Unknown gradient method: $method"))
+
     # centered difference
-    idx = ones(Int, ndirs); idx[dir] = 3
-    kern = reshape([-1.,0.,1.], idx...)
+    idx = ones(Int, ndirs); idx[dir] = length(finitediff)
+    kern = reshape(finitediff, idx...)
     # perpendicular smoothing
     for j in [1:dir-1;dir+1:ndirs]
         if extent[j] > 1
-            idx = ones(Int, ndirs); idx[j] = 3
+            idx = ones(Int, ndirs); idx[j] = length(weights)
             kern = broadcast(*, kern, reshape(weights, idx...))
         end
     end
@@ -221,7 +226,7 @@ end
 
 @deprecate imgradients(img::AbstractArray, method::AbstractString, border::AbstractString) imgradients(img; method=method, border=border)
 
-function imgradients{T<:Color}(img::AbstractArray{T}, method::AbstractString="ando3", border::AbstractString="replicate")
+function imgradients{T<:Color}(img::AbstractArray{T}; method::AbstractString="ando3", border::AbstractString="replicate")
     # Remove Color information
     imgradients(reinterpret(eltype(eltype(img)), img), method=method, border=border)
 end
