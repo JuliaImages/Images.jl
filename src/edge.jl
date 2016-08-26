@@ -252,7 +252,7 @@ function imgradients{T<:Color}(img::AbstractArray{T}; method::AbstractString="an
     rawimg = reinterpret(eltype(eltype(img)), img)
 
     # handle 2D images differently
-    if ndims(img) == 2
+    if sdims(img) == 2
         _imgradients2D(rawimg, method=method, border=border)
     else
         imgradients(rawimg, method=method, border=border)
