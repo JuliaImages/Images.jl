@@ -109,21 +109,45 @@ function ando5_sep()
     return f', f
 end
 
-# Image gradients in the X and Y direction
-"""
-```
-grad_x, grad_y = imgradients(img, [method], [border])
-```
+# Auxiliary functions for computing N-dimensional gradients
+function _gradientpad(img::AbstractArray, border::AbstractString="replicate")
+    border ∈ ["replicate", "circular", "reflect", "symmetric"] || error("border option not supported")
+    padding = map(Int, [size(img)...] .> 1)
 
-performs edge-detection filtering. `method` is one of `"sobel"`, `"prewitt"`, `"ando3"`,
-`"ando4"`, `"ando4_sep"`, `"ando5"`, or `"ando5_sep"`, defaulting to `"ando3"`
-(see the functions of the same name for more information).  `border` is any of
-the boundary conditions specified in `padarray`.
+    padarray(img, padding, padding, border)
+end
 
-Returns a tuple containing `x` (horizontal) and `y` (vertical) gradient images
-of the same size as `img`, calculated using the requested method and border.
-"""
-function imgradients(img::AbstractArray, method::AbstractString="ando3", border::AbstractString="replicate")
+function _directional_kernel(dir::Int, extent::Dims, method::AbstractString)
+    extent[dir] > 1 || error("invalid gradient direction")
+
+    ndirs = length(extent)
+
+    # smoothing weights
+    weights = (method == "sobel"   ? [1.,2.,1.] :
+               method == "prewitt" ? [1.,1.,1.] :
+               method == "ando3"   ? [.112737,.274526,.112737] :
+               error("Unknown gradient method: $method"))
+
+    # finite difference scheme
+    finitediff = (method ∈ ["sobel","prewitt","ando3"] ? [-1.,0.,1.] :
+                  error("Unknown gradient method: $method"))
+
+    # centered difference
+    idx = ones(Int, ndirs); idx[dir] = length(finitediff)
+    kern = reshape(finitediff, idx...)
+    # perpendicular smoothing
+    for j in [1:dir-1;dir+1:ndirs]
+        if extent[j] > 1
+            idx = ones(Int, ndirs); idx[j] = length(weights)
+            kern = broadcast(*, kern, reshape(weights, idx...))
+        end
+    end
+
+    kern
+end
+
+# For backward compatibility
+function _imgradients2D(img::AbstractArray; method::AbstractString="ando3", border::AbstractString="replicate")
     sx,sy = spatialorder(img)[1] == "x" ? (1,2) : (2,1)
     s = (method == "sobel"     ? sobel() :
          method == "prewitt"   ? prewitt() :
@@ -140,10 +164,102 @@ function imgradients(img::AbstractArray, method::AbstractString="ando3", border:
     return grad_x, grad_y
 end
 
-function imgradients{T<:Color}(img::AbstractArray{T}, method::AbstractString="ando3", border::AbstractString="replicate")
-    # Remove Color information
-    imgradients(reinterpret(eltype(eltype(img)), img), method, border)
+# N-dimensional gradients
+"""
+```
+G = imgradients(img, [points], [method], [border])
+```
+
+Performs edge detection filtering in the N-dimensional array `img`.
+Gradients are computed at specified `points` (or indexes) in the
+array or everywhere.
+
+Available methods for 2D images: `"sobel"`, `"prewitt"`, `"ando3"`, `"ando4"`,
+                                 `"ando5"`, `"ando4_sep"`, `"ando5_sep"`.
+
+Available methods for ND images: `"sobel"`, `"prewitt"`, `"ando3"`, `"ando4"`.
+
+Border options:`"replicate"`, `"circular"`, `"reflect"`, `"symmetric"`.
+
+If `points` is specified, returns a 2D array `G` with the
+gradients as rows. The number of rows is the number of
+points at which the gradient was computed and the number
+of columns is the dimensionality of the array.
+
+If `points` is ommitted, returns a tuple of arrays, each
+of the same size of the input image: (gradx, grady, ...)
+"""
+function imgradients{T,N}(img::AbstractArray{T,N}, points::AbstractVector;
+                          method::AbstractString="ando3", border::AbstractString="replicate")
+    extent = size(img)
+    ndirs = length(extent)
+    npoints = length(points)
+
+    # pad input image only on appropriate directions
+    imgpad = _gradientpad(img, border)
+
+    # gradient matrix
+    Tret = typeof(zero(T)*zero(Float64))
+    G = zeros(Tret, npoints, ndirs)
+
+    for dir in 1:ndirs
+        # kernel = centered difference + perpendicular smoothing
+        if extent[dir] > 1
+            kern = _directional_kernel(dir, extent, method)
+
+            # compute gradient at specified points
+            A = zeros(kern)
+            shape = size(kern)
+            for (k, p) in enumerate(points)
+                icenter = CartesianIndex(ind2sub(extent, p))
+                i1 = CartesianIndex(tuple(ones(Int, ndirs)...))
+                for ii in CartesianRange(shape)
+                    A[ii] = imgpad[ii + icenter - i1]
+                end
+
+                G[k,dir] = sum(kern .* A)
+            end
+        end
+    end
+
+    G
 end
+
+function imgradients{T,N}(img::AbstractArray{T,N}; method::AbstractString="ando3", border::AbstractString="replicate")
+    extent = size(img)
+    ndirs = length(extent)
+
+    # pad input image only on appropriate directions
+    imgpad = _gradientpad(img, border)
+
+    # gradient tuple
+    Tret = typeof(zero(T)*zero(Float64))
+    G = Array(Array{Tret,N}, ndirs)
+
+    for dir in 1:ndirs
+        # kernel = centered difference + perpendicular smoothing
+        if extent[dir] > 1
+            kern = _directional_kernel(dir, extent, method)
+            G[dir] = imfilter(imgpad, kern, "inner")
+        end
+    end
+
+    (G...,)
+end
+
+function imgradients{T<:Color}(img::AbstractArray{T}; method::AbstractString="ando3", border::AbstractString="replicate")
+    # Remove color information
+    rawimg = reinterpret(eltype(eltype(img)), img)
+
+    # handle 2D images differently
+    if sdims(img) == 2
+        _imgradients2D(rawimg, method=method, border=border)
+    else
+        imgradients(rawimg, method=method, border=border)
+    end
+end
+
+@deprecate imgradients(img::AbstractArray, method::AbstractString, border::AbstractString) imgradients(img; method=method, border=border)
 
 # Magnitude of gradient, calculated from X and Y image gradients
 """
@@ -226,7 +342,7 @@ magnitude_phase(grad_x::AbstractArray, grad_y::AbstractArray) = (magnitude(grad_
 
 # Return the magnituded and phase of the gradients in an image
 function magnitude_phase(img::AbstractArray, method::AbstractString="ando3", border::AbstractString="replicate")
-    grad_x, grad_y = imgradients(img, method, border)
+    grad_x, grad_y = imgradients(img, method=method, border=border)
     return magnitude_phase(grad_x, grad_y)
 end
 
@@ -246,7 +362,7 @@ gradient, vertical gradient, and the magnitude and orientation of the strongest
 edge, respectively.
 """
 function imedge(img::AbstractArray, method::AbstractString="ando3", border::AbstractString="replicate")
-    grad_x, grad_y = imgradients(img, method, border)
+    grad_x, grad_y = imgradients(img, method=method, border=border)
     mag = magnitude(grad_x, grad_y)
     orient = orientation(grad_x, grad_y)
     return (grad_x, grad_y, mag, orient)
@@ -534,19 +650,19 @@ canny_edges = canny(img, sigma = 1.4, upperThreshold = 0.80, lowerThreshold = 0.
 Performs Canny Edge Detection on the input image.
 
 Parameters :
-  
+
   sigma :           Specifies the standard deviation of the gaussian filter
   upperThreshold :  Upper bound for hysteresis thresholding
   lowerThreshold :  Lower bound for hysteresis thresholding
   astype :          Specifies return type of result
-  percentile :      Specifies if upperThreshold and lowerThreshold should be used 
+  percentile :      Specifies if upperThreshold and lowerThreshold should be used
                     as quantiles or absolute values
 
 """
 function canny{T}(img::AbstractArray{T, 2}, sigma::Number = 1.4, upperThreshold::Number = 0.90, lowerThreshold::Number = 0.10; percentile::Bool = true)
     img_gray = convert(Image{Images.Gray{U8}}, img)
     img_grayf = imfilter_gaussian(img_gray, [sigma,sigma])
-    img_grad_x, img_grad_y = imgradients(img_grayf, "sobel")
+    img_grad_x, img_grad_y = imgradients(img_grayf, method="sobel")
     img_mag, img_phase = magnitude_phase(img_grad_x, img_grad_y)
     img_nonMaxSup = thin_edges_nonmaxsup(img_mag, img_phase)
     if percentile == true
@@ -562,8 +678,8 @@ end
 function hysteresis_thresholding{T}(img_nonMaxSup::AbstractArray{T, 2}, upperThreshold::Number, lowerThreshold::Number)
     img_thresholded = map(i -> i > lowerThreshold ? i > upperThreshold ? 1.0 : 0.5 : 0.0, img_nonMaxSup)
     queue = CartesianIndex{2}[]
-    R = CartesianRange(size(img_thresholded)) 
-        
+    R = CartesianRange(size(img_thresholded))
+
     I1, Iend = first(R), last(R)
     for I in R
       if img_thresholded[I] == 1.0
