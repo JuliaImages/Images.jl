@@ -146,6 +146,24 @@ function _directional_kernel(dir::Int, extent::Dims, method::AbstractString)
     kern
 end
 
+# For backward compatibility
+function _imgradients2D(img::AbstractArray; method::AbstractString="ando3", border::AbstractString="replicate")
+    sx,sy = spatialorder(img)[1] == "x" ? (1,2) : (2,1)
+    s = (method == "sobel"     ? sobel() :
+         method == "prewitt"   ? prewitt() :
+         method == "ando3"     ? ando3() :
+         method == "ando4"     ? ando4() :
+         method == "ando5"     ? ando5() :
+         method == "ando4_sep" ? ando4_sep() :
+         method == "ando5_sep" ? ando5_sep() :
+         error("Unknown gradient method: $method"))
+
+    grad_x = imfilter(img, s[sx], border)
+    grad_y = imfilter(img, s[sy], border)
+
+    return grad_x, grad_y
+end
+
 # N-dimensional gradients
 """
 ```
@@ -154,12 +172,22 @@ G = imgradients(img, [points], [method], [border])
 
 Performs edge detection filtering in the N-dimensional array `img`.
 Gradients are computed at specified `points` (or indexes) in the
-array or everywhere. Available methods: `"sobel"` and `"ando3"`.
+array or everywhere.
+
+Available methods for 2D images: `"sobel"`, `"prewitt"`, `"ando3"`, `"ando4"`,
+                                 `"ando5"`, `"ando4_sep"`, `"ando5_sep"`.
+
+Available methods for ND images: `"sobel"`, `"prewitt"`, `"ando3"`, `"ando4"`.
+
 Border options:`"replicate"`, `"circular"`, `"reflect"`, `"symmetric"`.
 
-Returns a 2D array `G` with the gradients as rows. The number of rows
-is the number of points at which the gradient was computed and the
-number of columns is the dimensionality of the array.
+If `points` is specified, returns a 2D array `G` with the
+gradients as rows. The number of rows is the number of
+points at which the gradient was computed and the number
+of columns is the dimensionality of the array.
+
+If `points` is ommitted, returns a tuple of arrays, each
+of the same size of the input image: (gradx, grady, ...)
 """
 function imgradients{T,N}(img::AbstractArray{T,N}, points::AbstractVector;
                           method::AbstractString="ando3", border::AbstractString="replicate")
@@ -216,20 +244,22 @@ function imgradients{T,N}(img::AbstractArray{T,N}; method::AbstractString="ando3
         end
     end
 
-    result = (G...,)
-    if ndims(img) == 2 && spatialorder(img) == yx
-      result = (result[2], result[1])
-    end
+    (G...,)
+end
 
-    result
+function imgradients{T<:Color}(img::AbstractArray{T}; method::AbstractString="ando3", border::AbstractString="replicate")
+    # Remove color information
+    rawimg = reinterpret(eltype(eltype(img)), img)
+
+    # handle 2D images differently
+    if ndims(img) == 2
+        _imgradients2D(rawimg, method=method, border=border)
+    else
+        imgradients(rawimg, method=method, border=border)
+    end
 end
 
 @deprecate imgradients(img::AbstractArray, method::AbstractString, border::AbstractString) imgradients(img; method=method, border=border)
-
-function imgradients{T<:Color}(img::AbstractArray{T}; method::AbstractString="ando3", border::AbstractString="replicate")
-    # Remove Color information
-    imgradients(reinterpret(eltype(eltype(img)), img), method=method, border=border)
-end
 
 # Magnitude of gradient, calculated from X and Y image gradients
 """
