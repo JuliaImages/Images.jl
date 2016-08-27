@@ -1816,7 +1816,7 @@ integral_img = integral_image(img)
 
 Returns the integral image of an image. The integral image is calculated by assigning
 to each pixel the sum of all pixels above it and to its left, i.e. the rectangle from
-(1, 1) to the pixel. An integral image is a data structure which helps in efficient 
+(1, 1) to the pixel. An integral image is a data structure which helps in efficient
 calculation of sum of pixels in a rectangular subset of an image. See `boxdiff` for more
 information.
 """
@@ -1837,19 +1837,19 @@ sum = boxdiff(integral_image, CartesianIndex(tl_y, tl_x), CartesianIndex(br_y, b
 sum = boxdiff(integral_image, tl_y, tl_x, br_y, br_x)
 ```
 
-An integral image is a data structure which helps in efficient calculation of sum of pixels in 
-a rectangular subset of an image. It stores at each pixel the sum of all pixels above it and to 
-its left. The sum of a window in an image can be directly calculated using four array 
+An integral image is a data structure which helps in efficient calculation of sum of pixels in
+a rectangular subset of an image. It stores at each pixel the sum of all pixels above it and to
+its left. The sum of a window in an image can be directly calculated using four array
 references of the integral image, irrespective of the size of the window, given the `yrange` and
-`xrange` of the window. Given an integral image - 
-        
+`xrange` of the window. Given an integral image -
+
         A - - - - - - B -
         - * * * * * * * -
         - * * * * * * * -
         - * * * * * * * -
         - * * * * * * * -
         - * * * * * * * -
-        C * * * * * * D - 
+        C * * * * * * D -
         - - - - - - - - -
 
 The sum of pixels in the area denoted by * is given by S = D + A - B - C.
@@ -1883,10 +1883,10 @@ function bilinear_interpolation{T}(img::AbstractArray{T, 2}, y::Number, x::Numbe
     y_max = ceil(Int, y)
     x_max = ceil(Int, x)
 
-    topleft = chkbounds(Bool, img, y_min, x_min) ? img[y_min, x_min] : zero(T) 
-    bottomleft = chkbounds(Bool, img, y_max, x_min) ? img[y_max, x_min] : zero(T) 
-    topright = chkbounds(Bool, img, y_min, x_max) ? img[y_min, x_max] : zero(T) 
-    bottomright = chkbounds(Bool, img, y_max, x_max) ? img[y_max, x_max] : zero(T) 
+    topleft = chkbounds(Bool, img, y_min, x_min) ? img[y_min, x_min] : zero(T)
+    bottomleft = chkbounds(Bool, img, y_max, x_min) ? img[y_max, x_min] : zero(T)
+    topright = chkbounds(Bool, img, y_min, x_max) ? img[y_min, x_max] : zero(T)
+    bottomright = chkbounds(Bool, img, y_max, x_max) ? img[y_max, x_max] : zero(T)
 
     if x_max == x_min
         if y_max == y_min
@@ -1916,7 +1916,7 @@ pyramid = gaussian_pyramid(img, n_scales, downsample, sigma)
 ```
 
 Returns a  gaussian pyramid of scales `n_scales`, each downsampled
-by a factor `downsample` and `sigma` for the gaussian kernel. 
+by a factor `downsample` and `sigma` for the gaussian kernel.
 
 """
 function gaussian_pyramid{T}(img::AbstractArray{T, 2}, n_scales::Int, downsample::Real, sigma::Real)
