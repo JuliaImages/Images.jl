@@ -99,13 +99,14 @@ function fastcorners{T}(img::AbstractArray{T}, n::Int = 12, threshold::Float64 =
     idx = map(CartesianIndex{2}, [(0, 3), (1, 3), (2, 2), (3, 1), (3, 0), (3, -1), (2, -2), (1, -3),
             (0, -3), (-1, -3), (-2, -2), (-3, -1), (-3, 0), (-3, 1), (-2, 2), (-1, 3)])
 
+    idxidx = [1, 5, 9, 13]
     for I in R
         bright_threshold = img_padded[I] + threshold
         dark_threshold = img_padded[I] - threshold
         if n >= 12
             sum_bright = 0
             sum_dark = 0
-            for k in [1, 5, 9, 13]
+            for k in idxidx
                 pixel = img_padded[I + idx[k]]
                 if pixel > bright_threshold
                     sum_bright += 1
