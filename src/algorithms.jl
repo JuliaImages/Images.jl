@@ -1056,16 +1056,18 @@ Note that only 2-D images are currently supported due to a limitation of `imfilt
         end
 
         radii = sqrt(2.0)*sigmas
-        maxima = findlocalmaxima(img_LoG, 1:ndims(img_LoG), false)
+        maxima = findlocalmaxima(img_LoG, 1:ndims(img_LoG), (true, falses(N)...))
         [(img_LoG[x...], radii[x[1]], (@ntuple $N d->x[d+1])...) for x in maxima]
     end
 end
 
-@generated function findlocalextrema{T,N}(img::AbstractArray{T,N}, region::Union{Tuple{Int},Vector{Int},UnitRange{Int},Int}, edges::Bool, order::Base.Order.Ordering)
+findlocalextrema{T,N}(img::AbstractArray{T,N}, region, edges::Bool, order) = findlocalextrema(img, region, ntuple(d->edges,N), order)
+
+@generated function findlocalextrema{T,N}(img::AbstractArray{T,N}, region::Union{Tuple{Int},Vector{Int},UnitRange{Int},Int}, edges::NTuple{N,Bool}, order::Base.Order.Ordering)
     quote
         issubset(region,1:ndims(img)) || throw(ArgumentError("Invalid region."))
         extrema = Tuple{(@ntuple $N d->Int)...}[]
-        @inbounds @nloops $N i d->((1+!edges):(size(img,d)-!edges)) begin
+        @inbounds @nloops $N i d->((1+!edges[d]):(size(img,d)-!edges[d])) begin
             isextrema = true
             img_I = (@nref $N img i)
             @nloops $N j d->(in(d,region) ? (max(1,i_d-1):min(size(img,d),i_d+1)) : i_d) begin
@@ -1084,10 +1086,11 @@ end
 """
 `findlocalmaxima(img, [region, edges]) -> Vector{Tuple}`
 
-Returns the coordinates of elements whose value is larger than all of their
-immediate neighbors.  `region` is a list of dimensions to consider.  `edges`
-is a boolean specifying whether to include the first and last elements of
-each dimension.
+Returns the coordinates of elements whose value is larger than all of
+their immediate neighbors.  `region` is a list of dimensions to
+consider.  `edges` is a boolean specifying whether to include the
+first and last elements of each dimension, or a tuple-of-Bool
+specifying edge behavior for each dimension separately.
 """
 findlocalmaxima(img::AbstractArray, region=coords_spatial(img), edges=true) =
         findlocalextrema(img, region, edges, Base.Order.Forward)
@@ -1813,7 +1816,7 @@ integral_img = integral_image(img)
 
 Returns the integral image of an image. The integral image is calculated by assigning
 to each pixel the sum of all pixels above it and to its left, i.e. the rectangle from
-(1, 1) to the pixel. An integral image is a data structure which helps in efficient 
+(1, 1) to the pixel. An integral image is a data structure which helps in efficient
 calculation of sum of pixels in a rectangular subset of an image. See `boxdiff` for more
 information.
 """
@@ -1834,19 +1837,19 @@ sum = boxdiff(integral_image, CartesianIndex(tl_y, tl_x), CartesianIndex(br_y, b
 sum = boxdiff(integral_image, tl_y, tl_x, br_y, br_x)
 ```
 
-An integral image is a data structure which helps in efficient calculation of sum of pixels in 
-a rectangular subset of an image. It stores at each pixel the sum of all pixels above it and to 
-its left. The sum of a window in an image can be directly calculated using four array 
+An integral image is a data structure which helps in efficient calculation of sum of pixels in
+a rectangular subset of an image. It stores at each pixel the sum of all pixels above it and to
+its left. The sum of a window in an image can be directly calculated using four array
 references of the integral image, irrespective of the size of the window, given the `yrange` and
-`xrange` of the window. Given an integral image - 
-        
+`xrange` of the window. Given an integral image -
+
         A - - - - - - B -
         - * * * * * * * -
         - * * * * * * * -
         - * * * * * * * -
         - * * * * * * * -
         - * * * * * * * -
-        C * * * * * * D - 
+        C * * * * * * D -
         - - - - - - - - -
 
 The sum of pixels in the area denoted by * is given by S = D + A - B - C.
@@ -1880,10 +1883,10 @@ function bilinear_interpolation{T}(img::AbstractArray{T, 2}, y::Number, x::Numbe
     y_max = ceil(Int, y)
     x_max = ceil(Int, x)
 
-    topleft = chkbounds(Bool, img, y_min, x_min) ? img[y_min, x_min] : zero(T) 
-    bottomleft = chkbounds(Bool, img, y_max, x_min) ? img[y_max, x_min] : zero(T) 
-    topright = chkbounds(Bool, img, y_min, x_max) ? img[y_min, x_max] : zero(T) 
-    bottomright = chkbounds(Bool, img, y_max, x_max) ? img[y_max, x_max] : zero(T) 
+    topleft = chkbounds(Bool, img, y_min, x_min) ? img[y_min, x_min] : zero(T)
+    bottomleft = chkbounds(Bool, img, y_max, x_min) ? img[y_max, x_min] : zero(T)
+    topright = chkbounds(Bool, img, y_min, x_max) ? img[y_min, x_max] : zero(T)
+    bottomright = chkbounds(Bool, img, y_max, x_max) ? img[y_max, x_max] : zero(T)
 
     if x_max == x_min
         if y_max == y_min
@@ -1913,7 +1916,7 @@ pyramid = gaussian_pyramid(img, n_scales, downsample, sigma)
 ```
 
 Returns a  gaussian pyramid of scales `n_scales`, each downsampled
-by a factor `downsample` and `sigma` for the gaussian kernel. 
+by a factor `downsample` and `sigma` for the gaussian kernel.
 
 """
 function gaussian_pyramid{T}(img::AbstractArray{T, 2}, n_scales::Int, downsample::Real, sigma::Real)

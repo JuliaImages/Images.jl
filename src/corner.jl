@@ -4,16 +4,16 @@ corners = imcorner(img; [method])
 corners = imcorner(img, threshold, percentile; [method])
 ```
 
-Performs corner detection using one of the following methods - 
+Performs corner detection using one of the following methods -
 
     1. harris
     2. shi_tomasi
     3. kitchen_rosenfeld
 
-The parameters of the individual methods are described in their documentation. The 
-maxima values of the resultant responses are taken as corners. If a threshold is 
-specified, the values of the responses are thresholded to give the corner pixels. 
-The threshold is assumed to be a percentile value unless `percentile` is set to false. 
+The parameters of the individual methods are described in their documentation. The
+maxima values of the resultant responses are taken as corners. If a threshold is
+specified, the values of the responses are thresholded to give the corner pixels.
+The threshold is assumed to be a percentile value unless `percentile` is set to false.
 """
 function imcorner(img::AbstractArray; method::Function = harris, args...)
     img_gray = convert(Array{Gray}, img)
@@ -27,7 +27,7 @@ end
 function imcorner(img::AbstractArray, threshold, percentile; method::Function = harris, args...)
     img_gray = convert(Array{Gray}, img)
     responses = method(img_gray; args...)
-    
+
     if percentile == true
         threshold = StatsBase.percentile(responses[:], threshold * 100)
     end
@@ -96,16 +96,17 @@ function fastcorners{T}(img::AbstractArray{T}, n::Int = 12, threshold::Float64 =
     corner = falses(size(img))
     h, w = size(img)
     R = CartesianRange(CartesianIndex((4, 4)), CartesianIndex((h + 3, w + 3)))
-    idx = map(CartesianIndex{2}, [(0, 3), (1, 3), (2, 2), (3, 1), (3, 0), (3, -1), (2, -2), (1, -3), 
+    idx = map(CartesianIndex{2}, [(0, 3), (1, 3), (2, 2), (3, 1), (3, 0), (3, -1), (2, -2), (1, -3),
             (0, -3), (-1, -3), (-2, -2), (-3, -1), (-3, 0), (-3, 1), (-2, 2), (-1, 3)])
-    
+
+    idxidx = [1, 5, 9, 13]
     for I in R
         bright_threshold = img_padded[I] + threshold
         dark_threshold = img_padded[I] - threshold
         if n >= 12
             sum_bright = 0
             sum_dark = 0
-            for k in [1, 5, 9, 13]
+            for k in idxidx
                 pixel = img_padded[I + idx[k]]
                 if pixel > bright_threshold
                     sum_bright += 1
@@ -120,7 +121,7 @@ function fastcorners{T}(img::AbstractArray{T}, n::Int = 12, threshold::Float64 =
         consecutive_bright = 0
         consecutive_dark = 0
 
-        for i in 1:15 + n 
+        for i in 1:15 + n
             k = mod1(i, 16)
             pixel = img_padded[I + idx[k]]
             if pixel > bright_threshold

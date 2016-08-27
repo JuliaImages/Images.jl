@@ -534,12 +534,12 @@ canny_edges = canny(img, sigma = 1.4, upperThreshold = 0.80, lowerThreshold = 0.
 Performs Canny Edge Detection on the input image.
 
 Parameters :
-  
+
   sigma :           Specifies the standard deviation of the gaussian filter
   upperThreshold :  Upper bound for hysteresis thresholding
   lowerThreshold :  Lower bound for hysteresis thresholding
   astype :          Specifies return type of result
-  percentile :      Specifies if upperThreshold and lowerThreshold should be used 
+  percentile :      Specifies if upperThreshold and lowerThreshold should be used
                     as quantiles or absolute values
 
 """
@@ -562,8 +562,8 @@ end
 function hysteresis_thresholding{T}(img_nonMaxSup::AbstractArray{T, 2}, upperThreshold::Number, lowerThreshold::Number)
     img_thresholded = map(i -> i > lowerThreshold ? i > upperThreshold ? 1.0 : 0.5 : 0.0, img_nonMaxSup)
     queue = CartesianIndex{2}[]
-    R = CartesianRange(size(img_thresholded)) 
-        
+    R = CartesianRange(size(img_thresholded))
+
     I1, Iend = first(R), last(R)
     for I in R
       if img_thresholded[I] == 1.0

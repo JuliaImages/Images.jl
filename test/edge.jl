@@ -32,7 +32,7 @@ facts("Edge") do
         edges = canny(img)
         @fact eltype(edges.data) --> Gray{U8}
         @fact all(edges .== 0.0) --> true
-        
+
         #Box Edges
 
         img[2:end-1, 2:end-1] = 1
@@ -42,7 +42,7 @@ facts("Edge") do
         @fact all(edges[2, 2:end-1] .== 1.0) --> true
         @fact all(edges[end-1, 2:end-1] .== 1.0) --> true
         @fact all(edges[3:end-2, 3:end-2] .== 0.0) --> true
-        
+
         edges = canny(img, 1.4, 0.9, 0.2, percentile = false)
         @fact all(edges[2:end-1, 2] .== 1.0) --> true
         @fact all(edges[2:end-1, end-1] .== 1.0) --> true
@@ -73,7 +73,7 @@ facts("Edge") do
         @fact all(edges[diagind(edges, -2)] .== 1.0) --> true
         nondiags = setdiff(1:1:100, union(diagind(edges, 2), diagind(edges, -2)))
         @fact all(edges[nondiags] .== 0.0) --> true
-        
+
         #Checks Hysteresis Thresholding
         img = ones(Gray{U8}, (10, 10))
         img[3:7, 3:7] = 0.0

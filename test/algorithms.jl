@@ -210,14 +210,14 @@ facts("Algorithms") do
         @fact isapprox(pyramid[2][10, 10], 1.0, atol = 0.01) --> true
         @fact isapprox(pyramid[3][5, 5], 1.0, atol = 0.05) --> true
         @fact isapprox(pyramid[4][3, 3], 0.9, atol = 0.025) --> true
-        
+
         for p in pyramid
             h, w = size(p)
             @fact all([isapprox(v, 0, atol = 0.06) for v in p[1, :]]) --> true
             @fact all([isapprox(v, 0, atol = 0.06) for v in p[:, 1]]) --> true
             @fact all([isapprox(v, 0, atol = 0.06) for v in p[h, :]]) --> true
             @fact all([isapprox(v, 0, atol = 0.06) for v in p[:, w]]) --> true
-        end 
+        end
     end
 
     context("fft and ifft") do
@@ -382,6 +382,7 @@ facts("Algorithms") do
     context("Features") do
         A = zeros(Int, 9, 9); A[5, 5] = 1
         @fact all(x->x<eps(),[blob_LoG(A, 2.0.^[0.5,0,1])[1]...] - [0.3183098861837907,sqrt(2),5,5]) --> true
+        @fact all(x->x<eps(),[blob_LoG(A, [1])[1]...] - [0.3183098861837907,sqrt(2),5,5]) --> true
         A = zeros(Int, 9, 9); A[[1:2;5],5]=1
         @fact findlocalmaxima(A) --> [(5,5)]
         @fact findlocalmaxima(A,2) --> [(1,5),(2,5),(5,5)]
