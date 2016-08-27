@@ -651,7 +651,7 @@ padarray
 <p><a id='Images.findlocalmaxima' href='#Images.findlocalmaxima'>#</a>
 <strong><code>Images.findlocalmaxima</code></strong> &mdash; <em>Function</em>.</p>
 <p><code>findlocalmaxima(img, [region, edges]) -&gt; Vector{Tuple}</code></p>
-<p>Returns the coordinates of elements whose value is larger than all of their immediate neighbors.  <code>region</code> is a list of dimensions to consider.  <code>edges</code> is a boolean specifying whether to include the first and last elements of each dimension.</p>
+<p>Returns the coordinates of elements whose value is larger than all of their immediate neighbors.  <code>region</code> is a list of dimensions to consider.  <code>edges</code> is a boolean specifying whether to include the first and last elements of each dimension, or a tuple-of-Bool specifying edge behavior for each dimension separately.</p>
 <p><a id='Images.findlocalminima' href='#Images.findlocalminima'>#</a>
 <strong><code>Images.findlocalminima</code></strong> &mdash; <em>Function</em>.</p>
 <p>Like <code>findlocalmaxima</code>, but returns the coordinates of the smallest elements.</p>
@@ -884,7 +884,7 @@ label = label_components(tf, [region])
 <pre><code>integral_img = integral_image(img)
 </code></pre>
 
-<p>Returns the integral image of an image. The integral image is calculated by assigning to each pixel the sum of all pixels above it and to its left, i.e. the rectangle from (1, 1) to the pixel. An integral image is a data structure which helps in efficient  calculation of sum of pixels in a rectangular subset of an image. See <code>boxdiff</code> for more information.</p>
+<p>Returns the integral image of an image. The integral image is calculated by assigning to each pixel the sum of all pixels above it and to its left, i.e. the rectangle from (1, 1) to the pixel. An integral image is a data structure which helps in efficient calculation of sum of pixels in a rectangular subset of an image. See <code>boxdiff</code> for more information.</p>
 <p><a id='Images.boxdiff' href='#Images.boxdiff'>#</a>
 <strong><code>Images.boxdiff</code></strong> &mdash; <em>Function</em>.</p>
 <pre><code>sum = boxdiff(integral_image, ytop:ybot, xtop:xbot)
@@ -892,14 +892,14 @@ sum = boxdiff(integral_image, CartesianIndex(tl_y, tl_x), CartesianIndex(br_y, b
 sum = boxdiff(integral_image, tl_y, tl_x, br_y, br_x)
 </code></pre>
 
-<p>An integral image is a data structure which helps in efficient calculation of sum of pixels in  a rectangular subset of an image. It stores at each pixel the sum of all pixels above it and to  its left. The sum of a window in an image can be directly calculated using four array  references of the integral image, irrespective of the size of the window, given the <code>yrange</code> and <code>xrange</code> of the window. Given an integral image - </p>
+<p>An integral image is a data structure which helps in efficient calculation of sum of pixels in a rectangular subset of an image. It stores at each pixel the sum of all pixels above it and to its left. The sum of a window in an image can be directly calculated using four array references of the integral image, irrespective of the size of the window, given the <code>yrange</code> and <code>xrange</code> of the window. Given an integral image -</p>
 <pre><code>    A - - - - - - B -
     - * * * * * * * -
     - * * * * * * * -
     - * * * * * * * -
     - * * * * * * * -
     - * * * * * * * -
-    C * * * * * * D - 
+    C * * * * * * D -
     - - - - - - - - -
 </code></pre>
 
@@ -911,7 +911,7 @@ sum = boxdiff(integral_image, tl_y, tl_x, br_y, br_x)
 <pre><code>pyramid = gaussian_pyramid(img, n_scales, downsample, sigma)
 </code></pre>
 
-<p>Returns a  gaussian pyramid of scales <code>n_scales</code>, each downsampled by a factor <code>downsample</code> and <code>sigma</code> for the gaussian kernel. </p>
+<p>Returns a  gaussian pyramid of scales <code>n_scales</code>, each downsampled by a factor <code>downsample</code> and <code>sigma</code> for the gaussian kernel.</p>
 <p><a id='Phantoms-1'></a></p>
 <h1 id="phantoms">Phantoms</h1>
 <p><a id='Images.shepp_logan' href='#Images.shepp_logan'>#</a>
