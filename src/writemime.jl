@@ -33,9 +33,9 @@ end
 @compat function Base.show(stream::IO, mime::MIME"image/png", img::AbstractImageIndexed; kwargs...)
     @compat show(stream, mime, convert(Image, img); kwargs...)
 end
-# @compat function Base.show{C<:Colorant}(stream::IO, mime::MIME"image/png", img::AbstractArray{C}; kwargs...)
-#     @compat show(stream, mime, Image(img, spatialorder=["x","y"]); kwargs...)
-# end
+@compat function Base.show{C<:Colorant}(stream::IO, mime::MIME"image/png", img::AbstractMatrix{C}; kwargs...)
+    @compat show(stream, mime, Image(img, spatialorder=["y","x"]); kwargs...)
+end
 
 function mapinfo_writemime(img; maxpixels=10^6)
     if length(img) <= maxpixels
