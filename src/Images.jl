@@ -5,10 +5,10 @@ module Images
 import Base.take
 import Base.Order: Ordering, ForwardOrdering, ReverseOrdering
 import Base: ==, .==, +, -, *, /, .+, .-, .*, ./, .^, .<, .>
-import Base: atan2, clamp, convert, copy, copy!, ctranspose, delete!, done,
+import Base: abs, atan2, clamp, convert, copy, copy!, ctranspose, delete!, done,
              eltype, fft, get, getindex, haskey, hypot,
-             ifft, length, linearindexing, map, map!, maximum, mimewritable,
-             minimum, next, ndims, one, parent, permutedims, reinterpret,
+             ifft, imag, length, linearindexing, map, map!, maximum, mimewritable,
+             minimum, next, ndims, one, parent, permutedims, real, reinterpret,
              reshape, resize!,
              setindex!, show, showcompact, similar, size, slice, sqrt, squeeze,
              start, strides, sub, sum, write, zero

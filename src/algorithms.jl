@@ -57,6 +57,9 @@ end
 sqrt(img::AbstractImageDirect) = shareproperties(img, sqrt(data(img)))
 atan2(img1::AbstractImageDirect, img2::AbstractImageDirect) = shareproperties(img1, atan2(data(img1),data(img2)))
 hypot(img1::AbstractImageDirect, img2::AbstractImageDirect) = shareproperties(img1, hypot(data(img1),data(img2)))
+real(img::AbstractImageDirect) = shareproperties(img,real(data(img)))
+imag(img::AbstractImageDirect) = shareproperties(img,imag(data(img)))
+abs(img::AbstractImageDirect) = shareproperties(img,abs(data(img)))
 
 @vectorize_2arg Gray atan2
 @vectorize_2arg Gray hypot
