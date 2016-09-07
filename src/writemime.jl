@@ -2,9 +2,14 @@
 ### writemime
 ###
 # only mime writeable to PNG if 2D (used by IJulia for example)
-mimewritable(::MIME"image/svg+xml", img::AbstractImage) = false
 mimewritable(::MIME"image/png", img::AbstractImage) = sdims(img) == 2 && timedim(img) == 0
 mimewritable{C<:Colorant}(::MIME"image/png", img::AbstractArray{C}) = sdims(img) == 2 && timedim(img) == 0
+# Colors.jl turns on SVG display of colors, which leads to poor
+# performance and weird spacing if you're displaying images. We need
+# to disable that here.
+# See https://github.com/JuliaLang/IJulia.jl/issues/229 and Images #548
+mimewritable(::MIME"image/svg+xml", img::AbstractImage)  = false
+mimewritable{C<:Color}(::MIME"image/svg+xml", img::AbstractMatrix{C}) = false
 
 # This is used for output by IJulia. Really large images can make
 # display very slow, so we shrink big images.  Conversely, tiny images
