@@ -1,4 +1,9 @@
 facts("show (MIME)") do
+    # Test that we remembered to turn off Colors.jl's colorswatch display
+    @fact mimewritable(MIME("image/svg+xml"), rand(Gray{U8}, 5, 5)) --> false
+    @fact mimewritable(MIME("image/svg+xml"), rand(RGB{U8},  5, 5)) --> false
+    @fact mimewritable(MIME("image/png"), rand(Gray{U8}, 5, 5)) --> true
+    @fact mimewritable(MIME("image/png"), rand(RGB{U8},  5, 5)) --> true
     workdir = joinpath(tempdir(), "Images")
     if !isdir(workdir)
         mkdir(workdir)
