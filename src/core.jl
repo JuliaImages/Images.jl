@@ -987,7 +987,7 @@ pixelspacing{T}(img::AbstractImage{T}) = @get img "pixelspacing" _pixelspacing(i
 function _pixelspacing(img::AbstractImage)
     if haskey(img, "spacedirections")
         sd = img["spacedirections"]
-        return [maximum(abs(sd[i])) for i = 1:length(sd)]
+        return [maximum(@compat abs.(sd[i])) for i = 1:length(sd)]
     end
     ones(sdims(img))
 end

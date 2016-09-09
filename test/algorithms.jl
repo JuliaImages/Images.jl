@@ -5,7 +5,7 @@ srand(1234)
 
 facts("Algorithms") do
     # Comparison of each element in arrays with a scalar
-    approx_equal(ar, v) = all(abs(ar.-v) .< sqrt(eps(v)))
+    approx_equal(ar, v) = @compat all(abs.(ar.-v) .< sqrt(eps(v)))
     approx_equal(ar::Images.AbstractImage, v) = approx_equal(Images.data(ar), v)
 
 	context("Flip dimensions") do
@@ -213,10 +213,10 @@ facts("Algorithms") do
 
         for p in pyramid
             h, w = size(p)
-            @fact all([isapprox(v, 0, atol = 0.06) for v in p[1, :]]) --> true
-            @fact all([isapprox(v, 0, atol = 0.06) for v in p[:, 1]]) --> true
-            @fact all([isapprox(v, 0, atol = 0.06) for v in p[h, :]]) --> true
-            @fact all([isapprox(v, 0, atol = 0.06) for v in p[:, w]]) --> true
+            @fact all(Bool[isapprox(v, 0, atol = 0.06) for v in p[1, :]]) --> true
+            @fact all(Bool[isapprox(v, 0, atol = 0.06) for v in p[:, 1]]) --> true
+            @fact all(Bool[isapprox(v, 0, atol = 0.06) for v in p[h, :]]) --> true
+            @fact all(Bool[isapprox(v, 0, atol = 0.06) for v in p[:, w]]) --> true
         end
     end
 
@@ -268,18 +268,18 @@ facts("Algorithms") do
         @fact isa(padarray(B, ones(Int,3), ones(Int,3), "replicate"), BitArray{3}) --> true
     end
 
-    context("Filtering") do
+    @compat context("Filtering") do
         EPS = 1e-14
         imgcol = Images.colorim(rand(3,5,6))
         imgcolf = convert(Images.Image{RGB{UFixed8}}, imgcol)
         for T in (Float64, Int)
             A = zeros(T,3,3); A[2,2] = 1
             kern = rand(3,3)
-            @fact maximum(abs(Images.imfilter(A, kern) - rot180(kern))) --> less_than(EPS)
+            @fact maximum(abs.(Images.imfilter(A, kern) - rot180(kern))) --> less_than(EPS)
             kern = rand(2,3)
-            @fact maximum(abs(Images.imfilter(A, kern)[1:2,:] - rot180(kern))) --> less_than(EPS)
+            @fact maximum(abs.(Images.imfilter(A, kern)[1:2,:] - rot180(kern))) --> less_than(EPS)
             kern = rand(3,2)
-            @fact maximum(abs(Images.imfilter(A, kern)[:,1:2] - rot180(kern))) --> less_than(EPS)
+            @fact maximum(abs.(Images.imfilter(A, kern)[:,1:2] - rot180(kern))) --> less_than(EPS)
         end
         kern = zeros(3,3); kern[2,2] = 1
         @fact maximum(map(abs, imgcol - Images.imfilter(imgcol, kern))) --> less_than(EPS)
@@ -288,19 +288,19 @@ facts("Algorithms") do
             # Separable kernels
             A = zeros(T,3,3); A[2,2] = 1
             kern = rand(3).*rand(3)'
-            @fact maximum(abs(Images.imfilter(A, kern) - rot180(kern))) --> less_than(EPS)
+            @fact maximum(abs.(Images.imfilter(A, kern) - rot180(kern))) --> less_than(EPS)
             kern = rand(2).*rand(3)'
-            @fact maximum(abs(Images.imfilter(A, kern)[1:2,:] - rot180(kern))) --> less_than(EPS)
+            @fact maximum(abs.(Images.imfilter(A, kern)[1:2,:] - rot180(kern))) --> less_than(EPS)
             kern = rand(3).*rand(2)'
-            @fact maximum(abs(Images.imfilter(A, kern)[:,1:2] - rot180(kern))) --> less_than(EPS)
+            @fact maximum(abs.(Images.imfilter(A, kern)[:,1:2] - rot180(kern))) --> less_than(EPS)
         end
         A = zeros(3,3); A[2,2] = 1
         kern = rand(3,3)
-        @fact maximum(abs(Images.imfilter_fft(A, kern) - rot180(kern))) --> less_than(EPS)
+        @fact maximum(abs.(Images.imfilter_fft(A, kern) - rot180(kern))) --> less_than(EPS)
         kern = rand(2,3)
-        @fact maximum(abs(Images.imfilter_fft(A, kern)[1:2,:] - rot180(kern))) --> less_than(EPS)
+        @fact maximum(abs.(Images.imfilter_fft(A, kern)[1:2,:] - rot180(kern))) --> less_than(EPS)
         kern = rand(3,2)
-        @fact maximum(abs(Images.imfilter_fft(A, kern)[:,1:2] - rot180(kern))) --> less_than(EPS)
+        @fact maximum(abs.(Images.imfilter_fft(A, kern)[:,1:2] - rot180(kern))) --> less_than(EPS)
         kern = zeros(3,3); kern[2,2] = 1
         @fact maximum(map(abs, imgcol - Images.imfilter_fft(imgcol, kern))) --> less_than(EPS)
         @fact maximum(map(abs, imgcolf - Images.imfilter_fft(imgcolf, kern))) --> less_than(EPS)
@@ -329,7 +329,7 @@ facts("Algorithms") do
         @fact Af --> roughly(Afft)
         h = [0.24,0.87]
         hfft = Images.imfilter_fft(eye(3), h, "inner")
-        hfft[abs(hfft) .< 3eps()] = 0
+        hfft[abs.(hfft) .< 3eps()] = 0
         @fact Images.imfilter(eye(3), h, "inner") --> roughly(hfft)  # issue #204
 
         # circular
@@ -356,7 +356,7 @@ facts("Algorithms") do
         @fact Images.imfilter_gaussian(A, [0,0]) --> exactly(A)
         @test_approx_eq Images.imfilter_gaussian(A, [0,3]) A
         B = copy(A)
-        B[isfinite(B)] = 2
+        B[isfinite.(B)] = 2
         @test_approx_eq Images.imfilter_gaussian(A, [10^3,0]) B
         @fact maximum(map(abs, Images.imfilter_gaussian(imgcol, [10^3,10^3]) - mean(imgcol))) --> less_than(1e-4)
         @fact maximum(map(abs, Images.imfilter_gaussian(imgcolf, [10^3,10^3]) - mean(imgcolf))) --> less_than(1e-4)
@@ -370,7 +370,7 @@ facts("Algorithms") do
         @fact reinterpret(Float64, Images.data(imgf)) --> roughly(Images.imfilter_gaussian(A, [0,2,2]))
 
         A = zeros(Int, 9, 9); A[5, 5] = 1
-        @fact maximum(abs(Images.imfilter_LoG(A, [1,1]) - Images.imlog(1.0))) --> less_than(EPS)
+        @fact maximum(abs.(Images.imfilter_LoG(A, [1,1]) - Images.imlog(1.0))) --> less_than(EPS)
         @fact maximum(Images.imfilter_LoG([0 0 0 0 1 0 0 0 0], [1,1]) - sum(Images.imlog(1.0),1)) --> less_than(EPS)
         @fact maximum(Images.imfilter_LoG([0 0 0 0 1 0 0 0 0]', [1,1]) - sum(Images.imlog(1.0),2)) --> less_than(EPS)
 

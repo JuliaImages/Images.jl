@@ -54,15 +54,17 @@ end
 (./)(img1::AbstractImageDirect, img2::AbstractImageDirect) = shareproperties(img1, data(img1)./data(img2))
 (./)(img::AbstractImageDirect, A::AbstractArray) = shareproperties(img, data(img)./A)
 (.^)(img::AbstractImageDirect, p::Number) = shareproperties(img, data(img).^p)
-sqrt(img::AbstractImageDirect) = shareproperties(img, sqrt(data(img)))
-atan2(img1::AbstractImageDirect, img2::AbstractImageDirect) = shareproperties(img1, atan2(data(img1),data(img2)))
-hypot(img1::AbstractImageDirect, img2::AbstractImageDirect) = shareproperties(img1, hypot(data(img1),data(img2)))
-real(img::AbstractImageDirect) = shareproperties(img,real(data(img)))
-imag(img::AbstractImageDirect) = shareproperties(img,imag(data(img)))
-abs(img::AbstractImageDirect) = shareproperties(img,abs(data(img)))
+sqrt(img::AbstractImageDirect) = @compat shareproperties(img, sqrt.(data(img)))
+atan2(img1::AbstractImageDirect, img2::AbstractImageDirect) =
+    @compat shareproperties(img1, atan2.(data(img1),data(img2)))
+hypot(img1::AbstractImageDirect, img2::AbstractImageDirect) =
+    @compat shareproperties(img1, hypot.(data(img1),data(img2)))
+real(img::AbstractImageDirect) = @compat shareproperties(img,real.(data(img)))
+imag(img::AbstractImageDirect) = @compat shareproperties(img,imag.(data(img)))
+abs(img::AbstractImageDirect) = @compat shareproperties(img,abs.(data(img)))
 
-@vectorize_2arg Gray atan2
-@vectorize_2arg Gray hypot
+Compat.@dep_vectorize_2arg Gray atan2
+Compat.@dep_vectorize_2arg Gray hypot
 
 function sum(img::AbstractImageDirect, region::Union{AbstractVector,Tuple,Integer})
     f = prod(size(img)[[region...]])
@@ -133,15 +135,15 @@ end
 
 # Entropy for grayscale (intensity) images
 function _log(kind::Symbol)
-  if kind == :shannon
-    x -> log2(x)
-  elseif kind == :nat
-    x -> log(x)
-  elseif kind == :hartley
-    x -> log10(x)
-  else
-    throw(ArgumentError("Invalid entropy unit. (:shannon, :nat or :hartley)"))
-  end
+    @compat if kind == :shannon
+        x -> log2.(x)
+    elseif kind == :nat
+        x -> log.(x)
+    elseif kind == :hartley
+        x -> log10.(x)
+    else
+        throw(ArgumentError("Invalid entropy unit. (:shannon, :nat or :hartley)"))
+    end
 end
 
 """
@@ -160,9 +162,9 @@ function entropy(img::AbstractArray; kind=:shannon)
     logp = logᵦ(p)
 
     # take care of empty bins
-    logp[isinf(logp)] = 0
+    logp[Bool[isinf(v) for v in logp]] = 0
 
-    -sum(p.*logp)
+    -sum(p .* logp)
 end
 
 function entropy(img::AbstractArray{Bool}; kind=:shannon)
@@ -849,7 +851,7 @@ function imfilter_gaussian{T<:AbstractFloat}(img::AbstractArray{T}, sigma::Vecto
         return img
     end
     A = copy(data(img))
-    nanflag = isnan(A)
+    nanflag = @compat isnan.(A)
     hasnans = any(nanflag)
     if hasnans
         A[nanflag] = zero(T)
@@ -1188,14 +1190,14 @@ function padindexes{T,n}(img::AbstractArray{T,n}, dim, prepad, postpad, border::
     M = size(img, dim)
     I = Array(Int, M + prepad + postpad)
     I = [(1 - prepad):(M + postpad);]
-    if border == "replicate"
-        I = min(max(I, 1), M)
+    @compat if border == "replicate"
+        I = min.(max.(I, 1), M)
     elseif border == "circular"
-        I = 1 .+ mod(I .- 1, M)
+        I = 1 .+ mod.(I .- 1, M)
     elseif border == "symmetric"
-        I = [1:M; M:-1:1][1 .+ mod(I .- 1, 2 * M)]
+        I = [1:M; M:-1:1][1 .+ mod.(I .- 1, 2 * M)]
     elseif border == "reflect"
-        I = [1:M; M-1:-1:2][1 .+ mod(I .- 1, 2 * M - 2)]
+        I = [1:M; M-1:-1:2][1 .+ mod.(I .- 1, 2 * M - 2)]
     else
         error("unknown border condition")
     end
