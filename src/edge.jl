@@ -156,7 +156,10 @@ Equivalent to ``sqrt(grad_x.^2 + grad_y.^2)``.
 
 Returns a magnitude image the same size as `grad_x` and `grad_y`.
 """
-magnitude(grad_x::AbstractArray, grad_y::AbstractArray) = hypot(grad_x, grad_y)
+magnitude(grad_x::AbstractArray, grad_y::AbstractArray) =
+    @compat hypot.(grad_x, grad_y)
+magnitude(img1::AbstractImageDirect, img2::AbstractImageDirect) =
+    hypot(img1, img2)
 
 # Phase (angle of steepest gradient ascent), calculated from X and Y gradient images
 """
@@ -381,13 +384,13 @@ function _calc_discrete_offsets(θ, radius, transposed)
     # x and y offset of points at specified radius and angles
     # from each reference position.
 
-    if transposed
+    @compat if transposed
         # θ′ = -π/2 - θ
-        xoffs = [CoordOffset(-x) for x in  radius*sin(angles)]
-        yoffs = [CoordOffset( y) for y in  radius*cos(angles)]
+        xoffs = [CoordOffset(-x) for x in  radius * sin.(angles)]
+        yoffs = [CoordOffset( y) for y in  radius * cos.(angles)]
     else
-        xoffs = [CoordOffset( x) for x in  radius*cos(angles)]
-        yoffs = [CoordOffset(-y) for y in  radius*sin(angles)]
+        xoffs = [CoordOffset( x) for x in  radius * cos.(angles)]
+        yoffs = [CoordOffset(-y) for y in  radius * sin.(angles)]
     end
 
     return θ, xoffs, yoffs

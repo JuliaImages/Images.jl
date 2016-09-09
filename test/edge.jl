@@ -116,7 +116,7 @@ facts("Edge") do
     cb_image_rgb = convert(Image{RGB}, cb_image_xy)
     cb_image_rgb2 = convert(Image{RGB{Float64}}, cb_image_xy)
 
-    context("Checkerboard") do
+    @compat context("Checkerboard") do
         for method in ["sobel", "prewitt", "ando3", "ando4", "ando5", "ando4_sep", "ando5_sep"]
             ## Checkerboard array
 
@@ -138,7 +138,8 @@ facts("Edge") do
 
             # Test that orientation is perpendicular to gradient
             aorient = orientation(agx, agy)
-            @fact all((cos(agphase).*cos(aorient) .+ sin(agphase).*sin(aorient) .< EPS) |
+            @fact all((cos.(agphase) .* cos.(aorient) .+
+                       sin.(agphase) .* sin.(aorient) .< EPS) |
                       ((agphase .== 0.0) & (aorient .== 0.0))) --> true
                       # this part is where both are zero because there is no gradient
 
@@ -161,7 +162,8 @@ facts("Edge") do
 
             # Test that orientation is perpendicular to gradient
             orient = orientation(gx, gy)
-            @fact all((cos(gphase).*cos(orient) .+ sin(gphase).*sin(orient) .< EPS) |
+            @fact all((cos.(gphase) .* cos.(orient) .+
+                       sin.(gphase) .* sin.(orient) .< EPS) |
                       ((gphase .== 0.0) & (orient .== 0.0))) --> true
                        # this part is where both are zero because there is no gradient
 
@@ -185,7 +187,8 @@ facts("Edge") do
 
             # Test that orientation is perpendicular to gradient
             orient = orientation(gx, gy)
-            @fact all((cos(gphase).*cos(orient) .+ sin(gphase).*sin(orient) .< EPS) |
+            @fact all((cos.(gphase) .* cos.(orient) .+
+                       sin.(gphase) .* sin.(orient) .< EPS) |
                       ((gphase .== 0.0) & (orient .== 0.0))) --> true
                       # this part is where both are zero because there is no gradient
 
@@ -208,7 +211,8 @@ facts("Edge") do
 
             # Test that orientation is perpendicular to gradient
             orientg = orientation(gxg, gyg)
-            @fact all((cos(gphaseg).*cos(orientg) .+ sin(gphaseg).*sin(orientg) .< EPS) |
+            @fact all((cos.(gphaseg) .* cos.(orientg) .+
+                       sin.(gphaseg) .* sin.(orientg) .< EPS) |
                       ((gphaseg .== 0.0) & (orientg .== 0.0))) --> true
                       # this part is where both are zero because there is no gradient
 
@@ -231,7 +235,8 @@ facts("Edge") do
 
             # Test that orientation is perpendicular to gradient
             orient_rgb = orientation(gx_rgb, gy_rgb)
-            @fact all((cos(gphase_rgb).*cos(orient_rgb) .+ sin(gphase_rgb).*sin(orient_rgb) .< EPS) |
+            @fact all((cos.(gphase_rgb) .* cos.(orient_rgb) .+
+                       sin.(gphase_rgb) .* sin.(orient_rgb) .< EPS) |
                       ((gphase_rgb .== 0.0) & (orient_rgb .== 0.0))) --> true
                       # this part is where both are zero because there is no gradient
 
@@ -254,13 +259,14 @@ facts("Edge") do
 
             # Test that orientation is perpendicular to gradient
             orient_rgb = orientation(gx_rgb, gy_rgb)
-            @fact all((cos(gphase_rgb).*cos(orient_rgb) .+ sin(gphase_rgb).*sin(orient_rgb) .< EPS) |
+            @fact all((cos.(gphase_rgb) .* cos.(orient_rgb) .+
+                       sin.(gphase_rgb) .* sin.(orient_rgb) .< EPS) |
                       ((gphase_rgb .== 0.0) & (orient_rgb .== 0.0))) --> true
                       # this part is where both are zero because there is no gradient
         end
     end
 
-    context("Diagonals") do
+    @compat context("Diagonals") do
         # Create an image with white along diagonals -2:2 and black elsewhere
         m = zeros(UInt8, 20,20)
         for i = -2:2; m[diagind(m,i)] = 0xff; end
@@ -288,7 +294,8 @@ facts("Edge") do
 
             # Test that orientation is perpendicular to gradient
             aorient = orientation(agx, agy)
-            @fact all((cos(agphase).*cos(aorient) .+ sin(agphase).*sin(aorient) .< EPS) |
+            @fact all((cos.(agphase) .* cos.(aorient) .+
+                       sin.(agphase) .* sin.(aorient) .< EPS) |
                       ((agphase .== 0.0) & (aorient .== 0.0))) --> true
                       # this part is where both are zero because there is no gradient
 
@@ -310,7 +317,8 @@ facts("Edge") do
 
             # Test that orientation is perpendicular to gradient
             orient = orientation(gx, gy)
-            @fact all((cos(gphase).*cos(orient) .+ sin(gphase).*sin(orient) .< EPS) |
+            @fact all((cos.(gphase) .* cos.(orient) .+
+                       sin.(gphase) .* sin.(orient) .< EPS) |
                       ((gphase .== 0.0) & (orient .== 0.0))) --> true
                       # this part is where both are zero because there is no gradient
 
@@ -332,7 +340,8 @@ facts("Edge") do
 
             # Test that orientation is perpendicular to gradient
             orient = orientation(gx, gy)
-            @fact all((cos(gphase).*cos(orient) .+ sin(gphase).*sin(orient) .< EPS) |
+            @fact all((cos.(gphase) .* cos.(orient) .+
+                       sin.(gphase) .* sin.(orient) .< EPS) |
                       ((gphase .== 0.0) & (orient .== 0.0))) --> true
                       # this part is where both are zero because there is no gradient
         end

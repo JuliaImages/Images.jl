@@ -6,5 +6,5 @@ SIUnits
 Zlib
 Graphics 0.1
 FileIO
-Compat 0.8.4
+Compat 0.9.1
 StatsBase   # for histrange

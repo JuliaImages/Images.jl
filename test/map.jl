@@ -203,7 +203,7 @@ facts("Map") do
     context("ScaleAutoMinMax") do
         mapi = ScaleAutoMinMax()
         A = [100,550,1000]
-        @chk map(mapi, A) ufixed8([0.0,0.5,1.0])
+        @chk map(mapi, A) @compat ufixed8.([0.0,0.5,1.0])
         mapi = ScaleAutoMinMax(RGB24)
         @chk map(mapi, A) RGB24[0x00000000, 0x00808080, 0x00ffffff]
 
