@@ -1,4 +1,4 @@
-__precompile__(true)
+__precompile__(false)  # because of ImageAxes/ImageMeta
 
 module Images
 
@@ -22,32 +22,36 @@ else
     export float32, float64
 end
 
+using Compat
 import Compat.view
 
 # "deprecated imports" are below
 
-using Colors, ColorVectorSpace, FixedPointNumbers, FileIO, StatsBase
+using Reexport
+@reexport using FixedPointNumbers
+@reexport using Colors
+using ColorVectorSpace, FileIO
+export load, save
 import Colors: Fractional, red, green, blue
 typealias AbstractGray{T}                    Color{T,1}
 typealias TransparentRGB{C<:AbstractRGB,T}   TransparentColor{C,T,4}
 typealias TransparentGray{C<:AbstractGray,T} TransparentColor{C,T,2}
-using Graphics
+import Graphics
 import Graphics: width, height, Point
-import FixedPointNumbers: ufixed8, ufixed10, ufixed12, ufixed14, ufixed16
-using Compat
-import Compat.String
-
-using Base.Cartesian
-include("compatibility/forcartesian.jl")
 
 # if isdefined(module_parent(Images), :Grid)
 #     import ..Grid.restrict
 # end
 
 const is_little_endian = ENDIAN_BOM == 0x04030201
-immutable TypeConst{N} end  # for passing compile-time constants to functions
 
-include("core.jl")
+@reexport using ImageCore
+@reexport using ImageAxes
+@reexport using ImageMetadata
+@reexport using ImageFiltering
+
+using Base.Cartesian  # TODO: delete this
+
 include("map.jl")
 include("overlays.jl")
 include("labeledarrays.jl")
@@ -58,34 +62,6 @@ include("edge.jl")
 include("writemime.jl")
 include("corner.jl")
 include("distances.jl")
-
-
-function precompile()
-    for T in (UInt8, UInt16, Int, Float32, Float64)
-        Tdiv = typeof(one(T)/2)
-        for N = 2:3
-            precompile(restrict!, (Array{Tdiv, N}, Array{T,N}, Int))
-            precompile(imfilter, (Array{T,N}, Array{Float64,N}))
-            precompile(imfilter, (Array{T,N}, Array{Float64,2}))
-            precompile(imfilter, (Array{T,N}, Array{Float32,N}))
-            precompile(imfilter, (Array{T,N}, Array{Float32,2}))
-        end
-    end
-    for T in (Float32, Float64)
-        for N = 2:3
-            precompile(_imfilter_gaussian!, (Array{T,N}, Vector{Float64}))
-            precompile(_imfilter_gaussian!, (Array{T,N}, Vector{Int}))
-            precompile(imfilter_gaussian_no_nans!, (Array{T,N}, Vector{Float64}))
-            precompile(imfilter_gaussian_no_nans!, (Array{T,N}, Vector{Int}))
-            precompile(fft, (Array{T,N},))
-        end
-    end
-    for T in (Complex{Float32}, Complex{Float64})
-        for N = 2:3
-            precompile(ifft, (Array{T,N},))
-        end
-    end
-end
 
 export # types
     AbstractImage,
@@ -281,7 +257,7 @@ export # types
     boxdiff,
     bilinear_interpolation,
     gaussian_pyramid,
-    
+
     # distances
     hausdorff_distance,
 
@@ -325,15 +301,5 @@ Test images and phantoms (see also TestImages.jl):
     - `shepp_logan`
 """
 Images
-
-import FileIO: load, save
-@deprecate imread(filename; kwargs...) load(filename; kwargs...)
-@deprecate imwrite(img, filename; kwargs...) save(filename, img; kwargs...)
-export load, save
-
-function limits(img)
-    Base.depwarn("limits is deprecated, all limits are (0,1)", :limits)
-    oldlimits(img)
-end
 
 end

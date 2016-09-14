@@ -72,8 +72,8 @@ map1(mapi::Union{MapNone{RGB24}, MapNone{ARGB32}}, b::Bool) = ifelse(b, 0xffuf8,
 map1(mapi::Union{MapNone{RGB24},MapNone{ARGB32}}, val::Fractional) = convert(UFixed8, val)
 map1{CT<:Colorant}(mapi::MapNone{CT}, val::Fractional) = convert(eltype(CT), val)
 
-immap{T<:Colorant}(mapi::MapNone{T}, img::AbstractImageIndexed{T}) = convert(Image{T}, img)
-immap{C<:Colorant}(mapi::MapNone{C}, img::AbstractImageDirect{C}) = img  # ambiguity resolution
+# immap{T<:Colorant}(mapi::MapNone{T}, img::AbstractImageIndexed{T}) = convert(Image{T}, img)
+# immap{C<:Colorant}(mapi::MapNone{C}, img::AbstractImageDirect{C}) = img  # ambiguity resolution
 immap{T}(mapi::MapNone{T}, img::AbstractArray{T}) = img
 
 immap(::MapNone{UInt32}, val::RGB24)  = val.color
@@ -465,21 +465,21 @@ function immap{T}(mapi::MapInfo{T}, img::AbstractArray)
     map!(mapi, out, img)
 end
 
-immap{C<:Colorant,R<:Real}(mapi::MapNone{C}, img::AbstractImageDirect{R}) = mapcd(mapi, img)  # ambiguity resolution
-immap{C<:Colorant,R<:Real}(mapi::MapInfo{C}, img::AbstractImageDirect{R}) = mapcd(mapi, img)
-function mapcd{C<:Colorant,R<:Real}(mapi::MapInfo{C}, img::AbstractImageDirect{R})
-    # For this case we have to check whether color is defined along an array axis
-    cd = colordim(img)
-    if cd > 0
-        dims = setdiff(1:ndims(img), cd)
-        out = similar(img, C, size(img)[dims])
-        map!(mapi, out, img, TypeConst{cd})
-    else
-        out = similar(img, C)
-        map!(mapi, out, img)
-    end
-    out   # note this isn't type-stable
-end
+# immap{C<:Colorant,R<:Real}(mapi::MapNone{C}, img::AbstractImageDirect{R}) = mapcd(mapi, img)  # ambiguity resolution
+# immap{C<:Colorant,R<:Real}(mapi::MapInfo{C}, img::AbstractImageDirect{R}) = mapcd(mapi, img)
+# function mapcd{C<:Colorant,R<:Real}(mapi::MapInfo{C}, img::AbstractImageDirect{R})
+#     # For this case we have to check whether color is defined along an array axis
+#     cd = colordim(img)
+#     if cd > 0
+#         dims = setdiff(1:ndims(img), cd)
+#         out = similar(img, C, size(img)[dims])
+#         map!(mapi, out, img, Val{cd})
+#     else
+#         out = similar(img, C)
+#         map!(mapi, out, img)
+#     end
+#     out   # note this isn't type-stable
+# end
 
 function immap{T<:Colorant}(mapi::MapInfo{T}, img::AbstractImageIndexed)
     out = Image(Array(T, size(img)), properties(img))
@@ -519,31 +519,6 @@ function _mapindx!{T,T1,N}(mapi::MapInfo{T}, out::AbstractArray{T,N}, img::Abstr
         @inbounds dout[I] = colmap[dimg[I]]
     end
     out
-end
-
-# For when color is encoded along dimension CD
-# NC is the number of color channels
-# This is a very flexible implementation: color can be stored along any dimension, and it handles conversions to
-# many different colorspace representations.
-for (CT, NC) in ((Union{AbstractRGB,RGB24}, 3), (Union{RGBA,ARGB,ARGB32}, 4), (Union{AGray,GrayA,AGray32}, 2))
-    for N = 1:4
-        N1 = N+1
-        @eval begin
-function map!{T<:$CT,T1,T2,CD}(mapi::MapInfo{T}, out::AbstractArray{T1,$N}, img::AbstractArray{T2,$N1}, ::Type{TypeConst{CD}})
-    mi = take(mapi, img)
-    dimg = data(img)
-    dout = data(out)
-    # Set up the index along the color axis
-    # We really only need dimension CD, but this will suffice
-    @nexprs $NC k->(@nexprs $N1 d->(j_k_d = k))
-    # Loop over all the elements in the output, performing the conversion on each color component
-    @nloops $N i dout d->(d<CD ? (@nexprs $NC k->(j_k_d = i_d)) : (@nexprs $NC k->(j_k_{d+1} = i_d))) begin
-        @inbounds @nref($N, dout, i) = @ncall $NC T k->(map1(mi, @nref($N1, dimg, j_k)))
-    end
-    out
-end
-        end
-    end
 end
 
 
@@ -680,11 +655,11 @@ uint32color!(buf, img::AbstractArray, mi::MapInfo) = map!(mi, buf, img)
 uint32color!{T,N}(buf::Array{UInt32,N}, img::AbstractImageDirect{T,N}) =
     map!(mapinfo(UInt32, img), buf, img)
 uint32color!{T,N,N1}(buf::Array{UInt32,N}, img::AbstractImageDirect{T,N1}) =
-    map!(mapinfo(UInt32, img), buf, img, TypeConst{colordim(img)})
+    map!(mapinfo(UInt32, img), buf, img, Val{colordim(img)})
 uint32color!{T,N}(buf::Array{UInt32,N}, img::AbstractImageDirect{T,N}, mi::MapInfo) =
     map!(mi, buf, img)
 uint32color!{T,N,N1}(buf::Array{UInt32,N}, img::AbstractImageDirect{T,N1}, mi::MapInfo) =
-    map!(mi, buf, img, TypeConst{colordim(img)})
+    map!(mi, buf, img, Val{colordim(img)})
 
 """
 ```
@@ -696,24 +671,6 @@ Applies default or specified `ScaleMinMax` mapping to the image.
 """
 sc(img::AbstractArray) = immap(ScaleMinMax(UFixed8, img), img)
 sc(img::AbstractArray, mn::Real, mx::Real) = immap(ScaleMinMax(UFixed8, img, mn, mx), img)
-
-for (fn,T) in ((:float32, Float32), (:float64, Float64), (:ufixed8, UFixed8),
-               (:ufixed10, UFixed10), (:ufixed12, UFixed12), (:ufixed14, UFixed14),
-               (:ufixed16, UFixed16))
-    @eval begin
-        function $fn{C<:Colorant}(A::AbstractArray{C})
-            newC = eval(C.name.name){$T}
-            convert(Array{newC}, A)
-        end
-        $fn{C<:Colorant}(img::AbstractImage{C}) = shareproperties(img, $fn(data(img)))
-    end
-    if VERSION >= v"0.5.0"
-        @eval begin
-            $fn(x::Number) = convert($T, x)
-            $fn(str::AbstractString) = parse($T, str)
-        end
-    end
-end
 
 ufixedsc{T<:UFixed}(::Type{T}, img::AbstractImageDirect) = immap(mapinfo(T, img), img)
 ufixed8sc(img::AbstractImageDirect) = ufixedsc(UFixed8, img)
