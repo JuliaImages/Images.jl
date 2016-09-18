@@ -108,7 +108,6 @@ export # types
     coords_spatial,
     copyproperties,
     data,
-    dimindex,
     dimindexes,
     getindexim,
     grayim,

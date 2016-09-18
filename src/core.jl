@@ -1432,10 +1432,9 @@ showdictelem(io::IO, v) = showcompact(io, v)
 # where anything not mentioned by name is assumed to include the whole range
 function coords(img::AbstractImage, dimname::String, ind, nameind...)
     c = Any[1:d for d in size(img)]
-    so = spatialorder(img)
-    c[require_dimindex(img, dimname, so)] = ind
+    c[require_dimindex(img, dimname)] = ind
     for i = 1:2:length(nameind)
-        c[require_dimindex(img, nameind[i], so)] = nameind[i+1]
+        c[require_dimindex(img, nameind[i])] = nameind[i+1]
     end
     tuple(c...)
 end
@@ -1446,42 +1445,14 @@ function coords(img::AbstractImage; kwargs...)
     c = Any[1:d for d in size(img)]
     so = spatialorder(img)
     for (k, v) in kwargs
-        c[require_dimindex(img, string(k), so)] = v
+        c[require_dimindex(img, string(k))] = v
     end
     tuple(c...)
 end
 
+require_dimindex(img::AbstractImage, dimname) = (di = dimindex(img, dimname); di > 0 || error("No dimension called ", dimname); di)
 
-function dimindex(img::AbstractImage, dimname::String, so = spatialorder(img))
-    n::Int = 0
-    if dimname == "color"
-        n = colordim(img)
-    elseif dimname == "t"
-        n = timedim(img)
-    else
-        cd = colordim(img)
-        td = timedim(img)
-        j = 1
-        tn = 1
-        while j <= length(so)
-            while tn == cd || tn == td
-                tn += 1
-            end
-            if dimname == so[j]
-                n = tn
-                break
-            end
-            tn += 1
-            j += 1
-        end
-    end
-    n
-end
-
-
-require_dimindex(img::AbstractImage, dimname, so) = (di = dimindex(img, dimname, so); di > 0 || error("No dimension called ", dimname); di)
-
-dimindexes(img::AbstractImage, dimnames::AbstractString...) = Int[dimindex(img, nam, spatialorder(img)) for nam in dimnames]
+dimindexes(img::AbstractImage, dimnames::AbstractString...) = Int[dimindex(img, nam) for nam in dimnames]
 
 to_vector(v::AbstractVector) = v
 to_vector(v::Tuple) = [v...]
