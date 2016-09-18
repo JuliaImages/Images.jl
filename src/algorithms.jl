@@ -185,11 +185,6 @@ function maxabsfinite{T}(A::AbstractArray{T})
     ret
 end
 
-# Issue #232. FIXME: really should return a Gray here?
-for f in (:minfinite, :maxfinite, :maxabsfinite)
-    @eval $f{T}(A::AbstractArray{Gray{T}}) = $f(reinterpret(T, data(A)))
-end
-
 minfinite_scalar{T}(a::T, b::T) = isfinite(a) ? (b < a ? b : a) : b
 maxfinite_scalar{T}(a::T, b::T) = isfinite(a) ? (b > a ? b : a) : b
 minfinite_scalar{T<:Union{Integer,FixedPoint}}(a::T, b::T) = b < a ? b : a
