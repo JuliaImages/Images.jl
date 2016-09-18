@@ -114,6 +114,7 @@ immutable BS{N} end
 _immap{T<:Unsigned,N}(::Type{T}, ::Type{BS{N}}, val::Unsigned) = (v = val>>>N; tm = oftype(val, typemax(T)); convert(T, ifelse(v > tm, tm, v)))
 _immap{T<:UFixed,N}(::Type{T}, ::Type{BS{N}}, val::UFixed) = reinterpret(T, _immap(FixedPointNumbers.rawtype(T), BS{N}, reinterpret(val)))
 immap{T<:Real,N}(mapi::BitShift{T,N}, val::Real) = _immap(T, BS{N}, val)
+immap{T<:Real,N}(mapi::BitShift{T,N}, val::Gray) = _immap(T, BS{N}, val.val)
 immap{T<:Real,N}(mapi::BitShift{Gray{T},N}, val::Gray) = Gray(_immap(T, BS{N}, val.val))
 map1{N}(mapi::Union{BitShift{RGB24,N},BitShift{ARGB32,N}}, val::Unsigned) = _immap(UInt8, BS{N}, val)
 map1{N}(mapi::Union{BitShift{RGB24,N},BitShift{ARGB32,N}}, val::UFixed) = _immap(UFixed8, BS{N}, val)
@@ -251,7 +252,8 @@ ScaleMinMax{To,From<:Real}(::Type{To}, img::AbstractArray{Gray{From}}, mn::Real,
 ScaleMinMax{To,From<:Real,R<:Real}(::Type{To}, img::AbstractArray{From}, mn::Gray{R}, mx::Gray{R}) = ScaleMinMax(To, convert(From,mn.val), convert(From,mx.val), 1.0f0/(convert(Float32, convert(From,mx.val))-convert(Float32, convert(From,mn.val))))
 ScaleMinMax{To,From<:Real,R<:Real}(::Type{To}, img::AbstractArray{Gray{From}}, mn::Gray{R}, mx::Gray{R}) = ScaleMinMax(To, convert(From,mn.val), convert(From,mx.val), 1.0f0/(convert(Float32, convert(From,mx.val))-convert(Float32, convert(From,mn.val))))
 ScaleMinMax{To}(::Type{To}, img::AbstractArray) = ScaleMinMax(To, img, minfinite(img), maxfinite(img))
-ScaleMinMax{To,CV<:AbstractRGB}(::Type{To}, img::AbstractArray{CV}) = (imgr = reinterpret(eltype(CV), img); ScaleMinMax(To, minfinite(imgr), maxfinite(imgr)))
+ScaleMinMax{To<:Real,CV<:AbstractRGB}(::Type{To}, img::AbstractArray{CV}) = (imgr = channelview(img); ScaleMinMax(To, minfinite(imgr), maxfinite(imgr)))
+ScaleMinMax{To<:Colorant,CV<:AbstractRGB}(::Type{To}, img::AbstractArray{CV}) = (imgr = channelview(img); ScaleMinMax(To, minfinite(imgr), maxfinite(imgr)))
 
 similar{T,F,To,From,S}(mapi::ScaleMinMax{To,From,S}, ::Type{T}, ::Type{F}) = ScaleMinMax{T,F,S}(convert(F,mapi.min), convert(F.mapi.max), mapi.s)
 
@@ -514,9 +516,9 @@ map!{T,T1,N}(mapi::MapInfo{T}, out::AbstractArray{T,N}, img::AbstractImageIndexe
 function _mapindx!{T,T1,N}(mapi::MapInfo{T}, out::AbstractArray{T,N}, img::AbstractImageIndexed{T1,N})
     dimg = data(img)
     dout = data(out)
-    colmap = immap(mapi, img.cmap)
+    colmap = immap(mapi, dimg.values)
     for I in eachindex(dout, dimg)
-        @inbounds dout[I] = colmap[dimg[I]]
+        @inbounds dout[I] = colmap[dimg.index[I]]
     end
     out
 end

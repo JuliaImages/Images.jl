@@ -274,7 +274,7 @@ facts("Map") do
         gray = collect(linspace(0.0,1.0,5)) # a 1-dimensional image
         gray8 = [round(UInt8, 255 * x) for x in gray]
         gray32 = UInt32[convert(UInt32, g)<<16 | convert(UInt32, g)<<8 | convert(UInt32, g) for g in gray8]
-        imgray = Images.Image(gray, Dict{Compat.ASCIIString,Any}([("colordim",0), ("colorspace","Gray")]))
+        imgray = Images.Image(gray)
         buf = map(Images.mapinfo(UInt32, imgray), imgray) # Images.uint32color(imgray)
         @fact buf --> reinterpret(RGB24, gray32)
         rgb = RGB{Float64}[RGB(g, g, g) for g in gray]
@@ -286,13 +286,13 @@ facts("Map") do
         buf = map(Images.mapinfo(UInt32, img), img) # Images.uint32color(img)
         @fact buf --> reinterpret(RGB24, gray32)
         rgb = repeat(gray, outer=[1,3])
-        img = Images.Image(rgb, Dict{Compat.ASCIIString,Any}([("colordim",2), ("colorspace","RGB"), ("spatialorder",["x"])]))
+        img = colorview(RGB, permuteddimsview(rgb, (2,1)))
         buf = map(Images.mapinfo(UInt32, img), img) # Images.uint32color(img)
         @fact buf --> reinterpret(RGB24, gray32)
         g = green(img)
         @fact g --> gray
         rgb = repeat(gray', outer=[3,1])
-        img = Images.Image(rgb, Dict{Compat.ASCIIString,Any}([("colordim",1), ("colorspace","RGB"), ("spatialorder",["x"])]))
+        img = Images.Image(colorview(RGB, rgb))
         buf = map(Images.mapinfo(UInt32, img), img) # Images.uint32color(img)
         @fact buf --> reinterpret(RGB24, gray32)
         b = blue(img)
