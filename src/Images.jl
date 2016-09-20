@@ -34,6 +34,7 @@ typealias TransparentRGB{C<:AbstractRGB,T}   TransparentColor{C,T,4}
 typealias TransparentGray{C<:AbstractGray,T} TransparentColor{C,T,2}
 import Graphics
 import Graphics: width, height, Point
+using StatsBase  # TODO: eliminate this dependency
 
 # if isdefined(module_parent(Images), :Grid)
 #     import ..Grid.restrict
@@ -45,6 +46,8 @@ const is_little_endian = ENDIAN_BOM == 0x04030201
 @reexport using ImageAxes
 @reexport using ImageMetadata
 @reexport using ImageFiltering
+
+using ImageMetadata: ImageMetaAxis
 
 using Base.Cartesian  # TODO: delete this
 
@@ -161,20 +164,11 @@ export # types
     ufixed8sc,
     ufixedsc,
 
-    # flip dimensions
-    flipx,
-    flipy,
-    flipz,
-
     # algorithms
-    ando3,
-    ando4,
-    ando5,
     backdiffx,
     backdiffy,
     dilate,
     erode,
-    extrema_filter,
     opening,
     closing,
     tophat,
@@ -183,8 +177,6 @@ export # types
     morpholaplace,
     forwarddiffx,
     forwarddiffy,
-    gaussian2d,
-    imaverage,
     imcorner,
     harris,
     shi_tomasi,
@@ -192,22 +184,13 @@ export # types
     fastcorners,
     meancovs,
     gammacovs,
-    imdog,
-    imedge,
-    imfilter,
-    imfilter!,
-    imfilter_fft,
-    imfilter_gaussian,
-    imfilter_gaussian!,
+    imedge,  # TODO: deprecate?
     imfilter_LoG,
     blob_LoG,
     findlocalmaxima,
     findlocalminima,
     imgaussiannoise,
-    imgradients,
-    imlaplacian,
     imlineardiffusion,
-    imlog,
     imROF,
 
     #Exposure

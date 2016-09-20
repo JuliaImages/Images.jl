@@ -1,3 +1,5 @@
+using Base: indices1, tail
+
 Compat.@dep_vectorize_2arg Gray atan2
 Compat.@dep_vectorize_2arg Gray hypot
 
@@ -371,31 +373,31 @@ function blob_LoG{T,N}(img::AbstractArray{T,N}, sigmas)
 
     radii = sqrt(2.0)*sigmas
     maxima = findlocalmaxima(img_LoG, 1:ndims(img_LoG), (true, falses(N)...))
-    [(img_LoG[x...], radii[x[1]], tail(x.I)...) for x in maxima]
+    [(img_LoG[x...], radii[x[1]], tail(x)...) for x in maxima]
 end
 
 findlocalextrema{T,N}(img::AbstractArray{T,N}, region, edges::Bool, order) = findlocalextrema(img, region, ntuple(d->edges,N), order)
 
 # FIXME
-# @generated function findlocalextrema{T,N}(img::AbstractArray{T,N}, region::Union{Tuple{Int},Vector{Int},UnitRange{Int},Int}, edges::NTuple{N,Bool}, order::Base.Order.Ordering)
-#     quote
-#         issubset(region,1:ndims(img)) || throw(ArgumentError("Invalid region."))
-#         extrema = Tuple{(@ntuple $N d->Int)...}[]
-#         @inbounds @nloops $N i d->((1+!edges[d]):(size(img,d)-!edges[d])) begin
-#             isextrema = true
-#             img_I = (@nref $N img i)
-#             @nloops $N j d->(in(d,region) ? (max(1,i_d-1):min(size(img,d),i_d+1)) : i_d) begin
-#                 (@nall $N d->(j_d == i_d)) && continue
-#                 if !Base.Order.lt(order, (@nref $N img j), img_I)
-#                     isextrema = false
-#                     break
-#                 end
-#             end
-#             isextrema && push!(extrema, (@ntuple $N d->(i_d)))
-#         end
-#         extrema
-#     end
-# end
+@generated function findlocalextrema{T,N}(img::AbstractArray{T,N}, region::Union{Tuple{Int,Vararg{Int}},Vector{Int},UnitRange{Int},Int}, edges::NTuple{N,Bool}, order::Base.Order.Ordering)
+    quote
+        issubset(region,1:ndims(img)) || throw(ArgumentError("Invalid region."))
+        extrema = Tuple{(@ntuple $N d->Int)...}[]
+        @inbounds @nloops $N i d->((1+!edges[d]):(size(img,d)-!edges[d])) begin
+            isextrema = true
+            img_I = (@nref $N img i)
+            @nloops $N j d->(in(d,region) ? (max(1,i_d-1):min(size(img,d),i_d+1)) : i_d) begin
+                (@nall $N d->(j_d == i_d)) && continue
+                if !Base.Order.lt(order, (@nref $N img j), img_I)
+                    isextrema = false
+                    break
+                end
+            end
+            isextrema && push!(extrema, (@ntuple $N d->(i_d)))
+        end
+        extrema
+    end
+end
 
 """
 `findlocalmaxima(img, [region, edges]) -> Vector{Tuple}`
@@ -511,41 +513,54 @@ along the dimensions listed in `region`, or all spatial coordinates if
 `region` is not specified.  It anti-aliases the image as it goes, so
 is better than a naive summation over 2x2 blocks.
 """
-restrict(img::AbstractImageDirect, ::Tuple{}) = img
+restrict(img::AbstractArray, ::Tuple{}) = img
 
-function restrict(img::AbstractImageDirect, region::Union{Dims, Vector{Int}}=coords_spatial(img))
-    A = data(img)
-    for dim in region
-        A = _restrict(A, dim)
-    end
-    props = copy(properties(img))
-    ps = copy(pixelspacing(img))
-    ind = findin(coords_spatial(img), region)
-    ps[ind] *= 2
-    props["pixelspacing"] = ps
-    Image(A, props)
+typealias RegionType Union{Dims,Vector{Int}}
+
+function restrict(img::ImageMeta, region::RegionType=coords_spatial(img))
+    shareproperties(img, restrict(data(img), region))
 end
-function restrict(A::AbstractArray, region::Union{Dims, Vector{Int}}=coords_spatial(A))
+
+function restrict{T,N}(img::AxisArray{T,N}, region::RegionType=coords_spatial(img))
+    inregion = falses(ndims(img))
+    inregion[[region...]] = true
+    inregiont = (inregion...,)::NTuple{N,Bool}
+    AxisArray(restrict(img.data, region), map(modax, axes(img), inregiont))
+end
+
+function restrict{Ax}(img::Union{AxisArray,ImageMetaAxis}, ::Type{Ax})
+    A = _restrict(img.data, axisdim(img, Ax))
+    AxisArray(A, replace_axis(modax(img[Ax]), axes(img)))
+end
+
+replace_axis(newax, axs) = _replace_axis(newax, axnametype(newax), axs...)
+@inline _replace_axis{Ax}(newax, ::Type{Ax}, ax::Ax, axs...) = (newax, _replace_axis(newax, Ax, axs...)...)
+@inline _replace_axis{Ax}(newax, ::Type{Ax}, ax, axs...) = (ax, _replace_axis(newax, Ax, axs...)...)
+_replace_axis{Ax}(newax, ::Type{Ax}) = ()
+
+axnametype{name}(ax::Axis{name}) = Axis{name}
+
+function modax(ax)
+    v = ax.val
+    veven = v[1]-step(v)/2 : 2*step(v) : v[end]+step(v)/2
+    return ax(isodd(length(v)) ? oftype(veven, v[1:2:end]) : veven)
+end
+
+modax(ax, inregion::Bool) = inregion ? modax(ax) : ax
+
+function restrict(A::AbstractArray, region::RegionType=coords_spatial(A))
     for dim in region
         A = _restrict(A, dim)
     end
     A
 end
 
-function restrict{S<:String}(img::AbstractImageDirect, region::Union{Tuple{Vararg{String}}, Vector{S}})
-    so = spatialorder(img)
-    regioni = Int[]
-    for i = 1:length(region)
-        push!(regioni, require_dimindex(img, region[i], so))
-    end
-    restrict(img, regioni)
-end
-
-function _restrict(A, dim)
+function _restrict{T,N}(A::AbstractArray{T,N}, dim)
     if size(A, dim) <= 2
         return A
     end
-    out = Array(typeof(A[1]/4+A[2]/2), ntuple(i->i==dim?restrict_size(size(A,dim)):size(A,i), ndims(A)))
+    newsz = ntuple(i->i==dim?restrict_size(size(A,dim)):size(A,i), Val{N})
+    out = Array{typeof(A[1]/4+A[2]/2)}(newsz)
     restrict!(out, A, dim)
     out
 end
@@ -801,17 +816,17 @@ function extremefilt!(A::AbstractArray, select::Function, region=coords_spatial(
 end
 
 @noinline function _extremefilt!(A, select, Rpre, inds, Rpost)
-    # This is not cache efficient, unfortunately
+    # TODO: improve the cache efficiency
     for Ipost in Rpost, Ipre in Rpre
         # first element along dim
         i1 = first(inds)
         a2, a3 = A[Ipre, i1, Ipost], A[Ipre, i1+1, Ipost]
         A[Ipre, i1, Ipost] = select(a2, a3)
         # interior along dim
-        for i = i1+2:last(inds)-1
+        for i = i1+2:last(inds)
             a1, a2 = a2, a3
             a3 = A[Ipre, i, Ipost]
-            A[Ipre, i, Ipost] = select(select(a1, a2), a3)
+            A[Ipre, i-1, Ipost] = select(select(a1, a2), a3)
         end
         # last element along dim
         A[Ipre, last(inds), Ipost] = select(a2, a3)
