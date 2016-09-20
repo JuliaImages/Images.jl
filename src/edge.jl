@@ -1,5 +1,52 @@
 ### Edge and Gradient Related Image Operations ###
 
+typealias GrayLike Union{Number,AbstractGray}
+
+
+# Phase (angle of steepest gradient ascent), calculated from X and Y gradient images
+"""
+    phase(grad_x, grad_y) -> p
+
+Calculate the rotation angle of the gradient given by `grad_x` and
+`grad_y`. Equivalent to `atan2(-grad_y, grad_x)`, except that when both `grad_x` and
+`grad_y` are effectively zero, the corresponding angle is set to zero.
+"""
+function phase{T<:Number}(grad_x::T, grad_y::T, tol=sqrt(eps(T)))
+    atan2(-grad_y, grad_x) * ((abs(grad_x) > tol) | (abs(grad_y) > tol))
+end
+phase(grad_x::Number,   grad_y::Number)   = phase(promote(grad_x, grad_y)...)
+phase(grad_x::GrayLike, grad_y::GrayLike) = phase(gray(grad_x), gray(grad_y))
+
+phase(grad_x::AbstractRGB, grad_y::AbstractRGB) = phase(vecsum(grad_x), vecsum(grad_y))
+
+magnitude_phase(grad_x::GrayLike, grad_y::GrayLike) =
+    hypot(grad_x, grad_y), phase(grad_x, grad_y)
+
+function magnitude_phase(grad_x::AbstractRGB, grad_y::AbstractRGB)
+    gx, gy = vecsum(grad_x), vecsum(grad_y)
+    magnitude_phase(gx, gy)
+end
+
+vecsum(c::AbstractRGB) = float(red(c)) + float(green(c)) + float(blue(c))
+
+## TODO? orientation seems nearly redundant with phase, deprecate?
+
+"""
+    orientation(grad_x, grad_y) -> orient
+
+Calculate the orientation angle of the strongest edge from gradient images
+given by `grad_x` and `grad_y`.  Equivalent to `atan2(grad_x, grad_y)`.  When
+both `grad_x` and `grad_y` are effectively zero, the corresponding angle is set to
+zero.
+"""
+function orientation{T<:Number}(grad_x::T, grad_y::T, tol=sqrt(eps(T)))
+    atan2(grad_x, grad_y) * ((abs(grad_x) > tol) | (abs(grad_y) > tol))
+end
+orientation(grad_x::Number,   grad_y::Number)   = orientation(promote(grad_x, grad_y)...)
+orientation(grad_x::GrayLike, grad_y::GrayLike) = orientation(gray(grad_x), gray(grad_y))
+
+orientation(grad_x::AbstractRGB, grad_y::AbstractRGB) = orientation(vecsum(grad_x), vecsum(grad_y))
+
 # Magnitude of gradient, calculated from X and Y image gradients
 """
 ```
@@ -11,79 +58,37 @@ Equivalent to ``sqrt(grad_x.^2 + grad_y.^2)``.
 
 Returns a magnitude image the same size as `grad_x` and `grad_y`.
 """
-magnitude(grad_x::AbstractArray, grad_y::AbstractArray) =
-    @compat hypot.(grad_x, grad_y)
-magnitude(img1::AbstractImageDirect, img2::AbstractImageDirect) =
-    hypot(img1, img2)
+magnitude(grad_x::AbstractArray, grad_y::AbstractArray) = hypot.(grad_x, grad_y)
 
-# Phase (angle of steepest gradient ascent), calculated from X and Y gradient images
-"""
-```
-p = phase(grad_x, grad_y)
-```
+Base.hypot(x::AbstractRGB, y::AbstractRGB) = hypot(vecsum(x), vecsum(y))
 
-Calculates the rotation angle of the gradient images given by `grad_x` and
-`grad_y`. Equivalent to ``atan2(-grad_y, grad_x)``.  When both ``grad_x[i]`` and
-``grad_y[i]`` are zero, the corresponding angle is set to zero.
-
-Returns a phase image the same size as `grad_x` and `grad_y`, with values in [-pi,pi].
-"""
-function phase{T}(grad_x::AbstractArray{T}, grad_y::AbstractArray{T})
-    EPS = sqrt(eps(eltype(T)))
-    # Set phase to zero when both gradients are close to zero
-    reshape([atan2(-grad_y[i], grad_x[i]) * ((abs(grad_x[i]) > EPS) | (abs(grad_y[i]) > EPS))
-             for i=1:length(grad_x)], size(grad_x))
-end
-
-function phase(grad_x::AbstractImageDirect, grad_y::AbstractImageDirect)
-    img = copyproperties(grad_x, phase(data(grad_x), data(grad_y)))
-    img["limits"] = (-float(pi),float(pi))
-    img
-end
+phase(grad_x::AbstractArray, grad_y::AbstractArray) = phase.(grad_x, grad_y)
 
 # Orientation of the strongest edge at a point, calculated from X and Y gradient images
 # Note that this is perpendicular to the phase at that point, except where
 # both gradients are close to zero.
 
-"""
-```
-orient = orientation(grad_x, grad_y)
-```
-
-Calculates the orientation angle of the strongest edge from gradient images
-given by `grad_x` and `grad_y`.  Equivalent to ``atan2(grad_x, grad_y)``.  When
-both `grad_x[i]` and `grad_y[i]` are zero, the corresponding angle is set to
-zero.
-
-Returns a phase image the same size as `grad_x` and `grad_y`, with values in
-[-pi,pi].
-"""
-function orientation{T}(grad_x::AbstractArray{T}, grad_y::AbstractArray{T})
-    EPS = sqrt(eps(eltype(T)))
-    # Set orientation to zero when both gradients are close to zero
-    # (grad_y[i] should probably be negated here, but isn't for consistency with earlier releases)
-    reshape([atan2(grad_x[i], grad_y[i]) * ((abs(grad_x[i]) > EPS) | (abs(grad_y[i]) > EPS))
-             for i=1:length(grad_x)], size(grad_x))
-end
-
-function orientation(grad_x::AbstractImageDirect, grad_y::AbstractImageDirect)
-    img = copyproperties(grad_x, orientation(data(grad_x), data(grad_y)))
-    img["limits"] = (-float(pi),float(pi))
-    img
-end
+orientation{T}(grad_x::AbstractArray{T}, grad_y::AbstractArray{T}) = orientation.(grad_x, grad_y)
 
 # Return both the magnitude and phase in one call
 """
-`m, p = magnitude_phase(grad_x, grad_y)`
+    magnitude_phase(grad_x, grad_y) -> m, p
 
 Convenience function for calculating the magnitude and phase of the gradient
 images given in `grad_x` and `grad_y`.  Returns a tuple containing the magnitude
 and phase images.  See `magnitude` and `phase` for details.
 """
-magnitude_phase(grad_x::AbstractArray, grad_y::AbstractArray) = (magnitude(grad_x,grad_y), phase(grad_x,grad_y))
+function magnitude_phase{T}(grad_x::AbstractArray{T}, grad_y::AbstractArray{T})
+    m = similar(grad_x, eltype(T))
+    p = similar(m)
+    for I in eachindex(grad_x, grad_y)
+        m[I], p[I] = magnitude_phase(grad_x[I], grad_y[I])
+    end
+    m, p
+end
 
-# Return the magnituded and phase of the gradients in an image
-function magnitude_phase(img::AbstractArray, method::AbstractString="ando3", border::AbstractString="replicate")
+# Return the magnitude and phase of the gradients in an image
+function magnitude_phase(img::AbstractArray, method::Function=KernelFactors.ando3, border::AbstractString="replicate")
     grad_x, grad_y = imgradients(img, method, border)
     return magnitude_phase(grad_x, grad_y)
 end
@@ -401,21 +406,22 @@ Parameters :
                     as quantiles or absolute values
 
 """
-function canny{T}(img::AbstractArray{T, 2}, sigma::Number = 1.4, upperThreshold::Number = 0.90, lowerThreshold::Number = 0.10; percentile::Bool = true)
-    img_gray = convert(Image{Images.Gray{U8}}, img)
+function canny{T<:Union{Number,Gray}}(img_gray::AbstractMatrix{T}, sigma::Number = 1.4, upperThreshold::Number = 0.90, lowerThreshold::Number = 0.10; percentile::Bool = true)
     img_grayf = imfilter_gaussian(img_gray, [sigma,sigma])
-    img_grad_x, img_grad_y = imgradients(img_grayf, "sobel")
+    img_grad_y, img_grad_x = imgradients(img_grayf, KernelFactors.sobel)
     img_mag, img_phase = magnitude_phase(img_grad_x, img_grad_y)
     img_nonMaxSup = thin_edges_nonmaxsup(img_mag, img_phase)
-    if percentile == true
+    if percentile
         upperThreshold = StatsBase.percentile(img_nonMaxSup[:], upperThreshold * 100)
         lowerThreshold = StatsBase.percentile(img_nonMaxSup[:], lowerThreshold * 100)
     end
     img_thresholded = hysteresis_thresholding(img_nonMaxSup, upperThreshold, lowerThreshold)
-    edges = map(i -> i < 0.9 ? zero(Gray{U8}) : one(Gray{U8}), img_thresholded)
+    S = eltype(img_thresholded)
+    edges = map(i -> i < 0.9 ? zero(S) : one(S), img_thresholded)
     edges
 end
 
+canny(img::AbstractMatrix, args...) = canny(convert(Array{Gray}, img), args...)
 
 function hysteresis_thresholding{T}(img_nonMaxSup::AbstractArray{T, 2}, upperThreshold::Number, lowerThreshold::Number)
     img_thresholded = map(i -> i > lowerThreshold ? i > upperThreshold ? 1.0 : 0.5 : 0.0, img_nonMaxSup)
@@ -440,4 +446,21 @@ function hysteresis_thresholding{T}(img_nonMaxSup::AbstractArray{T, 2}, upperThr
     end
     img_thresholded
 end
-0
+
+function padindexes{T,n}(img::AbstractArray{T,n}, dim, prepad, postpad, border::AbstractString)
+    M = size(img, dim)
+    I = Array(Int, M + prepad + postpad)
+    I = [(1 - prepad):(M + postpad);]
+    @compat if border == "replicate"
+        I = min.(max.(I, 1), M)
+    elseif border == "circular"
+        I = 1 .+ mod.(I .- 1, M)
+    elseif border == "symmetric"
+        I = [1:M; M:-1:1][1 .+ mod.(I .- 1, 2 * M)]
+    elseif border == "reflect"
+        I = [1:M; M-1:-1:2][1 .+ mod.(I .- 1, 2 * M - 2)]
+    else
+        error("unknown border condition")
+    end
+    I
+end
