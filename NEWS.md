@@ -74,11 +74,21 @@ Key changes (of which many are breaking):
 
 Other changes:
 
-- `extrema_filter` is being deprecated in favor of
+- The gradient components returned by `imgradients` match the
+  dimensions of the input; in `g1, g2, ... = imgradients(img,
+  ...)`, `g1` corresponds to the gradient along the first dimension,
+  `g2` along the second, and so on.
+
+- `sobel` and other filters have been normalized so that the returned
+  "gradient components" are scaled to estimate the actual
+  derivatives. For example, for `sobel` the normalization factor is
+  1/8 compared to earlier releases.
+
+- `extrema_filter` has been deprecated in favor of
   `rankfilter(extrema, A, window)`. However, this returns an array of
   `(min,max)` tuples rather than separate `min`, `max` arrays. This is
   intended to transition towards a future API where one can pass `min`
-  or `max` in place of `extrema` to obtain just get one of
+  or `max` in place of `extrema` to obtain just one of
   these. Currently, you can retrieve the `min` array with `first.(mm)`
   and the `max` array with `last.(mm)`.
 

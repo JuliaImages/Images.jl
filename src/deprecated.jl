@@ -32,3 +32,9 @@ function restrict{S<:String}(img::AbstractArray, region::Union{Tuple{String,Vara
     end
     restrict(img, regioni)
 end
+
+function magnitude_phase(img::AbstractArray, method::AbstractString, border::AbstractString="replicate")
+    f = ImageFiltering.kernelfunc_lookup(method)
+    depwarn("magnitude_phase(img, method::AbstractString, [border]) is deprecated, use magnitude_phase(img, $f, [border]) instead", :magnitude_phase)
+    magnitude_phase(img, f, border)
+end
