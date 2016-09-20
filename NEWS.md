@@ -60,7 +60,9 @@ Key changes (of which many are breaking):
   been deprecated and replaced with dispatch-leveraging
   alternatives. Specification of standard kernels has been changed
   considerably, and has been split out into two modules, `Kernel` and
-  `KernelFactors`, both defined in the `ImageFiltering` package.
+  `KernelFactors`, both defined in the `ImageFiltering` package. In
+  particular note the `IIRGaussian` types which contain the
+  functionality that was formerly in `imfilter_gaussian`.
 
 - Previous versions of Images used `reinterpret` for several
   operations, but `reinterpret` fails for most `AbstractArray`s other
@@ -69,6 +71,19 @@ Key changes (of which many are breaking):
   `AbstractArray` type. (When it would help performance, `reinterpret`
   is still used when applicable.) Consequently, this release features
   better support for a wider range of array types.
+
+Other changes:
+
+- `extrema_filter` is being deprecated in favor of
+  `rankfilter(extrema, A, window)`. However, this returns an array of
+  `(min,max)` tuples rather than separate `min`, `max` arrays. This is
+  intended to transition towards a future API where one can pass `min`
+  or `max` in place of `extrema` to obtain just get one of
+  these. Currently, you can retrieve the `min` array with `first.(mm)`
+  and the `max` array with `last.(mm)`.
+
+- `extrema_filter` discards the edges of the image, whereas
+  `rankfilter` returns an array of the same size as the input.
 
 # Older versions
 
