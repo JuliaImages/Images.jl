@@ -1,8 +1,5 @@
 ### Edge and Gradient Related Image Operations ###
 
-typealias GrayLike Union{Number,AbstractGray}
-
-
 # Phase (angle of steepest gradient ascent), calculated from X and Y gradient images
 """
     phase(grad_x, grad_y) -> p
@@ -15,11 +12,11 @@ function phase{T<:Number}(grad_x::T, grad_y::T, tol=sqrt(eps(T)))
     atan2(-grad_y, grad_x) * ((abs(grad_x) > tol) | (abs(grad_y) > tol))
 end
 phase(grad_x::Number,   grad_y::Number)   = phase(promote(grad_x, grad_y)...)
-phase(grad_x::GrayLike, grad_y::GrayLike) = phase(gray(grad_x), gray(grad_y))
+phase(grad_x::NumberLike, grad_y::NumberLike) = phase(gray(grad_x), gray(grad_y))
 
 phase(grad_x::AbstractRGB, grad_y::AbstractRGB) = phase(vecsum(grad_x), vecsum(grad_y))
 
-magnitude_phase(grad_x::GrayLike, grad_y::GrayLike) =
+magnitude_phase(grad_x::NumberLike, grad_y::NumberLike) =
     hypot(grad_x, grad_y), phase(grad_x, grad_y)
 
 function magnitude_phase(grad_x::AbstractRGB, grad_y::AbstractRGB)
@@ -43,7 +40,7 @@ function orientation{T<:Number}(grad_x::T, grad_y::T, tol=sqrt(eps(T)))
     atan2(grad_x, grad_y) * ((abs(grad_x) > tol) | (abs(grad_y) > tol))
 end
 orientation(grad_x::Number,   grad_y::Number)   = orientation(promote(grad_x, grad_y)...)
-orientation(grad_x::GrayLike, grad_y::GrayLike) = orientation(gray(grad_x), gray(grad_y))
+orientation(grad_x::NumberLike, grad_y::NumberLike) = orientation(gray(grad_x), gray(grad_y))
 
 orientation(grad_x::AbstractRGB, grad_y::AbstractRGB) = orientation(vecsum(grad_x), vecsum(grad_y))
 
@@ -406,7 +403,7 @@ Parameters :
                     as quantiles or absolute values
 
 """
-function canny{T<:Union{Number,Gray}}(img_gray::AbstractMatrix{T}, sigma::Number = 1.4, upperThreshold::Number = 0.90, lowerThreshold::Number = 0.10; percentile::Bool = true)
+function canny{T<:NumberLike}(img_gray::AbstractMatrix{T}, sigma::Number = 1.4, upperThreshold::Number = 0.90, lowerThreshold::Number = 0.10; percentile::Bool = true)
     img_grayf = imfilter_gaussian(img_gray, [sigma,sigma])
     img_grad_y, img_grad_x = imgradients(img_grayf, KernelFactors.sobel)
     img_mag, img_phase = magnitude_phase(img_grad_x, img_grad_y)
