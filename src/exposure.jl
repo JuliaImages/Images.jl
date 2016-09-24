@@ -35,7 +35,7 @@ complement(x::TransparentColor) = typeof(x)(complement(color(x)), alpha(x))
 
 imhist{T<:Colorant}(img::AbstractArray{T}, nbins::Integer = 400) = imhist(convert(Array{Gray}, data(img)), nbins)
 
-function imhist{T<:Union{Gray,Number}}(img::AbstractArray{T}, nbins::Integer = 400)
+function imhist{T<:NumberLike}(img::AbstractArray{T}, nbins::Integer = 400)
     minval = minfinite(img)
     maxval = maxfinite(img)
     imhist(img, nbins, minval, maxval)
@@ -57,7 +57,7 @@ maximum values present in the image are taken.
 `count[end]` is the number satisfying `x >= edges[end]`. Consequently,
 `length(count) == length(edges)+1`.
 """
-function imhist(img::AbstractArray, nbins::Integer, minval::Union{Gray,Real}, maxval::Union{Gray,Real})
+function imhist(img::AbstractArray, nbins::Integer, minval::RealLike, maxval::RealLike)
     edges = StatsBase.histrange([Float64(minval), Float64(maxval)], nbins, :left)
     imhist(img, edges)
 end
@@ -78,7 +78,7 @@ function imhist(img::AbstractArray, edges::Range)
     edges, histogram
 end
 
-function _histeq_pixel_rescale{T<:Union{Gray,Number}}(pixel::T, cdf, minval, maxval)
+function _histeq_pixel_rescale{T<:NumberLike}(pixel::T, cdf, minval, maxval)
     n = length(cdf)
     bin_pixel = clamp(ceil(Int, (pixel - minval) * length(cdf) / (maxval - minval)), 1, n)
     rescaled_pixel = minval + ((cdf[bin_pixel] - cdf[1]) * (maxval - minval) / (cdf[end] - cdf[1]))
@@ -114,7 +114,7 @@ If minval and maxval are specified then intensities are equalized to the range
 (minval, maxval). The default values are 0 and 1.
 
 """
-function histeq(img::AbstractArray, nbins::Integer, minval::Union{Number,Gray}, maxval::Union{Number,Gray})
+function histeq(img::AbstractArray, nbins::Integer, minval::RealLike, maxval::RealLike)
     bins, histogram = imhist(img, nbins, minval, maxval)
     cdf = cumsum(histogram[2:end-1])
     img_shape = size(img)
@@ -132,7 +132,7 @@ function histeq(img::AbstractArray, nbins::Integer)
     histeq(img, nbins, zero(T), one(T))
 end
 
-function histeq(img::AbstractImage, nbins::Integer, minval::Union{Number,Gray}, maxval::Union{Number,Gray})
+function histeq(img::AbstractImage, nbins::Integer, minval::RealLike, maxval::RealLike)
     newimg = histeq(data(img), nbins, minval, maxval)
     shareproperties(img, newimg)
 end
@@ -141,7 +141,7 @@ histeq(img::AbstractImage, nbins::Integer) = shareproperties(img, histeq(data(im
 
 adjust_gamma(img::AbstractImage, gamma::Number) = shareproperties(img, adjust_gamma(data(img), gamma))
 
-_gamma_pixel_rescale{T<:Union{Gray, Number}}(pixel::T, gamma::Number) = pixel ^ gamma
+_gamma_pixel_rescale{T<:NumberLike}(pixel::T, gamma::Number) = pixel ^ gamma
 
 function _gamma_pixel_rescale{C<:Color}(pixel::C, gamma::Number)
     yiq = convert(YIQ, pixel)
@@ -217,7 +217,7 @@ matched and `oimg` is the image having the desired histogram to be matched to.
 """
 histmatch(img::AbstractImage, oimg::AbstractArray, nbins::Integer = 400) = shareproperties(img, histmatch(data(img), oimg, nbins))
 
-_hist_match_pixel{T<:Union{Gray, Number}}(pixel::T, bins, lookup_table) = T(bins[lookup_table[searchsortedlast(bins, pixel)]])
+_hist_match_pixel{T<:NumberLike}(pixel::T, bins, lookup_table) = T(bins[lookup_table[searchsortedlast(bins, pixel)]])
 
 function _hist_match_pixel{T<:Color}(pixel::T, bins, lookup_table)
     yiq = convert(YIQ, pixel)
@@ -394,16 +394,16 @@ function _clahe{C}(img::AbstractArray{C, 2}, nbins::Integer = 100, xblocks::Inte
     res_img
 end
 
-_clahe_pixel_rescale{T<:Union{Gray, Number}}(pixel::T, cdf, edges) = cdf[searchsortedlast(edges, pixel, Base.Order.Forward)]
+_clahe_pixel_rescale{T<:NumberLike}(pixel::T, cdf, edges) = cdf[searchsortedlast(edges, pixel, Base.Order.Forward)]
 
-function _clahe_pixel_rescale{T<:Union{Gray, Number}}(pixel::T, first, second, edges, pos, length)
+function _clahe_pixel_rescale{T<:NumberLike}(pixel::T, first, second, edges, pos, length)
     id = searchsortedlast(edges, pixel, Base.Order.Forward)
     f = first[id]
     s = second[id]
     T(((length - pos) * f + (pos - 1) * s) / (length - 1))
 end
 
-function _clahe_pixel_rescale{T<:Union{Gray, Number}}(pixel::T, top_left, top_right, bot_left, bot_right, edges, i, j, w, h)
+function _clahe_pixel_rescale{T<:NumberLike}(pixel::T, top_left, top_right, bot_left, bot_right, edges, i, j, w, h)
     id = searchsortedlast(edges, pixel, Base.Order.Forward)
     tl = top_left[id]
     tr = top_right[id]

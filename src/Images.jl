@@ -36,13 +36,11 @@ import Colors: Fractional, red, green, blue
 typealias AbstractGray{T}                    Color{T,1}
 typealias TransparentRGB{C<:AbstractRGB,T}   TransparentColor{C,T,4}
 typealias TransparentGray{C<:AbstractGray,T} TransparentColor{C,T,2}
+typealias NumberLike                         Union{Number,AbstractGray}
+typealias RealLike                           Union{Real,AbstractGray}
 import Graphics
 import Graphics: width, height, Point
 using StatsBase  # TODO: eliminate this dependency
-
-# if isdefined(module_parent(Images), :Grid)
-#     import ..Grid.restrict
-# end
 
 const is_little_endian = ENDIAN_BOM == 0x04030201
 
