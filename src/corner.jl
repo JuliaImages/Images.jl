@@ -16,8 +16,7 @@ specified, the values of the responses are thresholded to give the corner pixels
 The threshold is assumed to be a percentile value unless `percentile` is set to false.
 """
 function imcorner(img::AbstractArray; method::Function = harris, args...)
-    img_gray = convert(Array{Gray}, img)
-    responses = method(img_gray; args...)
+    responses = method(img; args...)
     corners = falses(size(img))
     maxima = map(CartesianIndex{2}, findlocalmaxima(responses))
     for m in maxima corners[m] = true end
@@ -25,11 +24,10 @@ function imcorner(img::AbstractArray; method::Function = harris, args...)
 end
 
 function imcorner(img::AbstractArray, threshold, percentile; method::Function = harris, args...)
-    img_gray = convert(Array{Gray}, img)
-    responses = method(img_gray; args...)
+    responses = method(img; args...)
 
     if percentile == true
-        threshold = StatsBase.percentile(responses[:], threshold * 100)
+        threshold = StatsBase.percentile(vec(responses), threshold * 100)
     end
 
     corners = map(i -> i > threshold, responses)
@@ -73,29 +71,45 @@ Performs Kitchen Rosenfeld corner detection. The covariances can be taken using 
 weighted filter or a gamma kernel.
 """
 function kitchen_rosenfeld(img::AbstractArray; border::AbstractString = "replicate")
-    (grad_x, grad_y) = imgradients(img, "sobel", border)
-    (grad_xx, grad_xy) = imgradients(grad_x, "sobel", border)
-    (grad_yx, grad_yy) = imgradients(grad_y, "sobel", border)
-    numerator = map((x, y, xx, xy, yy) -> xx * (y ^ 2) + yy * (x ^ 2) - 2 * xy * x * y, grad_x, grad_y, grad_xx, grad_xy, grad_yy)
-    denominator = map((x, y) -> x ^ 2 + y ^ 2, grad_x, grad_y)
-    corner = map((n, d) -> d == 0.0 ? 0.0 : -n / d, numerator, denominator)
-    corner
+    meth = KernelFactors.sobel
+    (grad_x, grad_y) = imgradients(img, meth, border)
+    (grad_xx, grad_xy) = imgradients(grad_x, meth, border)
+    (grad_yx, grad_yy) = imgradients(grad_y, meth, border)
+    map(kr, grad_x, grad_y, grad_xx, grad_xy, grad_yy)
+end
+
+function kr{T<:Real}(x::T, y::T, xx::T, xy::T, yy::T)
+    num = xx*y*y + yy*x*x - 2*xy*x*y
+    denom = x*x + y*y
+    ifelse(denom == 0, zero(num)/one(denom), -num/denom)
+end
+
+function kr(x::Real, y::Real, xx::Real, xy::Real, yy::Real)
+    xp, yp, xxp, xyp, yyp = promote(x, y, xx, xy, yy)
+    kr(xp, yp, xxp, xyp, yyp)
+end
+
+kr(x::RealLike, y::RealLike, xx::RealLike, xy::RealLike, yy::RealLike) =
+    kr(gray(x), gray(y), gray(xx), gray(xy), gray(yy))
+
+function kr(x::AbstractRGB, y::AbstractRGB, xx::AbstractRGB, xy::AbstractRGB, yy::AbstractRGB)
+    krrgb = RGB(kr(red(x), red(y), red(xx), red(xy), red(yy)),
+                kr(green(x), green(y), green(xx), green(xy), green(yy)),
+                kr(blue(x),  blue(y),  blue(xx),  blue(xy),  blue(yy)))
+    gray(convert(Gray, krrgb))
 end
 
 """
-```
-corners = fastcorners(img, n, threshold)
-```
+    fastcorners(img, n, threshold) -> corners
 
 Performs FAST Corner Detection. `n` is the number of contiguous pixels
 which need to be greater (lesser) than intensity + threshold (intensity - threshold)
 for a pixel to be marked as a corner. The default value for n is 12.
 """
 function fastcorners{T}(img::AbstractArray{T}, n::Int = 12, threshold::Float64 = 0.15)
-    img_padded = padarray(img, [3,3], [3,3], "value", 0)
+    img_padded = padarray(img, Fill(0, (3,3)))
     corner = falses(size(img))
-    h, w = size(img)
-    R = CartesianRange(CartesianIndex((4, 4)), CartesianIndex((h + 3, w + 3)))
+    R = CartesianRange(size(img))
     idx = map(CartesianIndex{2}, [(0, 3), (1, 3), (2, 2), (3, 1), (3, 0), (3, -1), (2, -2), (1, -3),
             (0, -3), (-1, -3), (-2, -2), (-3, -1), (-3, 0), (-3, 1), (-2, 2), (-1, 3)])
 
@@ -133,7 +147,7 @@ function fastcorners{T}(img::AbstractArray{T}, n::Int = 12, threshold::Float64 =
             end
 
             if consecutive_dark == n || consecutive_bright == n
-                corner[I - CartesianIndex((3, 3))] = true
+                corner[I] = true
                 break
             end
         end
@@ -142,18 +156,18 @@ function fastcorners{T}(img::AbstractArray{T}, n::Int = 12, threshold::Float64 =
 end
 
 function gradcovs(img::AbstractArray, border::AbstractString = "replicate"; weights::Function = meancovs, args...)
-    (grad_x, grad_y) = imgradients(img, "sobel", border)
+    (grad_x, grad_y) = imgradients(img, KernelFactors.sobel, border)
 
-    cov_xx = grad_x .* grad_x
-    cov_xy = grad_x .* grad_y
-    cov_yy = grad_y .* grad_y
+    cov_xx = dotc.(grad_x, grad_x)
+    cov_xy = dotc.(grad_x, grad_y)
+    cov_yy = dotc.(grad_y, grad_y)
 
     weights(cov_xx, cov_xy, cov_yy, args...)
 end
 
 function meancovs(cov_xx, cov_xy, cov_yy, blockSize::Int = 3)
 
-    box_filter_kernel = (1 / (blockSize * blockSize)) * ones(blockSize, blockSize)
+    box_filter_kernel = centered((1 / (blockSize * blockSize)) * ones(blockSize, blockSize))
 
     filt_cov_xx = imfilter(cov_xx, box_filter_kernel)
     filt_cov_xy = imfilter(cov_xy, box_filter_kernel)
@@ -163,10 +177,11 @@ function meancovs(cov_xx, cov_xy, cov_yy, blockSize::Int = 3)
 end
 
 function gammacovs(cov_xx, cov_xy, cov_yy, gamma::Float64 = 1.4)
+    kernel = KernelFactors.gaussian((gamma, gamma))
 
-    filt_cov_xx = imfilter_gaussian(cov_xx, [gamma, gamma])
-    filt_cov_xy = imfilter_gaussian(cov_xy, [gamma, gamma])
-    filt_cov_yy = imfilter_gaussian(cov_yy, [gamma, gamma])
+    filt_cov_xx = imfilter(cov_xx, kernel)
+    filt_cov_xy = imfilter(cov_xy, kernel)
+    filt_cov_yy = imfilter(cov_yy, kernel)
 
     filt_cov_xx, filt_cov_xy, filt_cov_yy
 end
