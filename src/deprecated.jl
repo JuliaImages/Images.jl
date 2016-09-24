@@ -12,7 +12,9 @@ rerange!(args...) = error("reslice! has been removed, along with SliceData; plea
 @deprecate ando3 KernelFactors.ando3
 @deprecate ando4 KernelFactors.ando3
 @deprecate ando5 KernelFactors.ando3
-@deprecate gaussian2d KernelFactors.gaussian
+@deprecate gaussian2d() Kernel.gaussian(0.5)
+@deprecate gaussian2d(σ::Number) Kernel.gaussian(σ)
+@deprecate gaussian2d(σ::Number, filter_size) Kernel.gaussian((σ,σ), (filter_size...,))
 @deprecate imaverage KernelFactors.boxcar
 @deprecate imdog Kernel.DoG
 @deprecate imlog Kernel.LoG
