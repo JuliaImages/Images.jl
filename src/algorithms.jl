@@ -514,6 +514,8 @@ along the dimensions listed in `region`, or all spatial coordinates if
 is better than a naive summation over 2x2 blocks.
 """
 restrict(img::AbstractArray, ::Tuple{}) = img
+restrict(img::AxisArray, ::Tuple{}) = img
+restrict(img::ImageMeta, ::Tuple{}) = img
 
 typealias RegionType Union{Dims,Vector{Int}}
 
