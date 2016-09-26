@@ -258,14 +258,14 @@ ScaleMinMax{To<:Colorant,CV<:AbstractRGB}(::Type{To}, img::AbstractArray{CV}) = 
 similar{T,F,To,From,S}(mapi::ScaleMinMax{To,From,S}, ::Type{T}, ::Type{F}) = ScaleMinMax{T,F,S}(convert(F,mapi.min), convert(F.mapi.max), mapi.s)
 
 # Implementation
-function immap{To<:RealLike,From<:RealLike}(mapi::ScaleMinMax{To,From}, val::From)
+function immap{To<:RealLike,From<:RealLike}(mapi::ScaleMinMax{To,From}, val::Union{Real,Colorant})
     t = clamp(gray(val), gray(mapi.min), gray(mapi.max))
     f = mapi.s*t - mapi.s*mapi.min  # better than mapi.s*(t-mapi.min) (overflow)
     convertsafely(To, f)
 end
-function immap{To<:RealLike,From<:RealLike}(mapi::ScaleMinMax{To,From}, val::Union{Real,Colorant})
-    immap(mapi, convert(From, val))
-end
+# function immap{To<:RealLike,From<:RealLike}(mapi::ScaleMinMax{To,From}, val::Union{Real,Colorant})
+#     immap(mapi, convert(From, val))
+# end
 function map1{To<:Union{RGB24,ARGB32},From<:Real}(mapi::ScaleMinMax{To,From}, val::From)
     t = clamp(val, mapi.min, mapi.max)
     f = mapi.s*t - mapi.s*mapi.min
