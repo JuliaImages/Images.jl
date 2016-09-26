@@ -483,10 +483,10 @@ end
 #     out   # note this isn't type-stable
 # end
 
-function immap{T<:Colorant}(mapi::MapInfo{T}, img::AbstractImageIndexed)
-    out = Image(Array(T, size(img)), properties(img))
-    map!(mapi, out, img)
-end
+# function immap{T<:Colorant}(mapi::MapInfo{T}, img::AbstractImageIndexed)
+#     out = Image(Array(T, size(img)), properties(img))
+#     map!(mapi, out, img)
+# end
 
 map!{T,T1,T2,N}(mapi::MapInfo{T1}, out::AbstractArray{T,N}, img::AbstractArray{T2,N}) =
     _map_a!(mapi, out, img)
@@ -511,9 +511,9 @@ take(mapi::MapInfo, img::AbstractArray) = mapi
 take{T}(mapi::ScaleAutoMinMax{T}, img::AbstractArray) = ScaleMinMax(T, img)
 
 # Indexed images (colormaps)
-map!{T,T1,N}(mapi::MapInfo{T}, out::AbstractArray{T,N}, img::AbstractImageIndexed{T1,N}) =
+map!{T,T1,N}(mapi::MapInfo{T}, out::AbstractArray{T,N}, img::IndirectArray{T1,N}) =
     _mapindx!(mapi, out, img)
-function _mapindx!{T,T1,N}(mapi::MapInfo{T}, out::AbstractArray{T,N}, img::AbstractImageIndexed{T1,N})
+function _mapindx!{T,T1,N}(mapi::MapInfo{T}, out::AbstractArray{T,N}, img::IndirectArray{T1,N})
     dimg = data(img)
     dout = data(out)
     colmap = immap(mapi, dimg.values)
@@ -650,19 +650,6 @@ mapinfo(::Type{Clamp}, img::AbstractArray{RGB24}) = MapNone{RGB{UFixed8}}()
 mapinfo(::Type{Clamp}, img::AbstractArray{ARGB32}) = MapNone{BGRA{UFixed8}}()
 
 
-# Backwards-compatibility
-uint32color(img) = immap(mapinfo(UInt32, img), img)
-uint32color!(buf, img::AbstractArray) = map!(mapinfo(UInt32, img), buf, img)
-uint32color!(buf, img::AbstractArray, mi::MapInfo) = map!(mi, buf, img)
-uint32color!{T,N}(buf::Array{UInt32,N}, img::AbstractImageDirect{T,N}) =
-    map!(mapinfo(UInt32, img), buf, img)
-uint32color!{T,N,N1}(buf::Array{UInt32,N}, img::AbstractImageDirect{T,N1}) =
-    map!(mapinfo(UInt32, img), buf, img, Val{colordim(img)})
-uint32color!{T,N}(buf::Array{UInt32,N}, img::AbstractImageDirect{T,N}, mi::MapInfo) =
-    map!(mi, buf, img)
-uint32color!{T,N,N1}(buf::Array{UInt32,N}, img::AbstractImageDirect{T,N1}, mi::MapInfo) =
-    map!(mi, buf, img, Val{colordim(img)})
-
 """
 ```
 imgsc = sc(img)
@@ -674,5 +661,5 @@ Applies default or specified `ScaleMinMax` mapping to the image.
 sc(img::AbstractArray) = immap(ScaleMinMax(UFixed8, img), img)
 sc(img::AbstractArray, mn::Real, mx::Real) = immap(ScaleMinMax(UFixed8, img, mn, mx), img)
 
-ufixedsc{T<:UFixed}(::Type{T}, img::AbstractImageDirect) = immap(mapinfo(T, img), img)
-ufixed8sc(img::AbstractImageDirect) = ufixedsc(UFixed8, img)
+ufixedsc{T<:UFixed}(::Type{T}, img::AbstractArray) = immap(mapinfo(T, img), img)
+ufixed8sc(img::AbstractArray) = ufixedsc(UFixed8, img)

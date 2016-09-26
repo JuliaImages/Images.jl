@@ -1,9 +1,24 @@
+export
+    AbstractImage,
+    AbstractImageDirect,
+    AbstractImageIndexed,
+    Image
+
 const yx = ["y", "x"]
 const xy = ["x", "y"]
 
 SliceData(args...) = error("SliceData has been removed, please use julia's regular indexing operations")
 reslice!(args...) = error("reslice! has been removed, along with SliceData; please use julia's regular indexing operations")
 rerange!(args...) = error("reslice! has been removed, along with SliceData; please use julia's regular indexing operations")
+
+# These should have been deprecated long ago
+@deprecate uint32color(img) immap(mapinfo(UInt32, img), img)
+@deprecate uint32color!(buf, img::AbstractArray) map!(mapinfo(UInt32, img), buf, img)
+@deprecate uint32color!(buf, img::AbstractArray, mi::MapInfo) map!(mi, buf, img)
+@deprecate uint32color!{T,N}(buf::Array{UInt32,N}, img::AbstractArray{T,N}) map!(mapinfo(UInt32, img), buf, img)
+@deprecate uint32color!{T,N,N1}(buf::Array{UInt32,N}, img::ChannelView{T,N1}) map!(mapinfo(UInt32, img), buf, img, Val{1})
+@deprecate uint32color!{T,N}(buf::Array{UInt32,N}, img::AbstractArray{T,N}, mi::MapInfo) map!(mi, buf, img)
+@deprecate uint32color!{T,N,N1}(buf::Array{UInt32,N}, img::ChannelView{T,N1}, mi::MapInfo) map!(mi, buf, img, Val{1})
 
 @deprecate flipx(img) flipdim(img, 2)
 @deprecate flipy(img) flipdim(img, 1)
