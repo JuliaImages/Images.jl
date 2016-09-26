@@ -29,7 +29,7 @@ Returns the complement of an image.
 """
 imcomplement{T}(img::AbstractArray{T}) = map(complement, img)
 
-imcomplement(img::AbstractImage) = copyproperties(img, imcomplement(data(img)))
+imcomplement(img::ImageMeta) = copyproperties(img, imcomplement(data(img)))
 complement(x) = one(x)-x
 complement(x::TransparentColor) = typeof(x)(complement(color(x)), alpha(x))
 
@@ -132,14 +132,14 @@ function histeq(img::AbstractArray, nbins::Integer)
     histeq(img, nbins, zero(T), one(T))
 end
 
-function histeq(img::AbstractImage, nbins::Integer, minval::RealLike, maxval::RealLike)
+function histeq(img::ImageMeta, nbins::Integer, minval::RealLike, maxval::RealLike)
     newimg = histeq(data(img), nbins, minval, maxval)
     shareproperties(img, newimg)
 end
 
-histeq(img::AbstractImage, nbins::Integer) = shareproperties(img, histeq(data(img), nbins))
+histeq(img::ImageMeta, nbins::Integer) = shareproperties(img, histeq(data(img), nbins))
 
-adjust_gamma(img::AbstractImage, gamma::Number) = shareproperties(img, adjust_gamma(data(img), gamma))
+adjust_gamma(img::ImageMeta, gamma::Number) = shareproperties(img, adjust_gamma(data(img), gamma))
 
 _gamma_pixel_rescale{T<:NumberLike}(pixel::T, gamma::Number) = pixel ^ gamma
 
@@ -215,7 +215,7 @@ Returns a grayscale histogram matched image with a granularity of `nbins` number
 matched and `oimg` is the image having the desired histogram to be matched to.
 
 """
-histmatch(img::AbstractImage, oimg::AbstractArray, nbins::Integer = 400) = shareproperties(img, histmatch(data(img), oimg, nbins))
+histmatch(img::ImageMeta, oimg::AbstractArray, nbins::Integer = 400) = shareproperties(img, histmatch(data(img), oimg, nbins))
 
 _hist_match_pixel{T<:NumberLike}(pixel::T, bins, lookup_table) = T(bins[lookup_table[searchsortedlast(bins, pixel)]])
 
@@ -287,7 +287,7 @@ function clahe{C}(img::AbstractArray{C, 2}, nbins::Integer = 100; xblocks::Integ
     imresize(hist_equalised_img, (h, w))
 end
 
-function clahe(img::AbstractImage, nbins::Integer = 100; xblocks::Integer = 8, yblocks::Integer = 8, clip::Number = 3)
+function clahe(img::ImageMeta, nbins::Integer = 100; xblocks::Integer = 8, yblocks::Integer = 8, clip::Number = 3)
     shareproperties(clahe(data(img), nbins, xblocks = xblocks, yblocks = yblocks, clip = clip), img)
 end
 

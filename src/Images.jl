@@ -1,4 +1,4 @@
-__precompile__(false)  # because of ImageAxes/ImageMeta
+__precompile__(true)  # because of ImageAxes/ImageMeta
 
 module Images
 
@@ -37,6 +37,7 @@ typealias RealLike                           Union{Real,AbstractGray}
 import Graphics
 import Graphics: width, height, Point
 using StatsBase  # TODO: eliminate this dependency
+using IndirectArrays
 
 const is_little_endian = ENDIAN_BOM == 0x04030201
 
@@ -62,11 +63,6 @@ include("distances.jl")
 include("deprecated.jl")
 
 export # types
-    AbstractImage,
-    AbstractImageDirect,
-    AbstractImageIndexed,
-    Image,
-    ImageCmap,
     BitShift,
     ClampMin,
     ClampMax,
@@ -87,12 +83,6 @@ export # types
     # macros
     @test_approx_eq_sigma_eps,
 
-    # constants
-    palette_fire,
-    palette_gray32,
-    palette_gray64,
-    palette_rainbow,
-
     # core functions
     assert2d,
     assert_scalar_color,
@@ -101,11 +91,9 @@ export # types
     assert_yfirst,
     colordim,
     colorspace,
-    coords,
     coords_spatial,
     copyproperties,
     data,
-    dimindexes,
     getindexim,
     grayim,
     colorim,
@@ -140,25 +128,13 @@ export # types
     widthheight,
     raw,
 
-    # iterator functions
-    first_index,
-    iterate_spatial,
-    parent,
-
     # color-related functions
-    indexedcolor,
-    lut,
     separate,
-    uint32color,
-    uint32color!,
 
     # Scaling of intensity
     sc,
     scale,
     mapinfo,
-    uint8sc,
-    uint16sc,
-    uint32sc,
     ufixed8sc,
     ufixedsc,
 
@@ -219,10 +195,8 @@ export # types
     orientation,
     padarray,
     phase,
-    prewitt,
     sad,
     sadn,
-    sobel,
     ssd,
     ssdn,
     thin_edges,
