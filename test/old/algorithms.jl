@@ -241,11 +241,11 @@ facts("Algorithms") do
         @fact B --> roughly(Btarget) "test g0lXjp"
         Argb = reinterpret(RGB, reinterpret(UFixed16, permutedims(A, (3,1,2))))
         B = Images.restrict(Argb)
-        Bf = permutedims(reinterpret(Float64, B), (2,3,1))
+        Bf = permutedims(reinterpret(eltype(eltype(B)), B), (2,3,1))
         @fact Bf --> roughly(Btarget/reinterpret(one(UFixed16)), 1e-12) "test IVByaq"
         Argba = reinterpret(RGBA{UFixed16}, reinterpret(UFixed16, A))
         B = Images.restrict(Argba)
-        @fact reinterpret(Float64, B) --> roughly(Images.restrict(A, (2,3))/reinterpret(one(UFixed16)), 1e-12) "test z8K24e"
+        @fact reinterpret(eltype(eltype(B)), B) --> roughly(Images.restrict(A, (2,3))/reinterpret(one(UFixed16)), 1e-12) "test z8K24e"
         A = reshape(1:60, 5, 4, 3)
         B = Images.restrict(A, (1,2,3))
         @fact cat(3, [ 2.6015625  8.71875 6.1171875;
