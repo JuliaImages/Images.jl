@@ -29,7 +29,7 @@ facts("Algorithms") do
         @fact all(Images.data(img2) == Images.data(img).*A) --> true "test Txfm6a"
         img2 = convert(Images.Image, A)
         img2 = img2 .- 0.5
-        img3 = 2img .* img2
+        img3 = 2img .* data(img2)
         img2 = img ./ A
         img2 = (2img).^2
         # Same operations with Color images
