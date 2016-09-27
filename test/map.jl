@@ -69,7 +69,7 @@ facts("Map") do
         @chk map(mapi, RGB{UFixed16}(1.0,0.8,0.6)) RGBA{UFixed8}(1.0,0.8,0.6,1.0)
         # Issue, #269, IJulia issue #294
         bs = BitShift(Gray{UFixed8}, 8)
-        v = Gray(ufixed16(0.8))
+        v = Gray(UFixed16(0.8))
         @chk map(bs, v) Gray{UFixed8}(0.8)
     end
 
@@ -203,7 +203,7 @@ facts("Map") do
     context("ScaleAutoMinMax") do
         mapi = ScaleAutoMinMax()
         A = [100,550,1000]
-        @chk map(mapi, A) @compat ufixed8.([0.0,0.5,1.0])
+        @chk map(mapi, A) @compat UFixed8.([0.0,0.5,1.0])
         mapi = ScaleAutoMinMax(RGB24)
         @chk map(mapi, A) RGB24[0x00000000, 0x00808080, 0x00ffffff]
 
