@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<!--[if lt IE 7 ]><html class="no-js ie6"><![endif]-->
+<!--[if IE 7 ]><html class="no-js ie7"><![endif]-->
+<!--[if IE 8 ]><html class="no-js ie8"><![endif]-->
+<!--[if IE 9 ]><html class="no-js ie9"><![endif]-->
+<!--[if (gt IE 9)|!(IE)]><!--> <html class="no-js"> <!--<![endif]-->
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,maximum-scale=1">
+    
+      
+        <title>Function Reference - Images.jl</title>
+      
+      
+      
+      
+        <meta name="author" content="Tim Holy">
+      
+    
+    <meta property="og:url" content="None">
+    <meta property="og:title" content="Images.jl">
+    <meta property="og:image" content="None/../">
+    <meta name="apple-mobile-web-app-title" content="Images.jl">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
+    
+    <link rel="shortcut icon" type="image/x-icon" href="../assets/images/favicon-e565ddfa3b.ico">
+    <link rel="icon" type="image/x-icon" href="../assets/images/favicon-e565ddfa3b.ico">
+    <style>
+      @font-face {
+      	font-family: 'Icon';
+      	src: url('../assets/fonts/icon.eot?52m981');
+      	src: url('../assets/fonts/icon.eot?#iefix52m981')
+               format('embedded-opentype'),
+      		   url('../assets/fonts/icon.woff?52m981')
+               format('woff'),
+      		   url('../assets/fonts/icon.ttf?52m981')
+               format('truetype'),
+      		   url('../assets/fonts/icon.svg?52m981#icon')
+               format('svg');
+      	font-weight: normal;
+      	font-style: normal;
+      }
+    </style>
+    <link rel="stylesheet" href="../assets/stylesheets/application-a422ff04cc.css">
+    
+      <link rel="stylesheet" href="../assets/stylesheets/palettes-05ab2406df.css">
+    
+    
+      
+      
+      
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source Pro:400,700|Source+Code+Pro">
+      <style>
+        body, input {
+          font-family: 'Source Pro', Helvetica, Arial, sans-serif;
+        }
+        pre, code {
+          font-family: 'Source Code Pro', 'Courier New', 'Courier', monospace;
+        }
+      </style>
+    
+    
+      <link rel="stylesheet" href="../assets/Documenter.css">
+    
+    <script src="../assets/javascripts/modernizr-4ab42b99fd.js"></script>
+    
+  </head>
+  
+  
+  
+  <body class="palette-primary-indigo palette-accent-light-blue">
+    
+      
+      
+    
+    <div class="backdrop">
+      <div class="backdrop-paper"></div>
+    </div>
+    <input class="toggle" type="checkbox" id="toggle-drawer">
+    <input class="toggle" type="checkbox" id="toggle-search">
+    <label class="toggle-button overlay" for="toggle-drawer"></label>
+    <header class="header">
+      <nav aria-label="Header">
+  <div class="bar default">
+    <div class="button button-menu" role="button" aria-label="Menu">
+      <label class="toggle-button icon icon-menu" for="toggle-drawer">
+        <span></span>
+      </label>
+    </div>
+    <div class="stretch">
+      <div class="title">
+        
+          <span class="path">
+            
+          </span>
+        
+        Function Reference
+      </div>
+    </div>
+    
+    
+    <div class="button button-search" role="button" aria-label="Search">
+      <label class="toggle-button icon icon-search" title="Search" for="toggle-search"></label>
+    </div>
+  </div>
+  <div class="bar search">
+    <div class="button button-close" role="button" aria-label="Close">
+      <label class="toggle-button icon icon-back" for="toggle-search"></label>
+    </div>
+    <div class="stretch">
+      <div class="field">
+        <input class="query" type="text" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck>
+      </div>
+    </div>
+    <div class="button button-reset" role="button" aria-label="Search">
+      <button class="toggle-button icon icon-close" id="reset-search"></button>
+    </div>
+  </div>
+</nav>
+    </header>
+    <main class="main">
+      
+      <div class="drawer">
+        <nav aria-label="Navigation">
+  
+  <a href="https://github.com/timholy/Images.jl.git" class="project">
+    <div class="banner">
+      
+      <div class="name">
+        <strong>
+          Images.jl
+          <span class="version">
+            
+          </span>
+        </strong>
+        
+          <br>
+          timholy/Images.jl.git
+        
+      </div>
+    </div>
+  </a>
+  <div class="scrollable">
+    <div class="wrapper">
+      
+        <ul class="repo">
+          <li class="repo-download">
+            
+            <a href="https://github.com/timholy/Images.jl.git/archive/master.zip" target="_blank" title="Download" data-action="download">
+              <i class="icon icon-download"></i> Download
+            </a>
+          </li>
+          <li class="repo-stars">
+            <a href="https://github.com/timholy/Images.jl.git/stargazers" target="_blank" title="Stargazers" data-action="star">
+              <i class="icon icon-star"></i> Stars
+              <span class="count">&ndash;</span>
+            </a>
+          </li>
+        </ul>
+        <hr>
+      
+      <div class="toc">
+        <ul>
+          
+            
+  <li>
+    <a class="" title="Home" href="..">
+      Home
+    </a>
+    
+  </li>
+
+          
+            
+  <li>
+    <span class="section">User Guide</span>
+    <ul>
+      
+        
+  <li>
+    <a class="" title="Aims" href="../aims/">
+      Aims
+    </a>
+    
+  </li>
+
+      
+        
+  <li>
+    <a class="" title="Core Concepts" href="../core/">
+      Core Concepts
+    </a>
+    
+  </li>
+
+      
+        
+  <li>
+    <a class="" title="Overlays" href="../overlays/">
+      Overlays
+    </a>
+    
+  </li>
+
+      
+    </ul>
+  </li>
+
+          
+            
+  <li>
+    <a class="current" title="Function Reference" href="./">
+      Function Reference
+    </a>
+    
+      
+        
+      
+      
+    
+  </li>
+
+          
+        </ul>
+        
+      </div>
+    </div>
+  </div>
+</nav>
+      </div>
+      <article class="article">
+        <div class="wrapper">
+          
+          <p><a id='Function-Reference-1'></a></p>
+<h1 id="function-reference">Function Reference</h1>
+<p>Below, <code>[]</code> in an argument list means an optional argument.</p>
+<p><a id='Image-construction-1'></a></p>
+<h1 id="image-construction">Image construction</h1>
+<p><a id='Images.Image' href='#Images.Image'>#</a>
+<strong><code>Images.Image</code></strong> &mdash; <em>Type</em>.</p>
+<pre><code>Image(data, [properties])
+Image(data, prop1=val1, prop2=val2, ...)
+</code></pre>
+
+<p>creates a new "direct" image, one in which the values in <code>data</code> correspond to the pixel values. In contrast with <code>convert</code>, <code>grayim</code> and <code>colorim</code>, this does not permute the data array or attempt to guess any of the <code>properties</code>. If <code>data</code> encodes color information along one of the dimensions of the array (as opposed to using a <code>Color</code> array, from the <code>Colors.jl</code> package), be sure to specify the <code>"colordim"</code> and <code>"colorspace"</code> in <code>properties</code>.</p>
+<p><a id='Images.ImageCmap' href='#Images.ImageCmap'>#</a>
+<strong><code>Images.ImageCmap</code></strong> &mdash; <em>Type</em>.</p>
+<pre><code>ImageCmap(data, cmap, [properties])
+</code></pre>
+
+<p>creates an indexed (colormap) image.</p>
+<pre><code>convert(Image, A)
+convert(Array, img)
+convert(Image{HSV}, img)
+</code></pre>
+
+<p>The first creates a 2d image from an array, setting up default properties. The data array is assumed to be in "vertical-major" order, and an m-by-n-by-3 array will be assumed to encode color along its third dimension.</p>
+<p><code>convert(Array, img)</code> works in the opposite direction, permuting dimensions (if needed) to put it in Matlab-standard storage order.</p>
+<p>The third syntax allows you to convert from one colorspace to another.</p>
+<p><a id='Images.grayim' href='#Images.grayim'>#</a>
+<strong><code>Images.grayim</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>img = grayim(A)
+</code></pre>
+
+<p>creates a 2d or 3d <em>spatial</em> grayscale Image from an AbstractArray <code>A</code>, assumed to be in "horizontal-major" order (and without permuting any dimensions). If you are working with 3d grayscale images, usage of this function is strongly recommended. This can fix errors like any of the following:</p>
+<pre><code>ERROR: Wrong number of spatial dimensions for plain Array, use an AbstractImage type
+ERROR: Cannot infer colorspace of Array, use an AbstractImage type
+ERROR: Cannot infer pixelspacing of Array, use an AbstractImage type
+</code></pre>
+
+<p>The main reason for such errors–-and the reason that <code>grayim</code> is recommended–-is the Matlab-derived convention that a <code>m x n x 3</code> array is to be interpreted as RGB.  One might then say that an <code>m x n x k</code> array, for <code>k</code> different from 3, could be interpreted as grayscale. However, this would lead to difficult-to-track-down surprises on the day where <code>k</code> happened to be 3 for your grayscale image.</p>
+<p>See also: <code>colorim</code>, <code>Image</code>, <code>convert(Image, A)</code>.</p>
+<p><a id='Images.colorim' href='#Images.colorim'>#</a>
+<strong><code>Images.colorim</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>img = colorim(A, [colorspace])
+</code></pre>
+
+<p>Creates a 2d color image from an AbstractArray <code>A</code>, auto-detecting which of the first or last dimension encodes the color and choosing between "horizontal-" and "vertical-major" accordingly. <code>colorspace</code> defaults to <code>"RGB"</code> but could also be e.g. <code>"Lab"</code> or <code>"HSV"</code>.  If the array represents a 4-channel image, the <code>colorspace</code> option is mandatory since there is no way to automatically distinguish between <code>"ARGB"</code> and <code>"RGBA"</code>.  If both the first and last dimensions happen to be of size 3 or 4, it is impossible to guess which one represents color and thus an error is generated.  Thus, if your code needs to be robust to arbitrary-sized images, you should use the <code>Image</code> constructor directly.</p>
+<p>See also: <code>grayim</code>, <code>Image</code>, <code>convert(Image{RGB}, A)</code>.</p>
+<p><a id='Images.copyproperties' href='#Images.copyproperties'>#</a>
+<strong><code>Images.copyproperties</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>imgnew = copyproperties(img, data)
+</code></pre>
+
+<p>Creates a new image from the data array <code>data</code>, copying the properties from Image <code>img</code>.</p>
+<p><a id='Images.shareproperties' href='#Images.shareproperties'>#</a>
+<strong><code>Images.shareproperties</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>imgnew = shareproperties(img, data)
+</code></pre>
+
+<p>Creates a new image from the data array <code>data</code>, <em>sharing</em> the properties of Image <code>img</code>. Any modifications made to the properties of one will affect the other.</p>
+<p><a id='Base.similar' href='#Base.similar'>#</a>
+<strong><code>Base.similar</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>similar(array, [element_type=eltype(array)], [dims=size(array)])
+</code></pre>
+
+<p>Create an uninitialized mutable array with the given element type and size, based upon the given source array. The second and third arguments are both optional, defaulting to the given array's <code>eltype</code> and <code>size</code>. The dimensions may be specified either as a single tuple argument or as a series of integer arguments.</p>
+<p>Custom AbstractArray subtypes may choose which specific array type is best-suited to return for the given element type and dimensionality. If they do not specialize this method, the default is an <code>Array(element_type, dims...)</code>.</p>
+<p>For example, <code>similar(1:10, 1, 4)</code> returns an uninitialized <code>Array{Int,2}</code> since ranges are neither mutable nor support 2 dimensions:</p>
+<pre><code>julia&gt; similar(1:10, 1, 4)
+1x4 Array{Int64,2}:
+ 4419743872  4374413872  4419743888  0
+</code></pre>
+
+<p>Conversely, <code>similar(trues(10,10), 2)</code> returns an uninitialized <code>BitVector</code> with two elements since <code>BitArray</code>s are both mutable and can support 1-dimensional arrays:</p>
+<pre><code>julia&gt; similar(trues(10,10), 2)
+2-element BitArray{1}:
+ false
+ false
+</code></pre>
+
+<p>Since <code>BitArray</code>s can only store elements of type <code>Bool</code>, however, if you request a different element type it will create a regular <code>Array</code> instead:</p>
+<pre><code>julia&gt; similar(falses(10), Float64, 2, 4)
+2x4 Array{Float64,2}:
+ 2.18425e-314  2.18425e-314  2.18425e-314  2.18425e-314
+ 2.18425e-314  2.18425e-314  2.18425e-314  2.18425e-314
+</code></pre>
+
+<p><a id='Images.Overlay' href='#Images.Overlay'>#</a>
+<strong><code>Images.Overlay</code></strong> &mdash; <em>Type</em>.</p>
+<pre><code>A = Overlay(channels, colors)
+A = Overlay(channels, colors, clim)
+A = Overlay(channels, colors, mapi)
+</code></pre>
+
+<p>Create an <code>Overlay</code> array from grayscale channels.  <code>channels = (channel1, channel2, ...)</code>, <code>colors</code> is a vector or tuple of <code>Color</code>s, and <code>clim</code> is a vector or tuple of min/max values, e.g., <code>clim = ((min1,max1),(min2,max2),...)</code>. Alternatively, you can supply a list of <code>MapInfo</code> objects.</p>
+<p>See also: <code>OverlayImage</code>.</p>
+<p><a id='Images.OverlayImage' href='#Images.OverlayImage'>#</a>
+<strong><code>Images.OverlayImage</code></strong> &mdash; <em>Function</em>.</p>
+<p><code>OverlayImage</code> is identical to <code>Overlay</code>, except that it returns an Image.</p>
+<p><a id='Accessing-image-data-1'></a></p>
+<h1 id="accessing-image-data">Accessing image data</h1>
+<p><a id='Images.data' href='#Images.data'>#</a>
+<strong><code>Images.data</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>A = data(img)
+</code></pre>
+
+<p>returns a reference <code>A</code> to the array data in <code>img</code>. It allows you to use algorithms specialized for particular <code>AbstractArray</code> types on <code>Image</code> types. This works for both <code>AbstractImage</code>s and <code>AbstractArray</code>s (for the latter it just returns the input), so is a "safe" component of any algorithm.</p>
+<p>For algorithms written to accept arbitrary <code>AbstractArrays</code>, this function is not needed.</p>
+<p><a id='Images.raw' href='#Images.raw'>#</a>
+<strong><code>Images.raw</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>imgraw = raw(img)
+</code></pre>
+
+<p>returns a reference to the array data in raw (machine-native) storage format. This is particularly useful when Images.jl wraps image data in a <code>FixedPointNumbers</code> type, and raw data access is desired. For example</p>
+<pre><code>img = load(&quot;someimage.tif&quot;)
+typeof( data(img) )  # return Array{UFixed{UInt8,8},2}
+typeof( raw(img) )   # returns Array{UInt8,2}
+</code></pre>
+
+<p><a id='Images.separate' href='#Images.separate'>#</a>
+<strong><code>Images.separate</code></strong> &mdash; <em>Function</em>.</p>
+<p><code>imgs = separate(img)</code> separates the color channels of <code>img</code>, for example returning an <code>m-by-n-by-3</code> array from an <code>m-by-n</code> array of <code>RGB</code>.</p>
+<p>img<a href="../indexing"></a></p>
+<pre><code class="julia">img[i, j, k,...]
+img[&quot;x&quot;, 100:200, &quot;y&quot;, 400:600]
+</code></pre>
+
+<p>return image data as an array. The latter syntax allows you to address dimensions by name, irrespective of the storage order. The returned values have the same storage order as the parent.</p>
+<p><a id='Images.getindexim' href='#Images.getindexim'>#</a>
+<strong><code>Images.getindexim</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>imgnew = getindexim(img, i, j, k,...)
+imgnew = getindexim(img, &quot;x&quot;, 100:200, &quot;y&quot;, 400:600)
+</code></pre>
+
+<p>return a new Image <code>imgnew</code>, copying (and where necessary modifying) the properties of <code>img</code>.  This is in contrast with <code>img[i, j, k...]</code>, which returns an <code>Array</code>.</p>
+<p>sub and slice</p>
+<pre><code class="julia">sub(img, i, j, k, ...)
+sub(img, &quot;x&quot;, 100:200, &quot;y&quot;, 400:600)
+slice(img, i, j, k, ...)
+slice(img, &quot;x&quot;, 15, &quot;y&quot;, 400:600)
+</code></pre>
+
+<p>returns a <code>SubArray</code> of image data, with the ordinary meanings of <code>sub</code> and <code>slice</code>.</p>
+<p>subim and sliceim</p>
+<pre><code class="julia">subim(img, i, j, k, ...)
+subim(img, &quot;x&quot;, 100:200, &quot;y&quot;, 400:600)
+sliceim(img, i, j, k, ...)
+subim(img, &quot;x&quot;, 15, &quot;y&quot;, 400:600)
+</code></pre>
+
+<p>returns an <code>Image</code> with <code>SubArray</code> data.</p>
+<p><a id='Properties-dictionary-like-interface-1'></a></p>
+<h1 id="properties-dictionary-like-interface">Properties dictionary-like interface</h1>
+<p>Unless specified, these functions work on both plain arrays (when properties can be inferred), and on <code>Image</code> types.</p>
+<pre><code class="julia">val = img[&quot;propertyname&quot;]
+img[&quot;propertyname&quot;] = val
+</code></pre>
+
+<p>get and set, respectively, the value of a property. These work only for <code>Image</code> types.</p>
+<p>haskey</p>
+<pre><code class="julia">haskey(img, &quot;propertyname&quot;)
+</code></pre>
+
+<p>Tests whether the named property exists. Returns false for <code>Array</code>s.</p>
+<p>get</p>
+<pre><code class="julia">get(img, &quot;propertyname&quot;, defaultvalue)
+</code></pre>
+
+<p>Gets the named property, or returns the default if not present. For <code>Array</code>, the default is always returned.</p>
+<p><a id='Properties-accessor-function-interface-1'></a></p>
+<h1 id="properties-accessor-function-interface">Properties accessor-function interface</h1>
+<p>Unless specified, these functions work on both plain arrays (when properties can be inferred), and on <code>Image</code> types.</p>
+<p><a id='Images.assert2d' href='#Images.assert2d'>#</a>
+<strong><code>Images.assert2d</code></strong> &mdash; <em>Function</em>.</p>
+<p><code>assert2d(img)</code> triggers an error if the image has more than two spatial dimensions or has a time dimension.</p>
+<p><a id='Images.assert_scalar_color' href='#Images.assert_scalar_color'>#</a>
+<strong><code>Images.assert_scalar_color</code></strong> &mdash; <em>Function</em>.</p>
+<p><code>assert_scalar_color(img)</code> triggers an error if the image uses an array dimension to encode color.</p>
+<p><a id='Images.assert_timedim_last' href='#Images.assert_timedim_last'>#</a>
+<strong><code>Images.assert_timedim_last</code></strong> &mdash; <em>Function</em>.</p>
+<p><code>assert_timedim_last(img)</code> triggers an error if the image has a time dimension that is not the last dimension.</p>
+<p><a id='Images.assert_xfirst' href='#Images.assert_xfirst'>#</a>
+<strong><code>Images.assert_xfirst</code></strong> &mdash; <em>Function</em>.</p>
+<p><code>assert_xfirst(img)</code> triggers an error if the first spatial dimension is not <code>"x"</code>.</p>
+<p><a id='Images.colordim' href='#Images.colordim'>#</a>
+<strong><code>Images.colordim</code></strong> &mdash; <em>Function</em>.</p>
+<p><code>dim = colordim(img)</code> returns the dimension used to encode color, or 0 if no dimension of the array is used for color. For example, an <code>Array</code> of size <code>(m, n, 3)</code> would result in 3, whereas an <code>Array</code> of <code>RGB</code> colorvalues would yield 0.</p>
+<p>See also: <code>ncolorelem</code>, <code>timedim</code>.</p>
+<p><a id='Images.colorspace' href='#Images.colorspace'>#</a>
+<strong><code>Images.colorspace</code></strong> &mdash; <em>Function</em>.</p>
+<p><code>cs = colorspace(img)</code> returns a string specifying the colorspace representation of the image.</p>
+<p><a id='Images.coords_spatial' href='#Images.coords_spatial'>#</a>
+<strong><code>Images.coords_spatial</code></strong> &mdash; <em>Function</em>.</p>
+<p><code>c = coords_spatial(img)</code> returns a vector listing the spatial dimensions of the image. For example, an <code>Array</code> of size <code>(m,n,3)</code> would return <code>[1,2]</code>.</p>
+<p>See also: <code>spatialorder</code>.</p>
+<p><a id='Graphics.height' href='#Graphics.height'>#</a>
+<strong><code>Graphics.height</code></strong> &mdash; <em>Function</em>.</p>
+<p><code>h = height(img)</code> returns the vertical size of the image, regardless of storage order. By default horizontal corresponds to dimension <code>"y"</code>, but see <code>spatialpermutation</code> for other options.</p>
+<p><a id='Images.isdirect' href='#Images.isdirect'>#</a>
+<strong><code>Images.isdirect</code></strong> &mdash; <em>Function</em>.</p>
+<p><code>isdirect(img)</code> returns true if <code>img</code> encodes its values directly, rather than via an indexed colormap.</p>
+<p><a id='Images.isxfirst' href='#Images.isxfirst'>#</a>
+<strong><code>Images.isxfirst</code></strong> &mdash; <em>Function</em>.</p>
+<p><code>tf = isxfirst(img)</code> tests whether the first spatial dimension is <code>"x"</code>.</p>
+<p>See also: <code>isyfirst</code>, <code>assert_xfirst</code>.</p>
+<p><a id='Images.isyfirst' href='#Images.isyfirst'>#</a>
+<strong><code>Images.isyfirst</code></strong> &mdash; <em>Function</em>.</p>
+<p><code>tf = isyfirst(img)</code> tests whether the first spatial dimension is <code>"y"</code>.</p>
+<p>See also: <code>isxfirst</code>, <code>assert_yfirst</code>.</p>
+<p><a id='Images.pixelspacing' href='#Images.pixelspacing'>#</a>
+<strong><code>Images.pixelspacing</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>ps = pixelspacing(img)
+</code></pre>
+
+<p>Returns a vector <code>ps</code> containing the spacing between adjacent pixels along each dimension. If this property is not available, it will be computed from <code>"spacedirections"</code> if present; otherwise it defaults to <code>ones(sdims(img))</code>. If desired, you can set this property in terms of physical <a href="https://github.com/Keno/SIUnits.jl">units</a>.</p>
+<p>See also: <code>spacedirections</code>.</p>
+<p><a id='Images.spacedirections' href='#Images.spacedirections'>#</a>
+<strong><code>Images.spacedirections</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>sd = spacedirections(img)
+</code></pre>
+
+<p>Returns a vector-of-vectors <code>sd</code>, each <code>sd[i]</code>indicating the displacement between adjacent pixels along spatial axis <code>i</code> of the image array, relative to some external coordinate system ("physical coordinates").  For example, you could indicate that a photograph was taken with the camera tilted 30-degree relative to vertical using</p>
+<pre><code>img[&quot;spacedirections&quot;] = [[0.866025,-0.5],[0.5,0.866025]]
+</code></pre>
+
+<p>If not specified, it will be computed from <code>pixelspacing(img)</code>, placing the spacing along the "diagonal".  If desired, you can set this property in terms of physical <a href="https://github.com/loladiro/SIUnits.jl">units</a>.</p>
+<p>See also: <code>pixelspacing</code>.</p>
+<p><a id='Images.nimages' href='#Images.nimages'>#</a>
+<strong><code>Images.nimages</code></strong> &mdash; <em>Function</em>.</p>
+<p><code>n = nimages(img)</code> returns the number of time-points in the image array. This is safer than <code>size(img, "t")</code> because it also works for plain <code>AbstractArray</code> types.</p>
+<p><a id='Images.sdims' href='#Images.sdims'>#</a>
+<strong><code>Images.sdims</code></strong> &mdash; <em>Function</em>.</p>
+<p><code>n = sdims(img)</code> is similar to <code>ndims</code>, but it returns just the number of <em>spatial</em> dimensions in the image array (excluding color and time).</p>
+<p>size</p>
+<pre><code class="julia">size(img, 2)
+size(img, &quot;t&quot;)
+</code></pre>
+
+<p>Obtains the size of the specified dimension, even for dimensions specified by name. See also <code>nimages</code>, <code>size_spatial</code>, <code>width</code>, <code>height</code>, and <code>widthheight</code>.</p>
+<p><a id='Images.size_spatial' href='#Images.size_spatial'>#</a>
+<strong><code>Images.size_spatial</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>ssz = size_spatial(img)
+</code></pre>
+
+<p>Returns a tuple listing the sizes of the spatial dimensions of the image. For example, an <code>Array</code> of size <code>(m,n,3)</code> would return <code>(m,n)</code>.</p>
+<p>See also: <code>nimages</code>, <code>width</code>, <code>height</code>, <code>widthheight</code>.</p>
+<p><a id='Images.spatialorder' href='#Images.spatialorder'>#</a>
+<strong><code>Images.spatialorder</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>order = spatialorder(img)
+order = spatialorder(ImageType)
+</code></pre>
+
+<p>Returns the storage order of the <em>spatial</em> coordinates of the image, e.g., <code>["y", "x"]</code>. The second version works on a type, e.g., <code>Matrix</code>. See <code>storageorder</code>, <code>timedim</code>, and <code>colordim</code> for related properties.</p>
+<pre><code>so = spatialorder(img)
+so = spatialorder(ImageType)
+</code></pre>
+
+<p>Returns the storage order of the <em>spatial</em> coordinates of the image, e.g., <code>["y", "x"]</code>. The second version works on a type, e.g., <code>Matrix</code>.</p>
+<p>See also: <code>storageorder</code>, <code>coords_spatial</code>, <code>timedim</code>, and <code>colordim</code>.</p>
+<p><a id='Images.spatialpermutation' href='#Images.spatialpermutation'>#</a>
+<strong><code>Images.spatialpermutation</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>p = spatialpermutation(to, img)
+</code></pre>
+
+<p>Calculates the <em>spatial</em> permutation needed to convert the spatial dimensions to a given order. This is probably easiest to understand by examples: for an <code>Array</code> <code>A</code> of size <code>(m,n,3)</code>, <code>spatialorder(A)</code> would yield <code>["y", "x"]</code>, so <code>spatialpermutation(["y", "x"], A) = [1,2]</code> and <code>spatialpermutation(["x", "y"], A) = [2,1]</code>.  For an image type, here's a demonstration:</p>
+<pre><code>julia&gt; Aimg = convert(Image, A)
+RGB Image with:
+  data: 4x5x3 Array{Float64,3}
+  properties:
+    colordim: 3
+    spatialorder:  y x
+    colorspace: RGB
+
+julia&gt; Ap = permutedims(Aimg, [3, 1, 2])
+RGB Image with:
+  data: 3x4x5 Array{Float64,3}
+  properties:
+    colordim: 1
+    spatialorder:  y x
+    colorspace: RGB
+
+julia&gt; spatialpermutation([&quot;x&quot;,&quot;y&quot;], Ap)
+2-element Array{Int64,1}:
+ 2
+ 1
+</code></pre>
+
+<p><a id='Images.spatialproperties' href='#Images.spatialproperties'>#</a>
+<strong><code>Images.spatialproperties</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>sp = spatialproperties(img)
+</code></pre>
+
+<p>Returns all properties whose values are of the form of an array or tuple, with one entry per spatial dimension. If you have a custom type with additional spatial properties, you can set <code>img["spatialproperties"] = ["property1", "property2", ...]</code>. An advantage is that functions that change spatial dimensions, like <code>permutedims</code> and <code>slice</code>, will also adjust the properties. The default is <code>["spatialorder", "pixelspacing"]</code>; however, if you override the setting then these are not included automatically (you'll want to do so manually, if applicable).</p>
+<p><a id='Images.storageorder' href='#Images.storageorder'>#</a>
+<strong><code>Images.storageorder</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>so = storageorder(img)
+</code></pre>
+
+<p>Returns the complete storage order of the image array, including <code>"t"</code> for time and <code>"color"</code> for color.</p>
+<p>See also: <code>spatialorder</code>, <code>colordim</code>, <code>timedim</code>.</p>
+<p><a id='Images.timedim' href='#Images.timedim'>#</a>
+<strong><code>Images.timedim</code></strong> &mdash; <em>Function</em>.</p>
+<p><code>dim = timedim(img)</code> returns the dimension used to represent time, or 0 if this is a single image.</p>
+<p>See also: <code>nimages</code>, <code>colordim</code>.</p>
+<p><a id='Graphics.width' href='#Graphics.width'>#</a>
+<strong><code>Graphics.width</code></strong> &mdash; <em>Function</em>.</p>
+<p><code>w = width(img)</code> returns the horizontal size of the image, regardless of storage order. By default horizontal corresponds to dimension <code>"x"</code>, but see <code>spatialpermutation</code> for other options.</p>
+<p><a id='Images.widthheight' href='#Images.widthheight'>#</a>
+<strong><code>Images.widthheight</code></strong> &mdash; <em>Function</em>.</p>
+<p><code>w, h = widthheight(img)</code> returns the width and height of an image, regardless of storage order.</p>
+<p>See also: <code>width</code>, <code>height</code>.</p>
+<p><a id='Element-transformation-and-intensity-scaling-1'></a></p>
+<h1 id="element-transformation-and-intensity-scaling">Element transformation and intensity scaling</h1>
+<p>Many images require some type of transformation before you can use or view them. For example, visualization libraries work in terms of 8-bit data, so if you're using a 16-bit scientific camera, your image values will need to be scaled before display.</p>
+<p>One can directly rescale the pixel intensities in the image array.  In general, element-wise transformations are handled by <code>map</code> or <code>map!</code>, where the latter is used when you want to provide a pre-allocated output.  You can use an anonymous function of your own design, or, if speed is paramount, the "anonymous functions" of the <a href="https://github.com/timholy/FastAnonymous.jl">FastAnonymous</a> package.</p>
+<p>Images also supports "lazy transformations." When loading a very large image, (e.g., loaded by memory-mapping) you may use or view just a small portion of it. In such cases, it would be quite wasteful to force transformation of the entire image, and indeed on might exhaust available memory or need to write a new file on disk.  <code>Images</code> supports lazy-evaluation scaling through the <code>MapInfo</code> abstract type.  The basic syntax is</p>
+<pre><code class="julia">valout = map(mapi::MapInfo, valin)
+</code></pre>
+
+<p>Here <code>val</code> can refer to a single pixel's data, or to the entire image array. The <code>mapi</code> input is a type that determines how the input value is scale and converted to a new type.</p>
+<p><a id='MapInfo-1'></a></p>
+<h2 id="mapinfo">MapInfo</h2>
+<p>Here is how to directly construct the major concrete <code>MapInfo</code> types:</p>
+<ul>
+<li>
+<p><code>MapNone(T)</code>, indicating that the only form of scaling is conversion   to type T.  This can throw an error if a value <code>x</code> cannot be   represented as an object of type <code>T</code>, e.g., <code>map(MapNone{U8}, 1.2)</code>.</p>
+</li>
+<li>
+<p><code>ClampMin(T, minvalue)</code>, <code>ClampMax(T, maxvalue)</code>, and   <code>ClampMinMax(T, minvalue, maxvalue)</code> create <code>MapInfo</code> objects that   clamp pixel values at the specified min, max, and min/max values,   respectively, before converting to type <code>T</code>. Clamping is equivalent   to <code>clampedval = min(max(val, minvalue), maxvalue)</code>.</p>
+</li>
+<li>
+<p><code>BitShift(T, N)</code> or <code>BitShift{T,N}()</code>, for scaling by bit-shift operators.   <code>N</code> specifies the number of bits to right-shift by.  For example you could   convert a 14-bit image to 8-bits using <code>BitShift(Uint8, 6)</code>.  In general this   will be faster than using multiplication.</p>
+</li>
+<li>
+<p><code>ScaleMinMax(T, min, max, [scalefactor])</code> clamps the image at the specified   min/max values, subtracts the min value, scales the result by multiplying by   <code>scalefactor</code>, and finally converts the type.  If <code>scalefactor</code> is not   specified, it defaults to scaling the range <code>[min,max]</code> to <code>[0,1]</code>.</p>
+</li>
+<li>
+<p><code>ScaleAutoMinMax(T)</code> will cause images to be dynamically scaled to their   specific min/max values, using the same algorithm for <code>ScaleMinMax</code>. When   displaying a movie, the min/max will be recalculated for each frame, so this   can result in inconsistent contrast scaling.</p>
+</li>
+<li>
+<p><code>ScaleSigned(T, scalefactor)</code> multiplies the image by the scalefactor, then   clamps to the range <code>[-1,1]</code>. If <code>T</code> is a floating-point type, it stays in   this representation.  If <code>T</code> is <code>RGB24</code> or <code>RGB{UFixed8}</code>, then it is encoded   as a magenta (positive)/green (negative) image.</p>
+</li>
+</ul>
+<p>There are also convenience functions:</p>
+<p><a id='Images.sc' href='#Images.sc'>#</a>
+<strong><code>Images.sc</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>imgsc = sc(img)
+imgsc = sc(img, min, max)
+</code></pre>
+
+<p>Applies default or specified <code>ScaleMinMax</code> mapping to the image.</p>
+<p><a id='Images.MapInfo' href='#Images.MapInfo'>#</a>
+<strong><code>Images.MapInfo</code></strong> &mdash; <em>Type</em>.</p>
+<p><code>MapInfo{T}</code> is an abstract type that encompasses objects designed to perform intensity or color transformations on pixels.  For example, before displaying an image in a window, you might need to adjust the contrast settings; <code>MapInfo</code> objects provide a means to describe these transformations without calculating them immediately.  This delayed execution can be useful in many contexts.  For example, if you want to display a movie, it would be quite wasteful to have to first transform the entire movie; instead, <code>MapInfo</code> objects allow one to specify a transformation to be performed on-the-fly as particular frames are displayed.</p>
+<p>You can create your own custom <code>MapInfo</code> objects. For example, given a grayscale image, you could color "saturated" pixels red using</p>
+<pre><code class="jl">immutable ColorSaturated{C&lt;:AbstractRGB} &lt;: MapInfo{C}
+end
+
+Base.map{C}(::ColorSaturated{C}, val::Union{Number,Gray}) = ifelse(val == 1, C(1,0,0), C(val,val,val))
+
+imgc = map(ColorSaturated{RGB{U8}}(), img)
+</code></pre>
+
+<p>For pre-defined types see <code>MapNone</code>, <code>BitShift</code>, <code>ClampMinMax</code>, <code>ScaleMinMax</code>, <code>ScaleAutoMinMax</code>, and <code>ScaleSigned</code>.</p>
+<p><a id='Images.mapinfo' href='#Images.mapinfo'>#</a>
+<strong><code>Images.mapinfo</code></strong> &mdash; <em>Function</em>.</p>
+<p><code>mapi = mapinf(T, img)</code> returns a <code>MapInfo</code> object that is deemed appropriate for converting pixels of <code>img</code> to be of type <code>T</code>. <code>T</code> can either be a specific type (e.g., <code>RGB24</code>), or you can specify an abstract type like <code>Clamp</code> and it will return one of the <code>Clamp</code> family of <code>MapInfo</code> objects.</p>
+<p>You can define your own rules for <code>mapinfo</code>.  For example, the <code>ImageMagick</code> package defines methods for how pixels values should be converted before saving images to disk.</p>
+<p><a id='Color-conversion-1'></a></p>
+<h1 id="color-conversion">Color conversion</h1>
+<p>convert</p>
+<pre><code class="julia">convert(Image{Color}, img)
+</code></pre>
+
+<p>as described above. Use <code>convert(Image{Gray}, img)</code> to calculate a grayscale representation of a color image using the <a href="http://en.wikipedia.org/wiki/Luma_%28video%29#Rec._601_luma_versus_Rec._709_luma_coefficients">Rec 601 luma</a>.</p>
+<p>map</p>
+<pre><code class="julia">map(mapi, img)
+map!(mapi, dest, img)
+</code></pre>
+
+<p>can be used to specify both the form of the result and the algorithm used.</p>
+<p><a id='Image-I/O-1'></a></p>
+<h1 id="image-io">Image I/O</h1>
+<p>Image loading and saving is handled by the <a href="https://github.com/JuliaIO/FileIO.jl">FileIO</a> package.</p>
+<p><a id='Image-algorithms-1'></a></p>
+<h1 id="image-algorithms">Image algorithms</h1>
+<p>You can perform arithmetic with <code>Image</code>s and <code>Color</code>s. Algorithms also include the following functions:</p>
+<p><a id='Linear-filtering-and-padding-1'></a></p>
+<h1 id="linear-filtering-and-padding">Linear filtering and padding</h1>
+<pre><code>imfilter
+imfilter!
+imfilter_fft
+imfilter_gaussian
+imfilter_LoG
+imgradients
+magnitude
+phase
+orientation
+magnitude_phase
+imedge
+thin_edges
+canny
+forwarddiffx
+forwarddiffy
+backdiffx
+backdiffy
+padarray
+</code></pre>
+
+<p><a id='Feature-Extraction-1'></a></p>
+<h1 id="feature-extraction">Feature Extraction</h1>
+<p><a id='Images.blob_LoG' href='#Images.blob_LoG'>#</a>
+<strong><code>Images.blob_LoG</code></strong> &mdash; <em>Function</em>.</p>
+<p><code>blob_LoG(img, sigmas) -&gt; Vector{Tuple}</code></p>
+<p>Find "blobs" in an N-D image using Lapacian of Gaussians at the specifed sigmas.  Returned are the local maxima's heights, radii, and spatial coordinates.</p>
+<p>See Lindeberg T (1998), "Feature Detection with Automatic Scale Selection", International Journal of Computer Vision, 30(2), 79–116.</p>
+<p>Note that only 2-D images are currently supported due to a limitation of <code>imfilter_LoG</code>.</p>
+<p><a id='Images.findlocalmaxima' href='#Images.findlocalmaxima'>#</a>
+<strong><code>Images.findlocalmaxima</code></strong> &mdash; <em>Function</em>.</p>
+<p><code>findlocalmaxima(img, [region, edges]) -&gt; Vector{Tuple}</code></p>
+<p>Returns the coordinates of elements whose value is larger than all of their immediate neighbors.  <code>region</code> is a list of dimensions to consider.  <code>edges</code> is a boolean specifying whether to include the first and last elements of each dimension, or a tuple-of-Bool specifying edge behavior for each dimension separately.</p>
+<p><a id='Images.findlocalminima' href='#Images.findlocalminima'>#</a>
+<strong><code>Images.findlocalminima</code></strong> &mdash; <em>Function</em>.</p>
+<p>Like <code>findlocalmaxima</code>, but returns the coordinates of the smallest elements.</p>
+<p><a id='Exposure-1'></a></p>
+<h1 id="exposure">Exposure</h1>
+<p><a id='Images.imhist' href='#Images.imhist'>#</a>
+<strong><code>Images.imhist</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>edges, count = imhist(img, nbins)
+edges, count = imhist(img, nbins, minval, maxval)
+</code></pre>
+
+<p>Generates a histogram for the image over nbins spread between <code>(minval, maxval]</code>. If <code>minval</code> and <code>maxval</code> are not given, then the minimum and maximum values present in the image are taken.</p>
+<p><code>edges</code> is a vector that specifies how the range is divided; <code>count[i+1]</code> is the number of values <code>x</code> that satisfy <code>edges[i] &lt;= x &lt; edges[i+1]</code>. <code>count[1]</code> is the number satisfying <code>x &lt; edges[1]</code>, and <code>count[end]</code> is the number satisfying <code>x &gt;= edges[end]</code>. Consequently, <code>length(count) == length(edges)+1</code>.</p>
+<p><a id='Images.cliphist' href='#Images.cliphist'>#</a>
+<strong><code>Images.cliphist</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>clipped_hist = cliphist(hist, clip)
+</code></pre>
+
+<p>Clips the histogram above a certain value <code>clip</code>. The excess left in the bins exceeding <code>clip</code> is redistributed among the remaining bins.</p>
+<p><a id='Images.histeq' href='#Images.histeq'>#</a>
+<strong><code>Images.histeq</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>hist_equalised_img = histeq(img, nbins)
+hist_equalised_img = histeq(img, nbins, minval, maxval)
+</code></pre>
+
+<p>Returns a histogram equalised image with a granularity of approximately <code>nbins</code> number of bins.</p>
+<p>The <code>histeq</code> function can handle a variety of input types. The returned image depends on the input type. If the input is an <code>Image</code> then the resulting image is of the same type and has the same properties.</p>
+<p>For coloured images, the input is converted to YIQ type and the Y channel is equalised. This is the combined with the I and Q channels and the resulting image converted to the same type as the input.</p>
+<p>If minval and maxval are specified then intensities are equalized to the range (minval, maxval). The default values are 0 and 1.</p>
+<p><a id='Images.adjust_gamma' href='#Images.adjust_gamma'>#</a>
+<strong><code>Images.adjust_gamma</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>gamma_corrected_img = adjust_gamma(img, gamma)
+</code></pre>
+
+<p>Returns a gamma corrected image.</p>
+<p>The <code>adjust_gamma</code> function can handle a variety of input types. The returned image depends on the input type. If the input is an <code>Image</code> then the resulting image is of the same type and has the same properties.</p>
+<p>For coloured images, the input is converted to YIQ type and the Y channel is gamma corrected. This is the combined with the I and Q channels and the resulting image converted to the same type as the input.</p>
+<p><a id='Images.imstretch' href='#Images.imstretch'>#</a>
+<strong><code>Images.imstretch</code></strong> &mdash; <em>Function</em>.</p>
+<p><code>imgs = imstretch(img, m, slope)</code> enhances or reduces (for slope &gt; 1 or &lt; 1, respectively) the contrast near saturation (0 and 1). This is essentially a symmetric gamma-correction. For a pixel of brightness <code>p</code>, the new intensity is <code>1/(1+(m/(p+eps))^slope)</code>.</p>
+<p>This assumes the input <code>img</code> has intensities between 0 and 1.</p>
+<p><a id='Images.imadjustintensity' href='#Images.imadjustintensity'>#</a>
+<strong><code>Images.imadjustintensity</code></strong> &mdash; <em>Function</em>.</p>
+<p><code>imadjustintensity(img [, (minval,maxval)]) -&gt; Image</code></p>
+<p>Map intensities over the interval <code>(minval,maxval)</code> to the interval    <code>[0,1]</code>. This is equivalent to <code>map(ScaleMinMax(eltype(img), minval,    maxval), img)</code>.  (minval,maxval) defaults to <code>extrema(img)</code>.</p>
+<p><a id='Images.imcomplement' href='#Images.imcomplement'>#</a>
+<strong><code>Images.imcomplement</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>complement_img = imcomplement(img)
+</code></pre>
+
+<p>Returns the complement of an image.</p>
+<p><a id='Images.histmatch' href='#Images.histmatch'>#</a>
+<strong><code>Images.histmatch</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>hist_matched_img = histmatch(img, oimg, nbins)
+</code></pre>
+
+<p>Returns a grayscale histogram matched image with a granularity of <code>nbins</code> number of bins. <code>img</code> is the image to be matched and <code>oimg</code> is the image having the desired histogram to be matched to.</p>
+<p><a id='Images.clahe' href='#Images.clahe'>#</a>
+<strong><code>Images.clahe</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>hist_equalised_img = clahe(img, nbins, xblocks = 8, yblocks = 8, clip = 3)
+
+</code></pre>
+
+<p>Performs Contrast Limited Adaptive Histogram Equalisation (CLAHE) on the input image. It differs from ordinary histogram equalization in the respect that the adaptive method computes several histograms, each corresponding to a distinct section of the image, and uses them to redistribute the lightness values of the image. It is therefore suitable for improving the local contrast and enhancing the definitions of edges in each region of an image.</p>
+<p>In the straightforward form, CLAHE is done by calculation a histogram of a window around each pixel and using the transformation function of the equalised histogram to rescale the pixel. Since this is computationally expensive, we use interpolation which gives a significant rise in efficiency without compromising the result. The image is divided into a grid and equalised histograms are calculated for each block. Then, each pixel is interpolated using the closest histograms.</p>
+<p>The <code>xblocks</code> and <code>yblocks</code> specify the number of blocks to divide the input image into in each direction. <code>nbins</code> specifies the granularity of histogram calculation of each local region. <code>clip</code> specifies the value at which the histogram is clipped. The excess in the histogram bins with value exceeding <code>clip</code> is redistributed among the other bins.</p>
+<p><a id='Filtering-kernels-1'></a></p>
+<h1 id="filtering-kernels">Filtering kernels</h1>
+<p><a id='Images.gaussian2d' href='#Images.gaussian2d'>#</a>
+<strong><code>Images.gaussian2d</code></strong> &mdash; <em>Function</em>.</p>
+<p><code>kern = gaussian2d(sigma, filtersize)</code> returns a kernel for FIR-based Gaussian filtering.</p>
+<p>See also: <code>imfilter_gaussian</code>.</p>
+<p><a id='Images.imaverage' href='#Images.imaverage'>#</a>
+<strong><code>Images.imaverage</code></strong> &mdash; <em>Function</em>.</p>
+<p><code>kern = imaverage(filtersize)</code> constructs a boxcar-filter of the specified size.</p>
+<p><a id='Images.imdog' href='#Images.imdog'>#</a>
+<strong><code>Images.imdog</code></strong> &mdash; <em>Function</em>.</p>
+<p><code>kern = imdog(sigma)</code> creates a difference-of-gaussians kernel (<code>sigma</code>s differing by a factor of <code>sqrt(2)</code>).</p>
+<p><a id='Images.imlaplacian' href='#Images.imlaplacian'>#</a>
+<strong><code>Images.imlaplacian</code></strong> &mdash; <em>Function</em>.</p>
+<p><code>kern = imlaplacian(filtersize)</code> returns a kernel for laplacian filtering.</p>
+<p><a id='Images.imlog' href='#Images.imlog'>#</a>
+<strong><code>Images.imlog</code></strong> &mdash; <em>Function</em>.</p>
+<p><code>kern = imlog(sigma)</code> returns a laplacian-of-gaussian kernel.</p>
+<p><a id='Images.sobel' href='#Images.sobel'>#</a>
+<strong><code>Images.sobel</code></strong> &mdash; <em>Function</em>.</p>
+<p><code>kern1, kern2 = sobel()</code> returns Sobel filters for dimensions 1 and 2 of your image</p>
+<p><a id='Images.prewitt' href='#Images.prewitt'>#</a>
+<strong><code>Images.prewitt</code></strong> &mdash; <em>Function</em>.</p>
+<p><code>kern1, kern2 = prewitt()</code> returns Prewitt filters for dimensions 1 and 2 of your image</p>
+<p><a id='Images.ando3' href='#Images.ando3'>#</a>
+<strong><code>Images.ando3</code></strong> &mdash; <em>Function</em>.</p>
+<p><code>kern1, kern2 = ando3()</code> returns optimal 3x3 filters for dimensions 1 and 2 of your image, as defined in Ando Shigeru, IEEE Trans. Pat. Anal. Mach. Int., vol. 22 no 3, March 2000.</p>
+<p>See also: <code>ando4</code>, <code>ando5</code>.</p>
+<p><a id='Images.ando4' href='#Images.ando4'>#</a>
+<strong><code>Images.ando4</code></strong> &mdash; <em>Function</em>.</p>
+<p><code>kern1, kern2 = ando4()</code> returns optimal 4x4 filters for dimensions 1 and 2 of your image, as defined in Ando Shigeru, IEEE Trans. Pat. Anal. Mach. Int., vol. 22 no 3, March 2000.</p>
+<p>See also: <code>ando4_sep</code>, <code>ando3</code>, <code>ando5</code>.</p>
+<p><a id='Images.ando5' href='#Images.ando5'>#</a>
+<strong><code>Images.ando5</code></strong> &mdash; <em>Function</em>.</p>
+<p><code>kern1, kern2 = ando5()</code> returns optimal 5x5 filters for dimensions 1 and 2 of your image, as defined in Ando Shigeru, IEEE Trans. Pat. Anal. Mach. Int., vol. 22 no 3, March 2000.</p>
+<p>See also: <code>ando5_sep</code>, <code>ando3</code>, <code>ando4</code>.</p>
+<p><a id='Nonlinear-filtering-and-transformation-1'></a></p>
+<h1 id="nonlinear-filtering-and-transformation">Nonlinear filtering and transformation</h1>
+<p><a id='Images.imROF' href='#Images.imROF'>#</a>
+<strong><code>Images.imROF</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>imgr = imROF(img, lambda, iterations)
+</code></pre>
+
+<p>Perform Rudin-Osher-Fatemi (ROF) filtering, more commonly known as Total Variation (TV) denoising or TV regularization. <code>lambda</code> is the regularization coefficient for the derivative, and <code>iterations</code> is the number of relaxation iterations taken. 2d only.</p>
+<p><a id='Corner-Detection-1'></a></p>
+<h1 id="corner-detection">Corner Detection</h1>
+<pre><code>imcorner
+harris
+shi_tomasi
+kitchen_rosenfeld
+fastcorners
+meancovs
+gammacovs
+</code></pre>
+
+<p><a id='Resizing-1'></a></p>
+<h1 id="resizing">Resizing</h1>
+<p><a id='Images.restrict' href='#Images.restrict'>#</a>
+<strong><code>Images.restrict</code></strong> &mdash; <em>Function</em>.</p>
+<p><code>imgr = restrict(img[, region])</code> performs two-fold reduction in size along the dimensions listed in <code>region</code>, or all spatial coordinates if <code>region</code> is not specified.  It anti-aliases the image as it goes, so is better than a naive summation over 2x2 blocks.</p>
+<p><a id='Image-statistics-1'></a></p>
+<h1 id="image-statistics">Image statistics</h1>
+<p><a id='Images.minfinite' href='#Images.minfinite'>#</a>
+<strong><code>Images.minfinite</code></strong> &mdash; <em>Function</em>.</p>
+<p><code>m = minfinite(A)</code> calculates the minimum value in <code>A</code>, ignoring any values that are not finite (Inf or NaN).</p>
+<p><a id='Images.maxfinite' href='#Images.maxfinite'>#</a>
+<strong><code>Images.maxfinite</code></strong> &mdash; <em>Function</em>.</p>
+<p><code>m = maxfinite(A)</code> calculates the maximum value in <code>A</code>, ignoring any values that are not finite (Inf or NaN).</p>
+<p><a id='Images.maxabsfinite' href='#Images.maxabsfinite'>#</a>
+<strong><code>Images.maxabsfinite</code></strong> &mdash; <em>Function</em>.</p>
+<p><code>m = maxabsfinite(A)</code> calculates the maximum absolute value in <code>A</code>, ignoring any values that are not finite (Inf or NaN).</p>
+<p><a id='Images.meanfinite' href='#Images.meanfinite'>#</a>
+<strong><code>Images.meanfinite</code></strong> &mdash; <em>Function</em>.</p>
+<p><code>M = meanfinite(img, region)</code> calculates the mean value along the dimensions listed in <code>region</code>, ignoring any non-finite values.</p>
+<p><a id='Images.ssd' href='#Images.ssd'>#</a>
+<strong><code>Images.ssd</code></strong> &mdash; <em>Function</em>.</p>
+<p><code>s = ssd(A, B)</code> computes the sum-of-squared differences over arrays/images A and B</p>
+<p><a id='Images.ssdn' href='#Images.ssdn'>#</a>
+<strong><code>Images.ssdn</code></strong> &mdash; <em>Function</em>.</p>
+<p><code>s = ssdn(A, B)</code> computes the sum-of-squared differences over arrays/images A and B, normalized by array size</p>
+<p><a id='Images.sad' href='#Images.sad'>#</a>
+<strong><code>Images.sad</code></strong> &mdash; <em>Function</em>.</p>
+<p><code>s = sad(A, B)</code> computes the sum-of-absolute differences over arrays/images A and B</p>
+<p><a id='Images.sadn' href='#Images.sadn'>#</a>
+<strong><code>Images.sadn</code></strong> &mdash; <em>Function</em>.</p>
+<p><code>s = sadn(A, B)</code> computes the sum-of-absolute differences over arrays/images A and B, normalized by array size</p>
+<p><a id='Morphological-operations-1'></a></p>
+<h1 id="morphological-operations">Morphological operations</h1>
+<p><a id='Images.dilate' href='#Images.dilate'>#</a>
+<strong><code>Images.dilate</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>imgd = dilate(img, [region])
+</code></pre>
+
+<p>perform a max-filter over nearest-neighbors. The default is 8-connectivity in 2d, 27-connectivity in 3d, etc. You can specify the list of dimensions that you want to include in the connectivity, e.g., <code>region = [1,2]</code> would exclude the third dimension from filtering.</p>
+<p><a id='Images.erode' href='#Images.erode'>#</a>
+<strong><code>Images.erode</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>imge = erode(img, [region])
+</code></pre>
+
+<p>perform a min-filter over nearest-neighbors. The default is 8-connectivity in 2d, 27-connectivity in 3d, etc. You can specify the list of dimensions that you want to include in the connectivity, e.g., <code>region = [1,2]</code> would exclude the third dimension from filtering.</p>
+<p><a id='Images.opening' href='#Images.opening'>#</a>
+<strong><code>Images.opening</code></strong> &mdash; <em>Function</em>.</p>
+<p><code>imgo = opening(img, [region])</code> performs the <code>opening</code> morphology operation, equivalent to <code>dilate(erode(img))</code>. <code>region</code> allows you to control the dimensions over which this operation is performed.</p>
+<p><a id='Images.closing' href='#Images.closing'>#</a>
+<strong><code>Images.closing</code></strong> &mdash; <em>Function</em>.</p>
+<p><code>imgc = closing(img, [region])</code> performs the <code>closing</code> morphology operation, equivalent to <code>erode(dilate(img))</code>. <code>region</code> allows you to control the dimensions over which this operation is performed.</p>
+<p><a id='Images.tophat' href='#Images.tophat'>#</a>
+<strong><code>Images.tophat</code></strong> &mdash; <em>Function</em>.</p>
+<p><code>imgth = tophat(img, [region])</code> performs <code>top hat</code> of an image, which is defined as the image minus its morphological opening. <code>region</code> allows you to control the dimensions over which this operation is performed.</p>
+<p><a id='Images.bothat' href='#Images.bothat'>#</a>
+<strong><code>Images.bothat</code></strong> &mdash; <em>Function</em>.</p>
+<p><code>imgbh = bothat(img, [region])</code> performs <code>bottom hat</code> of an image, which is defined as its morphological closing minus the original image. <code>region</code> allows you to control the dimensions over which this operation is performed.</p>
+<p><a id='Images.morphogradient' href='#Images.morphogradient'>#</a>
+<strong><code>Images.morphogradient</code></strong> &mdash; <em>Function</em>.</p>
+<p><code>imgmg = morphogradient(img, [region])</code> returns morphological gradient of the image, which is the difference between the dilation and the erosion of a given image. <code>region</code> allows you to control the dimensions over which this operation is performed.</p>
+<p><a id='Images.morpholaplace' href='#Images.morpholaplace'>#</a>
+<strong><code>Images.morpholaplace</code></strong> &mdash; <em>Function</em>.</p>
+<p><code>imgml = morpholaplace(img, [region])</code> performs <code>Morphological Laplacian</code> of an image, which is defined as the arithmetic difference between the internal and the external gradient. <code>region</code> allows you to control the dimensions over which this operation is performed.</p>
+<p><a id='Images.label_components' href='#Images.label_components'>#</a>
+<strong><code>Images.label_components</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>label = label_components(tf, [connectivity])
+label = label_components(tf, [region])
+</code></pre>
+
+<p>Find the connected components in a binary array <code>tf</code>. There are two forms that <code>connectivity</code> can take:</p>
+<ul>
+<li>
+<p>It can be a boolean array of the same dimensionality as <code>tf</code>, of size 1 or 3 along each dimension. Each entry in the array determines whether a given neighbor is used for connectivity analyses. For example, <code>connectivity = trues(3,3)</code> would use 8-connectivity and test all pixels that touch the current one, even the corners.</p>
+</li>
+<li>
+<p>You can provide a list indicating which dimensions are used to determine connectivity. For example, <code>region = [1,3]</code> would not test neighbors along dimension 2 for connectivity. This corresponds to just the nearest neighbors, i.e., 4-connectivity in 2d and 6-connectivity in 3d.</p>
+</li>
+</ul>
+<p>The default is <code>region = 1:ndims(A)</code>.</p>
+<p>The output <code>label</code> is an integer array, where 0 is used for background pixels, and each connected region gets a different integer index.</p>
+<p><a id='Images.component_boxes' href='#Images.component_boxes'>#</a>
+<strong><code>Images.component_boxes</code></strong> &mdash; <em>Function</em>.</p>
+<p><code>component_boxes(labeled_array)</code> -&gt; an array of bounding boxes for each label, including the background label 0</p>
+<p><a id='Images.component_lengths' href='#Images.component_lengths'>#</a>
+<strong><code>Images.component_lengths</code></strong> &mdash; <em>Function</em>.</p>
+<p><code>component_lengths(labeled_array)</code> -&gt; an array of areas (2D), volumes (3D), etc. for each label, including the background label 0</p>
+<p><a id='Images.component_indices' href='#Images.component_indices'>#</a>
+<strong><code>Images.component_indices</code></strong> &mdash; <em>Function</em>.</p>
+<p><code>component_indices(labeled_array)</code> -&gt; an array of pixels for each label, including the background label 0</p>
+<p><a id='Images.component_subscripts' href='#Images.component_subscripts'>#</a>
+<strong><code>Images.component_subscripts</code></strong> &mdash; <em>Function</em>.</p>
+<p><code>component_subscripts(labeled_array)</code> -&gt; an array of pixels for each label, including the background label 0</p>
+<p><a id='Images.component_centroids' href='#Images.component_centroids'>#</a>
+<strong><code>Images.component_centroids</code></strong> &mdash; <em>Function</em>.</p>
+<p><code>component_centroids(labeled_array)</code> -&gt; an array of centroids for each label, including the background label 0</p>
+<p><a id='Interpolation-1'></a></p>
+<h1 id="interpolation">Interpolation</h1>
+<p><a id='Images.bilinear_interpolation' href='#Images.bilinear_interpolation'>#</a>
+<strong><code>Images.bilinear_interpolation</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>P = bilinear_interpolation(img, r, c)
+</code></pre>
+
+<p>Bilinear Interpolation is used to interpolate functions of two variables on a rectilinear 2D grid.</p>
+<p>The interpolation is done in one direction first and then the values obtained are used to do the interpolation in the second direction.</p>
+<p><a id='Integral-Images-1'></a></p>
+<h1 id="integral-images">Integral Images</h1>
+<p><a id='Images.integral_image' href='#Images.integral_image'>#</a>
+<strong><code>Images.integral_image</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>integral_img = integral_image(img)
+</code></pre>
+
+<p>Returns the integral image of an image. The integral image is calculated by assigning to each pixel the sum of all pixels above it and to its left, i.e. the rectangle from (1, 1) to the pixel. An integral image is a data structure which helps in efficient calculation of sum of pixels in a rectangular subset of an image. See <code>boxdiff</code> for more information.</p>
+<p><a id='Images.boxdiff' href='#Images.boxdiff'>#</a>
+<strong><code>Images.boxdiff</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>sum = boxdiff(integral_image, ytop:ybot, xtop:xbot)
+sum = boxdiff(integral_image, CartesianIndex(tl_y, tl_x), CartesianIndex(br_y, br_x))
+sum = boxdiff(integral_image, tl_y, tl_x, br_y, br_x)
+</code></pre>
+
+<p>An integral image is a data structure which helps in efficient calculation of sum of pixels in a rectangular subset of an image. It stores at each pixel the sum of all pixels above it and to its left. The sum of a window in an image can be directly calculated using four array references of the integral image, irrespective of the size of the window, given the <code>yrange</code> and <code>xrange</code> of the window. Given an integral image -</p>
+<pre><code>    A - - - - - - B -
+    - * * * * * * * -
+    - * * * * * * * -
+    - * * * * * * * -
+    - * * * * * * * -
+    - * * * * * * * -
+    C * * * * * * D -
+    - - - - - - - - -
+</code></pre>
+
+<p>The sum of pixels in the area denoted by * is given by S = D + A - B - C.</p>
+<p><a id='Pyramids-1'></a></p>
+<h1 id="pyramids">Pyramids</h1>
+<p><a id='Images.gaussian_pyramid' href='#Images.gaussian_pyramid'>#</a>
+<strong><code>Images.gaussian_pyramid</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>pyramid = gaussian_pyramid(img, n_scales, downsample, sigma)
+</code></pre>
+
+<p>Returns a  gaussian pyramid of scales <code>n_scales</code>, each downsampled by a factor <code>downsample</code> and <code>sigma</code> for the gaussian kernel.</p>
+<p><a id='Phantoms-1'></a></p>
+<h1 id="phantoms">Phantoms</h1>
+<p><a id='Images.shepp_logan' href='#Images.shepp_logan'>#</a>
+<strong><code>Images.shepp_logan</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code>phantom = shepp_logan(N,[M]; highContrast=true)
+</code></pre>
+
+<p>output the NxM Shepp-Logan phantom, which is a standard test image usually used for comparing image reconstruction algorithms in the field of computed tomography (CT) and magnetic resonance imaging (MRI). If the argument M is omitted, the phantom is of size NxN. When setting the keyword argument <code>`highConstrast</code> to false, the CT version of the phantom is created. Otherwise, the high contrast MRI version is calculated.</p>
+          <aside class="copyright" role="note">
+            
+            Documentation built with
+            <a href="http://www.mkdocs.org" target="_blank">MkDocs</a>
+            using the
+            <a href="http://squidfunk.github.io/mkdocs-material/" target="_blank">
+              Material
+            </a>
+            theme.
+          </aside>
+          
+            <footer class="footer">
+              
+  <nav class="pagination" aria-label="Footer">
+    <div class="previous">
+      
+        <a href="../overlays/" title="Overlays">
+          <span class="direction">
+            Previous
+          </span>
+          <div class="page">
+            <div class="button button-previous" role="button" aria-label="Previous">
+              <i class="icon icon-back"></i>
+            </div>
+            <div class="stretch">
+              <div class="title">
+                Overlays
+              </div>
+            </div>
+          </div>
+        </a>
+      
+    </div>
+    <div class="next">
+      
+    </div>
+  </nav>
+
+            </footer>
+          
+        </div>
+      </article>
+      <div class="results" role="status" aria-live="polite">
+        <div class="scrollable">
+          <div class="wrapper">
+            <div class="meta"></div>
+            <div class="list"></div>
+          </div>
+        </div>
+      </div>
+    </main>
+    <script>
+      var base_url = '..';
+      var repo_id  = 'timholy/Images.jl.git';
+    </script>
+    <script src="../assets/javascripts/application-997097ee0c.js"></script>
+    
+      <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+      <script src="../assets/mathjaxhelper.js"></script>
+    
+    
+  </body>
+</html>
