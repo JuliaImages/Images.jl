@@ -17,6 +17,7 @@ if VERSION < v"0.5.0-dev+4490"
 else
     export float32, float64
 end
+using Base: depwarn
 
 using Compat
 import Compat.view
@@ -50,7 +51,7 @@ using ImageMetadata: ImageMetaAxis
 
 using Base.Cartesian  # TODO: delete this
 
-include("map.jl")
+include("map-deprecated.jl")
 include("overlays.jl")
 include("labeledarrays.jl")
 include("algorithms.jl")
