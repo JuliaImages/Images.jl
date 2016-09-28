@@ -57,7 +57,12 @@ map(mapi::MapInfo, A::AbstractArray) = immap(mapi, A)
 
 ## MapNone
 "`MapNone(T)` is a `MapInfo` object that converts `x` to have type `T`."
-immutable MapNone{T} <: MapInfo{T}; end
+immutable MapNone{T} <: MapInfo{T}
+    function MapNone()
+        depwarn("MapNone is deprecated, use x->$T(x)", :MapNone)
+        new()
+    end
+end
 
 # Constructors
 MapNone{T}(::Type{T}) = MapNone{T}()
@@ -104,7 +109,12 @@ because `0xa2d5>>7 == 0x0145 > typemax(UInt8)`.
 When applicable, the main advantage of using `BitShift` rather than
 `MapNone` or `ScaleMinMax` is speed.
 """
-immutable BitShift{T,N} <: MapInfo{T} end
+immutable BitShift{T,N} <: MapInfo{T}
+    function BitShift()
+        depwarn("BitShift is deprecated, use x->x>>>$N", :BitShift)
+        new()
+    end
+end
 BitShift{T}(::Type{T}, n::Int) = BitShift{T,n}()  # note that this is not type-stable
 
 similar{S,T,N}(mapi::BitShift{S,N}, ::Type{T}, ::Type) = BitShift{T,N}()
@@ -134,6 +144,11 @@ See also: `ClampMax`, `ClampMinMax`.
 """
 immutable ClampMin{T,From} <: AbstractClamp{T}
     min::From
+
+    function ClampMin(min)
+        depwarn("ClampMin is deprecated, use x->max(x, $min)", :ClampMin)
+        new(min)
+    end
 end
 ClampMin{T,From}(::Type{T}, min::From) = ClampMin{T,From}(min)
 ClampMin{T}(min::T) = ClampMin{T,T}(min)
@@ -145,12 +160,22 @@ See also: `ClampMin`, `ClampMinMax`.
 """
 immutable ClampMax{T,From} <: AbstractClamp{T}
     max::From
+
+    function ClampMax(max)
+        depwarn("ClampMax is deprecated, use x->min(x, $max)", :ClampMax)
+        new(max)
+    end
 end
 ClampMax{T,From}(::Type{T}, max::From) = ClampMax{T,From}(max)
 ClampMax{T}(max::T) = ClampMax{T,T}(max)
 immutable ClampMinMax{T,From} <: AbstractClamp{T}
     min::From
     max::From
+
+    function ClampMinMax(min, max)
+        depwarn("ClampMinMax is deprecated, use x->clamp(x, $min, $max)", :ClampMinMax)
+        new(min, max)
+    end
 end
 """
 `ClampMinMax(T, minvalue, maxvalue)` is a `MapInfo` object that clamps
@@ -169,7 +194,12 @@ gamut.  For example,
 map(Clamp(RGB{U8}), RGB(1.2, -0.4, 0.6)) === RGB{U8}(1, 0, 0.6)
 ```
 """
-immutable Clamp{T} <: AbstractClamp{T} end
+immutable Clamp{T} <: AbstractClamp{T}
+    function Clamp()
+        depwarn("Clamp is deprecated, use a colorspace-specific function (clamp01 for gray/RGB)", :Clamp)
+        new()
+    end
+end
 Clamp{T}(::Type{T}) = Clamp{T}()
 
 similar{T,F}(mapi::ClampMin, ::Type{T}, ::Type{F}) = ClampMin{T,F}(convert(F, mapi.min))
@@ -204,13 +234,10 @@ map1{CT<:AbstractRGB}(::Clamp{CT}, val::Real) = clamp01(eltype(CT), val)
 map1{P<:TransparentRGB}(::Clamp{P}, val::Real) = clamp01(eltype(P), val)
 
 # Also available as a stand-alone function
-clamp01{T}(::Type{T}, x::Real) = convert(T, min(max(x, zero(x)), one(x)))
-clamp01(x::Real) = clamp01(typeof(x), x)
-clamp01(x::Colorant) = clamp01(typeof(x), x)
-clamp01{Cdest<:AbstractRGB   }(::Type{Cdest}, x::AbstractRGB)    = (To = eltype(Cdest);
-    Cdest(clamp01(To, red(x)), clamp01(To, green(x)), clamp01(To, blue(x))))
-clamp01{Pdest<:TransparentRGB}(::Type{Pdest}, x::TransparentRGB) = (To = eltype(Pdest);
-    Pdest(clamp01(To, red(x)), clamp01(To, green(x)), clamp01(To, blue(x)), clamp01(To, alpha(x))))
+function ImageCore.clamp01{T}(::Type{T}, x::Real)
+    depwarn("clamp01(T, x) is deprecated, use x->T(clamp01(x))", :clamp01)
+    T(clamp01(x))
+end
 
 # clamp is generic for any colorspace; this version does the right thing for any RGB type
 clamp(x::Union{AbstractRGB, TransparentRGB}) = clamp01(x)
@@ -235,6 +262,7 @@ immutable ScaleMinMax{To,From,S<:AbstractFloat} <: MapInfo{To}
     s::S
 
     function ScaleMinMax(min, max, s)
+        depwarn("ScaleMinMax is deprecated, use scaleminmax([$To,] $min, $max)", :ScaleMinMax)
         min >= max && error("min must be smaller than max")
         new(min, max, s)
     end
@@ -295,6 +323,11 @@ color proportional to the clamped absolute value.
 """
 immutable ScaleSigned{T, S<:AbstractFloat} <: MapInfo{T}
     s::S
+
+    function ScaleSigned(s)
+        depwarn("ScaleSigned is deprecated, use scalesigned", :ScaleSigned)
+        new(s)
+    end
 end
 ScaleSigned{T}(::Type{T}, s::AbstractFloat) = ScaleSigned{T, typeof(s)}(s)
 
@@ -321,7 +354,12 @@ same algorithm for `ScaleMinMax`. When displaying a movie, the min/max
 will be recalculated for each frame, so this can result in
 inconsistent contrast scaling.
 """
-immutable ScaleAutoMinMax{T} <: MapInfo{T} end
+immutable ScaleAutoMinMax{T} <: MapInfo{T}
+    function ScaleAutoMinMax()
+        depwarn("ScaleAutoMinMax is deprecated, use scaleminmax as an argument to takemap", :ScaleAutoMinMax)
+        new()
+    end
+end
 ScaleAutoMinMax{T}(::Type{T}) = ScaleAutoMinMax{T}()
 ScaleAutoMinMax() = ScaleAutoMinMax{UFixed8}()
 
@@ -337,6 +375,10 @@ See also: `ScaleMinMax`.
 """
 immutable ScaleMinMaxNaN{To,From,S} <: MapInfo{To}
     smm::ScaleMinMax{To,From,S}
+    function ScaleMinMaxNaN(smm)
+        depwarn("ScaleMinMaxNaN is deprecated, use scaleminmax in conjunction with clamp01nan or x->ifelse(isnan(x), zero(x), x)", :ScaleMinMaxNaN)
+        new(smm)
+    end
 end
 
 """
@@ -344,7 +386,12 @@ end
 that clamps grayscale or color pixels to the interval `[0,1]`, sending
 `NaN` pixels to zero.
 """
-immutable Clamp01NaN{T} <: MapInfo{T} end
+immutable Clamp01NaN{T} <: MapInfo{T}
+    function Clamp01NaN()
+        depwarn("Clamp01NaN is deprecated, use clamp01nan", :Clamp01NaN)
+        new()
+    end
+end
 
 Clamp01NaN{T}(A::AbstractArray{T}) = Clamp01NaN{T}()
 
