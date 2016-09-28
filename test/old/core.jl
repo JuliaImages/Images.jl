@@ -296,7 +296,7 @@ facts("Core") do
     end
 
     context("Spatial order, width/ height, and permutations") do
-        @fact widthheight(imgds) --> (3,5) "test tgY2FG"
+        @fact widthheight(imgds) --> (5,3) "test tgY2FG"
         imgp = permutedims(imgds, ["x", "y", "color"])
         @fact imgp.data --> permutedims(imgds.data, [2,1,3]) "test MobXxa"
         imgp = permutedims(imgds, ("color", "x", "y"))
