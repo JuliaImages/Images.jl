@@ -147,7 +147,7 @@ function _log(kind::Symbol)
 end
 
 """
-`entropy(img, kind)` is the entropy of a grayscale image defined as -sum(p.*logb(p)).
+`entropy(img, kind)` is the entropy of a grayscale image defined as `-sum(p.*logb(p))`.
 The base b of the logarithm (a.k.a. entropy unit) is one of the following:
   `:shannon ` (log base 2, default)
   `:nat` (log base e)
@@ -1775,7 +1775,7 @@ output the NxM Shepp-Logan phantom, which is a standard test image usually used
 for comparing image reconstruction algorithms in the field of computed
 tomography (CT) and magnetic resonance imaging (MRI). If the argument M is
 omitted, the phantom is of size NxN. When setting the keyword argument
-``highConstrast` to false, the CT version of the phantom is created. Otherwise,
+`highConstrast` to false, the CT version of the phantom is created. Otherwise,
 the high contrast MRI version is calculated.
 """
 function shepp_logan(M,N; highContrast=true)
