@@ -79,7 +79,7 @@ for NC = 1:3
                 @inbounds @nexprs $NCm c->begin
                     out += map(O.mapi[c], getindex(O.channels[c], $(indexargs...))) * O.colors[c]
                 end
-                clamp01(eltype(O), out)
+                T(clamp01(out))
             end
         end
     end
