@@ -1,3 +1,5 @@
+using Images, FactCheck, Colors, FixedPointNumbers
+
 facts("show (MIME)") do
     # Test that we remembered to turn off Colors.jl's colorswatch display
     @fact mimewritable(MIME("image/svg+xml"), rand(Gray{U8}, 5, 5)) --> false
@@ -12,7 +14,7 @@ facts("show (MIME)") do
         A = U8[0.01 0.99; 0.25 0.75]
         fn = joinpath(workdir, "writemime.png")
         open(fn, "w") do file
-            @compat show(file, MIME("image/png"), grayim(A), minpixels=0, maxpixels=typemax(Int))
+            show(file, MIME("image/png"), grayim(A), minpixels=0, maxpixels=typemax(Int))
         end
         b = convert(Image{Gray{U8}}, load(fn))
         @fact data(b) --> A
@@ -21,7 +23,7 @@ facts("show (MIME)") do
         A = U8[0.01 0.99; 0.25 0.75]
         fn = joinpath(workdir, "writemime.png")
         open(fn, "w") do file
-            @compat show(file, MIME("image/png"), grayim(A), minpixels=5, maxpixels=typemax(Int))
+            show(file, MIME("image/png"), grayim(A), minpixels=5, maxpixels=typemax(Int))
         end
         b = convert(Image{Gray{U8}}, load(fn))
         @fact data(b) --> A[[1,1,2,2],[1,1,2,2]]
@@ -31,7 +33,7 @@ facts("show (MIME)") do
         Ar = restrict(A)
         fn = joinpath(workdir, "writemime.png")
         open(fn, "w") do file
-            @compat show(file, MIME("image/png"), grayim(A), minpixels=0, maxpixels=5)
+            show(file, MIME("image/png"), grayim(A), minpixels=0, maxpixels=5)
         end
         b = convert(Image{Gray{U8}}, load(fn))
         @fact data(b) --> convert(Array{U8}, Ar)
@@ -39,7 +41,7 @@ facts("show (MIME)") do
         abig = grayim(rand(UInt8, 1024, 1023))
         fn = joinpath(workdir, "big.png")
         open(fn, "w") do file
-            @compat show(file, MIME("image/png"), abig, maxpixels=10^6)
+            show(file, MIME("image/png"), abig, maxpixels=10^6)
         end
         b = convert(Image{Gray{U8}}, load(fn))
         abigui = convert(Array{UFixed8,2}, data(restrict(abig, (1,2))))
