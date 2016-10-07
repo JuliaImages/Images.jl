@@ -62,7 +62,7 @@ include("algorithms.jl")
 include("exposure.jl")
 include("connected.jl")
 include("edge.jl")
-include("writemime.jl")
+include("showmime.jl")
 include("corner.jl")
 include("distances.jl")
 include("deprecated.jl")
@@ -220,6 +220,8 @@ export # types
     # phantoms
     shepp_logan
 
+_length(A::AbstractArray) = length(linearindices(A))
+_length(A) = length(A)
 
 """
 `Images` is a package for representing and processing images.
