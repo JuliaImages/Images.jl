@@ -49,12 +49,12 @@ facts("Map") do
         @chk map(mapi, 0xffuf8) 0x01uf8
         @chk map(mapi, 0xf0ffuf16) 0xffuf8
         mapi = BitShift{ARGB32,4}()
-        @chk map(mapi, 0xffuf8) ARGB32(0xff0f0f0f)
+        @chk map(mapi, 0xffuf8) reinterpret(ARGB32, 0xff0f0f0f)
         mapi = BitShift{RGB24,2}()
-        @chk map(mapi, Gray(0xffuf8)) RGB24(0x003f3f3f)
+        @chk map(mapi, Gray(0xffuf8)) reinterpret(RGB24, 0x003f3f3f)
         mapi = BitShift{ARGB32,2}()
-        @chk map(mapi, Gray(0xffuf8)) ARGB32(0xff3f3f3f)
-        @chk map(mapi, GrayA{UFixed8}(Gray(0xffuf8),0x3fuf8)) ARGB32(0x0f3f3f3f)
+        @chk map(mapi, Gray(0xffuf8)) reinterpret(ARGB32, 0xff3f3f3f)
+        @chk map(mapi, GrayA{UFixed8}(Gray(0xffuf8),0x3fuf8)) reinterpret(ARGB32, 0x0f3f3f3f)
         mapi = BitShift{RGB{UFixed8},2}()
         @chk map(mapi, Gray(0xffuf8)) RGB(0x3fuf8, 0x3fuf8, 0x3fuf8)
         mapi = BitShift{ARGB{UFixed8},2}()
@@ -78,18 +78,18 @@ facts("Map") do
         @chk map(mapi,  1.2) 1.2f0
         @chk map(mapi, -1.2) 0.0f0
         mapi = ClampMin(RGB24, 0.0f0)
-        @chk map(mapi, RGB{Float32}(-5.3,0.4,0.8)) RGB24(0x000066cc)
+        @chk map(mapi, RGB{Float32}(-5.3,0.4,0.8)) reinterpret(RGB24, 0x000066cc)
         mapi = ClampMax(Float32, 1.0)
         @chk map(mapi,  1.2)  1.0f0
         @chk map(mapi, -1.2) -1.2f0
         mapi = ClampMax(RGB24, 1.0f0)
-        @chk map(mapi, RGB{Float32}(0.2,1.3,0.8)) RGB24(0x0033ffcc)
+        @chk map(mapi, RGB{Float32}(0.2,1.3,0.8)) reinterpret(RGB24, 0x0033ffcc)
         mapi = ClampMinMax(Float32, 0.0, 1.0)
         @chk map(mapi,  1.2) 1.0f0
         @chk map(mapi, -1.2) 0.0f0
         mapi = ClampMinMax(ARGB32, 0.0f0, 1.0f0)
-        @chk map(mapi, RGB{Float32}(-0.2,1.3,0.8)) ARGB32(0xff00ffcc)
-        @chk map(mapi, ARGB{Float32}(-0.2,1.3,0.8,0.6)) ARGB32(0x9900ffcc)
+        @chk map(mapi, RGB{Float32}(-0.2,1.3,0.8)) reinterpret(ARGB32, 0xff00ffcc)
+        @chk map(mapi, ARGB{Float32}(-0.2,1.3,0.8,0.6)) reinterpret(ARGB32, 0x9900ffcc)
         mapi = Clamp(Float32)
         @chk map(mapi,  1.2) 1.0f0
         @chk map(mapi, -1.2) 0.0f0
@@ -98,9 +98,9 @@ facts("Map") do
         mapi = Clamp(Gray{UFixed12})
         @chk map(mapi, Gray(UFixed12(1.2))) Gray(one(UFixed12))
         mapi = ClampMinMax(RGB24, 0.0, 1.0)
-        @chk map(mapi, 1.2) RGB24(0x00ffffff)
-        @chk map(mapi, 0.5) RGB24(0x00808080)
-        @chk map(mapi, -.3) RGB24(0x00000000)
+        @chk map(mapi, 1.2) reinterpret(RGB24, 0x00ffffff)
+        @chk map(mapi, 0.5) reinterpret(RGB24, 0x00808080)
+        @chk map(mapi, -.3) reinterpret(RGB24, 0x00000000)
         mapi = ClampMinMax(RGB{UFixed8}, 0.0, 1.0)
         @chk map(mapi, 1.2) RGB{UFixed8}(1,1,1)
         @chk map(mapi, 0.5) RGB{UFixed8}(0.5,0.5,0.5)
@@ -184,7 +184,7 @@ facts("Map") do
         smm = ScaleMinMax(Gray{U8}, typemin(Int8), typemax(Int8))
         @fact map(smm, 2) --> Gray{U8}(0.51)
         smm = ScaleMinMax(RGB24, typemin(Int8), typemax(Int8))
-        @fact map(smm, 2) --> RGB24(0x828282)
+        @fact map(smm, 2) --> reinterpret(RGB24, 0x828282)
     end
 
     context("ScaleSigned") do
@@ -195,9 +195,9 @@ facts("Map") do
         @chk map(mapi, -3) convert(Float32, -3/5)
         @chk map(mapi, -6) -1.0f0
         mapi = ScaleSigned(RGB24, 1.0f0/10)
-        @chk map(mapi, 12) RGB24(0x00ff00ff)
-        @chk map(mapi, -10.0) RGB24(0x0000ff00)
-        @chk map(mapi, 0) RGB24(0x00000000)
+        @chk map(mapi, 12) reinterpret(RGB24, 0x00ff00ff)
+        @chk map(mapi, -10.0) reinterpret(RGB24, 0x0000ff00)
+        @chk map(mapi, 0) reinterpret(RGB24, 0x00000000)
     end
 
     context("ScaleAutoMinMax") do
@@ -205,7 +205,7 @@ facts("Map") do
         A = [100,550,1000]
         @chk map(mapi, A) @compat UFixed8.([0.0,0.5,1.0])
         mapi = ScaleAutoMinMax(RGB24)
-        @chk map(mapi, A) RGB24[0x00000000, 0x00808080, 0x00ffffff]
+        @chk map(mapi, A) reinterpret(RGB24, [0x00000000, 0x00808080, 0x00ffffff])
 
         # Issue #304
         A = rand(UInt16, 3, 2, 2)
@@ -268,25 +268,25 @@ facts("Map") do
         gray32 = UInt32[convert(UInt32, g)<<16 | convert(UInt32, g)<<8 | convert(UInt32, g) for g in gray8]
         imgray = Images.Image(gray, Dict{Compat.ASCIIString,Any}([("colordim",0), ("colorspace","Gray")]))
         buf = map(Images.mapinfo(UInt32, imgray), imgray) # Images.uint32color(imgray)
-        @fact buf --> gray32
+        @fact buf --> reinterpret(RGB24, gray32)
         rgb = RGB{Float64}[RGB(g, g, g) for g in gray]
         buf = map(Images.mapinfo(UInt32, rgb), rgb) # Images.uint32color(rgb)
-        @fact buf --> gray32
+        @fact buf --> reinterpret(RGB24, gray32)
         r = red(rgb)
         @fact r --> gray
         img = Images.Image(reinterpret(RGB24, gray32)) # , ["colordim"-->0, "colorspace"=>"RGB24"])
         buf = map(Images.mapinfo(UInt32, img), img) # Images.uint32color(img)
-        @fact buf --> gray32
+        @fact buf --> reinterpret(RGB24, gray32)
         rgb = repeat(gray, outer=[1,3])
         img = Images.Image(rgb, Dict{Compat.ASCIIString,Any}([("colordim",2), ("colorspace","RGB"), ("spatialorder",["x"])]))
         buf = map(Images.mapinfo(UInt32, img), img) # Images.uint32color(img)
-        @fact buf --> gray32
+        @fact buf --> reinterpret(RGB24, gray32)
         g = green(img)
         @fact g --> gray
         rgb = repeat(gray', outer=[3,1])
         img = Images.Image(rgb, Dict{Compat.ASCIIString,Any}([("colordim",1), ("colorspace","RGB"), ("spatialorder",["x"])]))
         buf = map(Images.mapinfo(UInt32, img), img) # Images.uint32color(img)
-        @fact buf --> gray32
+        @fact buf --> reinterpret(RGB24, gray32)
         b = blue(img)
         @fact b --> gray
     end
