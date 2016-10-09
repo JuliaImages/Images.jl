@@ -42,7 +42,7 @@ facts("Overlay") do
         @fact size(s) --> (3, 2)
         buf = Images.uint32color(ovr)
         gray8 = round(UInt8, 255*gray)
-        nogreen = [convert(UInt32, g)<<16 | convert(UInt32, g) for g in gray8]
+        nogreen = reinterpret(RGB24, [convert(UInt32, g)<<16 | convert(UInt32, g) for g in gray8])
         @fact buf --> nogreen
     end
 

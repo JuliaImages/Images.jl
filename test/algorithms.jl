@@ -269,7 +269,7 @@ facts("Algorithms") do
     end
 
     @compat context("Filtering") do
-        EPS = 1e-14
+        EPS = 10*eps(float(UFixed8(1)))
         imgcol = Images.colorim(rand(3,5,6))
         imgcolf = convert(Images.Image{RGB{UFixed8}}, imgcol)
         for T in (Float64, Int)
