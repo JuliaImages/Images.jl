@@ -38,7 +38,7 @@ typealias RealLike                           Union{Real,AbstractGray}
 import Graphics
 import Graphics: width, height, Point
 using StatsBase  # TODO: eliminate this dependency
-using IndirectArrays
+using IndirectArrays, MappedArrays
 
 const is_little_endian = ENDIAN_BOM == 0x04030201
 
@@ -52,7 +52,7 @@ using ImageMetadata: ImageMetaAxis
 using Base.Cartesian  # TODO: delete this
 
 include("map-deprecated.jl")
-include("overlays.jl")
+include("overlays-deprecated.jl")
 include("labeledarrays.jl")
 include("algorithms.jl")
 include("exposure.jl")
