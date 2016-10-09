@@ -2,7 +2,10 @@ export
     AbstractImage,
     AbstractImageDirect,
     AbstractImageIndexed,
-    Image
+    Image,
+    LabeledArray,
+    Overlay,
+    OverlayImage
 
 const yx = ["y", "x"]
 const xy = ["x", "y"]
@@ -55,3 +58,6 @@ function magnitude_phase(img::AbstractArray, method::AbstractString, border::Abs
     depwarn("magnitude_phase(img, method::AbstractString, [border]) is deprecated, use magnitude_phase(img, $f, [border]) instead", :magnitude_phase)
     magnitude_phase(img, f, border)
 end
+
+Base.@deprecate_binding LabeledArray ColorizedArray
+@deprecate ColorizedArray{T,N}(intensity::AbstractArray{T,N}, label::AbstractArray, colors::Vector{RGB}) ColorizedArray(intensity, IndirectArray(label, colors))

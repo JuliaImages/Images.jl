@@ -1,74 +1,43 @@
-type LabeledArray{T,N,A<:AbstractArray,L<:AbstractArray} <: AbstractArray{T,N}
-    data::A
+immutable ColorizedArray{C<:Colorant,N,A<:AbstractArray,L<:AbstractArray} <: AbstractArray{C,N}
+    intensity::A
     label::L
-    colors::Vector{RGB}
-
-    # Enforce that the label has Integer type
-    LabeledArray{Ti<:Integer}(data::AbstractArray{T,N}, label::AbstractArray{Ti}, colors::Vector{RGB}) =
-        new(data, label, colors)
 end
-LabeledArray{T,N}(data::AbstractArray{T,N}, label::AbstractArray, colors::Vector{RGB}) =
-    LabeledArray{T,N,typeof(data),typeof(label)}(data, label, colors)
 
-size(A::LabeledArray) = size(A.data)
-size(A::LabeledArray, i::Integer) = size(A.data, i)
-eltype{T}(A::LabeledArray{T}) = T
-ndims{T,N}(A::LabeledArray{T,N}) = N
+"""
+    ColorizedArray(intensity, label::IndirectArray) -> A
 
-for N = 1:4
-    @eval begin
-        # All but the last of these are inside the @eval loop simply to avoid ambiguity warnings.
-        # These first two are additional ones needed to avoid ambiguity warnings.
-        _uint32color_gray!{T}(buf::Array{UInt32}, A::LabeledArray{T,$N}, mapi::ScaleSigned) = error("Cannot use ScaleSigned with a labeled array")
-        _uint32color_gray!{T,L<:LabeledArray}(buf::Array{UInt32}, A::SubArray{T,$N,L}, mapi::ScaleSigned) = error("Cannot use ScaleSigned with a labeled array")
+Create an array, combining a `label` array (where each pixel is
+assigned one of a list of discrete colors) and an `intensity` array
+(where each pixel has a scalar value). `A` satisfies
 
-        function _uint32color_gray!{T}(buf::Array{UInt32}, A::LabeledArray{T,$N}, mapi::MapInfo = mapinfo(UInt8, A))
-            if size(buf) != size(A)
-                error("Size mismatch")
-            end
-            dat = A.data
-            label = A.label
-            col = A.colors
-            for i = 1:length(dat)
-                gr = map(mapi, dat[i])
-                lbl = label[i]
-                if lbl == 0
-                    buf[i] = rgb24(gr,gr,gr)
-                else
-                    buf[i] = convert(RGB24, gr*col[lbl])
-                end
-            end
-            buf
-        end
+    A[i,j,...] = intensity[i,j,...] * label[i,j,...]
 
-        # For SubArrays, we can't efficiently use linear indexing, and in any event
-        # we want to broadcast label where necessary
-        function _uint32color_gray!{T,A<:LabeledArray}(buf::Array{UInt32}, S::SubArray{T,$N,A}, mapi::MapInfo = mapinfo(UInt8, A))
-            if size(buf) != size(S)
-                error("Size mismatch")
-            end
-            indexes = S.indexes
-            dat = slice(S.parent.data, indexes)
-            plabel = S.parent.label
-            newindexes = RangeIndex[size(plabel,i)==1 ? (isa(indexes[i], Int) ? 1 : (1:1)) : indexes[i]  for i = 1:ndims(plabel)]
-            label = slice(plabel, newindexes...)
-            col = S.parent.colors
-            _uint32color_labeled(buf, dat, label, col, mapi) # type of label can't be inferred, use function boundary
-        end
+The label array "tinges" the grayscale intensity with the color
+associated with that point's label.
 
-        function _uint32color_labeled{T}(buf, dat::AbstractArray{T,$N}, label, col, mapi)
-            k = 0
-            @inbounds @nloops $N i buf begin
-                val = @nref $N dat i
-                gr = map(mapi, val)
-                lbl = @nref $N label i
-                if lbl == 0
-                    buf[k+=1] = rgb24(gr,gr,gr)
-                else
-                    buf[k+=1] = convert(RGB24, gr*col[lbl])
-                end
-            end
-            buf
-        end
-    end
+This computation is performed lazily, as to be suitable even for large arrays.
+"""
+function ColorizedArray{C<:Colorant,N}(intensity, label::IndirectArray{C,N})
+    indices(intensity) == indices(label) || throw(DimensionMismatch("intensity and label must have the same indices, got $(indices(intensity)) and $(indices(label))"))
+    CI = typeof(one(C)*zero(eltype(intensity)))
+    ColorizedArray{CI,N,typeof(intensity),typeof(label)}(intensity, label)
+end
+
+# TODO: an implementation involving AxisArray that matches the shared
+# axes, and therefore allows `label` to be of lower dimensionality
+# than `intensity`.
+
+Base.size(A::ColorizedArray) = size(A.intensity)
+Base.indices(A::ColorizedArray) = indices(A.intensity)
+Base.linearindexing(A::ColorizedArray) = Base.linearindexing(Base.linearindexing(A.intensity), Base.linearindexing(A.label))
+
+@inline function Base.getindex(A::ColorizedArray, i::Integer)
+    @boundscheck checkbounds(A, i)
+    @inbounds ret = A.intensity[i]*A.label[i]
+    ret
+end
+@inline function Base.getindex{C,N}(A::ColorizedArray{C,N}, I::Vararg{Int,N})
+    @boundscheck checkbounds(A, I...)
+    @inbounds ret = A.intensity[I...]*A.label[I...]
+    ret
 end
