@@ -1173,6 +1173,26 @@ function assert_timedim_last(img::AbstractArray)
 end
 
 """
+`assert_colordim_third(img)` triggers an error if the image does not have color
+encoded in the third dimension.
+"""
+function assert_colordim_third(img::AbstractArray)
+  if colordim(img) != 3
+    error("Color is not encoded in the third dimension")
+  end
+end
+
+"""
+`assert_same_size(img1,img2)` triggers an error if both images are not of the
+same size.
+"""
+function assert_same_size(img1::AbstractArray,img2::AbstractArray)
+  if size(img1) != size(img2)
+    error("Images are not of same size")
+  end
+end
+
+"""
 `tf = isyfirst(img)` tests whether the first spatial dimension is `"y"`.
 
 See also: `isxfirst`, `assert_yfirst`.
