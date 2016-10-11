@@ -77,6 +77,11 @@ map1(mapi::Union{MapNone{RGB24}, MapNone{ARGB32}}, b::Bool) = ifelse(b, 0xffuf8,
 map1(mapi::Union{MapNone{RGB24},MapNone{ARGB32}}, val::Fractional) = convert(UFixed8, val)
 map1{CT<:Colorant}(mapi::MapNone{CT}, val::Fractional) = convert(eltype(CT), val)
 
+immap(::MapNone{UInt32}, val::RGB24)  = val.color
+immap(::MapNone{UInt32}, val::ARGB32) = val.color
+immap(::MapNone{RGB24},  val::UInt32) = reinterpret(RGB24,  val)
+immap(::MapNone{ARGB32}, val::UInt32) = reinterpret(ARGB32, val)
+
 # immap{T<:Colorant}(mapi::MapNone{T}, img::AbstractImageIndexed{T}) = convert(Image{T}, img)
 # immap{C<:Colorant}(mapi::MapNone{C}, img::AbstractImageDirect{C}) = img  # ambiguity resolution
 immap{T}(mapi::MapNone{T}, img::AbstractArray{T}) = img
@@ -537,8 +542,14 @@ function _map_a!{T,T1,T2,N}(mapi::MapInfo{T1}, out::AbstractArray{T,N}, img::Abs
     dimg = data(img)
     dout = data(out)
     size(dout) == size(dimg) || throw(DimensionMismatch())
-    for I in eachindex(dout, dimg)
-        @inbounds dout[I] = immap(mi, dimg[I])
+    if eltype(dout) == UInt32 && isa(immap(mi, first(dimg)), Union{RGB24,ARGB32})
+        for I in eachindex(dout, dimg)
+            @inbounds dout[I] = immap(mi, dimg[I]).color
+        end
+    else
+        for I in eachindex(dout, dimg)
+            @inbounds dout[I] = immap(mi, dimg[I])
+        end
     end
     out
 end
