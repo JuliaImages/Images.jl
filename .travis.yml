@@ -3,7 +3,6 @@ os:
     - linux
     - osx
 julia:
-    - 0.4
     - 0.5
     - nightly
 notifications:
@@ -11,6 +10,7 @@ notifications:
 script:
     - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
     - julia -e 'Pkg.clone(pwd()); Pkg.build("Images")'
+    - julia -e 'Pkg.add("ImageMagick"); Pkg.checkout("ImageMagick", "images-next")'
     - julia -e 'Pkg.test("Images", coverage=true)'
 after_success:
     - if [ $TRAVIS_JULIA_VERSION = "0.4" ] && [ $TRAVIS_OS_NAME = "linux" ]; then
