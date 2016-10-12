@@ -4,8 +4,8 @@ Images has been rewritten essentially from scratch for this
 release. The major goals of the release are:
 
 - More consistent treatment of spatial orientation
-- Stop losing key properties upon indexing
-- More sensible treatment of indexed (colormap) images
+- Preserve key properties upon indexing
+- Intuitive handling of indexed (colormap) images
 - Better support for a wider range of array types
 - Improvements in type-stability of many operations
 - Improvements in the user experience through easier interfaces, more
@@ -28,18 +28,21 @@ Key changes (of which many are breaking):
   `ImageMeta`, and should be much less needed now that most properties
   can be encoded with `AxisArrays`. `ImageMeta` is still useful if you
   need to encode information like date/time at which the image was
-  taken, sky coordinates, patient IDs, or experimental conditions.
+  taken, sky coordinates, patient IDs, or experimental
+  conditions. Otherwise, it's recommended to use regular `Array`s, or
+  `AxisArrays` if you need to endow axes with "meaning."
 
 - Full commitment to the use of `Colorant` types (as defined by the
   `ColorTypes` and `Colors` packages) for encoding color
   images. Arrays are no longer allowed to declare that they use one
   axis (dimension) to store color information, i.e., a `m×n×3 Float32`
-  array would be a 3d grayscale image, not an RGB image. This choice
-  facilitates efficient and type-stable indexing behavior and enhances
-  consistency.  "Lazy" interconversion between arbitrary numeric
-  arrays and color arrays are provided by two new view types,
-  `colorview` and `channelview`, defined in the `ImageCore` package.
-  These types hopefully remove any awkwardness from the new requirement.
+  array would be displayed as a 3d grayscale image, not an RGB
+  image. This choice facilitates efficient and type-stable indexing
+  behavior and enhances consistency.  "Lazy" interconversion between
+  arbitrary numeric arrays and color arrays are provided by two new
+  view types, `colorview` and `channelview`, defined in the
+  `ImageCore` package.  These types hopefully remove any awkwardness
+  from the new requirement.
 
 - For an indexed (colormap) image `imgi`, indexing with `imgi[i,j]`
   used to return the *index*, not the *pixel value*. This operation now
@@ -72,6 +75,26 @@ Key changes (of which many are breaking):
   is still used when applicable.) Consequently, this release features
   better support for a wider range of array types.
 
+- Several improvements have been made to the handling of fixed-point
+  numbers, which permit the use of 8- and 16-bit types that act
+  similarly to floating-point numbers and which permit a consistent
+  criterion for "black" (0.0) and "white" (1.0) independent of storage
+  type. Specifically:
+
+  + Trying to convert out-of-bounds values now gives an informative
+    error message rather than just `InexactError`
+  + Several bugs in FixedPointNumber operations have been fixed, and
+    such operations are more consistent about return types
+  + A compact printing scheme is being tested in the
+    `teh/compact_printing` branch; check out the `fixed-renaming`
+    branch of many other packages to account for deprecations
+
+- A new package, `ImageTransformations`, is underway for rotation,
+  resizing, and other geometric operations on images.
+
+- Many deprecation warnings were designed to help users of the current
+  Images package transition to the new framework.
+
 Other changes:
 
 - The gradient components returned by `imgradients` match the
@@ -85,15 +108,15 @@ Other changes:
   1/8 compared to earlier releases.
 
 - `extrema_filter` has been deprecated in favor of
-  `rankfilter(extrema, A, window)`. However, this returns an array of
+  `mapwindow(extrema, A, window)`. However, this returns an array of
   `(min,max)` tuples rather than separate `min`, `max` arrays. This is
   intended to transition towards a future API where one can pass `min`
   or `max` in place of `extrema` to obtain just one of
   these. Currently, you can retrieve the `min` array with `first.(mm)`
   and the `max` array with `last.(mm)`.
 
-- `extrema_filter` discards the edges of the image, whereas
-  `rankfilter` returns an array of the same size as the input.
+- The old `extrema_filter` discards the edges of the image, whereas
+  the new one (based on `mapwindow`) returns an array of the same size as the input.
 
 # Older versions
 
