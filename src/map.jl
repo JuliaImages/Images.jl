@@ -707,8 +707,13 @@ for (fn,T) in ((:float32, Float32), (:float64, Float64), (:ufixed8, UFixed8),
         end
         $fn{C<:Colorant}(img::AbstractImage{C}) = shareproperties(img, $fn(data(img)))
     end
+    if VERSION >= v"0.5.0"
+        @eval begin
+            $fn(x::Number) = convert($T, x)
+            $fn(str::AbstractString) = parse($T, str)
+        end
+    end
 end
-
 
 ufixedsc{T<:UFixed}(::Type{T}, img::AbstractImageDirect) = immap(mapinfo(T, img), img)
 ufixed8sc(img::AbstractImageDirect) = ufixedsc(UFixed8, img)
