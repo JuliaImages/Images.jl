@@ -76,6 +76,11 @@ immap{T<:Colorant}(mapi::MapNone{T}, img::AbstractImageIndexed{T}) = convert(Ima
 immap{C<:Colorant}(mapi::MapNone{C}, img::AbstractImageDirect{C}) = img  # ambiguity resolution
 immap{T}(mapi::MapNone{T}, img::AbstractArray{T}) = img
 
+immap(::MapNone{UInt32}, val::RGB24)  = val.color
+immap(::MapNone{UInt32}, val::ARGB32) = val.color
+immap(::MapNone{RGB24},  val::UInt32) = reinterpret(RGB24,  val)
+immap(::MapNone{ARGB32}, val::UInt32) = reinterpret(ARGB32, val)
+
 
 ## BitShift
 """
@@ -488,8 +493,14 @@ function _map_a!{T,T1,T2,N}(mapi::MapInfo{T1}, out::AbstractArray{T,N}, img::Abs
     dimg = data(img)
     dout = data(out)
     size(dout) == size(dimg) || throw(DimensionMismatch())
-    for I in eachindex(dout, dimg)
-        @inbounds dout[I] = immap(mi, dimg[I])
+    if eltype(dout) == UInt32 && isa(immap(mi, first(dimg)), Union{RGB24,ARGB32})
+        for I in eachindex(dout, dimg)
+            @inbounds dout[I] = immap(mi, dimg[I]).color
+        end
+    else
+        for I in eachindex(dout, dimg)
+            @inbounds dout[I] = immap(mi, dimg[I])
+        end
     end
     out
 end
