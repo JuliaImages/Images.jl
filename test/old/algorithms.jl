@@ -69,7 +69,9 @@ facts("Algorithms") do
         @fact Images.meanfinite(A, 1) --> roughly([2]) "test jy9vvu"
         A = [NaN 1 2 3;
              NaN 6 5 4]
-        @test_approx_eq Images.meanfinite(A, 1) [NaN 3.5 3.5 3.5]
+        mf = Images.meanfinite(A, 1)
+        @fact isnan(mf[1]) --> true "test meanfiniteNaN"
+        @test_approx_eq mf[1,2:end] [3.5 3.5 3.5]
         @test_approx_eq Images.meanfinite(A, 2) [2, 5]'
         @test_approx_eq Images.meanfinite(A, (1,2)) [3.5]
         @fact Images.minfinite(A) --> 1 "test ctthKJ"

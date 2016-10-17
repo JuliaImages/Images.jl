@@ -18,7 +18,7 @@ end
 _meanfinite(A::AbstractArray, ::Type, region) = mean(A, region)  # non floating-point
 
 using Base: check_reducedims, reducedim1, safe_tail
-using Base.Broadcast: newindex, newindexer
+using Base.Broadcast: newindex
 
 """
     sumfinite!(S, K, A)
@@ -37,7 +37,7 @@ function sumfinite!{T,N}(S, K, A::AbstractArray{T,N})
     indices(S) == indices(K) || throw(DimensionMismatch("S and K must have identical indices"))
 
     indsAt, indsSt = safe_tail(indices(A)), safe_tail(indices(S))
-    keep, Idefault = newindexer(indsAt, indsSt)
+    keep, Idefault = _newindexer(indsAt, indsSt)
     if reducedim1(S, A)
         # keep the accumulators as a local variable when reducing along the first dimension
         i1 = first(indices1(S))
@@ -66,6 +66,11 @@ function sumfinite!{T,N}(S, K, A::AbstractArray{T,N})
         end
     end
     S, K
+end
+if VERSION < v"0.6.0-dev.693"
+    _newindexer(shape, inds) = Base.Broadcast.newindexer(shape, inds)
+else
+    _newindexer(shape, inds) = Base.Broadcast.shapeindexer(shape, inds)
 end
 
 # Entropy for grayscale (intensity) images
