@@ -5,7 +5,20 @@ export
     Image,
     LabeledArray,
     Overlay,
-    OverlayImage
+    OverlayImage,
+    BitShift,
+    ClampMin,
+    ClampMax,
+    ClampMinMax,
+    Clamp,
+    Clamp01NaN,
+    MapInfo,
+    MapNone,
+    ScaleAutoMinMax,
+    ScaleMinMax,
+    ScaleMinMaxNaN,
+    ScaleSigned,
+    SliceData
 
 const yx = ["y", "x"]
 const xy = ["x", "y"]

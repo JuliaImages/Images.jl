@@ -68,20 +68,7 @@ include("distances.jl")
 include("deprecated.jl")
 
 export # types
-    BitShift,
-    ClampMin,
-    ClampMax,
-    ClampMinMax,
-    Clamp,
-    Clamp01NaN,
     ColorizedArray,
-    MapInfo,
-    MapNone,
-    ScaleAutoMinMax,
-    ScaleMinMax,
-    ScaleMinMaxNaN,
-    ScaleSigned,
-    SliceData,
 
     # macros
     @test_approx_eq_sigma_eps,
