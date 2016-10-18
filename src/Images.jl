@@ -68,6 +68,7 @@ include("distances.jl")
 include("deprecated.jl")
 
 export # types
+    BlobLoG,
     ColorizedArray,
 
     # macros

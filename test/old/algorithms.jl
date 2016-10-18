@@ -213,20 +213,6 @@ facts("Algorithms") do
         @fact img2 --> roughly(A) "test D74cjO"
     end
 
-    context("Features") do
-        A = zeros(Int, 9, 9); A[5, 5] = 1
-        @fact all(x->x<eps(),[blob_LoG(A, 2.0.^[0.5,0,1])[1]...] - [0.3183098861837907,sqrt(2),5,5]) --> true "test IIHdVc"
-        @fact all(x->x<eps(),[blob_LoG(A, [1])[1]...] - [0.3183098861837907,sqrt(2),5,5]) --> true "test CMOJKr"
-        A = zeros(Int, 9, 9); A[[1:2;5],5]=1
-        @fact findlocalmaxima(A) --> [(5,5)] "test xyncRi"
-        @fact findlocalmaxima(A,2) --> [(1,5),(2,5),(5,5)] "test vRMsHj"
-        @fact findlocalmaxima(A,2,false) --> [(2,5),(5,5)] "test NpwSel"
-        A = zeros(Int, 9, 9, 9); A[[1:2;5],5,5]=1
-        @fact findlocalmaxima(A) --> [(5,5,5)] "test lSv2tA"
-        @fact findlocalmaxima(A,2) --> [(1,5,5),(2,5,5),(5,5,5)] "test 4jrt8N"
-        @fact findlocalmaxima(A,2,false) --> [(2,5,5),(5,5,5)] "test 2awiPo"
-    end
-
     context("Restriction") do
         imgcol = Images.colorim(rand(3,5,6))
         A = reshape([convert(UInt16, i) for i = 1:60], 4, 5, 3)

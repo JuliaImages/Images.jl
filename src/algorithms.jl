@@ -360,48 +360,90 @@ function test_approx_eq_sigma_eps{T<:Real}(A::AbstractArray, B::AbstractArray,
 end
 
 """
-    blob_LoG(img, sigmas) -> Vector{Tuple}
+BlobLoG stores information about the location of peaks as discovered by `blob_LoG`.
+It has fields:
 
-Find "blobs" in an N-D image using Lapacian of Gaussians at the specifed
-sigmas.  Returned are the local maxima's heights, radii, and spatial coordinates.
+- location: the location of a peak in the filtered image (a CartesianIndex)
+- σ: the value of σ which lead to the largest `-LoG`-filtered amplitude at this location
+- amplitude: the value of the `-LoG(σ)`-filtered image at the peak
 
-See Lindeberg T (1998), "Feature Detection with Automatic Scale Selection",
-International Journal of Computer Vision, 30(2), 79–116.
-
-Note that only 2-D images are currently supported due to a limitation of `imfilter_LoG`.
+Note that the radius is equal to σ√2.
 """
-function blob_LoG{T,N}(img::AbstractArray{T,N}, sigmas)
-    img_LoG = Array(Float64, length(sigmas), size(img)...)
-    @inbounds for isigma in eachindex(sigmas)
-        img_LoG[isigma,:] = sigmas[isigma] * imfilter_LoG(img, sigmas[isigma])
-    end
-
-    radii = sqrt(2.0)*sigmas
-    maxima = findlocalmaxima(img_LoG, 1:ndims(img_LoG), (true, falses(N)...))
-    [(img_LoG[x...], radii[x[1]], tail(x)...) for x in maxima]
+immutable BlobLoG{T,S,N}
+    location::CartesianIndex{N}
+    σ::S
+    amplitude::T
 end
 
-findlocalextrema{T,N}(img::AbstractArray{T,N}, region, edges::Bool, order) = findlocalextrema(img, region, ntuple(d->edges,N), order)
+"""
+    blob_LoG(img, σs, [edges]) -> Vector{BlobLoG}
 
-# FIXME
-@generated function findlocalextrema{T,N}(img::AbstractArray{T,N}, region::Union{Tuple{Int,Vararg{Int}},Vector{Int},UnitRange{Int},Int}, edges::NTuple{N,Bool}, order::Base.Order.Ordering)
-    quote
-        issubset(region,1:ndims(img)) || throw(ArgumentError("Invalid region."))
-        extrema = Tuple{(@ntuple $N d->Int)...}[]
-        @inbounds @nloops $N i d->((1+!edges[d]):(size(img,d)-!edges[d])) begin
-            isextrema = true
-            img_I = (@nref $N img i)
-            @nloops $N j d->(in(d,region) ? (max(1,i_d-1):min(size(img,d),i_d+1)) : i_d) begin
-                (@nall $N d->(j_d == i_d)) && continue
-                if !Base.Order.lt(order, (@nref $N img j), img_I)
+Find "blobs" in an N-D image using the negative Lapacian of Gaussians
+with the specifed vector or tuple of σ values. The algorithm searches for places
+where the filtered image (for a particular σ) is at a peak compared to all
+spatially- and σ-adjacent voxels.
+
+The optional `edges` argument controls whether peaks on the edges are
+included. `edges` can be `true` or `false`, or a N+1-tuple in which
+the first entry controls whether edge-σ values are eligible to serve
+as peaks, and the remaining N entries control each of the N dimensions
+of `img`.
+
+# Citation:
+
+Lindeberg T (1998), "Feature Detection with Automatic Scale Selection",
+International Journal of Computer Vision, 30(2), 79–116.
+
+See also: BlobLoG.
+"""
+function blob_LoG{T,N}(img::AbstractArray{T,N}, σs, edges::Tuple{Vararg{Bool}}=(true, ntuple(d->false, Val{N})...))
+    sigmas = sort(σs)
+    img_LoG = Array(Float64, length(sigmas), size(img)...)
+    colons = ntuple(d->Colon(), Val{N})
+    @inbounds for isigma in eachindex(sigmas)
+        img_LoG[isigma,colons...] = (-sigmas[isigma]) * imfilter(img, Kernel.LoG(sigmas[isigma]))
+    end
+    maxima = findlocalmaxima(img_LoG, 1:ndims(img_LoG), edges)
+    [BlobLoG(CartesianIndex(tail(x.I)), sigmas[x[1]], img_LoG[x]) for x in maxima]
+end
+blob_LoG{T,N}(img::AbstractArray{T,N}, σs, edges::Bool) = blob_LoG(img, σs, (edges, ntuple(d->edges,Val{N})...))
+
+findlocalextrema{T,N}(img::AbstractArray{T,N}, region, edges::Bool, order) = findlocalextrema(img, region, ntuple(d->edges,Val{N}), order)
+
+function findlocalextrema{T<:Union{Gray,Number},N}(img::AbstractArray{T,N}, region::Union{Tuple{Int,Vararg{Int}},Vector{Int},UnitRange{Int},Int}, edges::NTuple{N,Bool}, order::Base.Order.Ordering)
+    issubset(region,1:ndims(img)) || throw(ArgumentError("invalid region"))
+    extrema = Array{CartesianIndex{N}}(0)
+    edgeoffset = CartesianIndex(map(!, edges))
+    R0 = CartesianRange(indices(img))
+    R = CartesianRange(R0.start+edgeoffset, R0.stop-edgeoffset)
+    Rinterior = CartesianRange(R0.start+1, R0.stop-1)
+    iregion = CartesianIndex(ntuple(d->d∈region, Val{N}))
+    Rregion = CartesianRange(-iregion, iregion)
+    z = zero(iregion)
+    for i in R
+        isextrema = true
+        img_i = img[i]
+        if i ∈ Rinterior
+            # If i is in the interior, we don't have to worry about i+j being out-of-bounds
+            for j in Rregion
+                j == z && continue
+                if !Base.Order.lt(order, img[i+j], img_i)
                     isextrema = false
                     break
                 end
             end
-            isextrema && push!(extrema, (@ntuple $N d->(i_d)))
+        else
+            for j in Rregion
+                (j == z || i+j ∉ R0) && continue
+                if !Base.Order.lt(order, img[i+j], img_i)
+                    isextrema = false
+                    break
+                end
+            end
         end
-        extrema
+        isextrema && push!(extrema, i)
     end
+    extrema
 end
 
 """
