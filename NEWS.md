@@ -95,7 +95,7 @@ Key changes (of which many are breaking):
 - Many deprecation warnings were designed to help users of the current
   Images package transition to the new framework.
 
-Other changes:
+Other changes (all of which are breaking):
 
 - The gradient components returned by `imgradients` match the
   dimensions of the input; in `g1, g2, ... = imgradients(img,
@@ -117,6 +117,13 @@ Other changes:
 
 - The old `extrema_filter` discards the edges of the image, whereas
   the new one (based on `mapwindow`) returns an array of the same size as the input.
+
+- The output of `blob_LoG` is now a `Vector{BlobLoG}`, a new exported
+  immutable, rather than the old tuple format.
+
+- `findlocalextrema` now returns a `Vector{CartesianIndex{N}}` rather
+  than a `Vector{NTuple{N,Int}}`. This makes it ready for use in efficient
+  indexing.
 
 # Older versions
 
