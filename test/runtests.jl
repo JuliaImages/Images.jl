@@ -1,6 +1,12 @@
 module ImagesTests
 
-using FactCheck, Base.Test, Images, Colors, FixedPointNumbers
+using Images, Colors, FixedPointNumbers
+if VERSION >= v"0.5.0-dev+7720"
+    using Base.Test
+else
+    using BaseTestNext
+    const Test = BaseTestNext
+end
 using Graphics
 
 testing_units = Int == Int64
@@ -18,8 +24,6 @@ include("edge.jl")
 include("writemime.jl")
 include("corner.jl")
 include("distances.jl")
-
-isinteractive() || FactCheck.exitstatus()
 
 end
 
