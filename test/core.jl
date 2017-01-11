@@ -16,7 +16,7 @@ facts("Core") do
     B = rand(convert(UInt16, 1):convert(UInt16, 20), 3, 5)
     # img, imgd, and imgds will be used in many more tests
     # Thus, these must be defined as local if reassigned in any context() blocks
-    cmap = reinterpret(RGB, repmat(reinterpret(UFixed8, round(UInt8, linspace(12, 255, 20)))', 3, 1))
+    cmap = reinterpret(RGB, repmat(reinterpret(UFixed8, [round(UInt8, x) for x in linspace(12, 255, 20)])', 3, 1))
     img = ImageCmap(copy(B), cmap, Dict{Compat.ASCIIString, Any}([("pixelspacing", [2.0, 3.0]), ("spatialorder", Images.yx)]))
     imgd = convert(Image, img)
     if testing_units
@@ -35,14 +35,16 @@ facts("Core") do
             @fact colordim(B) --> 0
             @fact grayim(img) --> img
             # this is recommended for "integer-valued" images (or even better, directly as a UFixed type)
-            Bf = grayim(round(UInt8, B))
+            # Work around poor inference and no shape preserving comprehension
+            # on 0.4..... Change to `round.(UInt8, B)` on 0.6
+            Bf = grayim(convert(Array{UInt8}, @compat round.([UInt8], B)))
             @fact eltype(Bf) --> UFixed8
             @fact colorspace(Bf) --> "Gray"
             @fact colordim(Bf) --> 0
             Bf = grayim(B)
             @fact eltype(Bf) --> UFixed16
             # colorspace encoded as a Color (enables multiple dispatch)
-            BfCV = reinterpret(Gray{UFixed8}, round(UInt8, B))
+            BfCV = reinterpret(Gray{UFixed8}, [round(UInt8, x) for x in B])
             @fact colorspace(BfCV) --> "Gray"
             @fact colordim(BfCV) --> 0
             Bf3 = grayim(reshape(collect(convert(UInt8,1):convert(UInt8,36)), 3,4,3))

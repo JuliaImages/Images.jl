@@ -2,11 +2,19 @@ using FactCheck, Images, Colors, FixedPointNumbers
 using Compat
 
 macro chk(a, b)
-    :(@fact ($a == $b && typeof($a) == typeof($b)) --> true)
+    quote
+        a = $(esc(a))
+        b = $(esc(b))
+        @fact (a == b && typeof(a) == typeof(b)) --> true
+    end
 end
 
 macro chk_approx(a, b)
-    :(@fact (abs($a - $b) < 2*(eps($a)+eps($b)) && typeof($a) == typeof($b)) --> true)
+    quote
+        a = $(esc(a))
+        b = $(esc(b))
+        @fact (abs(a - b) < 2*(eps(a)+eps(b)) && typeof(a) == typeof(b)) --> true
+    end
 end
 
 facts("Map") do
@@ -200,10 +208,10 @@ facts("Map") do
         @chk map(mapi, 0) reinterpret(RGB24, 0x00000000)
     end
 
-    context("ScaleAutoMinMax") do
+    @compat context("ScaleAutoMinMax") do
         mapi = ScaleAutoMinMax()
         A = [100,550,1000]
-        @chk map(mapi, A) @compat UFixed8.([0.0,0.5,1.0])
+        @chk map(mapi, A) UFixed8.([0.0,0.5,1.0])
         mapi = ScaleAutoMinMax(RGB24)
         @chk map(mapi, A) reinterpret(RGB24, [0x00000000, 0x00808080, 0x00ffffff])
 
@@ -219,7 +227,7 @@ facts("Map") do
         #    s = 1.1269798f0
         #    val = 0xdeb5
         #    UFixed16(s*UFixed16(val,0)) == UFixed16((s/typemax(UInt16))*val)
-        @fact maxabs(convert(Array{Int32}, res1) - convert(Array{Int32}, res2)) --> less_than_or_equal(1)
+        @fact maximum(abs, convert(Array{Int32}, res1) - convert(Array{Int32}, res2)) --> less_than_or_equal(1)
     end
 
     context("Scaling and ssd") do
@@ -264,7 +272,7 @@ facts("Map") do
 
     context("Color conversion") do
         gray = collect(linspace(0.0,1.0,5)) # a 1-dimensional image
-        gray8 = round(UInt8, 255*gray)
+        gray8 = [round(UInt8, 255 * x) for x in gray]
         gray32 = UInt32[convert(UInt32, g)<<16 | convert(UInt32, g)<<8 | convert(UInt32, g) for g in gray8]
         imgray = Images.Image(gray, Dict{Compat.ASCIIString,Any}([("colordim",0), ("colorspace","Gray")]))
         buf = map(Images.mapinfo(UInt32, imgray), imgray) # Images.uint32color(imgray)

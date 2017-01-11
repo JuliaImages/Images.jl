@@ -2,7 +2,11 @@ __precompile__(true)
 
 module Images
 
-import Base.take
+if VERSION >= v"0.6.0-dev.1024"
+    import Base.Iterators.take
+else
+    import Base.take
+end
 import Base.Order: Ordering, ForwardOrdering, ReverseOrdering
 import Base: ==, .==, +, -, *, /, .+, .-, .*, ./, .^, .<, .>
 import Base: abs, atan2, clamp, convert, copy, copy!, ctranspose, delete!, done,
