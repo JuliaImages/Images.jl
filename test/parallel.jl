@@ -1,5 +1,11 @@
 addprocs(2)
-using Images, Base.Test, Colors
+using Images, Colors
+if VERSION >= v"0.5.0-dev+7720"
+    using Base.Test
+else
+    using BaseTestNext
+    const Test = BaseTestNext
+end
 # Normally "using Images" would suffice, but since Images has
 # already been loaded by the time this file runs, that yields
 # a no-op. So we have to force the workers to load it manually.

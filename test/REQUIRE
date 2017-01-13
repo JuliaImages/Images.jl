@@ -1,5 +1,5 @@
 @osx TestImages
-FactCheck
+BaseTestNext
 @windows ImageMagick
 @linux ImageMagick
 @osx QuartzImageIO

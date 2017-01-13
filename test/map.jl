@@ -1,22 +1,24 @@
-using FactCheck, Images, Colors, FixedPointNumbers
+using Images, Colors, FixedPointNumbers
 using Compat
 
+
+
 macro chk(a, b)
-    :(@fact ($a == $b && typeof($a) == typeof($b)) --> true)
+    :(@test ($a == $b && typeof($a) == typeof($b)))
 end
 
 macro chk_approx(a, b)
-    :(@fact (abs($a - $b) < 2*(eps($a)+eps($b)) && typeof($a) == typeof($b)) --> true)
+    :(@test (abs($a - $b) < 2*(eps($a)+eps($b)) && typeof($a) == typeof($b)))
 end
 
-facts("Map") do
-    context("MapNone") do
+@testset "Map" begin
+    @testset "MapNone" begin
         mapi = MapNone{Int}()
         @chk map(mapi, 7) 7
         @chk map(mapi, 0x07) 7
         a7 = Int[7]
         @chk map(mapi, [0x07]) a7
-        @fact map(mapi, a7) --> exactly(a7)
+        @test map(mapi,a7) === a7
         mapi = MapNone{RGB24}()
         g = UFixed8(0.1)
         @chk Images.map1(mapi, 0.1) g
@@ -40,7 +42,7 @@ facts("Map") do
         @chk map(mapi, c) convert(Images.ColorTypes.BGRA{UFixed8}, c)
     end
 
-    context("BitShift") do
+    @testset "BitShift" begin
         mapi = BitShift{UInt8,7}()
         @chk map(mapi, 0xff) 0x01
         @chk map(mapi, 0xf0ff) 0xff
@@ -73,7 +75,7 @@ facts("Map") do
         @chk map(bs, v) Gray{UFixed8}(0.8)
     end
 
-    context("Clamp") do
+    @testset "Clamp" begin
         mapi = ClampMin(Float32, 0.0)
         @chk map(mapi,  1.2) 1.2f0
         @chk map(mapi, -1.2) 0.0f0
@@ -128,14 +130,14 @@ facts("Map") do
         @chk clamp(RGBA{Float64}(1.2,0.5,-.3,0.2)) RGBA{Float64}(1.0,0.5,0.0,0.2)
     end
 
-    context("Issue #285") do
+    @testset "Issue #285" begin
         a = [Gray(0xd0uf8)]
         a1 = 10*a
         mapi = mapinfo(Gray{UFixed8}, a1)
         @chk map(mapi, a1[1]) Gray(0xffuf8)
     end
 
-    context("ScaleMinMax") do
+    @testset "ScaleMinMax" begin
         mapi = ScaleMinMax(UFixed8, 100, 1000)
         @chk map(mapi, 100) UFixed8(0.0)
         @chk map(mapi, 1000) UFixed8(1.0)
@@ -143,9 +145,9 @@ facts("Map") do
         @chk map(mapi, 2000) UFixed8(1.0)
         @chk map(mapi, 550) UFixed8(0.5)
         mapinew = ScaleMinMax(UFixed8, [100,500,1000])
-        @fact mapinew --> mapi
+        @test mapinew == mapi
         mapinew = ScaleMinMax(UFixed8, [0,500,2000], convert(UInt16, 100), convert(UInt16, 1000))
-        @fact mapinew --> mapi
+        @test mapinew == mapi
         mapi = ScaleMinMax(ARGB32, 100, 1000)
         @chk map(mapi, 100) ARGB32(0,0,0,1)
         @chk map(mapi, 550) ARGB32(0x80uf8,0x80uf8,0x80uf8,0xffuf8)
@@ -155,39 +157,39 @@ facts("Map") do
         @chk map(mapi, 550) RGB{Float32}(0.5, 0.5, 0.5)
         @chk map(mapi,2000) RGB(1.0f0, 1.0f0, 1.0f0)
         A = Gray{UFixed8}[UFixed8(0.1), UFixed8(0.9)]
-        @fact mapinfo(RGB24, A) --> MapNone{RGB24}()
+        @test mapinfo(RGB24,A) == MapNone{RGB24}()
         mapi = ScaleMinMax(RGB24, A, zero(Gray{UFixed8}), one(Gray{UFixed8}))
-        @fact map(mapi, A) --> map(mapinfo(RGB24, A), A)
+        @test map(mapi,A) == map(mapinfo(RGB24,A),A)
         mapi = ScaleMinMax(Float32, [Gray(one(UFixed8))], 0, 1) # issue #180
         @chk map(mapi, Gray(UFixed8(0.6))) 0.6f0
-        @fact_throws ErrorException ScaleMinMax(Float32, 0, 0, 1.0) # issue #245
+        @test_throws ErrorException ScaleMinMax(Float32,0,0,1.0) # issue #245
         A = [Gray{Float64}(0.2)]
         mapi = ScaleMinMax(RGB{UFixed8}, A, 0.0, 0.2)
-        @fact map(mapi, A) --> [RGB{UFixed8}(1,1,1)]
+        @test map(mapi,A) == [RGB{UFixed8}(1,1,1)]
         mapi = ScaleMinMax(Gray{U8}, Gray{U8}(0.2), Gray{U8}(0.4))
-        @fact Gray{U8}(0.49) <= map(mapi, Gray{U8}(0.3)) <= Gray{U8}(0.5) --> true
-        @fact Gray{U8}(0.49) <= map(mapi, 0.3) <= Gray{U8}(0.5) --> true
+        @test Gray{U8}(0.49) <= map(mapi,Gray{U8}(0.3)) <= Gray{U8}(0.5)
+        @test Gray{U8}(0.49) <= map(mapi,0.3) <= Gray{U8}(0.5)
         mapi = ScaleMinMax(Gray{U8}, 0.2, 0.4)
-        @fact Gray{U8}(0.49) <= map(mapi, Gray{U8}(0.3)) <= Gray{U8}(0.5) --> true
-        @fact Gray{U8}(0.49) <= map(mapi, 0.3) <= Gray{U8}(0.5) --> true
+        @test Gray{U8}(0.49) <= map(mapi,Gray{U8}(0.3)) <= Gray{U8}(0.5)
+        @test Gray{U8}(0.49) <= map(mapi,0.3) <= Gray{U8}(0.5)
 
         A = [-0.5 0.5; Inf NaN]
-        @fact map(Clamp01NaN(A), A) --> [0.0 0.5; 1.0 0.0]
+        @test map(Clamp01NaN(A),A) == [0.0 0.5;1.0 0.0]
         B = colorim(repeat(reshape(A, (1,2,2)), outer=[3,1,1]))
-        @fact map(Clamp01NaN(B), B) --> [RGB(0.0,0,0) RGB(0.5,0.5,0.5); RGB(1.0,1,1) RGB(0.0,0,0)]
+        @test map(Clamp01NaN(B),B) == [RGB(0.0,0,0) RGB(0.5,0.5,0.5);RGB(1.0,1,1) RGB(0.0,0,0)]
         # Integer-valued images are not recommended, but let's at
         # least make sure they work
         smm = ScaleMinMax(UInt8, 0.0, 1.0, 255)
-        @fact map(smm, 0.0) --> exactly(0x00)
-        @fact map(smm, 1.0) --> exactly(0xff)
-        @fact map(smm, 0.1) --> exactly(round(UInt8, 0.1*255.0f0))
+        @test map(smm,0.0) === 0x00
+        @test map(smm,1.0) === 0xff
+        @test map(smm,0.1) === round(UInt8,0.1 * 255.0f0)
         smm = ScaleMinMax(Gray{U8}, typemin(Int8), typemax(Int8))
-        @fact map(smm, 2) --> Gray{U8}(0.51)
+        @test map(smm,2) == Gray{U8}(0.51)
         smm = ScaleMinMax(RGB24, typemin(Int8), typemax(Int8))
-        @fact map(smm, 2) --> reinterpret(RGB24, 0x828282)
+        @test map(smm,2) == reinterpret(RGB24,0x00828282)
     end
 
-    context("ScaleSigned") do
+    @testset "ScaleSigned" begin
         mapi = ScaleSigned(Float32, 1/5)
         @chk map(mapi, 7) 1.0f0
         @chk map(mapi, 5) 1.0f0
@@ -200,7 +202,7 @@ facts("Map") do
         @chk map(mapi, 0) reinterpret(RGB24, 0x00000000)
     end
 
-    context("ScaleAutoMinMax") do
+    @testset "ScaleAutoMinMax" begin
         mapi = ScaleAutoMinMax()
         A = [100,550,1000]
         @chk map(mapi, A) @compat UFixed8.([0.0,0.5,1.0])
@@ -219,14 +221,14 @@ facts("Map") do
         #    s = 1.1269798f0
         #    val = 0xdeb5
         #    UFixed16(s*UFixed16(val,0)) == UFixed16((s/typemax(UInt16))*val)
-        @fact maxabs(convert(Array{Int32}, res1) - convert(Array{Int32}, res2)) --> less_than_or_equal(1)
+        @test maxabs(convert(Array{Int32},res1) - convert(Array{Int32},res2)) <= 1
     end
 
-    context("Scaling and ssd") do
+    @testset "Scaling and ssd" begin
         img = Images.grayim(fill(typemax(UInt16), 3, 3))
         mapi = Images.mapinfo(UFixed8, img)
         img8 = map(mapi, img)
-        @fact all(img8 .== typemax(UFixed8)) --> true
+        @test all(img8 .== typemax(UFixed8))
         A = 0
         mnA, mxA = 1.0, -1.0
         while mnA > 0 || mxA < 0
@@ -237,65 +239,65 @@ facts("Map") do
         img = convert(Images.Image, A .+ offset)
         mapi = Images.ScaleMinMax(UFixed8, offset, offset+mxA, 1/mxA)
         imgs = map(mapi, img)
-        @fact minimum(imgs) --> 0
-        @fact maximum(imgs) --> 1
-        @fact eltype(imgs) --> UFixed8
+        @test minimum(imgs) == 0
+        @test maximum(imgs) == 1
+        @test eltype(imgs) == UFixed8
         imgs = Images.imadjustintensity(img)
-        @fact_throws MethodError Images.imadjustintensity(img, [1])
+        @test_throws MethodError Images.imadjustintensity(img,[1])
         mnA = minimum(A)
-        @fact Images.ssd(imgs, (A.-mnA)/(mxA-mnA)) --> less_than(eps(UFixed16))
+        @test Images.ssd(imgs,(A .- mnA) / (mxA - mnA)) < eps(UFixed16)
         A = reshape(1:9, 3, 3)
         B = map(Images.ClampMin(Float32, 3), A)
-        @fact (eltype(B) == Float32 && B == [3 4 7; 3 5 8; 3 6 9]) --> true
+        @test eltype(B) == Float32 && B == [3 4 7;3 5 8;3 6 9]
         B = map(Images.ClampMax(UInt8, 7), A)
-        @fact (eltype(B) == UInt8 && B == [1 4 7; 2 5 7; 3 6 7]) --> true
+        @test eltype(B) == UInt8 && B == [1 4 7;2 5 7;3 6 7]
 
         A = reinterpret(UFixed8, [convert(UInt8,1):convert(UInt8,24);], (3, 2, 4))
         img = reinterpret(RGB{UFixed8}, A, (2,4))
-        @fact separate(img) --> permutedims(A, (2,3,1))
+        @test separate(img) == permutedims(A,(2,3,1))
     end
 
-    context("sc") do
+    @testset "sc" begin
         arr = zeros(4,4)
         arr[2,2] = 0.5
-        @fact sc(arr)[2,2] --> 0xffuf8
-        @fact sc(arr, 0.0, 0.75)[2,2] --> 0xaauf8
+        @test (sc(arr))[2,2] == 0xffuf8
+        @test (sc(arr,0.0,0.75))[2,2] == 0xaauf8
     end
 
-    context("Color conversion") do
+    @testset "Color conversion" begin
         gray = collect(linspace(0.0,1.0,5)) # a 1-dimensional image
         gray8 = round(UInt8, 255*gray)
         gray32 = UInt32[convert(UInt32, g)<<16 | convert(UInt32, g)<<8 | convert(UInt32, g) for g in gray8]
         imgray = Images.Image(gray, Dict{Compat.ASCIIString,Any}([("colordim",0), ("colorspace","Gray")]))
         buf = map(Images.mapinfo(UInt32, imgray), imgray) # Images.uint32color(imgray)
-        @fact buf --> reinterpret(RGB24, gray32)
+        @test buf == reinterpret(RGB24,gray32)
         rgb = RGB{Float64}[RGB(g, g, g) for g in gray]
         buf = map(Images.mapinfo(UInt32, rgb), rgb) # Images.uint32color(rgb)
-        @fact buf --> reinterpret(RGB24, gray32)
+        @test buf == reinterpret(RGB24,gray32)
         r = red(rgb)
-        @fact r --> gray
+        @test r == gray
         img = Images.Image(reinterpret(RGB24, gray32)) # , ["colordim"-->0, "colorspace"=>"RGB24"])
         buf = map(Images.mapinfo(UInt32, img), img) # Images.uint32color(img)
-        @fact buf --> reinterpret(RGB24, gray32)
+        @test buf == reinterpret(RGB24,gray32)
         rgb = repeat(gray, outer=[1,3])
         img = Images.Image(rgb, Dict{Compat.ASCIIString,Any}([("colordim",2), ("colorspace","RGB"), ("spatialorder",["x"])]))
         buf = map(Images.mapinfo(UInt32, img), img) # Images.uint32color(img)
-        @fact buf --> reinterpret(RGB24, gray32)
+        @test buf == reinterpret(RGB24,gray32)
         g = green(img)
-        @fact g --> gray
+        @test g == gray
         rgb = repeat(gray', outer=[3,1])
         img = Images.Image(rgb, Dict{Compat.ASCIIString,Any}([("colordim",1), ("colorspace","RGB"), ("spatialorder",["x"])]))
         buf = map(Images.mapinfo(UInt32, img), img) # Images.uint32color(img)
-        @fact buf --> reinterpret(RGB24, gray32)
+        @test buf == reinterpret(RGB24,gray32)
         b = blue(img)
-        @fact b --> gray
+        @test b == gray
     end
 
-    context("Map and indexed images") do
+    @testset "Map and indexed images" begin
         img = Images.ImageCmap([1 2 3; 3 2 1], [RGB{UFixed16}(1.0,0.6,0.4), RGB{UFixed16}(0.2, 0.4, 0.6), RGB{UFixed16}(0.5,0.5,0.5)])
         mapi = MapNone(RGB{UFixed8})
         imgd = map(mapi, img)
         cmap = [RGB{UFixed8}(1.0,0.6,0.4), RGB{UFixed8}(0.2, 0.4, 0.6), RGB{UFixed8}(0.5,0.5,0.5)]
-        @fact imgd --> reshape(cmap[[1,3,2,2,3,1]], (2,3))
+        @test imgd == reshape(cmap[[1,3,2,2,3,1]],(2,3))
     end
 end
