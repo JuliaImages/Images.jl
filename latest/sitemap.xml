@@ -3,8 +3,8 @@
 
     
     <url>
-     <loc>None/</loc>
-     <lastmod>2016-10-17</lastmod>
+     <loc>/</loc>
+     <lastmod>2017-01-13</lastmod>
      <changefreq>daily</changefreq>
     </url>
     
@@ -12,20 +12,20 @@
     
         
     <url>
-     <loc>None/aims/</loc>
-     <lastmod>2016-10-17</lastmod>
+     <loc>/aims/</loc>
+     <lastmod>2017-01-13</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
-     <loc>None/core/</loc>
-     <lastmod>2016-10-17</lastmod>
+     <loc>/core/</loc>
+     <lastmod>2017-01-13</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
-     <loc>None/overlays/</loc>
-     <lastmod>2016-10-17</lastmod>
+     <loc>/overlays/</loc>
+     <lastmod>2017-01-13</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
@@ -33,8 +33,8 @@
 
     
     <url>
-     <loc>None/function_reference/</loc>
-     <lastmod>2016-10-17</lastmod>
+     <loc>/function_reference/</loc>
+     <lastmod>2017-01-13</lastmod>
      <changefreq>daily</changefreq>
     </url>
     
