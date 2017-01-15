@@ -13,17 +13,17 @@
         <meta name="author" content="Tim Holy">
       
       
-        <link rel="shortcut icon" href="../assets/images/favicon.ico">
+        <link rel="shortcut icon" href="/assets/images/favicon.ico">
       
       <meta name="generator" content="mkdocs+mkdocs-material#1.0.1">
     
     
       
-        <title>Aims - Images.jl</title>
+        <title>Images.jl - An image processing library for Julia</title>
       
     
     
-      <script src="../assets/javascripts/modernizr-facb31f4a3.js"></script>
+      <script src="/assets/javascripts/modernizr-facb31f4a3.js"></script>
     
     
       
@@ -36,12 +36,12 @@
       <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/application-e0a21a99ab.css">
+      <link rel="stylesheet" href="/assets/stylesheets/application-e0a21a99ab.css">
       
-        <link rel="stylesheet" href="../assets/stylesheets/application-02ce7adcc2.palette.css">
+        <link rel="stylesheet" href="/assets/stylesheets/application-02ce7adcc2.palette.css">
       
       
-        <link rel="stylesheet" href="../assets/Documenter.css">
+        <link rel="stylesheet" href="/assets/Documenter.css">
       
     
     
@@ -68,7 +68,7 @@
   <nav class="md-header-nav md-grid">
     <div class="md-flex">
       <div class="md-flex__cell md-flex__cell--shrink">
-        <a href=".." title="Images.jl" class=" md-icon md-icon--home  md-header-nav__button">
+        <a href="" title="Images.jl" class=" md-icon md-icon--home  md-header-nav__button">
           
         </a>
       </div>
@@ -79,13 +79,7 @@
         <span class="md-flex__ellipsis md-header-nav__title">
           
             
-              
-                <span class="md-header-nav__parent">
-                  User Guide
-                </span>
-              
-            
-            Aims
+            Images.jl
           
         </span>
       </div>
@@ -182,7 +176,7 @@
       
   <li class="md-nav__item">
     
-      <a href=".." title="Home" class="md-nav__link">
+      <a href="" title="Home" class="md-nav__link">
         Home
       </a>
     
@@ -193,7 +187,7 @@
       
   <li class="md-nav__item md-nav__item--nested">
     
-      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-2" type="checkbox" id="nav-2" checked>
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-2" type="checkbox" id="nav-2">
     
     <label class="md-nav__link" for="nav-2">
       User Guide
@@ -209,23 +203,9 @@
           
   <li class="md-nav__item">
     
-    <input class="md-toggle md-nav__toggle" data-md-toggle="toc" type="checkbox" id="toc">
-    
-      
-    
-    
-    <a href="./" title="Aims" class="md-nav__link md-nav__link--active">
-      Aims
-    </a>
-    
-      
-<nav class="md-nav md-nav--secondary">
-  
-  
-    
-  
-  
-</nav>
+      <a href="/aims" title="Aims" class="md-nav__link">
+        Aims
+      </a>
     
   </li>
 
@@ -234,7 +214,7 @@
           
   <li class="md-nav__item">
     
-      <a href="../core/" title="Core Concepts" class="md-nav__link">
+      <a href="/core" title="Core Concepts" class="md-nav__link">
         Core Concepts
       </a>
     
@@ -245,7 +225,7 @@
           
   <li class="md-nav__item">
     
-      <a href="../overlays/" title="Overlays" class="md-nav__link">
+      <a href="/overlays" title="Overlays" class="md-nav__link">
         Overlays
       </a>
     
@@ -261,7 +241,7 @@
       
   <li class="md-nav__item">
     
-      <a href="../function_reference/" title="Function Reference" class="md-nav__link">
+      <a href="/function_reference" title="Function Reference" class="md-nav__link">
         Function Reference
       </a>
     
@@ -275,37 +255,15 @@
               </div>
             
             
-              <div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
-                <div class="md-sidebar__scrollwrap">
-                  <div class="md-sidebar__inner">
-                    
-<nav class="md-nav md-nav--secondary">
-  
-  
-    
-  
-  
-</nav>
-                  </div>
-                </div>
-              </div>
-            
           
           <div class="md-content">
             <article class="md-content__inner md-typeset">
                
-                 <a href="https://github.com/timholy/Images.jl.git/edit/master/docs/aims.md" title="Edit this page" class="md-icon md-content__edit">edit</a>
+                 <a href="" title="Edit this page" class="md-icon md-content__edit">edit</a>
                
               
-                
-                <p><a id='Aims-1'></a></p>
-<h1 id="aims">Aims</h1>
-<p>Images are very diverse.  You might be working with a single photograph, or you might be processing MRI scans from databases of hundreds of subjects.  In the former case, you might not need much information about the image; perhaps just the pixel data itself suffices.  In the latter case, you probably need to know a lot of extra details, like the patient's ID number and characteristics of the image like the physical size of a voxel in all three dimensions.</p>
-<p>Even the raw pixel data can come in several different flavors. For example, you might represent each pixel as a <code>Uint32</code> because you are encoding red, green, and blue in separate 8-bit words within each integer. Visualization libraries like Cairo use these kinds of representations, and you might want to interact with those libraries efficiently.  Alternatively, perhaps you're an astronomer and your camera has such high precision that 16 bits aren't enough to encode grayscale intensities. If you're working with videos (images collected over time), you might have arrays that are too big to load into memory at once.  You still need to be able to "talk about" the array as a whole, but it may not be trivial to adjust the byte-level representation to match some pre-conceived storage order.</p>
-<p>To handle this diversity, we've endeavored to take a "big tent" philosophy.  We avoid imposing a strict programming model, because we don't want to make life difficult for people who have relatively simple needs.  If you do all your image processing with plain arrays (as is typical in Matlab, for example), that should work just fine. You just have to respect certain conventions, like a <code>m</code>-by-<code>n</code>-by-<code>3</code> array always means an RGB image with the third dimension encoding color.  You can call the routines that are in this package, and write your own custom algorithms that assume the same format.</p>
-<p>But if your images don't fit neatly into these assumptions, you can choose to represent your images using other schemes; you can then tag them with enough metadata that there's no ambiguity about the meaning of anything.  The algorithms in this package are already set to look for certain types of metadata, and adjust their behavior accordingly.</p>
-<p>One of the potential downsides of flexibility is complexity; it makes it harder to write generic algorithms that work with all these different representations. We've tried to mitigate this downside by providing many short utility functions that abstract away much of the complexity.  Many algorithms require just a handful of extra lines to work generically.  Or if you just want to get something running, it usually only takes a couple of lines of code to assert that the input is in the format you expect.</p>
-              
+  <h1>404 - Not found</h1>
+
             </article>
           </div>
         </div>
@@ -313,41 +271,6 @@
       
         
 <footer class="md-footer">
-  
-    <div class="md-footer-nav">
-      <nav class="md-footer-nav__inner md-grid">
-        
-          <a href=".." title="Home" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
-            <div class="md-flex__cell md-flex__cell--shrink">
-              <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
-            </div>
-            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
-              <span class="md-flex__ellipsis">
-                <span class="md-footer-nav__direction">
-                  Previous
-                </span>
-                Home
-              </span>
-            </div>
-          </a>
-        
-        
-          <a href="../core/" title="Core Concepts" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
-            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
-              <span class="md-flex__ellipsis">
-                <span class="md-footer-nav__direction">
-                  Next
-                </span>
-                Core Concepts
-              </span>
-            </div>
-            <div class="md-flex__cell md-flex__cell--shrink">
-              <i class="md-icon md-icon--arrow-forward md-footer-nav__button"></i>
-            </div>
-          </a>
-        
-      </nav>
-    </div>
   
   <div class="md-footer-meta md-typeset">
     <div class="md-footer-meta__inner md-grid">
@@ -368,12 +291,12 @@
       
     </div>
     
-      <script src="../assets/javascripts/application-16f434a21a.js"></script>
-      <script>var config={url:{base:".."}},app=new Application(config);app.initialize()</script>
+      <script src="/assets/javascripts/application-16f434a21a.js"></script>
+      <script>var config={url:{base:""}},app=new Application(config);app.initialize()</script>
       
         <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
       
-        <script src="../assets/mathjaxhelper.js"></script>
+        <script src="/assets/mathjaxhelper.js"></script>
       
     
     
