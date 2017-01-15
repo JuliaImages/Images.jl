@@ -8,27 +8,27 @@ facts("Algorithms") do
     approx_equal(ar, v) = @compat all(abs.(ar.-v) .< sqrt(eps(v)))
     approx_equal(ar::Images.AbstractImage, v) = approx_equal(Images.data(ar), v)
 
-	context("Flip dimensions") do
-		A = UInt8[200 150; 50 1]
-		img_x = grayim(A)
-		img_y = permutedims(img_x, [2, 1])
+    context("Flip dimensions") do
+        A = UInt8[200 150; 50 1]
+        img_x = grayim(A)
+        img_y = permutedims(img_x, [2, 1])
 
-		@fact raw(flipdim(img_x, "x")) --> raw(flipdim(img_x, 1))
-		@fact raw(flipdim(img_x, "x")) --> flipdim(A, 1)
-		@fact raw(flipdim(img_y, "x")) --> raw(flipdim(img_y, 2))
-		@fact raw(flipdim(img_y, "x")) --> flipdim(A', 2)
+        @fact raw(flipdim(img_x, "x")) --> raw(flipdim(img_x, 1))
+        @fact raw(flipdim(img_x, "x")) --> flipdim(A, 1)
+        @fact raw(flipdim(img_y, "x")) --> raw(flipdim(img_y, 2))
+        @fact raw(flipdim(img_y, "x")) --> flipdim(A', 2)
 
-		@fact raw(flipdim(img_x, "y")) --> raw(flipdim(img_x, 2))
-		@fact raw(flipdim(img_x, "y")) --> flipdim(A, 2)
-		@fact raw(flipdim(img_y, "y")) --> raw(flipdim(img_y, 1))
-		@fact raw(flipdim(img_y, "y")) --> flipdim(A', 1)
+        @fact raw(flipdim(img_x, "y")) --> raw(flipdim(img_x, 2))
+        @fact raw(flipdim(img_x, "y")) --> flipdim(A, 2)
+        @fact raw(flipdim(img_y, "y")) --> raw(flipdim(img_y, 1))
+        @fact raw(flipdim(img_y, "y")) --> flipdim(A', 1)
 
-		@fact raw(flipx(img_x)) --> raw(flipdim(img_x, "x"))
-		@fact raw(flipx(img_y)) --> raw(flipdim(img_y, "x"))
+        @fact raw(flipx(img_x)) --> raw(flipdim(img_x, "x"))
+        @fact raw(flipx(img_y)) --> raw(flipdim(img_y, "x"))
 
-		@fact raw(flipy(img_x)) --> raw(flipdim(img_x, "y"))
-		@fact raw(flipy(img_y)) --> raw(flipdim(img_y, "y"))
-	end
+        @fact raw(flipy(img_x)) --> raw(flipdim(img_x, "y"))
+        @fact raw(flipy(img_y)) --> raw(flipdim(img_y, "y"))
+    end
 
     context("Arithmetic") do
         img = convert(Images.Image, zeros(3,3))

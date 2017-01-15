@@ -89,7 +89,7 @@ function label_components!(Albl::AbstractArray{Int}, A::Array, region::Union{Dim
         f! = _label_components_cache[key]
     end
     sets = DisjointMinSets()
-    f!(Albl, sets, A, bkg)
+    eval(:($f!($Albl, $sets, $A, $bkg)))
     # Now parse sets to find the labels
     newlabel = minlabel(sets)
     for i = 1:length(A)

@@ -2,6 +2,7 @@ module ImagesTests
 
 using FactCheck, Base.Test, Images, Colors, FixedPointNumbers
 using Graphics
+using Compat
 
 testing_units = Int == Int64
 if testing_units

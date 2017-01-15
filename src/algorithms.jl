@@ -1042,6 +1042,15 @@ function copytail!(dest, A, coloffset, strd, len)
     dest
 end
 
+@generated function blob_LoG_helper1{T,N}(img_LoG::AbstractArray{T,N},
+                                          radii, x)
+    :(img_LoG[x...], radii[x[1]], (@ntuple $(N - 1) d->x[d+1])...)
+end
+
+function blob_LoG_helper2(img_LoG, radii, maxima)
+    return [blob_LoG_helper1(img_LoG, radii, x) for x in maxima]
+end
+
 """
 `blob_LoG(img, sigmas) -> Vector{Tuple}`
 
@@ -1062,7 +1071,7 @@ Note that only 2-D images are currently supported due to a limitation of `imfilt
 
         radii = sqrt(2.0)*sigmas
         maxima = findlocalmaxima(img_LoG, 1:ndims(img_LoG), (true, falses(N)...))
-        [(img_LoG[x...], radii[x[1]], (@ntuple $N d->x[d+1])...) for x in maxima]
+        blob_LoG_helper2(img_LoG, radii, maxima)
     end
 end
 
@@ -1619,8 +1628,9 @@ for N = 2:4
             end
 
             # Circular shift the dimensions
-            maxval_temp = permutedims(maxval_temp, mod(collect(1:$N), $N)+1)
-            minval_temp = permutedims(minval_temp, mod(collect(1:$N), $N)+1)
+            perm_idx = @compat mod.(1:$N, $N) .+ 1
+            maxval_temp = permutedims(maxval_temp, perm_idx)
+            minval_temp = permutedims(minval_temp, perm_idx)
 
         end
 

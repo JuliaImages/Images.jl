@@ -41,7 +41,7 @@ facts("Overlay") do
         @fact isa(s, Matrix{RGB{Float32}}) --> true
         @fact size(s) --> (3, 2)
         buf = Images.uint32color(ovr)
-        gray8 = round(UInt8, 255*gray)
+        gray8 = [round(UInt8, 255 * x) for x in gray]
         nogreen = reinterpret(RGB24, [convert(UInt32, g)<<16 | convert(UInt32, g) for g in gray8])
         @fact buf --> nogreen
     end
