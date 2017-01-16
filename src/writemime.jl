@@ -58,3 +58,36 @@ mapinfo_writemime_(img::AbstractImage) = Images.mapinfo(UFixed8,img)
 
 mapinfo_writemime_restricted{T<:Colorant}(img::AbstractImage{T}) = ClampMinMax(to_native_color(T), 0.0, 1.0)
 mapinfo_writemime_restricted(img::AbstractImage) = Images.mapinfo(UFixed8, img)
+
+function Base.show{T<:Image}(io::IOContext, m::MIME"text/html", imgs::AbstractMatrix{T})
+    m,n=size(imgs)
+    write(io, "<table>")
+    for i = 1:m
+        write(io, "<tr style='border:none; '>")
+        for j = 1:n
+            write(io, "<td style='text-align:center;vertical-align:middle; margin: 0.5em;border:1px #90999f solid;border-collapse:collapse'>")
+            show_element(IOContext(io, thumbnail=true), imgs[i,j])
+            write(io, "</td>")
+        end
+        write(io, "</tr>")
+    end
+    write(io, "</table>")
+end
+
+function downsize_for_thumbnail(img, w, h)
+    a,b=size(img)
+    a > 2w && b > 2h ?
+        downsize_for_thumbnail(restrict(img), w, h) : img
+end
+
+function show_element(io::IOContext, img::Image)
+    io2=IOBuffer()
+    w,h=get(io, :thumbnailsize, (100,100))
+    im_resized = downsize_for_thumbnail(img, w, h)
+    thumbnail_style = get(io, :thumbnail, false) ? "max-width: $(w)px; max-height:$(h)px;" : ""
+    b64pipe=Base64EncodePipe(io2)
+    write(io,"<img style='$(thumbnail_style)display:inline' src=\"data:image/png;base64,")
+    show(b64pipe, MIME"image/png"(), im_resized)
+    write(io, read(seekstart(io2)))
+    write(io,"\">")
+end
