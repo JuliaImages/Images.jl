@@ -9,7 +9,7 @@ facts("show (MIME)") do
         mkdir(workdir)
     end
     context("no compression or expansion") do
-        A = U8[0.01 0.99; 0.25 0.75]
+        A = Gray{U8}[0.01 0.99; 0.25 0.75]
         fn = joinpath(workdir, "writemime.png")
         open(fn, "w") do file
             @compat show(file, MIME("image/png"), grayim(A), minpixels=0, maxpixels=typemax(Int))
@@ -18,7 +18,7 @@ facts("show (MIME)") do
         @fact data(b) --> A
     end
     context("small images (expansion)") do
-        A = U8[0.01 0.99; 0.25 0.75]
+        A = Gray{U8}[0.01 0.99; 0.25 0.75]
         fn = joinpath(workdir, "writemime.png")
         open(fn, "w") do file
             @compat show(file, MIME("image/png"), grayim(A), minpixels=5, maxpixels=typemax(Int))
@@ -27,7 +27,7 @@ facts("show (MIME)") do
         @fact data(b) --> A[[1,1,2,2],[1,1,2,2]]
     end
     context("big images (use of restrict)") do
-        A = U8[0.01 0.4 0.99; 0.25 0.8 0.75; 0.6 0.2 0.0]
+        A = Gray{U8}[0.01 0.4 0.99; 0.25 0.8 0.75; 0.6 0.2 0.0]
         Ar = restrict(A)
         fn = joinpath(workdir, "writemime.png")
         open(fn, "w") do file
@@ -36,7 +36,7 @@ facts("show (MIME)") do
         b = convert(Image{Gray{U8}}, load(fn))
         @fact data(b) --> convert(Array{U8}, Ar)
         # a genuinely big image (tests the defaults)
-        abig = grayim(rand(UInt8, 1024, 1023))
+        abig = grayim(rand(Gray{U8}, 1024, 1023))
         fn = joinpath(workdir, "big.png")
         open(fn, "w") do file
             @compat show(file, MIME("image/png"), abig, maxpixels=10^6)
