@@ -20,15 +20,15 @@ function hausdorff_distance(imgA::AbstractArray, imgB::AbstractArray)
   # return if there is no object to match
   (isempty(A) || isempty(B)) && return Inf
 
-  # grid coordinates (ndims by npoints)
-  A = hcat([Float64[ind2sub(size(imgA), a)...] for a in A]...)
-  B = hcat([Float64[ind2sub(size(imgB), b)...] for b in B]...)
-
-  m = size(A, 2); n = size(B, 2)
+  m = length(A); n = length(B)
 
   D = zeros(m, n)
-  for j=1:n, i=1:m
-    @inbounds D[i,j] = norm(A[:,i] - B[:,j])
+  for j=1:n
+    b = [ind2sub(size(imgB), B[j])...]
+    for i=1:m
+      a = [ind2sub(size(imgA), A[i])...]
+      @inbounds D[i,j] = norm(a - b)
+    end
   end
 
   dAB = mean(minimum(D, 2))
