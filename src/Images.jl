@@ -65,6 +65,7 @@ include("edge.jl")
 include("showmime.jl")
 include("corner.jl")
 include("distances.jl")
+include("bwdist.jl")
 include("deprecated.jl")
 
 export # types
@@ -157,6 +158,7 @@ export # types
     imgaussiannoise,
     imlineardiffusion,
     imROF,
+    bwdist,
 
     #Exposure
     complement,
