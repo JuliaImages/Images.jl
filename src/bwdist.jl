@@ -16,20 +16,20 @@ function permutesubs!(subs, perm::Vector{Int}, result::Array{Int})
 end
 
 """
-    permutedimsubs!(F::AbstractArray{Int, N}, perm::AbstractVector{Int}, stride::AbstractArray{Int}, B::AbstractArray{Int, N}, tempArray::AbstractArray{Int})
+    permutedimsubs!(F::AbstractArray{Int, N}, perm::AbstractVector{Int}, stride::AbstractArray{Int}, sizeI::Tuple, B::AbstractArray{Int, N}, tempArray::AbstractArray{Int})
 
 Permute the dimensions of an array and those of the linear indices stored in that array,
 using `tempArray` as a temporary array for permuting the subscripts,
 `B` as a temporary array for permuted dims, and `stride` as the strides of array `F`.
 """
-function permutedimsubs!{N}(F::AbstractArray{Int, N}, perm::Vector{Int}, stride::AbstractArray{Int}, B::AbstractArray{Int, N}, tempArray::AbstractArray{Int})
+function permutedimsubs!{N}(F::AbstractArray{Int, N}, perm::Vector{Int}, stride::AbstractArray{Int}, sizeI::Tuple, B::AbstractArray{Int, N}, tempArray::AbstractArray{Int})
   permutedims!(B, F, perm)
 
   @inbounds @simd for i = 1:length(B)
-    B[i] = B[i] == 0 ? 0 : stridedSub2Ind(stride, permutesubs!(ind2sub(size(F), B[i]), perm, tempArray))
+    F[i] = B[i] == 0 ? 0 : stridedSub2Ind(stride, permutesubs!(ind2sub(sizeI, B[i]), perm, tempArray))
   end
 
-  return B
+  return F
 end
 
 """
@@ -40,9 +40,11 @@ Compute the index for given subindices using an array's strides.
 Replacing `sub2ind` in order to reduce memory consumption.
 """
 function stridedSub2Ind(stride::AbstractArray{Int}, i::AbstractArray{Int})
-  broadcast!(-, i, i, 1)
-  broadcast!(*, i, i, stride)
-  return sum(i) + 1
+  s = 1
+  @inbounds @fastmath for j = 1:length(stride)
+    s += (i[j]-1)*stride[j]
+  end
+  return s
 end
 
 
@@ -85,23 +87,26 @@ Binary Images in Arbitrary Dimensions' [Maurer et al., 2003]
     sizeI = size(I)
     # generate temporary arrays
     tempArray = Array{Int}($N)
-    B = Array{Int}(sizeI)
+    tempArray2 = Array{Int}(length(I) + 1)
     # generate strides array
     stride = collect(strides(I))
 
+    # F and D, we use D as a temporary array for permutedimsubs
     F = zeros(Int, sizeI)
+    D = zeros(Int, sizeI)
+
     _computeft!(F, I, stride)
     d = 1:$N
     @inbounds for i = d
-      _voronoift!(F, I, stride)
-      F = permutedimsubs!(F, circshift(d, 1), stride, B, tempArray)
+      _voronoift!(F, I, stride, sizeI, tempArray2)
+      F = permutedimsubs!(F, circshift(d, 1), stride, sizeI, D, tempArray)
     end
 
-    D = zeros(Int, sizeI)
+    setindex!(D, 0)
     @inbounds @nloops $N i F begin
       x = 1
       (@nexprs $N j -> (x += (i_j - 1)*stride[j]))
-      (@nref $N D i) = sqeuclidean((@nref $N F i), x, size(F))
+      (@nref $N D i) = sqeuclidean((@nref $N F i), x, sizeI)
     end
 
     return (F, D)
@@ -109,7 +114,7 @@ Binary Images in Arbitrary Dimensions' [Maurer et al., 2003]
 end
 
 """
-    \_computeft!(F::AbstractArray{Int, N}, I::AbstractArray{Bool, N}, stride::NTuple{N})
+    \_computeft!(F::AbstractArray{Int, N}, I::AbstractArray{Bool, N}, stride::AbstractArray{Int})
 
 Compute F_0 in the parlance of Maurer et al. 2003.
 """
@@ -123,17 +128,17 @@ Compute F_0 in the parlance of Maurer et al. 2003.
 end
 
 """
-    \_voronoift!(F::AbstractArray{Int, N}, I::AbstractArray{Bool, N}, stride::NTuple{N})
+    \_voronoift!(F::AbstractArray{Int, N}, I::AbstractArray{Bool, N}, stride::AbstractArray{Int}, sizeI::Tuple, g::AbstractArray{Int})
 
-Compute the partial Voronoi diagram along the first dimension of F
-following Maurer et al. 2003.
+Compute the partial Voronoi diagram along the first dimension of F,
+using g as a temporary array, following Maurer et al. 2003.
 """
-@generated function _voronoift!{N}(F::AbstractArray{Int, N}, I::AbstractArray{Bool, N}, stride::AbstractArray{Int})
+@generated function _voronoift!{N}(F::AbstractArray{Int, N}, I::AbstractArray{Bool, N}, stride::AbstractArray{Int}, sizeI::Tuple, g::AbstractArray{Int})
   quote
-    @inbounds @nloops $N d j -> (j == 1 ? 0 : 1:size(F, j)) begin
+    @inbounds @nloops $N d j -> (j == 1 ? 0 : 1:sizeI[j]) begin
       Fstar = (@nref $N F j -> (j == 1 ? (:) : d_j))
       l = 0
-      g = zeros(Int, length(Fstar) + 1)
+      setindex!(g, 0)
 
       @inbounds for i = 1:size(Fstar, 1)
         f = Fstar[i]
@@ -142,7 +147,7 @@ following Maurer et al. 2003.
             l += 1
             g[l] = f
           else
-            while l >= 2 && removeft(g[l-1], g[l], f, d_2, size(F))
+            while l >= 2 && removeft(g[l-1], g[l], f, d_2, sizeI)
               l -= 1
             end
             l += 1
@@ -159,7 +164,7 @@ following Maurer et al. 2003.
           # This makes a vector x containing the appropriate subscripts
           x = 1
           (@nexprs $N j -> (x += (d_j - 1)*stride[j]))
-          while l < n_s && (euclidean(x, g[l], size(F)) > euclidean(x, g[l+1], size(F)))
+          while l < n_s && (euclidean(x, g[l], sizeI) > euclidean(x, g[l+1], sizeI))
             l += 1
           end
           (@nref $N F d) = g[l]
