@@ -7,7 +7,7 @@ using Base.Cartesian
 Permute a tuple of subscripts given a permutation vector and
 writing the permutation into `result`.
 """
-function permutesubs!(subs, perm::Vector{Int}, result::Array{Int})
+function permutesubs!(subs, perm::Vector{Int}, result::AbstractArray{Int})
   n = length(subs)
   @inbounds @simd for i = 1:n
     result[i] = subs[perm[i]]
@@ -86,8 +86,7 @@ Binary Images in Arbitrary Dimensions' [Maurer et al., 2003]
     # size
     sizeI = size(I)
     # generate temporary arrays
-    tempArray = Array{Int}($N)
-    tempArray2 = Array{Int}(length(I) + 1)
+    tempArray = Array{Int}(length(I) + 1)
     # generate strides array
     stride = collect(strides(I))
 
@@ -98,7 +97,7 @@ Binary Images in Arbitrary Dimensions' [Maurer et al., 2003]
     _computeft!(F, I, stride)
     d = 1:$N
     @inbounds for i = d
-      _voronoift!(F, I, stride, sizeI, tempArray2)
+      _voronoift!(F, I, stride, sizeI, tempArray)
       F = permutedimsubs!(F, circshift(d, 1), stride, sizeI, D, tempArray)
     end
 
@@ -136,12 +135,13 @@ using g as a temporary array, following Maurer et al. 2003.
 @generated function _voronoift!{N}(F::AbstractArray{Int, N}, I::AbstractArray{Bool, N}, stride::AbstractArray{Int}, sizeI::Tuple, g::AbstractArray{Int})
   quote
     @inbounds @nloops $N d j -> (j == 1 ? 0 : 1:sizeI[j]) begin
-      Fstar = (@nref $N F j -> (j == 1 ? (:) : d_j))
+      # FIXME - this needs nearly all memory allocations!
+      #Fstar = (@nref $N F j -> (j == 1 ? (:) : d_j))
       l = 0
       setindex!(g, 0)
 
-      @inbounds for i = 1:size(Fstar, 1)
-        f = Fstar[i]
+      @inbounds for i = 1:sizeI[1]
+        f = (@nref $N F j -> (j == 1 ? i : d_j)) #Fstar[i]
         if f != 0
           if l < 2
             l += 1
@@ -160,7 +160,7 @@ using g as a temporary array, following Maurer et al. 2003.
       if n_s == 0
       else
         l = 1
-        @inbounds for d_1 = 1:length(Fstar)
+        @inbounds for d_1 = 1:sizeI[1]
           # This makes a vector x containing the appropriate subscripts
           x = 1
           (@nexprs $N j -> (x += (d_j - 1)*stride[j]))
