@@ -2,75 +2,6 @@ using Base.Cartesian
 
 
 """
-    permutesubs!(subs::Tuple, perm::Vector{Int}, result:AbstractArray{Int})
-
-Permute a tuple of subscripts given a permutation vector and
-writing the permutation into `result`.
-"""
-function permutesubs!(subs::Tuple, perm::Vector{Int}, result::AbstractArray{Int})
-  n = length(subs)
-  @inbounds @simd for i = 1:n
-    result[i] = subs[perm[i]]
-  end
-  return result
-end
-
-"""
-    permutedimsubs!(F::AbstractArray{Int, N}, perm::AbstractVector{Int}, sizeF::Tuple, tempArray::AbstractArray{Int})
-
-Permute the dimensions of an array and those of the linear indices stored in that array,
-using `tempArray` as a temporary array for permuting the subscripts.
-"""
-function permutedimsubs!{N}(F::AbstractArray{Int, N}, perm::Vector{Int}, sizeF::Tuple, tempArray::AbstractArray{Int})
-  B = permutedims(F, perm)
-
-  stride = collect(strides(B))
-  @inbounds for i = 1:length(B)
-    B[i] = B[i] == 0 ? 0 : stridedSub2Ind(stride, permutesubs!(ind2sub(sizeF, B[i]), perm, tempArray))
-  end
-
-  return (B, stride)
-end
-
-"""
-    stridedSub2Ind(stride::AbstractArray{Int}, i::AbstractArray{Int})
-
-Compute the index for given subindices using an array's strides.
-
-Replacing `sub2ind` in order to reduce memory consumption.
-"""
-function stridedSub2Ind(stride::AbstractArray{Int}, i::AbstractArray{Int})
-  s = 1
-  @inbounds @fastmath for j = 1:length(stride)
-    s += (i[j] - 1)*stride[j]
-  end
-  return s
-end
-
-
-# Relevant distance functions copied from Distance.jl
-function get_common_len(a::AbstractVector, b::AbstractVector)
-  n = length(a)
-  length(b) == n || throw(DimensionMismatch("The lengths of a and b must match."))
-  return n
-end
-
-function sumsqdiff(a::AbstractVector, b::AbstractVector)
-  n = get_common_len(a, b)::Int
-  s = 0.
-
-  @inbounds for i = 1:n
-    s += abs2(a[i] - b[i])
-  end
-
-  return s
-end
-
-sqeuclidean(a::AbstractVector, b::AbstractVector) = sumsqdiff(a, b)
-euclidean(a::AbstractVector, b::AbstractVector) = sqrt(sumsqdiff(a, b))
-
-
-"""
     bwdist(I::AbstractArray{Bool, N}) -> F, D
 
 Compute the euclidean distance and feature transform of a binary image,
@@ -176,7 +107,7 @@ using g as a temporary array, following Maurer et al. 2003.
 end
 
 """
-    removeft(u::Int, v::Int, w::INt, r::Int, dims::Tuple)
+    removeft(u::Int, v::Int, w::Int, r::Int, dims::Tuple)
 
 Calculate whether we should remove a feature pixel from the Voronoi diagram.
 """
@@ -189,6 +120,52 @@ function removeft(u::Int, v::Int, w::Int, r::Int, dims::Tuple)
   c = a + b
 
   return c*distance2(v, r, dims) - b*distance2(u, r, dims) - a*distance2(w, r, dims) - a*b*c > 0
+end
+
+"""
+    permutesubs!(subs::Tuple, perm::AbstractVector{Int}, result:AbstractArray{Int})
+
+Permute a tuple of subscripts given a permutation vector and
+writing the permutation into `result`.
+"""
+function permutesubs!(subs::Tuple, perm::AbstractVector{Int}, result::AbstractArray{Int})
+  n = length(subs)
+  @inbounds @simd for i = 1:n
+    result[i] = subs[perm[i]]
+  end
+  return result
+end
+
+"""
+    permutedimsubs!(F::AbstractArray{Int, N}, perm::AbstractVector{Int, N}, sizeF::Tuple, tempArray::AbstractArray{Int})
+
+Permute the dimensions of an array and those of the linear indices stored in that array,
+using `tempArray` as a temporary array for permuting the subscripts.
+"""
+function permutedimsubs!(F::AbstractArray{Int}, perm::AbstractVector{Int}, sizeF::Tuple, tempArray::AbstractArray{Int})
+  B = permutedims(F, perm)
+
+  stride = collect(strides(B))
+  @inbounds for i = 1:length(B)
+    B[i] = B[i] == 0 ? 0 : stridedSub2Ind(stride, permutesubs!(ind2sub(sizeF, B[i]), perm, tempArray))
+  end
+
+  return (B, stride)
+end
+
+"""
+    stridedSub2Ind(stride::AbstractArray{Int}, i::AbstractArray{Int})
+
+Compute the index for given subindices using an array's strides.
+
+Replacing `sub2ind` in order to reduce memory consumption.
+"""
+function stridedSub2Ind(stride::AbstractArray{Int}, i::AbstractArray{Int})
+  s = 1
+  @inbounds @fastmath for j = 1:length(stride)
+    s += (i[j] - 1)*stride[j]
+  end
+  return s
 end
 
 """
