@@ -16,13 +16,12 @@ function permutesubs!(subs::Tuple, perm::Vector{Int}, result::AbstractArray{Int}
 end
 
 """
-    permutedimsubs!(F::AbstractArray{Int, N}, perm::AbstractVector{Int}, tempArray::AbstractArray{Int})
+    permutedimsubs!(F::AbstractArray{Int, N}, perm::AbstractVector{Int}, sizeF::Tuple, tempArray::AbstractArray{Int})
 
 Permute the dimensions of an array and those of the linear indices stored in that array,
 using `tempArray` as a temporary array for permuting the subscripts.
 """
-function permutedimsubs!{N}(F::AbstractArray{Int, N}, perm::Vector{Int}, tempArray::AbstractArray{Int})
-  sizeF = size(F)
+function permutedimsubs!{N}(F::AbstractArray{Int, N}, perm::Vector{Int}, sizeF::Tuple, tempArray::AbstractArray{Int})
   B = permutedims(F, perm)
 
   stride = collect(strides(B))
@@ -30,7 +29,7 @@ function permutedimsubs!{N}(F::AbstractArray{Int, N}, perm::Vector{Int}, tempArr
     B[i] = B[i] == 0 ? 0 : stridedSub2Ind(stride, permutesubs!(ind2sub(sizeF, B[i]), perm, tempArray))
   end
 
-  return B
+  return (B, stride)
 end
 
 """
@@ -90,18 +89,18 @@ Binary Images in Arbitrary Dimensions' [Maurer et al., 2003]
     sizeI = size(I)
     # generate temporary arrays
     tempArray = Array{Int}(length(I) + 1)
-    # generate strides array
-    stride = collect(strides(I))
 
     # F and D
     F = zeros(Int, sizeI)
     D = zeros(Int, sizeI)
+    stride = collect(strides(F))
 
     _computeft!(F, I, stride)
     d = 1:$N
     @inbounds for i = d
-      _voronoift!(F, I, tempArray)
-      F = permutedimsubs!(F, circshift(d, 1), tempArray)
+      sizeF = size(F)
+      _voronoift!(F, I, sizeF, stride, tempArray)
+      (F, stride) = permutedimsubs!(F, circshift(d, 1), sizeF, tempArray)
     end
 
     @inbounds @nloops $N i F begin
@@ -131,16 +130,13 @@ in the parlance of Maurer et al. 2003.
 end
 
 """
-    \_voronoift!(F::AbstractArray{Int, N}, I::AbstractArray{Bool, N}, g::AbstractArray{Int})
+    \_voronoift!(F::AbstractArray{Int, N}, I::AbstractArray{Bool, N}, sizeF::Tuple, stride::AbstractArray{Int}, g::AbstractArray{Int})
 
 Compute the partial Voronoi diagram along the first dimension of F,
 using g as a temporary array, following Maurer et al. 2003.
 """
-@generated function _voronoift!{N}(F::AbstractArray{Int, N}, I::AbstractArray{Bool, N}, g::AbstractArray{Int})
+@generated function _voronoift!{N}(F::AbstractArray{Int, N}, I::AbstractArray{Bool, N}, sizeF::Tuple, stride::AbstractArray{Int}, g::AbstractArray{Int})
   quote
-    sizeF = size(F)
-    stride = collect(strides(F))
-
     @inbounds @nloops $N d j -> (j == 1 ? 0 : 1:sizeF[j]) begin
       l = 0
       setindex!(g, 0)
