@@ -19,6 +19,7 @@ include("edge.jl")
 include("writemime.jl")
 include("corner.jl")
 include("distances.jl")
+include("bwdist.jl")
 
 isinteractive() || FactCheck.exitstatus()
 
