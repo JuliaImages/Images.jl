@@ -1,4 +1,5 @@
 using FactCheck, Base.Test, Images
+include("../src/bwdist.jl")
 
 
 facts("bwdist") do
@@ -58,5 +59,43 @@ facts("bwdist") do
     (F, D) = bwdist(A)
     @fact F --> [1 1 1; 2 2 13; 2 8 13; 4 9 14; 4 10 10]
     @fact D --> [0 1 4; 0 1 1; 1 0 0; 0 0 0; 1 0 1]
+  end
+
+  context("Corner Case Images") do
+    # (1)
+    A = [false]
+    (F, D) = bwdist(A)
+    @fact F --> [0]
+    @fact D --> [1]
+
+    # (2)
+    A = [true]
+    (F, D) = bwdist(A)
+    @fact F --> [1]
+    @fact D --> [0]
+
+    # (3)
+    A = [true false]
+    (F, D) = bwdist(A)
+    @fact F --> [1 1]
+    @fact D --> [0 1]
+
+    # (4)
+    A = [false; false]
+    (F, D) = bwdist(A)
+    @fact F --> [0; 0]
+    @fact D --> [1; 4]
+
+    # (5)
+    A = [true; true]
+    (F, D) = bwdist(A)
+    @fact F --> [1; 2]
+    @fact D --> [0; 0]
+
+    # (6)
+    A = [true; true; false]
+    (F, D) = bwdist(A)
+    @fact F --> [1; 2; 2]
+    @fact D --> [0; 0; 1]
   end
 end

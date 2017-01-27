@@ -10,7 +10,7 @@ if testing_units
 end
 
 
-include("core.jl")
+#=include("core.jl")
 include("map.jl")
 include("overlays.jl")
 include("algorithms.jl")
@@ -18,7 +18,7 @@ include("exposure.jl")
 include("edge.jl")
 include("writemime.jl")
 include("corner.jl")
-include("distances.jl")
+include("distances.jl")=#
 include("bwdist.jl")
 
 isinteractive() || FactCheck.exitstatus()

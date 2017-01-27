@@ -27,11 +27,16 @@ Binary Images in Arbitrary Dimensions' [Maurer et al., 2003]
     stride = collect(strides(F))
 
     _computeft!(F, I, stride)
-    d = 1:$N
-    @inbounds for i = d
+
+    if $N > 1
+      for i = 1:$N
+        sizeF = size(F)
+        _voronoift!(F, I, sizeF, stride, tempArray)
+        (F, stride) = permutedimsubs(F, sizeF)
+      end
+    else
       sizeF = size(F)
       _voronoift!(F, I, sizeF, stride, tempArray)
-      (F, stride) = permutedimsubs!(F, circshift(d, 1), sizeF, tempArray)
     end
 
     @inbounds @nloops $N i F begin
@@ -43,6 +48,7 @@ Binary Images in Arbitrary Dimensions' [Maurer et al., 2003]
     return (F, D)
   end
 end
+
 
 """
     \_computeft!(F::AbstractArray{Int, N}, I::AbstractArray{Bool, N}, stride::AbstractArray{Int})
@@ -63,8 +69,8 @@ end
 """
     \_voronoift!(F::AbstractArray{Int, N}, I::AbstractArray{Bool, N}, sizeF::Tuple, stride::AbstractArray{Int}, g::AbstractArray{Int})
 
-Compute the partial Voronoi diagram along the first dimension of F,
-using g as a temporary array, following Maurer et al. 2003.
+Compute the partial Voronoi diagram along the first dimension of `F`,
+using `g` as a temporary array, following Maurer et al. 2003.
 """
 @generated function _voronoift!{N}(F::AbstractArray{Int, N}, I::AbstractArray{Bool, N}, sizeF::Tuple, stride::AbstractArray{Int}, g::AbstractArray{Int})
   quote
@@ -89,11 +95,10 @@ using g as a temporary array, following Maurer et al. 2003.
       end
 
       n_s = l
-      if n_s == 0
-      else
+      if n_s != 0
         l = 1
         @inbounds for d_1 = 1:sizeF[1]
-          # This makes a vector x containing the appropriate subscripts
+          # This makes the index x from subscripts d_{1, ...}
           x = 1
           (@nexprs $N j -> (x += (d_j - 1)*stride[j]))
           while l < n_s && (euclidean(x, g[l], sizeF) > euclidean(x, g[l+1], sizeF))
@@ -123,44 +128,39 @@ function removeft(u::Int, v::Int, w::Int, r::Int, dims::Tuple)
 end
 
 """
-    permutesubs!(subs::Tuple, perm::AbstractVector{Int}, result:AbstractArray{Int})
+    circperm(t::Tuple)
 
-Permute a tuple of subscripts given a permutation vector and
-writing the permutation into `result`.
+Circularly shift the data in the tuple.
 """
-function permutesubs!(subs::Tuple, perm::AbstractVector{Int}, result::AbstractArray{Int})
-  n = length(subs)
-  @inbounds @simd for i = 1:n
-    result[i] = subs[perm[i]]
-  end
-  return result
-end
+circperm(t::Tuple) = _circperm(t)
+@inline _circperm(t::Tuple) = _circperm(t...)
+@inline _circperm(t1, trest...) = (trest..., t1)
 
 """
-    permutedimsubs!(F::AbstractArray{Int, N}, perm::AbstractVector{Int, N}, sizeF::Tuple, tempArray::AbstractArray{Int})
+    permutedimsubs(F::AbstractArray{Int, N}, sizeF::Tuple) -> B, stride
 
 Permute the dimensions of an array and those of the linear indices stored in that array,
-using `tempArray` as a temporary array for permuting the subscripts.
+and returning `B` as the permuted array and `stride` indicating `strides(B)`.
 """
-function permutedimsubs!(F::AbstractArray{Int}, perm::AbstractVector{Int}, sizeF::Tuple, tempArray::AbstractArray{Int})
-  B = permutedims(F, perm)
+function permutedimsubs(F::AbstractArray{Int}, sizeF::Tuple)
+  B = transpose(F)
 
   stride = collect(strides(B))
   @inbounds for i = 1:length(B)
-    B[i] = B[i] == 0 ? 0 : stridedSub2Ind(stride, permutesubs!(ind2sub(sizeF, B[i]), perm, tempArray))
+    B[i] = B[i] == 0 ? 0 : stridedSub2Ind(stride, circperm(ind2sub(sizeF, B[i])))
   end
 
   return (B, stride)
 end
 
 """
-    stridedSub2Ind(stride::AbstractArray{Int}, i::AbstractArray{Int})
+    stridedSub2Ind(stride::AbstractArray{Int}, i::Tuple)
 
 Compute the index for given subindices using an array's strides.
 
 Replacing `sub2ind` in order to reduce memory consumption.
 """
-function stridedSub2Ind(stride::AbstractArray{Int}, i::AbstractArray{Int})
+function stridedSub2Ind(stride::AbstractArray{Int}, i::Tuple)
   s = 1
   @inbounds @fastmath for j = 1:length(stride)
     s += (i[j] - 1)*stride[j]
@@ -195,4 +195,9 @@ function sqeuclidean(x::Int, g::Int, dims::Tuple)
 end
 
 # Euclidean distance between linear indices
+"""
+    euclidean(x::Int, g::Int, dims::Tuple)
+
+Calculate the Euclidean Distance between linear indices.
+"""
 euclidean(x::Int, g::Int, dims::Tuple) = sqrt(sqeuclidean(x, g, dims))
