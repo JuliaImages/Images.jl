@@ -1,5 +1,4 @@
 using FactCheck, Base.Test, Images
-include("../src/bwdist.jl")
 
 
 facts("bwdist") do
