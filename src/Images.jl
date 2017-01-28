@@ -210,27 +210,22 @@ _length(A::AbstractArray) = length(linearindices(A))
 _length(A) = length(A)
 
 """
-`Images` is a package for representing and processing images.
-
 Constructors, conversions, and traits:
 
-    - Construction: `Image`, `ImageCmap`, `grayim`, `colorim`, `convert`, `copyproperties`, `shareproperties`
-    - Traits: `colordim`, `colorspace`, `coords_spatial`, `data`, `isdirect`, `isxfirst`, `isyfirst`, `pixelspacing`, `properties`, `sdims`, `spacedirections`, `spatialorder`, `storageorder`, `timedim`
-    - Size-related traits: `height`, `nchannels`, `ncolorelem`, `nimages`, `size_spatial`, `width`, `widthheight`
-    - Trait assertions: `assert_2d`, `assert_scalar_color`, `assert_timedim_last`, `assert_xfirst`, `assert_yfirst`
-    - Indexing operations: `getindexim`, `sliceim`, `subim`
-    - Conversions: `convert`, `raw`, `reinterpret`, `separate`
+    - Construction: use constructors of specialized packages, e.g., `AxisArray`, `ImageMeta`, etc.
+    - "Conversion": `colorview`, `channelview`, `rawview`, `ufixedview`, `permuteddimsview`
+    - Traits: `pixelspacing`, `sdims`, `timeaxis`, `timedim`, `spacedirections`
 
 Contrast/coloration:
 
-    - `MapInfo`: `MapNone`, `BitShift`, `ClampMinMax`, `ScaleMinMax`, `ScaleAutoMinMax`, `sc`, etc.
+    - `clamp01`, `clamp01nan`, `scaleminmax`, `colorsigned`, `scalesigned`
 
 Algorithms:
 
     - Reductions: `maxfinite`, `maxabsfinite`, `minfinite`, `meanfinite`, `sad`, `ssd`, `integral_image`, `boxdiff`, `gaussian_pyramid`
     - Resizing: `restrict`, `imresize` (not yet exported)
-    - Filtering: `imfilter`, `imfilter_fft`, `imfilter_gaussian`, `imfilter_LoG`, `imROF`, `ncc`, `padarray`
-    - Filtering kernels: `ando[345]`, `guassian2d`, `imaverage`, `imdog`, `imlaplacian`, `prewitt`, `sobel`
+    - Filtering: `imfilter`, `imfilter!`, `imfilter_LoG`, `mapwindow`, `imROF`, `padarray`
+    - Filtering kernels: `Kernel.` or `KernelFactors.`, followed by `ando[345]`, `guassian2d`, `imaverage`, `imdog`, `imlaplacian`, `prewitt`, `sobel`
     - Exposure : `imhist`, `histeq`, `adjust_gamma`, `histmatch`, `imadjustintensity`, `imstretch`, `imcomplement`, `clahe`, `cliphist`
     - Gradients: `backdiffx`, `backdiffy`, `forwarddiffx`, `forwarddiffy`, `imgradients`
     - Edge detection: `imedge`, `imgradients`, `thin_edges`, `magnitude`, `phase`, `magnitudephase`, `orientation`, `canny`

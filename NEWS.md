@@ -67,6 +67,10 @@ Key changes (of which many are breaking):
   particular note the `IIRGaussian` types which contain the
   functionality that was formerly in `imfilter_gaussian`.
 
+- Nonlinear filtering operations have been added with
+  `mapwindow`. Among the supported functions is `median!`, thus
+  providing an implementation of median-filtering.
+
 - Previous versions of Images used `reinterpret` for several
   operations, but `reinterpret` fails for most `AbstractArray`s other
   than `Array`. This release implements alternative mechanisms (e.g.,
@@ -85,9 +89,7 @@ Key changes (of which many are breaking):
     error message rather than just `InexactError`
   + Several bugs in FixedPointNumber operations have been fixed, and
     such operations are more consistent about return types
-  + A compact printing scheme is being tested in the
-    `teh/compact_printing` branch; check out the `fixed-renaming`
-    branch of many other packages to account for deprecations
+  + FixedPointNumbers are now printed more compactly
 
 - A new package, `ImageTransformations`, is underway for rotation,
   resizing, and other geometric operations on images.
@@ -124,6 +126,17 @@ Other changes (all of which are breaking):
 - `findlocalextrema` now returns a `Vector{CartesianIndex{N}}` rather
   than a `Vector{NTuple{N,Int}}`. This makes it ready for use in efficient
   indexing.
+
+Changes in related packages:
+
+- NRRD.jl has been extensively revamped. The NRRD format lacks an
+  official test suite, and hence it was always uncertain how well the
+  package supported "the standard" (to the extent that there is
+  one). However, it was discovered that `unu make` can generate files
+  that can serve as a test suite, and using this strategy several
+  incompatibilities in our former version were noted and fixed. It is
+  possible that old .nrrd files written by julia might not be readable
+  without making manual edits to the header.
 
 # Older versions
 
