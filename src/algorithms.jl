@@ -73,6 +73,26 @@ else
     _newindexer(shape, inds) = Base.Broadcast.shapeindexer(shape, inds)
 end
 
+function Base.var{C<:AbstractGray}(A::AbstractArray{C}; kwargs...)
+    imgc = channelview(A)
+    base_colorant_type(C)(var(imgc; kwargs...))
+end
+
+function Base.var{C<:Colorant,N}(A::AbstractArray{C,N}; kwargs...)
+    imgc = channelview(A)
+    colons = ntuple(d->Colon(), Val{N})
+    inds1 = indices(imgc, 1)
+    val1 = var(view(imgc, first(inds1), colons...); kwargs...)
+    vals = similar(imgc, typeof(val1), inds1)
+    vals[1] = val1
+    for i in first(inds1)+1:last(inds1)
+        vals[i] = var(view(imgc, i, colons...); kwargs...)
+    end
+    base_colorant_type(C)(vals...)
+end
+
+Base.std{C<:Colorant}(A::AbstractArray{C}; kwargs...) = mapc(sqrt, var(A; kwargs...))
+
 # Entropy for grayscale (intensity) images
 function _log(kind::Symbol)
     if kind == :shannon

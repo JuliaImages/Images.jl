@@ -2,6 +2,18 @@ using Images
 using Base.Test
 
 @testset "Algorithms" begin
+    @testset "Statistics" begin
+        # issue #187
+        for T in (N0f8, Float32)
+            A = rand(RGB{T}, 5, 4)
+            Ac = channelview(A)
+            s = std(A)
+            @test red(s) ≈ std(Ac[1,:,:])
+            @test green(s) ≈ std(Ac[2,:,:])
+            @test blue(s) ≈ std(Ac[3,:,:])
+        end
+    end
+
     @testset "Features" begin
         A = zeros(Int, 9, 9); A[5, 5] = 1
         blobs = blob_LoG(A, 2.0.^[0.5,0,1])
