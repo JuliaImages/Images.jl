@@ -6,11 +6,11 @@ facts("Overlay") do
     context("One") do
         ovr = Images.Overlay((2gray, 2gray), (RGB(1, 0, 0), RGB(0, 0, 1)), (Clamp{Float64}(), Clamp{Float64}()))
         @fact ovr[1] --> RGB(0, 0, 0) "test XcqmPT"
-        @fact ovr[2] --> RGB{U8}(0.5, 0, 0.5) "test yAFSVQ"
+        @fact ovr[2] --> RGB{N0f8}(0.5, 0, 0.5) "test yAFSVQ"
         @fact ovr[3] --> ovr[4] "test dyKCV9"
         @fact ovr[4] --> ovr[5] "test d4aUI1"
         @fact ovr[5] --> exactly(RGB(1, 0, 1)) "test UF1jSj"
-        @fact eltype(ovr) --> RGB{U8} "test Es9OnV"
+        @fact eltype(ovr) --> RGB{N0f8} "test Es9OnV"
         @fact length(ovr) --> 5 "test 04ptpL"
         @fact size(ovr) --> (5,) "test iE5wc4"
         @fact size(ovr, 1) --> 5 "test OvtQ4m"
@@ -19,7 +19,7 @@ facts("Overlay") do
         @fact raw(ovr) --> [0x00 0x80 0xff 0xff 0xff;
                             0x00 0x00 0x00 0x00 0x00;
                             0x00 0x80 0xff 0xff 0xff] "test vLlExB"
-        @fact separate(ovr) --> UFixed8[0   0   0;
+        @fact separate(ovr) --> N0f8[0   0   0;
                                         0.5 0   0.5;
                                         1   0   1;
                                         1   0   1;
@@ -29,11 +29,11 @@ facts("Overlay") do
     end
 
     context("Two") do
-        ovr = Images.Overlay((gray, 0*gray), (RGB{UFixed8}(1, 0, 1), RGB{UFixed8}(0, 1, 0)), ((0, 1), (0, 1)))
-        @fact eltype(ovr) --> RGB{UFixed8} "test u7gavU"
+        ovr = Images.Overlay((gray, 0*gray), (RGB{N0f8}(1, 0, 1), RGB{N0f8}(0, 1, 0)), ((0, 1), (0, 1)))
+        @fact eltype(ovr) --> RGB{N0f8} "test u7gavU"
         ovr = collect(ovr)
         s = similar(ovr)
-        @fact typeof(s) --> Vector{RGB{UFixed8}} "test qOV0Iu"
+        @fact typeof(s) --> Vector{RGB{N0f8}} "test qOV0Iu"
         @fact length(s) --> 5 "test HxDDe4"
         s = similar(ovr, RGB{Float32})
         @fact isa(s, Vector{RGB{Float32}}) --> true "test tPX9bh"

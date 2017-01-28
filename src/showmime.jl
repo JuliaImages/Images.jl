@@ -32,5 +32,5 @@ function Base.show{C<:Colorant}(io::IO, mime::MIME"image/png", img::AbstractMatr
 end
 
 # Jupyter seemingly can't handle 16-bit colors
-map8(c::Colorant) = mapc(UFixed8, c)
-map8(x::Number) = UFixed8(x)
+map8(c::Colorant) = mapc(N0f8, c)
+map8(x::Number) = N0f8(x)

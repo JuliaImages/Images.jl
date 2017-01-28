@@ -42,19 +42,19 @@ facts("Algorithms") do
         @fact all(A.*img2 .== fill(RGB{Float32}(1,1,1), 4, 5)) --> true "test OT1P7V"
         img2 = img2 .- RGB{Float32}(1,1,1)/2
         A = rand(UInt8,3,4)
-        img = reinterpret(Gray{UFixed8}, Images.grayim(A))
+        img = reinterpret(Gray{N0f8}, Images.grayim(A))
         imgm = mean(img)
         imgn = img/imgm
         @fact reinterpret(Float64, Images.data(imgn)) --> roughly(convert(Array{Float64}, A/mean(A))) "test NTAvmj"
         @fact imcomplement([Gray(0.2)]) --> [Gray(0.8)] "test Gu9b6h"
-        @fact imcomplement([Gray{U8}(0.2)]) --> [Gray{U8}(0.8)] "test Kle9oP"
+        @fact imcomplement([Gray{N0f8}(0.2)]) --> [Gray{N0f8}(0.8)] "test Kle9oP"
         @fact imcomplement([RGB(0,0.3,1)]) --> [RGB(1,0.7,0)] "test jgxQxd"
         @fact imcomplement([RGBA(0,0.3,1,0.7)]) --> [RGBA(1.0,0.7,0.0,0.7)] "test tEAo1x"
-        @fact imcomplement([RGBA{U8}(0,0.6,1,0.7)]) --> [RGBA{U8}(1.0,0.4,0.0,0.7)] "test MGiodE"
+        @fact imcomplement([RGBA{N0f8}(0,0.6,1,0.7)]) --> [RGBA{N0f8}(1.0,0.4,0.0,0.7)] "test MGiodE"
 
         img = rand(1:10,10,10)
         img2 = rand(1:2,10,10)
-        img3 = reinterpret(Gray{U8}, grayim(rand(UInt8,10,10)))
+        img3 = reinterpret(Gray{N0f8}, grayim(rand(UInt8,10,10)))
         @fact all([entropy(img, kind=kind) for kind in [:shannon,:nat,:hartley]] .≥ 0) --> true "test lwgD8l"
         @fact all([entropy(img2, kind=kind) for kind in [:shannon,:nat,:hartley]] .≥ 0) --> true "test L7wFfa"
         @fact all([entropy(img3, kind=kind) for kind in [:shannon,:nat,:hartley]] .≥ 0) --> true "test OHwUzO"
@@ -80,7 +80,7 @@ facts("Algorithms") do
         A = rand(10:20, 5, 5)
         @fact minfinite(A) --> minimum(A) "test k5GtIe"
         @fact maxfinite(A) --> maximum(A) "test 8qaTAa"
-        A = reinterpret(UFixed8, rand(0x00:0xff, 5, 5))
+        A = reinterpret(N0f8, rand(0x00:0xff, 5, 5))
         @fact minfinite(A) --> minimum(A) "test RCl2VS"
         @fact maxfinite(A) --> maximum(A) "test eKwX2u"
         A = rand(Float32,3,5,5)
@@ -96,16 +96,16 @@ facts("Algorithms") do
         b = convert(Array{UInt8}, [134, 252, 4])
         @fact Images.sad(a, b) --> 387 "test sx70B8"
         @fact Images.ssd(a, b) --> 80699 "test aFz7hO"
-        af = reinterpret(UFixed8, a)
-        bf = reinterpret(UFixed8, b)
+        af = reinterpret(N0f8, a)
+        bf = reinterpret(N0f8, b)
         @fact Images.sad(af, bf) --> roughly(387f0/255) "test R3U9a6"
         @fact Images.ssd(af, bf) --> roughly(80699f0/255^2) "test WtPNxa"
-        ac = reinterpret(RGB{UFixed8}, a)
-        bc = reinterpret(RGB{UFixed8}, b)
+        ac = reinterpret(RGB{N0f8}, a)
+        bc = reinterpret(RGB{N0f8}, b)
         @fact Images.sad(ac, bc) --> roughly(387f0/255) "test wtRHsd"
         @fact Images.ssd(ac, bc) --> roughly(80699f0/255^2) "test Ti1QN0"
-        ag = reinterpret(RGB{UFixed8}, a)
-        bg = reinterpret(RGB{UFixed8}, b)
+        ag = reinterpret(RGB{N0f8}, a)
+        bg = reinterpret(RGB{N0f8}, b)
         @fact Images.sad(ag, bg) --> roughly(387f0/255) "test jaMtWn"
         @fact Images.ssd(ag, bg) --> roughly(80699f0/255^2) "test Gc9gbr"
 
@@ -227,13 +227,13 @@ facts("Algorithms") do
                        32.875    50.5   42.875;
                        16.90625  25.875 21.90625])
         @fact B --> roughly(Btarget) "test g0lXjp"
-        Argb = reinterpret(RGB, reinterpret(UFixed16, permutedims(A, (3,1,2))))
+        Argb = reinterpret(RGB, reinterpret(N0f16, permutedims(A, (3,1,2))))
         B = Images.restrict(Argb)
         Bf = permutedims(reinterpret(eltype(eltype(B)), B), (2,3,1))
-        @fact Bf --> roughly(Btarget/reinterpret(one(UFixed16)), 1e-12) "test IVByaq"
-        Argba = reinterpret(RGBA{UFixed16}, reinterpret(UFixed16, A))
+        @fact Bf --> roughly(Btarget/reinterpret(one(N0f16)), 1e-12) "test IVByaq"
+        Argba = reinterpret(RGBA{N0f16}, reinterpret(N0f16, A))
         B = Images.restrict(Argba)
-        @fact reinterpret(eltype(eltype(B)), B) --> roughly(Images.restrict(A, (2,3))/reinterpret(one(UFixed16)), 1e-12) "test z8K24e"
+        @fact reinterpret(eltype(eltype(B)), B) --> roughly(Images.restrict(A, (2,3))/reinterpret(one(N0f16)), 1e-12) "test z8K24e"
         A = reshape(1:60, 5, 4, 3)
         B = Images.restrict(A, (1,2,3))
         @fact cat(3, [ 2.6015625  8.71875 6.1171875;
@@ -250,7 +250,7 @@ facts("Algorithms") do
         @inferred(restrict(imgcolax, Axis{:x}))
         # Issue #395
         img1 = colorim(fill(0.9, 3, 5, 5))
-        img2 = colorim(fill(U8(0.9), 3, 5, 5))
+        img2 = colorim(fill(N0f8(0.9), 3, 5, 5))
         @fact separate(restrict(img1)) --> roughly(separate(restrict(img2)), 0.01) "test TH8OoL"
     end
 

@@ -16,7 +16,7 @@ facts("Core") do
     B = rand(UInt16(1):UInt16(20), 3, 5)
     # img, imgd, and imgds will be used in many more tests
     # Thus, these must be defined as local if reassigned in any context() blocks
-    cmap = reinterpret(RGB, repmat(reinterpret(UFixed8, round(UInt8, linspace(12, 255, 20)))', 3, 1))
+    cmap = reinterpret(RGB, repmat(reinterpret(N0f8, round(UInt8, linspace(12, 255, 20)))', 3, 1))
     imgi = IndirectArray(copy(B), cmap)
     img = AxisArray(imgi, Axis{:y}(2*(1:size(imgi,1))), Axis{:x}(3*(1:size(imgi,2))))
     imgd0 = convert(Array, imgi)
@@ -40,19 +40,19 @@ facts("Core") do
             @fact colordim(B) --> 0 "test HAdcG0"
             @fact grayim(img) --> img "test mJppbD"
             Bf = grayim(round(UInt8, B))
-            @fact eltype(Bf) --> Gray{UFixed8} "test luvkCN"
+            @fact eltype(Bf) --> Gray{N0f8} "test luvkCN"
             @fact colorspace(Bf) --> "Gray" "test JwE99B"
             @fact colordim(Bf) --> 0 "test DNzikz"
             Bf = grayim(B)
-            @fact eltype(Bf) --> Gray{UFixed16} "test CPd4Fa"
+            @fact eltype(Bf) --> Gray{N0f16} "test CPd4Fa"
             # colorspace encoded as a Color (enables multiple dispatch)
-            BfCV = reinterpret(Gray{UFixed8}, round(UInt8, B))
+            BfCV = reinterpret(Gray{N0f8}, round(UInt8, B))
             @fact colorspace(BfCV) --> "Gray" "test Tp3xdg"
             @fact colordim(BfCV) --> 0 "test aALUCW"
             Bf3 = grayim(reshape(collect(convert(UInt8,1):convert(UInt8,36)), 3,4,3))
-            @fact eltype(Bf3) --> Gray{UFixed8} "test k8hBgR"
+            @fact eltype(Bf3) --> Gray{N0f8} "test k8hBgR"
             Bf3 = grayim(reshape(collect(convert(UInt16,1):convert(UInt16,36)), 3,4,3))
-            @fact eltype(Bf3) --> Gray{UFixed16} "test KASRod"
+            @fact eltype(Bf3) --> Gray{N0f16} "test KASRod"
             Bf3 = grayim(reshape(collect(1.0f0:36.0f0), 3,4,3))
             @fact eltype(Bf3) --> Gray{Float32} "test Vr9iDW"
         end
@@ -60,22 +60,22 @@ facts("Core") do
 
     context("Colorim") do
         C = colorim(rand(UInt8, 3, 5, 5))
-        @fact eltype(C) --> RGB{UFixed8} "test N0iGXo"
+        @fact eltype(C) --> RGB{N0f8} "test N0iGXo"
         @fact colordim(C) --> 0 "test 6COaeI"
         @fact colorim(C) --> C "test hPgSHp"
         C = colorim(rand(UInt16, 4, 5, 5), "ARGB")
-        @fact eltype(C) --> ARGB{UFixed16} "test PZ5Ld5"
+        @fact eltype(C) --> ARGB{N0f16} "test PZ5Ld5"
         C = colorim(rand(UInt8(1):UInt8(20), 3, 5, 5))
-        @fact eltype(C) --> RGB{U8} "test MyDpnz"
+        @fact eltype(C) --> RGB{N0f8} "test MyDpnz"
         @fact colordim(C) --> 0 "test vu1pXs"
         @fact colorspace(C) --> "RGB" "test moBy0x"
-        @fact eltype(colorim(rand(UInt16, 3, 5, 5))) --> RGB{UFixed16} "test pzSy1a"
+        @fact eltype(colorim(rand(UInt16, 3, 5, 5))) --> RGB{N0f16} "test pzSy1a"
         @fact eltype(colorim(rand(3, 5, 5))) --> RGB{Float64} "test F3ex39"
         @fact colordim(colorim(rand(UInt8, 5, 5, 3))) --> 0 "test kElkKH"
         @fact spatialorder(colorim(rand(UInt8, 3, 5, 5))) --> (:y, :x) "test auwSni"
         @fact spatialorder(colorim(rand(UInt8, 5, 5, 3))) --> (:y, :x) "test g307S1"
-        @fact eltype(colorim(rand(UInt8, 4, 5, 5), "RGBA")) --> RGBA{UFixed8} "test RcSRnh"
-        @fact eltype(colorim(rand(UInt8, 4, 5, 5), "ARGB")) --> ARGB{UFixed8} "test 9hscsz"
+        @fact eltype(colorim(rand(UInt8, 4, 5, 5), "RGBA")) --> RGBA{N0f8} "test RcSRnh"
+        @fact eltype(colorim(rand(UInt8, 4, 5, 5), "ARGB")) --> ARGB{N0f8} "test 9hscsz"
         @fact colordim(colorim(rand(UInt8, 5, 5, 4), "RGBA")) --> 0 "test SJTuxu"
         @fact colordim(colorim(rand(UInt8, 5, 5, 4), "ARGB")) --> 0 "test lIpIVN"
         @fact spatialorder(colorim(rand(UInt8, 5, 5, 4), "ARGB")) --> (:y, :x) "test y0Vpv4"
@@ -95,8 +95,8 @@ facts("Core") do
             @fact colorspace(img_) --> "RGB" "test F3LOhS"
             # Note: img from opening of facts() block
             # TODO: refactor whole block
-            @fact eltype(img) --> RGB{UFixed8} "test 8aSK8W"
-            @fact eltype(imgd) --> RGB{UFixed8} "test IhyuSH"
+            @fact eltype(img) --> RGB{N0f8} "test 8aSK8W"
+            @fact eltype(imgd) --> RGB{N0f8} "test IhyuSH"
         end
     end
 
@@ -240,7 +240,7 @@ facts("Core") do
         @fact ndims(s) --> 3 "test Kxj25e"
         @fact sdims(s) --> 2 "test L1qDs3"
         @fact colordim(s) --> 3 "test BGZevb"
-        @fact colorspace(s) --> "Gray" "test U8NVOG"
+        @fact colorspace(s) --> "Gray" "test N0f8NVOG"
         s = getindexim(imgds, 2:2, 1:4, 2)
         @fact ndims(s) --> 2 "test nKN91R"
         @fact sdims(s) --> 2 "test SFKKhD"
@@ -328,48 +328,48 @@ facts("Core") do
         @fact anew --> a "test VU6f3n"
         @fact_throws DimensionMismatch reinterpret(RGB{Float32}, af) "test 86GKXq"
         Au8 = rand(0x00:0xff, 3, 5, 4)
-        A8 = reinterpret(UFixed8, Au8)
+        A8 = reinterpret(N0f8, Au8)
         rawrgb8 = reinterpret(RGB, A8)
-        @fact eltype(rawrgb8) --> RGB{UFixed8} "test U5YnpG"
-        @fact reinterpret(UFixed8, rawrgb8) --> A8 "test VIsSBT"
+        @fact eltype(rawrgb8) --> RGB{N0f8} "test U5YnpG"
+        @fact reinterpret(N0f8, rawrgb8) --> A8 "test VIsSBT"
         @fact reinterpret(UInt8, rawrgb8) --> Au8 "test cWVSZ5"
         rawrgb32 = convert(Array{RGB{Float32}}, rawrgb8)
         @fact eltype(rawrgb32) --> RGB{Float32} "test BPX0oN"
         @fact ufixed8(rawrgb32) --> rawrgb8 "test 10hrUB"
-        @fact reinterpret(UFixed8, rawrgb8) --> A8 "test xz6V7Y"
+        @fact reinterpret(N0f8, rawrgb8) --> A8 "test xz6V7Y"
         imrgb8 = convert(Image, rawrgb8)
         @fact spatialorder(imrgb8) --> (Symbol.(Images.yx)...,) "test up03c2"
         @fact convert(Image, imrgb8) --> exactly(imrgb8) "test CaRwd8"
-        @fact convert(Image{RGB{UFixed8}}, imrgb8) --> exactly(imrgb8) "test 39AZU3"
-        im8 = reinterpret(UFixed8, imrgb8)
+        @fact convert(Image{RGB{N0f8}}, imrgb8) --> exactly(imrgb8) "test 39AZU3"
+        im8 = reinterpret(N0f8, imrgb8)
         @fact data(im8) --> A8 "test lZSAH9"
-        @fact permutedims(ufixedview(U8, separate(imrgb8)), (3, 1, 2)) --> im8 "test zDOWZM"
+        @fact permutedims(ufixedview(N0f8, separate(imrgb8)), (3, 1, 2)) --> im8 "test zDOWZM"
         @fact reinterpret(UInt8, imrgb8) --> Au8 "test HeezpR"
         @fact reinterpret(RGB, im8) --> imrgb8 "test VJUpj3"
         ims8 = separate(imrgb8)
         @fact colordim(ims8) --> 0 "test nGifan"
         @fact colorspace(ims8) --> "Gray" "test R0VFeL"
         @fact convert(Image, ims8) --> exactly(ims8) "test EGoCYN"
-        @fact convert(Image{UFixed8}, ims8) --> exactly(ims8) "test Qly190"
+        @fact convert(Image{N0f8}, ims8) --> exactly(ims8) "test Qly190"
         @fact separate(ims8) --> exactly(ims8) "test hAxqus"
-        A = reinterpret(UFixed8, UInt8[1 2; 3 4])
-        imgray = convert(Image{Gray{UFixed8}}, A)
+        A = reinterpret(N0f8, UInt8[1 2; 3 4])
+        imgray = convert(Image{Gray{N0f8}}, A)
         @fact spatialorder(imgray) --> (Symbol.(Images.yx)...,) "test gLMUOh"
-        @fact data(imgray) --> reinterpret(Gray{UFixed8}, [0x01 0x02; 0x03 0x04]) "test UC9NtZ"
+        @fact data(imgray) --> reinterpret(Gray{N0f8}, [0x01 0x02; 0x03 0x04]) "test UC9NtZ"
         @fact eltype(convert(Image{HSV{Float32}}, imrgb8)) --> HSV{Float32} "test cwCaVn"
         @fact eltype(convert(Image{HSV}, float32(imrgb8))) --> HSV{Float32} "test VB4EU3"
 
-        @fact eltype(convert(Array{Gray}, imrgb8)) --> Gray{U8} "test 4UOxZh"
-        @fact eltype(convert(Image{Gray}, imrgb8)) --> Gray{U8} "test 2hhcQd"
-        @fact eltype(convert(Array{Gray}, data(imrgb8))) --> Gray{U8} "test SdEY95"
-        @fact eltype(convert(Image{Gray}, data(imrgb8))) --> Gray{U8} "test lzipLL"
+        @fact eltype(convert(Array{Gray}, imrgb8)) --> Gray{N0f8} "test 4UOxZh"
+        @fact eltype(convert(Image{Gray}, imrgb8)) --> Gray{N0f8} "test 2hhcQd"
+        @fact eltype(convert(Array{Gray}, data(imrgb8))) --> Gray{N0f8} "test SdEY95"
+        @fact eltype(convert(Image{Gray}, data(imrgb8))) --> Gray{N0f8} "test lzipLL"
         # Issue 232
-        let img = Image(reinterpret(Gray{UFixed16}, rand(UInt16, 5, 5)))
+        let img = Image(reinterpret(Gray{N0f16}, rand(UInt16, 5, 5)))
             imgs = subim(img, :, :)
-            @fact isa(minfinite(imgs), Gray{UFixed16}) --> true "test PlxHep"
+            @fact isa(minfinite(imgs), Gray{N0f16}) --> true "test PlxHep"
             # Raw
             imgdata = rand(UInt16, 5, 5)
-            img = Image(reinterpret(Gray{UFixed16}, imgdata))
+            img = Image(reinterpret(Gray{N0f16}, imgdata))
             @fact all(raw(img) .== imgdata) --> true "test EvOATF"
             @fact typeof(raw(img).data) --> Array{UInt16,2} "test YlySCh"
             @fact typeof(raw(Image(rawrgb8)).data) --> Array{UInt8,3}  "test uOxsmv" # check color images
