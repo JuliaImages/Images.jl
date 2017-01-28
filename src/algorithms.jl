@@ -1371,28 +1371,55 @@ restrict_size(len::Integer) = isodd(len) ? (len+1)>>1 : (len>>1)+1
 
 ## imresize
 function imresize!(resized, original)
-    assert2d(original)
-    scale1 = (size(original,1)-1)/(size(resized,1)-0.999f0)
-    scale2 = (size(original,2)-1)/(size(resized,2)-0.999f0)
-    for jr = 0:size(resized,2)-1
-        jo = scale2*jr
-        ijo = trunc(Int, jo)
-        fjo = jo - oftype(jo, ijo)
-        @inbounds for ir = 0:size(resized,1)-1
-            io = scale1*ir
-            iio = trunc(Int, io)
-            fio = io - oftype(io, iio)
-            tmp = (1-fio)*((1-fjo)*original[iio+1,ijo+1] +
-                           fjo*original[iio+1,ijo+2]) +
-                  + fio*((1-fjo)*original[iio+2,ijo+1] +
-                         fjo*original[iio+2,ijo+2])
-            resized[ir+1,jr+1] = convertsafely(eltype(resized), tmp)
-        end
+  assert2d(original)
+  if length(size(resized)) < length(size(original))
+    error("Number of output dimensions must not be smaller than number of
+    dimensions of original image.")
+  end
+  if colordim(original) > 0
+    assert_colordim_third(original)
+    csize = size(original,colordim(original))
+  else
+    csize = 1
+  end
+
+  scale1 = (size(original,1)-1)/(size(resized,1)-0.999f0)
+  scale2 = (size(original,2)-1)/(size(resized,2)-0.999f0)
+  for jr = 0:size(resized,2)-1
+    jo = scale2*jr
+    ijo = trunc(Int, jo)
+    fjo = jo - oftype(jo, ijo)
+    @inbounds for ir = 0:size(resized,1)-1
+      io = scale1*ir
+      iio = trunc(Int, io)
+      fio = io - oftype(io, iio)
+      for cr = 1:csize
+        tmp = (1-fio)*((1-fjo)*original[iio+1,ijo+1,cr] +
+        fjo*original[iio+1,ijo+2,cr]) +
+        + fio*((1-fjo)*original[iio+2,ijo+1,cr] +
+        fjo*original[iio+2,ijo+2,cr])
+        resized[ir+1,jr+1,cr] = convertsafely(eltype(resized), tmp)
+      end
     end
-    resized
+  end
+  resized
 end
 
-imresize(original, new_size) = size(original) == new_size ? copy!(similar(original), original) : imresize!(similar(original, new_size), original)
+function imresize(original, new_size)
+  if new_size == size(original) ||
+     new_size == size_spatial(original) && colordim(original) != 0
+     return copy!(similar(original), original)
+  elseif colordim(original) != 0 &&
+    length(new_size) >= length(size(original)) &&
+    new_size[colordim(original)] != size(original)[colordim(original)]
+    error("Resizing along color dimension not supported")
+  elseif colordim(original) != 0
+      new_size_ = (new_size[1],new_size[2],size(original,3))
+      return imresize!(similar(original, new_size_), original)
+  else
+      return imresize!(similar(original, new_size), original)
+  end
+end
 
 convertsafely{T<:AbstractFloat}(::Type{T}, val) = convert(T, val)
 convertsafely{T<:Integer}(::Type{T}, val::Integer) = convert(T, val)
