@@ -213,7 +213,7 @@ _length(A) = length(A)
 Constructors, conversions, and traits:
 
     - Construction: use constructors of specialized packages, e.g., `AxisArray`, `ImageMeta`, etc.
-    - "Conversion": `colorview`, `channelview`, `rawview`, `ufixedview`, `permuteddimsview`
+    - "Conversion": `colorview`, `channelview`, `rawview`, `normedview`, `permuteddimsview`
     - Traits: `pixelspacing`, `sdims`, `timeaxis`, `timedim`, `spacedirections`
 
 Contrast/coloration:

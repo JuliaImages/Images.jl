@@ -173,7 +173,7 @@ This is the combined with the I and Q channels and the resulting image converted
 type as the input.
 
 """
-function adjust_gamma{T<:FixedPointNumbers.UFixed}(img::AbstractArray{Gray{T}}, gamma::Number)
+function adjust_gamma{T<:FixedPointNumbers.Normed}(img::AbstractArray{Gray{T}}, gamma::Number)
     raw_type = FixedPointNumbers.rawtype(T)
     gamma_inv = 1.0 / gamma
     table = zeros(T, typemax(raw_type) + 1)

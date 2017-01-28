@@ -1,7 +1,7 @@
 #### Elementwise manipulations (scaling/clamping/type conversion) ####
 
 # This file exists primarily to handle conversions for display and
-# saving to disk. Both of these operations require UFixed-valued
+# saving to disk. Both of these operations require Normed-valued
 # elements, but with display we always want to convert to 8-bit
 # whereas saving can handle 16-bit.
 # We also can't trust that user images are clamped properly.
@@ -122,13 +122,13 @@ similar{S,T,N}(mapi::BitShift{S,N}, ::Type{T}, ::Type) = BitShift{T,N}()
 # Implementation
 immutable BS{N} end
 _immap{T<:Unsigned,N}(::Type{T}, ::Type{BS{N}}, val::Unsigned) = (v = val>>>N; tm = oftype(val, typemax(T)); convert(T, ifelse(v > tm, tm, v)))
-_immap{T<:UFixed,N}(::Type{T}, ::Type{BS{N}}, val::UFixed) = reinterpret(T, _immap(FixedPointNumbers.rawtype(T), BS{N}, reinterpret(val)))
+_immap{T<:Normed,N}(::Type{T}, ::Type{BS{N}}, val::Normed) = reinterpret(T, _immap(FixedPointNumbers.rawtype(T), BS{N}, reinterpret(val)))
 immap{T<:Real,N}(mapi::BitShift{T,N}, val::Real) = _immap(T, BS{N}, val)
 immap{T<:Real,N}(mapi::BitShift{T,N}, val::Gray) = _immap(T, BS{N}, val.val)
 immap{T<:Real,N}(mapi::BitShift{Gray{T},N}, val::Gray) = Gray(_immap(T, BS{N}, val.val))
 map1{N}(mapi::Union{BitShift{RGB24,N},BitShift{ARGB32,N}}, val::Unsigned) = _immap(UInt8, BS{N}, val)
-map1{N}(mapi::Union{BitShift{RGB24,N},BitShift{ARGB32,N}}, val::UFixed) = _immap(N0f8, BS{N}, val)
-map1{CT<:Colorant,N}(mapi::BitShift{CT,N}, val::UFixed) = _immap(eltype(CT), BS{N}, val)
+map1{N}(mapi::Union{BitShift{RGB24,N},BitShift{ARGB32,N}}, val::Normed) = _immap(N0f8, BS{N}, val)
+map1{CT<:Colorant,N}(mapi::BitShift{CT,N}, val::Normed) = _immap(eltype(CT), BS{N}, val)
 
 
 ## Clamp types
@@ -572,7 +572,7 @@ end
 
 
 #### MapInfo defaults
-# Each "client" can define its own methods. "clients" include UFixed,
+# Each "client" can define its own methods. "clients" include Normed,
 # RGB24/ARGB32, and ImageMagick
 
 const bitshiftto8 = ((N6f10, 2), (N4f12, 4), (N2f14, 6), (N0f16, 8))
@@ -594,7 +594,7 @@ You can define your own rules for `mapinfo`.  For example, the
 `ImageMagick` package defines methods for how pixels values should be
 converted before saving images to disk.
 """
-mapinfo{T<:UFixed}(::Type{T}, img::AbstractArray{T}) = MapNone(img)
+mapinfo{T<:Normed}(::Type{T}, img::AbstractArray{T}) = MapNone(img)
 mapinfo{T<:AbstractFloat}(::Type{T}, img::AbstractArray{T}) = MapNone(img)
 
 # Grayscale methods
@@ -607,8 +607,8 @@ for (T,n) in bitshiftto8
     @eval mapinfo(::Type{Gray{N0f8}}, img::GrayArray{$T}) = BitShift{Gray{N0f8},$n}()
     @eval mapinfo(::Type{GrayA{N0f8}}, img::AbstractArray{GrayA{$T}}) = BitShift{GrayA{N0f8},$n}()
 end
-mapinfo{T<:UFixed,F<:AbstractFloat}(::Type{T}, img::GrayArray{F}) = ClampMinMax(T, zero(F), one(F))
-mapinfo{T<:UFixed,F<:AbstractFloat}(::Type{Gray{T}}, img::GrayArray{F}) = ClampMinMax(Gray{T}, zero(F), one(F))
+mapinfo{T<:Normed,F<:AbstractFloat}(::Type{T}, img::GrayArray{F}) = ClampMinMax(T, zero(F), one(F))
+mapinfo{T<:Normed,F<:AbstractFloat}(::Type{Gray{T}}, img::GrayArray{F}) = ClampMinMax(Gray{T}, zero(F), one(F))
 mapinfo{T<:AbstractFloat, R<:Real}(::Type{T}, img::AbstractArray{R}) = MapNone(T)
 
 mapinfo(::Type{RGB24}, img::Union{AbstractArray{Bool}, BitArray}) = MapNone{RGB24}()
@@ -666,16 +666,16 @@ mapinfo(::Type{UInt32}, img::Union{AbstractArray{Bool},BitArray}) = mapinfo(RGB2
 mapinfo(::Type{UInt32}, img::AbstractArray{UInt32}) = MapNone{UInt32}()
 
 
-# Clamping mapinfo client. Converts to RGB and uses UFixed, clamping
+# Clamping mapinfo client. Converts to RGB and uses Normed, clamping
 # floating-point values to [0,1].
-mapinfo{T<:UFixed}(::Type{Clamp}, img::AbstractArray{T}) = MapNone{T}()
+mapinfo{T<:Normed}(::Type{Clamp}, img::AbstractArray{T}) = MapNone{T}()
 mapinfo{T<:AbstractFloat}(::Type{Clamp}, img::AbstractArray{T}) = ClampMinMax(N0f8, zero(T), one(T))
 let handled = Set()
 for ACV in (Color, AbstractRGB)
     for CV in subtypes(ACV)
         (length(CV.parameters) == 1 && !(CV.abstract)) || continue
         CVnew = CV<:AbstractGray ? Gray : RGB
-        @eval mapinfo{T<:UFixed}(::Type{Clamp}, img::AbstractArray{$CV{T}}) = MapNone{$CVnew{T}}()
+        @eval mapinfo{T<:Normed}(::Type{Clamp}, img::AbstractArray{$CV{T}}) = MapNone{$CVnew{T}}()
         @eval mapinfo{CV<:$CV}(::Type{Clamp}, img::AbstractArray{CV}) = Clamp{$CVnew{N0f8}}()
         CVnew = CV<:AbstractGray ? Gray : BGR
         AC, CA       = alphacolor(CV), coloralpha(CV)
@@ -685,9 +685,9 @@ for ACV in (Color, AbstractRGB)
         push!(handled, AC)
         ACnew, CAnew = alphacolor(CVnew), coloralpha(CVnew)
         @eval begin
-            mapinfo{T<:UFixed}(::Type{Clamp}, img::AbstractArray{$AC{T}}) = MapNone{$ACnew{T}}()
+            mapinfo{T<:Normed}(::Type{Clamp}, img::AbstractArray{$AC{T}}) = MapNone{$ACnew{T}}()
             mapinfo{P<:$AC}(::Type{Clamp}, img::AbstractArray{P}) = Clamp{$ACnew{N0f8}}()
-            mapinfo{T<:UFixed}(::Type{Clamp}, img::AbstractArray{$CA{T}}) = MapNone{$CAnew{T}}()
+            mapinfo{T<:Normed}(::Type{Clamp}, img::AbstractArray{$CA{T}}) = MapNone{$CAnew{T}}()
             mapinfo{P<:$CA}(::Type{Clamp}, img::AbstractArray{P}) = Clamp{$CAnew{N0f8}}()
         end
     end
@@ -708,5 +708,5 @@ Applies default or specified `ScaleMinMax` mapping to the image.
 sc(img::AbstractArray) = immap(ScaleMinMax(N0f8, img), img)
 sc(img::AbstractArray, mn::Real, mx::Real) = immap(ScaleMinMax(N0f8, img, mn, mx), img)
 
-ufixedsc{T<:UFixed}(::Type{T}, img::AbstractArray) = immap(mapinfo(T, img), img)
+ufixedsc{T<:Normed}(::Type{T}, img::AbstractArray) = immap(mapinfo(T, img), img)
 ufixed8sc(img::AbstractArray) = ufixedsc(N0f8, img)

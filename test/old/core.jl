@@ -12,7 +12,7 @@ const scalar_getindex_new = VERSION >= v"0.5.0-dev+1195"
 facts("Core") do
     a = rand(3,3)
     @inferred(Image(a))
-    # support integer-valued types, but these are NOT recommended (use UFixed)
+    # support integer-valued types, but these are NOT recommended (use Normed)
     B = rand(UInt16(1):UInt16(20), 3, 5)
     # img, imgd, and imgds will be used in many more tests
     # Thus, these must be defined as local if reassigned in any context() blocks
@@ -32,7 +32,7 @@ facts("Core") do
     context("Constructors of Image types") do
         @fact colorspace(B) --> "Gray" "test h42DSP"
         @fact colordim(B) --> 0 "test 4ZQwBT"
-        let img = colorview(RGB, ufixedview(UFixed{UInt16,8}, B))
+        let img = colorview(RGB, normedview(Normed{UInt16,8}, B))
             @fact colorspace(img) --> "RGB" "test THoeTd"
             @fact colordim(img) --> 0 "test Zm2gDZ"
             img = grayim(B)
@@ -343,7 +343,7 @@ facts("Core") do
         @fact convert(Image{RGB{N0f8}}, imrgb8) --> exactly(imrgb8) "test 39AZU3"
         im8 = reinterpret(N0f8, imrgb8)
         @fact data(im8) --> A8 "test lZSAH9"
-        @fact permutedims(ufixedview(N0f8, separate(imrgb8)), (3, 1, 2)) --> im8 "test zDOWZM"
+        @fact permutedims(normedview(N0f8, separate(imrgb8)), (3, 1, 2)) --> im8 "test zDOWZM"
         @fact reinterpret(UInt8, imrgb8) --> Au8 "test HeezpR"
         @fact reinterpret(RGB, im8) --> imrgb8 "test VJUpj3"
         ims8 = separate(imrgb8)
