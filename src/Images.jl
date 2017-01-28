@@ -58,6 +58,7 @@ include("edge.jl")
 include("writemime.jl")
 include("corner.jl")
 include("distances.jl")
+include("bwdist.jl")
 
 
 function precompile()
@@ -237,6 +238,7 @@ export # types
     imlineardiffusion,
     imlog,
     imROF,
+    bwdist,
 
     #Exposure
     imhist,
@@ -281,7 +283,7 @@ export # types
     boxdiff,
     bilinear_interpolation,
     gaussian_pyramid,
-    
+
     # distances
     hausdorff_distance,
 
