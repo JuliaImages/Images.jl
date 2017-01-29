@@ -229,6 +229,7 @@ facts("Algorithms") do
         img2 = ifft(imgfft)
         @fact img2 --> roughly(reinterpret(Float32, img))
     end
+    
 
     context("Array padding") do
         A = [1 2; 3 4]
