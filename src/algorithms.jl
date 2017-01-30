@@ -388,6 +388,8 @@ It has fields:
 - amplitude: the value of the `-LoG(σ)`-filtered image at the peak
 
 Note that the radius is equal to σ√2.
+
+See also: [`blob_LoG`](@ref).
 """
 immutable BlobLoG{T,S,N}
     location::CartesianIndex{N}
@@ -414,7 +416,7 @@ of `img`.
 Lindeberg T (1998), "Feature Detection with Automatic Scale Selection",
 International Journal of Computer Vision, 30(2), 79–116.
 
-See also: BlobLoG.
+See also: [`BlobLoG`](@ref).
 """
 function blob_LoG{T,N}(img::AbstractArray{T,N}, σs, edges::Tuple{Vararg{Bool}}=(true, ntuple(d->false, Val{N})...))
     sigmas = sort(σs)
@@ -483,87 +485,6 @@ Like `findlocalmaxima`, but returns the coordinates of the smallest elements.
 """
 findlocalminima(img::AbstractArray, region=coords_spatial(img), edges=true) =
         findlocalextrema(img, region, edges, Base.Order.Reverse)
-
-# FIXME
-# Laplacian of Gaussian filter
-# Separable implementation from Huertas and Medioni,
-# IEEE Trans. Pat. Anal. Mach. Int., PAMI-8, 651, (1986)
-# """
-# ```
-# imgf = imfilter_LoG(img, sigma, [border])
-# ```
-
-# filters a 2D image with a Laplacian of Gaussian of the specified width. `sigma`
-# may be a vector with one value per array dimension, or may be a single scalar
-# value for uniform filtering in both dimensions.  Uses the Huertas and Medioni
-# separable algorithm.
-# """
-# function imfilter_LoG{T}(img::AbstractArray{T,2}, σ::Vector, border="replicate")
-#     # Limited to 2D for now.
-#     # See Sage D, Neumann F, Hediger F, Gasser S, Unser M.
-#     # Image Processing, IEEE Transactions on. (2005) 14(9):1372-1383.
-#     # for 3D.
-
-#     # Set up 1D kernels
-#     @assert length(σ) == 2
-#     σx, σy = σ[1], σ[2]
-#     h1(ξ, σ) = sqrt(1/(2π*σ^4))*(1 - ξ^2/σ^2)exp(-ξ^2/(2σ^2))
-#     h2(ξ, σ) = sqrt(1/(2π*σ^4))*exp(-ξ^2/(2σ^2))
-
-#     w = 8.5σx
-#     kh1x = Float64[h1(i, σx) for i = -floor(w/2):floor(w/2)]
-#     kh2x = Float64[h2(i, σx) for i = -floor(w/2):floor(w/2)]
-
-#     w = 8.5σy
-#     kh1y = Float64[h1(i, σy) for i = -floor(w/2):floor(w/2)]
-#     kh2y = Float64[h2(i, σy) for i = -floor(w/2):floor(w/2)]
-
-#     # Set up padding index lists
-#     kernlenx = length(kh1x)
-#     prepad  = div(kernlenx - 1, 2)
-#     postpad = div(kernlenx, 2)
-#     Ix = padindexes(img, 1, prepad, postpad, border)
-
-#     kernleny = length(kh1y)
-#     prepad  = div(kernleny - 1, 2)
-#     postpad = div(kernleny, 2)
-#     Iy = padindexes(img, 2, prepad, postpad, border)
-
-#     sz = size(img)
-#     # Store intermediate result in a transposed array
-#     # Allows column-major second stage filtering
-#     img1 = Array(Float64, (sz[2], sz[1]))
-#     img2 = Array(Float64, (sz[2], sz[1]))
-#     for j in 1:sz[2]
-#         for i in 1:sz[1]
-#             tmp1, tmp2 = 0.0, 0.0
-#             for k in 1:kernlenx
-#                 @inbounds tmp1 += kh1x[k] * img[Ix[i + k - 1], j]
-#                 @inbounds tmp2 += kh2x[k] * img[Ix[i + k - 1], j]
-#             end
-#             @inbounds img1[j, i] = tmp1 # Note the transpose
-#             @inbounds img2[j, i] = tmp2
-#         end
-#     end
-
-#     img12 = Array(Float64, sz) # Original image dims here
-#     img21 = Array(Float64, sz)
-#     for j in 1:sz[1]
-#         for i in 1:sz[2]
-#             tmp12, tmp21 = 0.0, 0.0
-#             for k in 1:kernleny
-#                 @inbounds tmp12 += kh2y[k] * img1[Iy[i + k - 1], j]
-#                 @inbounds tmp21 += kh1y[k] * img2[Iy[i + k - 1], j]
-#             end
-#             @inbounds img12[j, i] = tmp12 # Transpose back to original dims
-#             @inbounds img21[j, i] = tmp21
-#         end
-#     end
-#     copyproperties(img, img12 + img21)
-# end
-
-# imfilter_LoG{T}(img::AbstractArray{T,2}, σ::Real, border="replicate") =
-#     imfilter_LoG(img::AbstractArray{T,2}, [σ, σ], border)
 
 ### restrict, for reducing the image size by 2-fold
 # This properly anti-aliases. The only "oddity" is that edges tend towards zero under
