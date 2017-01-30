@@ -96,33 +96,33 @@ Base.std{C<:Colorant}(A::AbstractArray{C}; kwargs...) = mapc(sqrt, var(A; kwargs
 # Entropy for grayscale (intensity) images
 function _log(kind::Symbol)
     if kind == :shannon
-        x -> log2.(x)
+        return log2
     elseif kind == :nat
-        x -> log.(x)
+        return log
     elseif kind == :hartley
-        x -> log10.(x)
+        return log10
     else
         throw(ArgumentError("Invalid entropy unit. (:shannon, :nat or :hartley)"))
     end
 end
 
 """
-    entropy(img, kind)
+    entropy(logᵦ, img)
+    entropy(img; [kind=:shannon])
 
-Compute the entropy of a grayscale image defined as `-sum(p.*logb(p))`.
-The base b of the logarithm (a.k.a. entropy unit) is one of the following:
+Compute the entropy of a grayscale image defined as `-sum(p.*logᵦ(p))`.
+The base β of the logarithm (a.k.a. entropy unit) is one of the following:
 
-- `:shannon ` (log base 2, default)
-- `:nat` (log base e)
-- `:hartley` (log base 10)
+- `:shannon ` (log base 2, default), or use logᵦ = log2
+- `:nat` (log base e), or use logᵦ = log
+- `:hartley` (log base 10), or use logᵦ = log10
 """
-function entropy(img::AbstractArray; kind=:shannon)
-    logᵦ = _log(kind)
-
+entropy(img::AbstractArray; kind=:shannon) = entropy(_log(kind), img)
+function entropy{Log<:Function}(logᵦ::Log, img)
     hist = StatsBase.fit(Histogram, vec(img), nbins=256)
     counts = hist.weights
     p = counts / length(img)
-    logp = logᵦ(p)
+    logp = logᵦ.(p)
 
     # take care of empty bins
     logp[Bool[isinf(v) for v in logp]] = 0
