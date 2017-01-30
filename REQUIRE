@@ -3,7 +3,6 @@ Colors 0.6
 ColorVectorSpace 0.1
 FixedPointNumbers 0.1.0 0.3.0
 SIUnits
-Zlib
 Graphics 0.1
 FileIO
 Compat 0.9.1
