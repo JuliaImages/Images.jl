@@ -19,7 +19,7 @@ facts("bwdist") do
     A = [false false; false true]
     (F, D) = bwdist(A)
     @fact F --> [4 4; 4 4]
-    @fact D --> [2 1; 1 0]
+    @fact D --> roughly([1.41421 1.0; 1.0 0.0], 0.01)
 
     # (4)
     A = [true false true; false true false; true true false]
@@ -37,7 +37,7 @@ facts("bwdist") do
     A = [true false true true; false true false false; false true true false; true false false false]
     (F, D) = bwdist(A)
     @fact F --> [1 1 9 13; 1 6 6 13; 4 7 11 11; 4 4 11 11]
-    @fact D --> [0 1 0 0; 1 0 1 1; 1 0 0 1; 0 1 1 2]
+    @fact D --> roughly([0.0 1.0 0.0 0.0; 1.0 0.0 1.0 1.0; 1.0 0.0 0.0 1.0; 0.0 1.0 1.0 1.41421], 0.01)
   end
 
   context("Rectangular Images") do
@@ -57,7 +57,7 @@ facts("bwdist") do
     A = [true false false; true false false; false true true; true true true; false true false]
     (F, D) = bwdist(A)
     @fact F --> [1 1 1; 2 2 13; 2 8 13; 4 9 14; 4 10 10]
-    @fact D --> [0 1 4; 0 1 1; 1 0 0; 0 0 0; 1 0 1]
+    @fact D --> [0.0 1.0 2.0; 0.0 1.0 1.0; 1.0 0.0 0.0; 0.0 0.0 0.0; 1.0 0.0 1.0]
   end
 
   context("Corner Case Images") do
@@ -83,7 +83,7 @@ facts("bwdist") do
     A = [false; false]
     (F, D) = bwdist(A)
     @fact F --> [0; 0]
-    @fact D --> [1; 4]
+    @fact D --> [1.0; 2.0]
 
     # (5)
     A = [true; true]

@@ -23,7 +23,7 @@ Binary Images in Arbitrary Dimensions' [Maurer et al., 2003]
 
     # F and D
     F = zeros(Int, sizeI)
-    D = zeros(Int, sizeI)
+    D = zeros(Float64, sizeI)
     stride = collect(strides(F))
 
     _computeft!(F, I, stride)
@@ -39,16 +39,16 @@ Binary Images in Arbitrary Dimensions' [Maurer et al., 2003]
       _voronoift!(F, I, sizeF, stride, tempArray)
     end
 
-    @inbounds @nloops $N i F begin
-      x = 1
-      (@nexprs $N j -> (x += (i_j - 1)*stride[j]))
-      (@nref $N D i) = sqeuclidean((@nref $N F i), x, sizeI)
+    @inbounds for i in eachindex(F)
+      D[i] = euclidean(ind2sub(sizeI, F[i]), subindex(sizeI, i))
     end
 
     return (F, D)
   end
 end
 
+@inline subindex(dims::Tuple, i::Int) = ind2sub(dims, i)
+@inline subindex(dims::Tuple, i::CartesianIndex) = i.I
 
 """
     \_computeft!(F::AbstractArray{Int, N}, I::AbstractArray{Bool, N}, stride::AbstractArray{Int})
@@ -57,14 +57,14 @@ Compute F_0, indicating the closest feature voxel in the 0th dimension where
 for each voxel x in I `F_0(x) = x if x = 1 and 0 otherwise`,
 in the parlance of Maurer et al. 2003.
 """
-@generated function _computeft!{N}(F::AbstractArray{Int, N}, I::AbstractArray{Bool, N}, stride::AbstractArray{Int})
-  quote
-    @inbounds @nloops $N i I begin
-      ind = 1
-      (@nref $N F i) = (@nref $N I i) ? (@nexprs $N d -> (ind += (i_d - 1)*stride[d])) : 0
-    end
+function _computeft!(F::AbstractArray{Int}, I::AbstractArray{Bool}, stride::AbstractArray{Int})
+  @inbounds @simd for i in eachindex(F)
+    F[i] = ifelse(I[i], stridedGetindex(i, stride), 0)
   end
 end
+
+@inline stridedGetindex(i::Int, stride::AbstractArray{Int}) = i
+@inline stridedGetindex(i::CartesianIndex, stride::AbstractArray{Int}) = stridedSub2Ind(stride, i.I)
 
 """
     \_voronoift!(F::AbstractArray{Int, N}, I::AbstractArray{Bool, N}, sizeF::Tuple, stride::AbstractArray{Int}, g::AbstractArray{Int})
@@ -76,7 +76,6 @@ using `g` as a temporary array, following Maurer et al. 2003.
   quote
     @inbounds @nloops $N d j -> (j == 1 ? 0 : 1:sizeF[j]) begin
       l = 0
-      setindex!(g, 0)
 
       @inbounds for i = 1:sizeF[1]
         f = (@nref $N F j -> (j == 1 ? i : d_j))
@@ -91,17 +90,18 @@ using `g` as a temporary array, following Maurer et al. 2003.
             l += 1
             g[l] = f
           end
+          g[l] = f
         end
       end
 
       n_s = l
       if n_s != 0
         l = 1
-        @inbounds for d_1 = 1:sizeF[1]
+        @inbounds @fastmath for d_1 = 1:sizeF[1]
           # This makes the index x from subscripts d_{1, ...}
           x = 1
-          (@nexprs $N j -> (x += (d_j - 1)*stride[j]))
-          while l < n_s && (euclidean(x, g[l], sizeF) > euclidean(x, g[l+1], sizeF))
+          (@nexprs $N j -> x = (add_inline(x, mul_inline(d_j - 1, stride[j]))))
+          while l < n_s && (sqeuclidean(x, g[l], sizeF) > sqeuclidean(x, g[l+1], sizeF))
             l += 1
           end
           (@nref $N F d) = g[l]
@@ -117,14 +117,17 @@ end
 Calculate whether we should remove a feature pixel from the Voronoi diagram.
 """
 function removeft(u::Int, v::Int, w::Int, r::Int, dims::Tuple)
-  u1 = ind2sub(dims, u)[1]
-  v1 = ind2sub(dims, v)[1]
-  w1 = ind2sub(dims, w)[1]
-  a = v1 - u1
-  b = w1 - v1
-  c = a + b
+  @inbounds begin
+    uIdx = ind2sub(dims, u)
+    vIdx = ind2sub(dims, v)
+    wIdx = ind2sub(dims, w)
 
-  return c*distance2(v, r, dims) - b*distance2(u, r, dims) - a*distance2(w, r, dims) - a*b*c > 0
+    a = vIdx[1] - uIdx[1]
+    b = wIdx[1] - vIdx[1]
+    c = a + b
+
+    return c*distance2(vIdx[2], r) - b*distance2(uIdx[2], r) - a*distance2(wIdx[2], r) - a*b*c > 0
+  end
 end
 
 """
@@ -146,7 +149,7 @@ function permutedimsubs(F::AbstractArray{Int}, sizeF::Tuple)
   B = transpose(F)
 
   stride = collect(strides(B))
-  @inbounds for i = 1:length(B)
+  @inbounds for i in eachindex(B)
     B[i] = B[i] == 0 ? 0 : stridedSub2Ind(stride, circperm(ind2sub(sizeF, B[i])))
   end
 
@@ -162,21 +165,27 @@ Replacing `sub2ind` in order to reduce memory consumption.
 """
 function stridedSub2Ind(stride::AbstractArray{Int}, i::Tuple)
   s = 1
-  @inbounds @fastmath for j = 1:length(stride)
-    s += (i[j] - 1)*stride[j]
+  @inbounds @fastmath @simd for j in eachindex(i)
+    ij = i[j] - 1
+    stridej = stride[j]
+    s = add_inline(s, mul_inline(ij, stridej))
   end
   return s
 end
+
+"""
+    mul_inline(x::Number, y::Number)
+
+Multiplies x and y.
+"""
+@inline mul_inline(x::Number, y::Number) = x*y
 
 """
     distance2(u::Int, r::Int, dims::Tuple)
 
 Calculate the Squared Euclidean distance of u, given by a linear index, to a row index.
 """
-function distance2(u::Int, r::Int, dims::Tuple)
-  u2 = ind2sub(dims, u)[2]
-  return (u2 - r)^2
-end
+@inline distance2(u::Int, r::Int) = abs2diff_inline(u, r)
 
 """
     sqeuclidean(x::Int, g::Int, dims::Tuple)
@@ -186,18 +195,51 @@ Calculate the Squared Euclidean Distance between linear indices.
 function sqeuclidean(x::Int, g::Int, dims::Tuple)
   x_subs = ind2sub(dims, x)
   g_subs = ind2sub(dims, g)
+  return sqeuclidean(x_subs, g_subs)
+end
 
+"""
+    sqeuclidean(x::Tuple, g::Tuple)
+
+Calculate the Squared Euclidean Distance between linear indices.
+"""
+function sqeuclidean(x_subs::Tuple, g_subs::Tuple)
+  # taken from Distances.jl
   s = 0
-  @inbounds for i = 1:length(dims)
-    s += (x_subs[i] - g_subs[i])^2
+  @inbounds @simd for I in eachindex(x_subs, g_subs)
+    xi = x_subs[I]
+    gi = g_subs[I]
+    s = add_inline(s, abs2diff_inline(xi, gi))
   end
   return s
 end
 
-# Euclidean distance between linear indices
 """
     euclidean(x::Int, g::Int, dims::Tuple)
 
 Calculate the Euclidean Distance between linear indices.
 """
 euclidean(x::Int, g::Int, dims::Tuple) = sqrt(sqeuclidean(x, g, dims))
+
+"""
+    euclidean(x::Int, g::CartesianIndex, dims::Tuple)
+
+Calculate the Euclidean Distance between linear indices.
+"""
+euclidean(x::Tuple, g::Tuple) = sqrt(sqeuclidean(x, g))
+
+
+# Code taken from Distances.jl
+"""
+    abs2diff_inline(a::Number, b::Number)
+
+Calculate the squared absolute value of a - b.
+"""
+@inline abs2diff_inline(a::Number, b::Number) = abs2(a - b)
+
+"""
+    add_inline(s1::Number, s2::Number)
+
+Calculate the additon of s1 and s2.
+"""
+@inline add_inline(s1::Number, s2::Number) = s1 + s2
