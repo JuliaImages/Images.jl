@@ -1,79 +1,7 @@
-#### Math with images ####
-
-
-(+)(img::AbstractImageDirect{Bool}, n::Bool) = img .+ n
-(+)(n::Bool, img::AbstractImageDirect{Bool}) = n .+ img
-(+)(img::AbstractImageDirect, n::Number) = img .+ n
-(+)(img::AbstractImageDirect, n::AbstractRGB) = img .+ n
-(+)(n::Number, img::AbstractImageDirect) = n .+ img
-(+)(n::AbstractRGB, img::AbstractImageDirect) = n .+ img
-(.+)(img::AbstractImageDirect, n::Number) = shareproperties(img, data(img).+n)
-(.+)(n::Number, img::AbstractImageDirect) = shareproperties(img, data(img).+n)
-if isdefined(:UniformScaling)
-    (+){Timg,TA<:Number}(img::AbstractImageDirect{Timg,2}, A::UniformScaling{TA}) = shareproperties(img, data(img)+A)
-    (-){Timg,TA<:Number}(img::AbstractImageDirect{Timg,2}, A::UniformScaling{TA}) = shareproperties(img, data(img)-A)
-end
-(+)(img::AbstractImageDirect, A::BitArray) = shareproperties(img, data(img)+A)
-(+)(img::AbstractImageDirect, A::AbstractImageDirect) = shareproperties(img, data(img)+data(A))
-(+)(img::AbstractImageDirect, A::AbstractArray) = shareproperties(img, data(img)+data(A))
-(+){S,T}(A::Range{S}, img::AbstractImageDirect{T}) = shareproperties(img, data(A)+data(img))
-(+)(A::AbstractArray, img::AbstractImageDirect) = shareproperties(img, data(A)+data(img))
-(.+)(img::AbstractImageDirect, A::BitArray) = shareproperties(img, data(img).+A)
-(.+)(img::AbstractImageDirect, A::AbstractArray) = shareproperties(img, data(img).+data(A))
-(-)(img::AbstractImageDirect{Bool}, n::Bool) = img .- n
-(-)(img::AbstractImageDirect, n::Number) = img .- n
-(-)(img::AbstractImageDirect, n::AbstractRGB) = img .- n
-(.-)(img::AbstractImageDirect, n::Number) = shareproperties(img, data(img).-n)
-(-)(n::Bool, img::AbstractImageDirect{Bool}) = n .- img
-(-)(n::Number, img::AbstractImageDirect) = n .- img
-(-)(n::AbstractRGB, img::AbstractImageDirect) = n .- img
-(.-)(n::Number, img::AbstractImageDirect) = shareproperties(img, n.-data(img))
-(-)(img::AbstractImageDirect, A::BitArray) = shareproperties(img, data(img)-A)
-(-){T}(img::AbstractImageDirect{T,2}, A::Diagonal) = shareproperties(img, data(img)-A) # fixes an ambiguity warning
-(-)(img::AbstractImageDirect, A::Range) = shareproperties(img, data(img)-A)
-(-)(img::AbstractImageDirect, A::AbstractImageDirect) = shareproperties(img, data(img)-data(A))
-(-)(img::AbstractImageDirect, A::AbstractArray) = shareproperties(img, data(img)-data(A))
-(-){S,T}(A::Range{S}, img::AbstractImageDirect{T}) = shareproperties(img, data(A)-data(img))
-(-)(A::AbstractArray, img::AbstractImageDirect) = shareproperties(img, data(A)-data(img))
-(-)(img::AbstractImageDirect) = shareproperties(img, -data(img))
-(.-)(img::AbstractImageDirect, A::BitArray) = shareproperties(img, data(img).-A)
-(.-)(img::AbstractImageDirect, A::AbstractArray) = shareproperties(img, data(img).-data(A))
-(*)(img::AbstractImageDirect, n::Number) = (.*)(img, n)
-(*)(n::Number, img::AbstractImageDirect) = (.*)(n, img)
-(.*)(img::AbstractImageDirect, n::Number) = shareproperties(img, data(img).*n)
-(.*)(n::Number, img::AbstractImageDirect) = shareproperties(img, data(img).*n)
-(/)(img::AbstractImageDirect, n::Number) = shareproperties(img, data(img)/n)
-(.*)(img1::AbstractImageDirect, img2::AbstractImageDirect) = shareproperties(img1, data(img1).*data(img2))
-(.*)(img::AbstractImageDirect, A::BitArray) = shareproperties(img, data(img).*A)
-(.*)(A::BitArray, img::AbstractImageDirect) = shareproperties(img, data(img).*A)
-(.*)(img::AbstractImageDirect{Bool}, A::BitArray) = shareproperties(img, data(img).*A)
-(.*)(A::BitArray, img::AbstractImageDirect{Bool}) = shareproperties(img, data(img).*A)
-(.*)(img::AbstractImageDirect, A::AbstractArray) = shareproperties(img, data(img).*A)
-(.*)(A::AbstractArray, img::AbstractImageDirect) = shareproperties(img, data(img).*A)
-(./)(img::AbstractImageDirect, A::BitArray) = shareproperties(img, data(img)./A)  # needed to avoid ambiguity warning
-(./)(img1::AbstractImageDirect, img2::AbstractImageDirect) = shareproperties(img1, data(img1)./data(img2))
-(./)(img::AbstractImageDirect, A::AbstractArray) = shareproperties(img, data(img)./A)
-(.^)(img::AbstractImageDirect, p::Number) = shareproperties(img, data(img).^p)
-sqrt(img::AbstractImageDirect) = @compat shareproperties(img, sqrt.(data(img)))
-atan2(img1::AbstractImageDirect, img2::AbstractImageDirect) =
-    @compat shareproperties(img1, atan2.(data(img1),data(img2)))
-hypot(img1::AbstractImageDirect, img2::AbstractImageDirect) =
-    @compat shareproperties(img1, hypot.(data(img1),data(img2)))
-real(img::AbstractImageDirect) = @compat shareproperties(img,real.(data(img)))
-imag(img::AbstractImageDirect) = @compat shareproperties(img,imag.(data(img)))
-abs(img::AbstractImageDirect) = @compat shareproperties(img,abs.(data(img)))
+using Base: indices1, tail
 
 Compat.@dep_vectorize_2arg Gray atan2
 Compat.@dep_vectorize_2arg Gray hypot
-
-function sum(img::AbstractImageDirect, region::Union{AbstractVector,Tuple,Integer})
-    f = prod(size(img)[[region...]])
-    out = copyproperties(img, sum(data(img), region))
-    if in(colordim(img), region)
-        out["colorspace"] = "Unknown"
-    end
-    out
-end
 
 """
 `M = meanfinite(img, region)` calculates the mean value along the dimensions listed in `region`, ignoring any non-finite values.
@@ -89,77 +17,112 @@ function _meanfinite{T<:AbstractFloat}(A::AbstractArray, ::Type{T}, region)
 end
 _meanfinite(A::AbstractArray, ::Type, region) = mean(A, region)  # non floating-point
 
-function meanfinite{T<:AbstractFloat}(img::AbstractImageDirect{T}, region)
-    r = meanfinite(data(img), region)
-    out = copyproperties(img, r)
-    if in(colordim(img), region)
-        out["colorspace"] = "Unknown"
-    end
-    out
-end
-meanfinite(img::AbstractImageIndexed, region) = meanfinite(convert(Image, img), region)
-# Note that you have to zero S and K upon entry
-@generated function sumfinite!{T,N}(S, K, A::AbstractArray{T,N})
-    quote
-        isempty(A) && return S, K
-        @nexprs $N d->(sizeS_d = size(S,d))
-        sizeA1 = size(A, 1)
-        if size(S, 1) == 1 && sizeA1 > 1
-            # When we are reducing along dim == 1, we can accumulate to a temporary
-            @inbounds @nloops $N i d->(d>1? (1:size(A,d)) : (1:1)) d->(j_d = sizeS_d==1 ? 1 : i_d) begin
-                s = @nref($N, S, j)
-                k = @nref($N, K, j)
-                for i_1 = 1:sizeA1
-                    tmp = @nref($N, A, i)
-                    if isfinite(tmp)
-                        s += tmp
-                        k += 1
-                    end
-                end
-                @nref($N, S, j) = s
-                @nref($N, K, j) = k
-            end
-        else
-            # Accumulate to array storage
-            @inbounds @nloops $N i A d->(j_d = sizeS_d==1 ? 1 : i_d) begin
-                tmp = @nref($N, A, i)
+using Base: check_reducedims, reducedim1, safe_tail
+using Base.Broadcast: newindex
+
+"""
+    sumfinite!(S, K, A)
+
+Compute the sum `S` and number of contributing pixels `K` for
+reductions of the array `A` over dimensions. `S` and `K` must have
+identical indices, and either match `A` or have singleton-dimensions for
+the dimensions that are being summed over. Only pixels with finite
+value are included in the tallies of `S` and `K`.
+
+Note that the pixel mean is just S./K.
+"""
+function sumfinite!{T,N}(S, K, A::AbstractArray{T,N})
+    check_reducedims(S, A)
+    isempty(A) && return S, K
+    indices(S) == indices(K) || throw(DimensionMismatch("S and K must have identical indices"))
+
+    indsAt, indsSt = safe_tail(indices(A)), safe_tail(indices(S))
+    keep, Idefault = _newindexer(indsAt, indsSt)
+    if reducedim1(S, A)
+        # keep the accumulators as a local variable when reducing along the first dimension
+        i1 = first(indices1(S))
+        @inbounds for IA in CartesianRange(indsAt)
+            IS = newindex(IA, keep, Idefault)
+            s, k = S[i1,IS], K[i1,IS]
+            for i in indices(A, 1)
+                tmp = A[i, IA]
                 if isfinite(tmp)
-                    @nref($N, S, j) += tmp
-                    @nref($N, K, j) += 1
+                    s += tmp
+                    k += 1
+                end
+            end
+            S[i1,IS], K[i1,IS] = s, k
+        end
+    else
+        @inbounds for IA in CartesianRange(indsAt)
+            IS = newindex(IA, keep, Idefault)
+            for i in indices(A, 1)
+                tmp = A[i, IA]
+                if isfinite(tmp)
+                    S[i, IS] += tmp
+                    K[i, IS] += 1
                 end
             end
         end
-        S, K
     end
+    S, K
 end
+if VERSION < v"0.6.0-dev.693"
+    _newindexer(shape, inds) = Base.Broadcast.newindexer(shape, inds)
+else
+    _newindexer(shape, inds) = Base.Broadcast.shapeindexer(shape, inds)
+end
+
+function Base.var{C<:AbstractGray}(A::AbstractArray{C}; kwargs...)
+    imgc = channelview(A)
+    base_colorant_type(C)(var(imgc; kwargs...))
+end
+
+function Base.var{C<:Colorant,N}(A::AbstractArray{C,N}; kwargs...)
+    imgc = channelview(A)
+    colons = ntuple(d->Colon(), Val{N})
+    inds1 = indices(imgc, 1)
+    val1 = var(view(imgc, first(inds1), colons...); kwargs...)
+    vals = similar(imgc, typeof(val1), inds1)
+    vals[1] = val1
+    for i in first(inds1)+1:last(inds1)
+        vals[i] = var(view(imgc, i, colons...); kwargs...)
+    end
+    base_colorant_type(C)(vals...)
+end
+
+Base.std{C<:Colorant}(A::AbstractArray{C}; kwargs...) = mapc(sqrt, var(A; kwargs...))
 
 # Entropy for grayscale (intensity) images
 function _log(kind::Symbol)
-    @compat if kind == :shannon
-        x -> log2.(x)
+    if kind == :shannon
+        return log2
     elseif kind == :nat
-        x -> log.(x)
+        return log
     elseif kind == :hartley
-        x -> log10.(x)
+        return log10
     else
         throw(ArgumentError("Invalid entropy unit. (:shannon, :nat or :hartley)"))
     end
 end
 
 """
-`entropy(img, kind)` is the entropy of a grayscale image defined as `-sum(p.*logb(p))`.
-The base b of the logarithm (a.k.a. entropy unit) is one of the following:
-  `:shannon ` (log base 2, default)
-  `:nat` (log base e)
-  `:hartley` (log base 10)
-"""
-function entropy(img::AbstractArray; kind=:shannon)
-    logᵦ = _log(kind)
+    entropy(logᵦ, img)
+    entropy(img; [kind=:shannon])
 
+Compute the entropy of a grayscale image defined as `-sum(p.*logᵦ(p))`.
+The base β of the logarithm (a.k.a. entropy unit) is one of the following:
+
+- `:shannon ` (log base 2, default), or use logᵦ = log2
+- `:nat` (log base e), or use logᵦ = log
+- `:hartley` (log base 10), or use logᵦ = log10
+"""
+entropy(img::AbstractArray; kind=:shannon) = entropy(_log(kind), img)
+function entropy{Log<:Function}(logᵦ::Log, img)
     hist = StatsBase.fit(Histogram, vec(img), nbins=256)
     counts = hist.weights
     p = counts / length(img)
-    logp = logᵦ(p)
+    logp = logᵦ.(p)
 
     # take care of empty bins
     logp[Bool[isinf(v) for v in logp]] = 0
@@ -176,16 +139,6 @@ function entropy(img::AbstractArray{Bool}; kind=:shannon)
 end
 
 entropy{C<:AbstractGray}(img::AbstractArray{C}; kind=:shannon) = entropy(raw(img), kind=kind)
-
-# Logical operations
-(.<)(img::AbstractImageDirect, n::Number) = data(img) .< n
-(.>)(img::AbstractImageDirect, n::Number) = data(img) .> n
-(.<)(img::AbstractImageDirect{Bool}, A::AbstractArray{Bool}) = data(img) .< A
-(.<)(img::AbstractImageDirect, A::AbstractArray) = data(img) .< A
-(.>)(img::AbstractImageDirect, A::AbstractArray) = data(img) .> A
-(.==)(img::AbstractImageDirect, n::Number) = data(img) .== n
-(.==)(img::AbstractImageDirect{Bool}, A::AbstractArray{Bool}) = data(img) .== A
-(.==)(img::AbstractImageDirect, A::AbstractArray) = data(img) .== A
 
 # functions red, green, and blue
 for (funcname, fieldname) in ((:red, :r), (:green, :g), (:blue, :b))
@@ -259,11 +212,6 @@ function maxabsfinite{T}(A::AbstractArray{T})
     ret
 end
 
-# Issue #232. FIXME: really should return a Gray here?
-for f in (:minfinite, :maxfinite, :maxabsfinite)
-    @eval $f{T}(A::AbstractArray{Gray{T}}) = $f(reinterpret(T, data(A)))
-end
-
 minfinite_scalar{T}(a::T, b::T) = isfinite(a) ? (b < a ? b : a) : b
 maxfinite_scalar{T}(a::T, b::T) = isfinite(a) ? (b > a ? b : a) : b
 minfinite_scalar{T<:Union{Integer,FixedPoint}}(a::T, b::T) = b < a ? b : a
@@ -296,37 +244,7 @@ sentinel_max{C<:AbstractGray}(::Type{C}) = _sentinel_max(C, eltype(C))
 _sentinel_max{C<:AbstractGray,T}(::Type{C},::Type{T}) = C(sentinel_max(T))
 
 
-# fft & ifft
-fft(img::AbstractImageDirect) = shareproperties(img, fft(data(img)))
-function fft(img::AbstractImageDirect, region, args...)
-    F = fft(data(img), region, args...)
-    props = copy(properties(img))
-    props["region"] = region
-    Image(F, props)
-end
-fft{CV<:Colorant}(img::AbstractImageDirect{CV}) = fft(img, 1:ndims(img))
-function fft{CV<:Colorant}(img::AbstractImageDirect{CV}, region, args...)
-    imgr = reinterpret(eltype(CV), img)
-    if ndims(imgr) > ndims(img)
-        newregion = ntuple(i->region[i]+1, length(region))
-    else
-        newregion = ntuple(i->region[i], length(region))
-    end
-    F = fft(data(imgr), newregion, args...)
-    props = copy(properties(imgr))
-    props["region"] = newregion
-    Image(F, props)
-end
-
-function ifft(img::AbstractImageDirect)
-    region = get(img, "region", 1:ndims(img))
-    A = ifft(data(img), region)
-    props = copy(properties(img))
-    haskey(props, "region") && delete!(props, "region")
-    Image(A, props)
-end
-ifft(img::AbstractImageDirect, region, args...) = ifft(data(img), region, args...)
-
+# FIXME: replace with IntegralImage
 # average filter
 """
 `kern = imaverage(filtersize)` constructs a boxcar-filter of the specified size.
@@ -342,20 +260,7 @@ function imaverage(filter_size=[3,3])
     f = ones(Float64, m, n)/(m*n)
 end
 
-# laplacian filter kernel
-"""
-`kern = imlaplacian(filtersize)` returns a kernel for laplacian filtering.
-"""
-function imlaplacian(diagonals::AbstractString="nodiagonals")
-    if diagonals == "diagonals"
-        return [1.0 1.0 1.0; 1.0 -8.0 1.0; 1.0 1.0 1.0]
-    elseif diagonals == "nodiagonals"
-        return [0.0 1.0 0.0; 1.0 -4.0 1.0; 0.0 1.0 0.0]
-    else
-        error("Expected \"diagnoals\" or \"nodiagonals\" or Number, got: \"$diagonals\"")
-    end
-end
-
+# FIXME: do something about this
 # more general version
 function imlaplacian(alpha::Number)
     lc = alpha/(1 + alpha)
@@ -364,68 +269,22 @@ function imlaplacian(alpha::Number)
     return [lc lb lc; lb lm lb; lc lb lc]
 end
 
-# 2D gaussian filter kernel
-"""
-`kern = gaussian2d(sigma, filtersize)` returns a kernel for FIR-based Gaussian filtering.
-
-See also: `imfilter_gaussian`.
-"""
-function gaussian2d(sigma::Number=0.5, filter_size=[])
-    if length(filter_size) == 0
-        # choose 'good' size
-        m = 4*ceil(Int, sigma)+1
-        n = m
-    elseif length(filter_size) != 2
-        error("wrong filter size")
-    else
-        m, n = filter_size[1], filter_size[2]
+function sumdiff(f, A::AbstractArray, B::AbstractArray)
+    indices(A) == indices(B) || throw(DimensionMismatch("A and B must have the same indices"))
+    T = promote_type(difftype(eltype(A)), difftype(eltype(B)))
+    s = zero(accum(eltype(T)))
+    for (a, b) in zip(A, B)
+        x = convert(T, a) - convert(T, b)
+        s += f(x)
     end
-    if mod(m, 2) != 1 || mod(n, 2) != 1
-        error("filter dimensions must be odd")
-    end
-    g = Float64[exp(-(X.^2+Y.^2)/(2*sigma.^2)) for X=-floor(Int,m/2):floor(Int,m/2), Y=-floor(Int,n/2):floor(Int,n/2)]
-    return g/sum(g)
+    s
 end
 
-# difference of gaussian
-"""
-`kern = imdog(sigma)` creates a difference-of-gaussians kernel (`sigma`s differing by a factor of
-`sqrt(2)`).
-"""
-function imdog(sigma::Number=0.5)
-    m = 4*ceil(sqrt(2)*sigma)+1
-    return gaussian2d(sqrt(2)*sigma, [m m]) - gaussian2d(sigma, [m m])
-end
+"`s = ssd(A, B)` computes the sum-of-squared differences over arrays/images A and B"
+ssd(A::AbstractArray, B::AbstractArray) = sumdiff(abs2, A, B)
 
-# laplacian of gaussian
-"""
-`kern = imlog(sigma)` returns a laplacian-of-gaussian kernel.
-"""
-function imlog(sigma::Number=0.5)
-    m = ceil(8.5sigma)
-    m = m % 2 == 0 ? m + 1 : m
-    return [(1/(2pi*sigma^4))*(2 - (x^2 + y^2)/sigma^2)*exp(-(x^2 + y^2)/(2sigma^2))
-            for x=-floor(m/2):floor(m/2), y=-floor(m/2):floor(m/2)]
-end
-
-# Sum of squared differences and sum of absolute differences
-for (f, op) in ((:ssd, :(abs2(x))), (:sad, :(abs(x))))
-    @eval begin
-        function ($f)(A::AbstractArray, B::AbstractArray)
-            size(A) == size(B) || throw(DimensionMismatch("A and B must have the same size"))
-            T = promote_type(difftype(eltype(A)), difftype(eltype(B)))
-            s = zero(accum(eltype(T)))
-            for i = 1:length(A)
-                x = convert(T, A[i]) - convert(T, B[i])
-                s += $op
-            end
-            s
-        end
-    end
-end
-
-"`s = ssd(A, B)` computes the sum-of-squared differences over arrays/images A and B" ssd
-"`s = sad(A, B)` computes the sum-of-absolute differences over arrays/images A and B" sad
+"`s = sad(A, B)` computes the sum-of-absolute differences over arrays/images A and B"
+sad(A::AbstractArray, B::AbstractArray) = sumdiff(abs, A, B)
 
 difftype{T<:Integer}(::Type{T}) = Int
 difftype{T<:Real}(::Type{T}) = Float32
@@ -520,581 +379,93 @@ function test_approx_eq_sigma_eps{T<:Real}(A::AbstractArray, B::AbstractArray,
     diffpct
 end
 
-# Array padding
-function padindexes{T,n}(img::AbstractArray{T,n}, prepad::Union{Vector{Int},Dims}, postpad::Union{Vector{Int},Dims}, border::AbstractString)
-    I = Array(Vector{Int}, n)
-    for d = 1:n
-        I[d] = padindexes(img, d, prepad[d], postpad[d], border)
-    end
-    I
+"""
+BlobLoG stores information about the location of peaks as discovered by `blob_LoG`.
+It has fields:
+
+- location: the location of a peak in the filtered image (a CartesianIndex)
+- σ: the value of σ which lead to the largest `-LoG`-filtered amplitude at this location
+- amplitude: the value of the `-LoG(σ)`-filtered image at the peak
+
+Note that the radius is equal to σ√2.
+
+See also: [`blob_LoG`](@ref).
+"""
+immutable BlobLoG{T,S,N}
+    location::CartesianIndex{N}
+    σ::S
+    amplitude::T
 end
 
 """
-```
-imgpad = padarray(img, prepad, postpad, border, value)
-```
+    blob_LoG(img, σs, [edges]) -> Vector{BlobLoG}
 
-For an `N`-dimensional array `img`, apply padding on both edges. `prepad` and
-`postpad` are vectors of length `N` specifying the number of pixels used to pad
-each dimension. `border` is a string, one of `"value"` (to pad with a specific
-pixel value), `"replicate"` (to repeat the edge value), `"circular"` (periodic
-boundary conditions), `"reflect"` (reflecting boundary conditions, where the
-reflection is centered on edge), and `"symmetric"` (reflecting boundary
-conditions, where the reflection is centered a half-pixel spacing beyond the
-edge, so the edge value gets repeated). Arrays are automatically padded before
-filtering. Use `"inner"` to avoid padding altogether; the output array will be
-smaller than the input.
-"""
-function padarray{T,n}(img::AbstractArray{T,n}, prepad::Union{Vector{Int},Dims}, postpad::Union{Vector{Int},Dims}, border::AbstractString)
-    img[padindexes(img, prepad, postpad, border)...]::Array{T,n}
-end
-function padarray{n}(img::Union{BitArray{n}, SubArray{Bool,n,BitArray{n}}}, prepad::Union{Vector{Int},Dims}, postpad::Union{Vector{Int},Dims}, border::AbstractString)
-    img[padindexes(img, prepad, postpad, border)...]::BitArray{n}
-end
-function padarray{n,A<:BitArray}(img::Image{Bool,n,A}, prepad::Union{Vector{Int},Dims}, postpad::Union{Vector{Int},Dims}, border::AbstractString)
-    img[padindexes(img, prepad, postpad, border)...]::BitArray{n}
-end
+Find "blobs" in an N-D image using the negative Lapacian of Gaussians
+with the specifed vector or tuple of σ values. The algorithm searches for places
+where the filtered image (for a particular σ) is at a peak compared to all
+spatially- and σ-adjacent voxels.
 
-function padarray{T,n}(img::AbstractArray{T,n}, prepad::Union{Vector{Int},Dims}, postpad::Union{Vector{Int},Dims}, border::AbstractString, value)
-    if border != "value"
-        return padarray(img, prepad, postpad, border)
-    end
-    A = Array(T, ntuple(d->size(img,d)+prepad[d]+postpad[d], n))
-    fill!(A, value)
-    I = Vector{Int}[1+prepad[d]:size(A,d)-postpad[d] for d = 1:n]
-    A[I...] = img
-    A::Array{T,n}
-end
+The optional `edges` argument controls whether peaks on the edges are
+included. `edges` can be `true` or `false`, or a N+1-tuple in which
+the first entry controls whether edge-σ values are eligible to serve
+as peaks, and the remaining N entries control each of the N dimensions
+of `img`.
 
-padarray{T,n}(img::AbstractArray{T,n}, padding::Union{Vector{Int},Dims}, border::AbstractString = "replicate") = padarray(img, padding, padding, border)
-# Restrict the following to Number to avoid trouble when img is an Array{AbstractString}
-padarray{T<:Number,n}(img::AbstractArray{T,n}, padding::Union{Vector{Int},Dims}, value::T) = padarray(img, padding, padding, "value", value)
+# Citation:
 
-function padarray{T,n}(img::AbstractArray{T,n}, padding::Union{Vector{Int},Dims}, border::AbstractString, direction::AbstractString)
-    if direction == "both"
-        return padarray(img, padding, padding, border)
-    elseif direction == "pre"
-        return padarray(img, padding, zeros(Int, n), border)
-    elseif direction == "post"
-        return padarray(img, zeros(Int, n), padding, border)
-    end
-end
-
-function padarray{T<:Number,n}(img::AbstractArray{T,n}, padding::Vector{Int}, value::T, direction::AbstractString)
-    if direction == "both"
-        return padarray(img, padding, padding, "value", value)
-    elseif direction == "pre"
-        return padarray(img, padding, zeros(Int, n), "value", value)
-    elseif direction == "post"
-        return padarray(img, zeros(Int, n), padding, "value", value)
-    end
-end
-
-
-function prep_kernel(img::AbstractArray, kern::AbstractArray)
-    sc = coords_spatial(img)
-    if ndims(kern) > length(sc)
-        error("""The kernel has $(ndims(kern)) dimensions, more than the $(sdims(img)) spatial dimensions of img.
-                 You'll need to set the dimensions and type of the kernel to be the same as the image.""")
-    end
-    sz = ones(Int, ndims(img))
-    for i = 1:ndims(kern)
-        sz[sc[i]] = size(kern,i)
-    end
-    reshape(kern, sz...)
-end
-
-
-###
-### imfilter
-###
-"""
-```
-imgf = imfilter(img, kernel, [border, value])
-```
-
-filters the array `img` with the given `kernel`, using boundary conditions
-specified by `border` and `value`. See `padarray` for an explanation of
-the boundary conditions. Default is to use `"replicate"` boundary conditions.
-This uses finite-impulse-response (FIR) filtering, and is fast only for
-relatively small `kernel`s.
-
-See also: `imfilter_fft`, `imfilter_gaussian`.
-"""
-imfilter(img, kern, border, value) = imfilter_inseparable(img, kern, border, value)
-# Do not combine these with the previous using a default value (see the 2d specialization below)
-imfilter(img, filter) = imfilter(img, filter, "replicate", zero(eltype(img)))
-imfilter(img, filter, border) = imfilter(img, filter, border, zero(eltype(img)))
-
-imfilter_inseparable{T,K,N,M}(img::AbstractArray{T,N}, kern::AbstractArray{K,M}, border::AbstractString, value) =
-    imfilter_inseparable(img, prep_kernel(img, kern), border, value)
-
-function imfilter_inseparable{T,K,N}(img::AbstractArray{T,N}, kern::AbstractArray{K,N}, border::AbstractString, value)
-    if border == "inner"
-        result = Array(typeof(one(T)*one(K)), ntuple(d->max(0, size(img,d)-size(kern,d)+1), N))
-        imfilter!(result, img, kern)
-    else
-        prepad  = [div(size(kern,i)-1, 2) for i = 1:N]
-        postpad = [div(size(kern,i),   2) for i = 1:N]
-        A = padarray(img, prepad, postpad, border, convert(T, value))
-        result = imfilter!(Array(typeof(one(T)*one(K)), size(img)), A, data(kern))
-    end
-    copyproperties(img, result)
-end
-
-# Special case for 2d kernels: check for separability
-function imfilter{T}(img::AbstractArray{T}, kern::AbstractMatrix, border::AbstractString, value)
-    sc = coords_spatial(img)
-    if length(sc) < 2
-        imfilter_inseparable(img, kern, border, value)
-    end
-    SVD = svdfact(kern)
-    U, S, Vt = SVD[:U], SVD[:S], SVD[:Vt]
-    separable = true
-    EPS = sqrt(eps(eltype(S)))
-    for i = 2:length(S)
-        separable &= (abs(S[i]) < EPS)
-    end
-    if !separable
-        return imfilter_inseparable(img, kern, border, value)
-    end
-    s = S[1]
-    u,v = U[:,1],Vt[1,:]
-    ss = sqrt(s)
-    sz1 = ones(Int, ndims(img)); sz1[sc[1]] = size(kern, 1)
-    sz2 = ones(Int, ndims(img)); sz2[sc[2]] = size(kern, 2)
-    tmp = imfilter_inseparable(data(img), reshape(u*ss, sz1...), border, value)
-    copyproperties(img, imfilter_inseparable(tmp, reshape(v*ss, sz2...), border, value))
-end
-
-for N = 1:5
-    @eval begin
-        function imfilter!{T,K}(B, A::AbstractArray{T,$N}, kern::AbstractArray{K,$N})
-            for i = 1:$N
-                if size(B,i)+size(kern,i) > size(A,i)+1
-                    throw(DimensionMismatch("Output dimensions $(size(B)) and kernel dimensions $(size(kern)) do not agree with size of padded input, $(size(A))"))
-                end
-            end
-            (isempty(A) || isempty(kern)) && return B
-            p = A[1]*kern[1]
-            TT = typeof(p+p)
-            @nloops $N i B begin
-                tmp = zero(TT)
-                @inbounds begin
-                    @nloops $N j kern d->(k_d = i_d+j_d-1) begin
-                        tmp += (@nref $N A k)*(@nref $N kern j)
-                    end
-                    (@nref $N B i) = tmp
-                end
-            end
-            B
-        end
-    end
-end
-
-"""
-```
-imfilter!(dest, img, kernel)
-```
-
-filters the image with the given `kernel`, storing the output in the
-pre-allocated output `dest`. The size of `dest` must not be greater than the
-size of the result of `imfilter` with `border = "inner"`, and it behaves
-identically.  This uses finite-impulse-response (FIR) filtering, and is fast
-only for relatively small `kernel`s.
-
-No padding is performed; see `padarray` for options if you want to do
-this manually.
-
-See also: `imfilter`, `padarray`.
-"""
-imfilter!
-
-###
-### imfilter_fft
-###
-"""
-```
-imgf = imfilter_fft(img, kernel, [border, value])
-```
-
-filters `img` with the given `kernel` using an FFT algorithm.  This
-is slower than `imfilter` for small kernels, but much faster for large
-kernels. For Gaussian blur, an even faster choice is `imfilter_gaussian`.
-
-See also: `imfilter`, `imfilter_gaussian`.
-"""
-imfilter_fft(img, kern, border, value) = copyproperties(img, imfilter_fft_inseparable(img, kern, border, value))
-imfilter_fft(img, filter) = imfilter_fft(img, filter, "replicate", 0)
-imfilter_fft(img, filter, border) = imfilter_fft(img, filter, border, 0)
-
-imfilter_fft_inseparable{T,K,N,M}(img::AbstractArray{T,N}, kern::AbstractArray{K,M}, border::AbstractString, value) =
-    imfilter_fft_inseparable(img, prep_kernel(img, kern), border, value)
-
-function imfilter_fft_inseparable{T<:Colorant,K,N,M}(img::AbstractArray{T,N}, kern::AbstractArray{K,M}, border::AbstractString, value)
-    A = reinterpret(eltype(T), data(img))
-    kernrs = reshape(kern, tuple(1, size(kern)...))
-    B = imfilter_fft_inseparable(A, prep_kernel(A, kernrs), border, value)
-    reinterpret(base_colorant_type(T), B)
-end
-
-function imfilter_fft_inseparable{T<:Real,K,N}(img::AbstractArray{T,N}, kern::AbstractArray{K,N}, border::AbstractString, value)
-    if border == "circular" && size(img) == size(kern)
-        A = data(img)
-        krn = reflect(kern)
-        out = real(ifftshift(ifft(fft(A).*fft(krn))))
-    elseif border != "inner"
-        prepad  = [div(size(kern,i)-1, 2) for i = 1:N]
-        postpad = [div(size(kern,i),   2) for i = 1:N]
-        fullpad = Int[nextprod([2,3], size(img,i) + prepad[i] + postpad[i]) - size(img, i) - prepad[i] for i = 1:N]  # work around julia #15276
-        A = padarray(img, prepad, fullpad, border, convert(T, value))
-        krn = zeros(eltype(one(T)*one(K)), size(A))
-        indexesK = ntuple(d->[size(krn,d)-prepad[d]+1:size(krn,d);1:size(kern,d)-prepad[d]], N)
-        krn[indexesK...] = reflect(kern)
-        AF = ifft(fft(A).*fft(krn))
-        out = Array(realtype(eltype(AF)), size(img))
-        indexesA = ntuple(d->postpad[d]+1:size(img,d)+postpad[d], N)
-        copyreal!(out, AF, indexesA)
-    else
-        A = data(img)
-        prepad  = [div(size(kern,i)-1, 2) for i = 1:N]
-        postpad = [div(size(kern,i),   2) for i = 1:N]
-        krn = zeros(eltype(one(T)*one(K)), size(A))
-        indexesK = ntuple(d->[size(krn,d)-prepad[d]+1:size(krn,d);1:size(kern,d)-prepad[d]], N)
-        krn[indexesK...] = reflect(kern)
-        AF = ifft(fft(A).*fft(krn))
-        out = Array(realtype(eltype(AF)), ([size(img)...] - prepad - postpad)...)
-        indexesA = ntuple(d->postpad[d]+1:size(img,d)-prepad[d], N)
-        copyreal!(out, AF, indexesA)
-    end
-    out
-end
-
-# flips the dimension specified by name instead of index
-# it is thus independent of the storage order
-Base.flipdim(img::AbstractImage, dimname::String) = shareproperties(img, flipdim(data(img), dimindex(img, dimname)))
-
-flipx(img::AbstractImage) = flipdim(img, "x")
-flipy(img::AbstractImage) = flipdim(img, "y")
-flipz(img::AbstractImage) = flipdim(img, "z")
-
-# Generalization of rot180
-@generated function reflect{T,N}(A::AbstractArray{T,N})
-    quote
-        B = Array(T, size(A))
-        @nexprs $N d->(n_d = size(A, d)+1)
-        @nloops $N i A d->(j_d = n_d - i_d) begin
-            @nref($N, B, j) = @nref($N, A, i)
-        end
-        B
-    end
-end
-
-
-for N = 1:5
-    @eval begin
-        function copyreal!{T<:Real}(dst::Array{T,$N}, src, I::Tuple{Vararg{UnitRange{Int}}})
-            @nexprs $N d->(I_d = I[d])
-            @nloops $N i dst d->(j_d = first(I_d)+i_d-1) begin
-                (@nref $N dst i) = real(@nref $N src j)
-            end
-            dst
-        end
-        function copyreal!{T<:Complex}(dst::Array{T,$N}, src, I::Tuple{Vararg{UnitRange{Int}}})
-            @nexprs $N d->I_d = I[d]
-            @nloops $N i dst d->(j_d = first(I_d)+i_d-1) begin
-                (@nref $N dst i) = @nref $N src j
-            end
-            dst
-        end
-    end
-end
-
-realtype{R<:Real}(::Type{R}) = R
-realtype{R<:Real}(::Type{Complex{R}}) = R
-
-
-# IIR filtering with Gaussians
-# See
-#  Young, van Vliet, and van Ginkel, "Recursive Gabor Filtering",
-#    IEEE TRANSACTIONS ON SIGNAL PROCESSING, VOL. 50: 2798-2805.
-# and
-#  Triggs and Sdika, "Boundary Conditions for Young - van Vliet
-#    Recursive Filtering, IEEE TRANSACTIONS ON SIGNAL PROCESSING,
-# Here we're using NA boundary conditions, so we set i- and i+
-# (in Triggs & Sdika notation) to zero.
-# Note these two papers use different sign conventions for the coefficients.
-
-# Note: astype is ignored for AbstractFloat input
-"""
-```
-imgf = imfilter_gaussian(img, sigma)
-```
-
-filters `img` with a Gaussian of the specified width. `sigma` should have
-one value per array dimension (any number of dimensions are supported), 0
-indicating that no filtering is to occur along that dimension. Uses the Young,
-van Vliet, and van Ginkel IIR-based algorithm to provide fast gaussian filtering
-even with large `sigma`. Edges are handled by "NA" conditions, meaning the
-result is normalized by the number and weighting of available pixels, and
-missing data (NaNs) are handled likewise.
-"""
-function imfilter_gaussian{CT<:Colorant}(img::AbstractArray{CT}, sigma; emit_warning = true, astype::Type=Float64)
-    A = reinterpret(eltype(CT), data(img))
-    newsigma = ndims(A) > ndims(img) ? [0;sigma] : sigma
-    ret = imfilter_gaussian(A, newsigma; emit_warning=emit_warning, astype=astype)
-    shareproperties(img, reinterpret(base_colorant_type(CT), ret))
-end
-
-function imfilter_gaussian{T<:AbstractFloat}(img::AbstractArray{T}, sigma::Vector; emit_warning = true, astype::Type=Float64)
-    if all(sigma .== 0)
-        return img
-    end
-    A = copy(data(img))
-    nanflag = @compat isnan.(A)
-    hasnans = any(nanflag)
-    if hasnans
-        A[nanflag] = zero(T)
-        validpixels = convert(Array{T}, !nanflag)
-        imfilter_gaussian!(A, validpixels, sigma; emit_warning=emit_warning)
-        A[nanflag] = convert(T, NaN)
-    else
-        imfilter_gaussian_no_nans!(A, sigma; emit_warning=emit_warning)
-    end
-    shareproperties(img, A)
-end
-
-# For these types, you can't have NaNs
-function imfilter_gaussian{T<:Union{Integer,UFixed},TF<:AbstractFloat}(img::AbstractArray{T}, sigma::Vector; emit_warning = true, astype::Type{TF}=Float64)
-    A = copy!(Array(TF, size(img)), data(img))
-    if all(sigma .== 0)
-        return shareproperties(img, A)
-    end
-    imfilter_gaussian_no_nans!(A, sigma; emit_warning=emit_warning)
-    shareproperties(img, A)
-end
-
-# This version is in-place, and destructive
-# Any NaNs have to already be removed from data (and marked in validpixels)
-function imfilter_gaussian!{T<:AbstractFloat}(data::Array{T}, validpixels::Array{T}, sigma::Vector; emit_warning = true)
-    nd = ndims(data)
-    if length(sigma) != nd
-        error("Dimensionality mismatch")
-    end
-    _imfilter_gaussian!(data, sigma, emit_warning=emit_warning)
-    _imfilter_gaussian!(validpixels, sigma, emit_warning=false)
-    for i = 1:length(data)
-        data[i] /= validpixels[i]
-    end
-    return data
-end
-
-# When there are no NaNs, the normalization is separable and hence can be computed far more efficiently
-# This speeds the algorithm by approximately twofold
-function imfilter_gaussian_no_nans!{T<:AbstractFloat}(data::Array{T}, sigma::Vector; emit_warning = true)
-    nd = ndims(data)
-    if length(sigma) != nd
-        error("Dimensionality mismatch")
-    end
-    _imfilter_gaussian!(data, sigma, emit_warning=emit_warning)
-    denom = Array(Vector{T}, nd)
-    for i = 1:nd
-        denom[i] = ones(T, size(data, i))
-        if sigma[i] > 0
-            _imfilter_gaussian!(denom[i], sigma[i:i], emit_warning=false)
-        end
-    end
-    imfgnormalize!(data, denom)
-    return data
-end
-
-for N = 1:5
-    @eval begin
-        function imfgnormalize!{T}(data::Array{T,$N}, denom)
-            @nextract $N denom denom
-            @nloops $N i data begin
-                den = one(T)
-                @nexprs $N d->(den *= denom_d[i_d])
-                (@nref $N data i) /= den
-            end
-        end
-    end
-end
-
-function iir_gaussian_coefficients(T::Type, sigma::Number; emit_warning::Bool = true)
-    if sigma < 1 && emit_warning
-        warn("sigma is too small for accuracy")
-    end
-    m0 = convert(T,1.16680)
-    m1 = convert(T,1.10783)
-    m2 = convert(T,1.40586)
-    q = convert(T,1.31564*(sqrt(1+0.490811*sigma*sigma) - 1))
-    scale = (m0+q)*(m1*m1 + m2*m2  + 2m1*q + q*q)
-    B = m0*(m1*m1 + m2*m2)/scale
-    B *= B
-    # This is what Young et al call b, but in filt() notation would be called a
-    a1 = q*(2*m0*m1 + m1*m1 + m2*m2 + (2*m0+4*m1)*q + 3*q*q)/scale
-    a2 = -q*q*(m0 + 2m1 + 3q)/scale
-    a3 = q*q*q/scale
-    a = [-a1,-a2,-a3]
-    Mdenom = (1+a1-a2+a3)*(1-a1-a2-a3)*(1+a2+(a1-a3)*a3)
-    M = [-a3*a1+1-a3^2-a2      (a3+a1)*(a2+a3*a1)  a3*(a1+a3*a2);
-          a1+a3*a2            -(a2-1)*(a2+a3*a1)  -(a3*a1+a3^2+a2-1)*a3;
-          a3*a1+a2+a1^2-a2^2   a1*a2+a3*a2^2-a1*a3^2-a3^3-a3*a2+a3  a3*(a1+a3*a2)]/Mdenom;
-    return a, B, M
-end
-
-function _imfilter_gaussian!{T<:AbstractFloat}(A::Array{T}, sigma::Vector; emit_warning::Bool = true)
-    nd = ndims(A)
-    szA = [size(A,i) for i = 1:nd]
-    strdsA = [stride(A,i) for i = 1:nd]
-    for d = 1:nd
-        if sigma[d] == 0
-            continue
-        end
-        if size(A, d) < 3
-            error("All filtered dimensions must be of size 3 or larger")
-        end
-        a, B, M = iir_gaussian_coefficients(T, sigma[d], emit_warning=emit_warning)
-        a1 = a[1]
-        a2 = a[2]
-        a3 = a[3]
-        n1 = size(A,1)
-        keepdims = [false;trues(nd-1)]
-        if d == 1
-            x = zeros(T, 3)
-            vstart = zeros(T, 3)
-            szhat = szA[keepdims]
-            strdshat = strdsA[keepdims]
-            if isempty(szhat)
-                szhat = [1]
-                strdshat = [1]
-            end
-            @inbounds @forcartesian c szhat begin
-                coloffset = offset(c, strdshat)
-                A[2+coloffset] -= a1*A[1+coloffset]
-                A[3+coloffset] -= a1*A[2+coloffset] + a2*A[1+coloffset]
-                for i = 4+coloffset:n1+coloffset
-                    A[i] -= a1*A[i-1] + a2*A[i-2] + a3*A[i-3]
-                end
-                copytail!(x, A, coloffset, 1, n1)
-                A_mul_B!(vstart, M, x)
-                A[n1+coloffset] = vstart[1]
-                A[n1-1+coloffset] -= a1*vstart[1]   + a2*vstart[2] + a3*vstart[3]
-                A[n1-2+coloffset] -= a1*A[n1-1+coloffset] + a2*vstart[1] + a3*vstart[2]
-                for i = n1-3+coloffset:-1:1+coloffset
-                    A[i] -= a1*A[i+1] + a2*A[i+2] + a3*A[i+3]
-                end
-            end
-        else
-            x = Array(T, 3, n1)
-            vstart = similar(x)
-            keepdims[d] = false
-            szhat = szA[keepdims]
-            szd = szA[d]
-            strdshat = strdsA[keepdims]
-            strdd = strdsA[d]
-            if isempty(szhat)
-                szhat = [1]
-                strdshat = [1]
-            end
-            @inbounds @forcartesian c szhat begin
-                coloffset = offset(c, strdshat)  # offset for the remaining dimensions
-                for i = 1:n1 A[i+strdd+coloffset] -= a1*A[i+coloffset] end
-                for i = 1:n1 A[i+2strdd+coloffset] -= a1*A[i+strdd+coloffset] + a2*A[i+coloffset] end
-                for j = 3:szd-1
-                    jj = j*strdd+coloffset
-                    for i = jj+1:jj+n1 A[i] -= a1*A[i-strdd] + a2*A[i-2strdd] + a3*A[i-3strdd] end
-                end
-                copytail!(x, A, coloffset, strdd, szd)
-                A_mul_B!(vstart, M, x)
-                for i = 1:n1 A[i+(szd-1)*strdd+coloffset] = vstart[1,i] end
-                for i = 1:n1 A[i+(szd-2)*strdd+coloffset] -= a1*vstart[1,i]   + a2*vstart[2,i] + a3*vstart[3,i] end
-                for i = 1:n1 A[i+(szd-3)*strdd+coloffset] -= a1*A[i+(szd-2)*strdd+coloffset] + a2*vstart[1,i] + a3*vstart[2,i] end
-                for j = szd-4:-1:0
-                    jj = j*strdd+coloffset
-                    for i = jj+1:jj+n1 A[i] -= a1*A[i+strdd] + a2*A[i+2strdd] + a3*A[i+3strdd] end
-                end
-            end
-        end
-        @inbounds for i = 1:length(A)
-            A[i] *= B
-        end
-    end
-    A
-end
-
-function offset(c::Vector{Int}, strds::Vector{Int})
-    o = 0
-    for i = 1:length(c)
-        o += (c[i]-1)*strds[i]
-    end
-    o
-end
-
-function copytail!(dest, A, coloffset, strd, len)
-    for j = 1:3
-        for i = 1:size(dest, 2)
-            tmp = A[i + coloffset + (len-j)*strd]
-            dest[j,i] = tmp
-        end
-    end
-    dest
-end
-
-@generated function blob_LoG_helper1{T,N}(img_LoG::AbstractArray{T,N},
-                                          radii, x)
-    :(img_LoG[x...], radii[x[1]], (@ntuple $(N - 1) d->x[d+1])...)
-end
-
-function blob_LoG_helper2(img_LoG, radii, maxima)
-    return [blob_LoG_helper1(img_LoG, radii, x) for x in maxima]
-end
-
-"""
-`blob_LoG(img, sigmas) -> Vector{Tuple}`
-
-Find "blobs" in an N-D image using Lapacian of Gaussians at the specifed
-sigmas.  Returned are the local maxima's heights, radii, and spatial coordinates.
-
-See Lindeberg T (1998), "Feature Detection with Automatic Scale Selection",
+Lindeberg T (1998), "Feature Detection with Automatic Scale Selection",
 International Journal of Computer Vision, 30(2), 79–116.
 
-Note that only 2-D images are currently supported due to a limitation of `imfilter_LoG`.
+See also: [`BlobLoG`](@ref).
 """
-@generated function blob_LoG{T,N}(img::AbstractArray{T,N}, sigmas)
-    quote
-        img_LoG = Array(Float64, length(sigmas), size(img)...)
-        @inbounds for isigma in eachindex(sigmas)
-            img_LoG[isigma,:] = sigmas[isigma] * imfilter_LoG(img, sigmas[isigma])
-        end
-
-        radii = sqrt(2.0)*sigmas
-        maxima = findlocalmaxima(img_LoG, 1:ndims(img_LoG), (true, falses(N)...))
-        blob_LoG_helper2(img_LoG, radii, maxima)
+function blob_LoG{T,N}(img::AbstractArray{T,N}, σs, edges::Tuple{Vararg{Bool}}=(true, ntuple(d->false, Val{N})...))
+    sigmas = sort(σs)
+    img_LoG = Array(Float64, length(sigmas), size(img)...)
+    colons = ntuple(d->Colon(), Val{N})
+    @inbounds for isigma in eachindex(sigmas)
+        img_LoG[isigma,colons...] = (-sigmas[isigma]) * imfilter(img, Kernel.LoG(sigmas[isigma]))
     end
+    maxima = findlocalmaxima(img_LoG, 1:ndims(img_LoG), edges)
+    [BlobLoG(CartesianIndex(tail(x.I)), sigmas[x[1]], img_LoG[x]) for x in maxima]
 end
+blob_LoG{T,N}(img::AbstractArray{T,N}, σs, edges::Bool) = blob_LoG(img, σs, (edges, ntuple(d->edges,Val{N})...))
 
-findlocalextrema{T,N}(img::AbstractArray{T,N}, region, edges::Bool, order) = findlocalextrema(img, region, ntuple(d->edges,N), order)
+findlocalextrema{T,N}(img::AbstractArray{T,N}, region, edges::Bool, order) = findlocalextrema(img, region, ntuple(d->edges,Val{N}), order)
 
-@generated function findlocalextrema{T,N}(img::AbstractArray{T,N}, region::Union{Tuple{Int},Vector{Int},UnitRange{Int},Int}, edges::NTuple{N,Bool}, order::Base.Order.Ordering)
-    quote
-        issubset(region,1:ndims(img)) || throw(ArgumentError("Invalid region."))
-        extrema = Tuple{(@ntuple $N d->Int)...}[]
-        @inbounds @nloops $N i d->((1+!edges[d]):(size(img,d)-!edges[d])) begin
-            isextrema = true
-            img_I = (@nref $N img i)
-            @nloops $N j d->(in(d,region) ? (max(1,i_d-1):min(size(img,d),i_d+1)) : i_d) begin
-                (@nall $N d->(j_d == i_d)) && continue
-                if !Base.Order.lt(order, (@nref $N img j), img_I)
+function findlocalextrema{T<:Union{Gray,Number},N}(img::AbstractArray{T,N}, region::Union{Tuple{Int,Vararg{Int}},Vector{Int},UnitRange{Int},Int}, edges::NTuple{N,Bool}, order::Base.Order.Ordering)
+    issubset(region,1:ndims(img)) || throw(ArgumentError("invalid region"))
+    extrema = Array{CartesianIndex{N}}(0)
+    edgeoffset = CartesianIndex(map(!, edges))
+    R0 = CartesianRange(indices(img))
+    R = CartesianRange(R0.start+edgeoffset, R0.stop-edgeoffset)
+    Rinterior = CartesianRange(R0.start+1, R0.stop-1)
+    iregion = CartesianIndex(ntuple(d->d∈region, Val{N}))
+    Rregion = CartesianRange(-iregion, iregion)
+    z = zero(iregion)
+    for i in R
+        isextrema = true
+        img_i = img[i]
+        if i ∈ Rinterior
+            # If i is in the interior, we don't have to worry about i+j being out-of-bounds
+            for j in Rregion
+                j == z && continue
+                if !Base.Order.lt(order, img[i+j], img_i)
                     isextrema = false
                     break
                 end
             end
-            isextrema && push!(extrema, (@ntuple $N d->(i_d)))
+        else
+            for j in Rregion
+                (j == z || i+j ∉ R0) && continue
+                if !Base.Order.lt(order, img[i+j], img_i)
+                    isextrema = false
+                    break
+                end
+            end
         end
-        extrema
+        isextrema && push!(extrema, i)
     end
+    extrema
 end
 
 """
@@ -1115,104 +486,6 @@ Like `findlocalmaxima`, but returns the coordinates of the smallest elements.
 findlocalminima(img::AbstractArray, region=coords_spatial(img), edges=true) =
         findlocalextrema(img, region, edges, Base.Order.Reverse)
 
-# Laplacian of Gaussian filter
-# Separable implementation from Huertas and Medioni,
-# IEEE Trans. Pat. Anal. Mach. Int., PAMI-8, 651, (1986)
-"""
-```
-imgf = imfilter_LoG(img, sigma, [border])
-```
-
-filters a 2D image with a Laplacian of Gaussian of the specified width. `sigma`
-may be a vector with one value per array dimension, or may be a single scalar
-value for uniform filtering in both dimensions.  Uses the Huertas and Medioni
-separable algorithm.
-"""
-function imfilter_LoG{T}(img::AbstractArray{T,2}, σ::Vector, border="replicate")
-    # Limited to 2D for now.
-    # See Sage D, Neumann F, Hediger F, Gasser S, Unser M.
-    # Image Processing, IEEE Transactions on. (2005) 14(9):1372-1383.
-    # for 3D.
-
-    # Set up 1D kernels
-    @assert length(σ) == 2
-    σx, σy = σ[1], σ[2]
-    h1(ξ, σ) = sqrt(1/(2π*σ^4))*(1 - ξ^2/σ^2)exp(-ξ^2/(2σ^2))
-    h2(ξ, σ) = sqrt(1/(2π*σ^4))*exp(-ξ^2/(2σ^2))
-
-    w = 8.5σx
-    kh1x = Float64[h1(i, σx) for i = -floor(w/2):floor(w/2)]
-    kh2x = Float64[h2(i, σx) for i = -floor(w/2):floor(w/2)]
-
-    w = 8.5σy
-    kh1y = Float64[h1(i, σy) for i = -floor(w/2):floor(w/2)]
-    kh2y = Float64[h2(i, σy) for i = -floor(w/2):floor(w/2)]
-
-    # Set up padding index lists
-    kernlenx = length(kh1x)
-    prepad  = div(kernlenx - 1, 2)
-    postpad = div(kernlenx, 2)
-    Ix = padindexes(img, 1, prepad, postpad, border)
-
-    kernleny = length(kh1y)
-    prepad  = div(kernleny - 1, 2)
-    postpad = div(kernleny, 2)
-    Iy = padindexes(img, 2, prepad, postpad, border)
-
-    sz = size(img)
-    # Store intermediate result in a transposed array
-    # Allows column-major second stage filtering
-    img1 = Array(Float64, (sz[2], sz[1]))
-    img2 = Array(Float64, (sz[2], sz[1]))
-    for j in 1:sz[2]
-        for i in 1:sz[1]
-            tmp1, tmp2 = 0.0, 0.0
-            for k in 1:kernlenx
-                @inbounds tmp1 += kh1x[k] * img[Ix[i + k - 1], j]
-                @inbounds tmp2 += kh2x[k] * img[Ix[i + k - 1], j]
-            end
-            @inbounds img1[j, i] = tmp1 # Note the transpose
-            @inbounds img2[j, i] = tmp2
-        end
-    end
-
-    img12 = Array(Float64, sz) # Original image dims here
-    img21 = Array(Float64, sz)
-    for j in 1:sz[1]
-        for i in 1:sz[2]
-            tmp12, tmp21 = 0.0, 0.0
-            for k in 1:kernleny
-                @inbounds tmp12 += kh2y[k] * img1[Iy[i + k - 1], j]
-                @inbounds tmp21 += kh1y[k] * img2[Iy[i + k - 1], j]
-            end
-            @inbounds img12[j, i] = tmp12 # Transpose back to original dims
-            @inbounds img21[j, i] = tmp21
-        end
-    end
-    copyproperties(img, img12 + img21)
-end
-
-imfilter_LoG{T}(img::AbstractArray{T,2}, σ::Real, border="replicate") =
-    imfilter_LoG(img::AbstractArray{T,2}, [σ, σ], border)
-
-function padindexes{T,n}(img::AbstractArray{T,n}, dim, prepad, postpad, border::AbstractString)
-    M = size(img, dim)
-    I = Array(Int, M + prepad + postpad)
-    I = [(1 - prepad):(M + postpad);]
-    @compat if border == "replicate"
-        I = min.(max.(I, 1), M)
-    elseif border == "circular"
-        I = 1 .+ mod.(I .- 1, M)
-    elseif border == "symmetric"
-        I = [1:M; M:-1:1][1 .+ mod.(I .- 1, 2 * M)]
-    elseif border == "reflect"
-        I = [1:M; M-1:-1:2][1 .+ mod.(I .- 1, 2 * M - 2)]
-    else
-        error("unknown border condition")
-    end
-    I
-end
-
 ### restrict, for reducing the image size by 2-fold
 # This properly anti-aliases. The only "oddity" is that edges tend towards zero under
 # repeated iteration.
@@ -1228,41 +501,56 @@ along the dimensions listed in `region`, or all spatial coordinates if
 `region` is not specified.  It anti-aliases the image as it goes, so
 is better than a naive summation over 2x2 blocks.
 """
-restrict(img::AbstractImageDirect, ::Tuple{}) = img
+restrict(img::AbstractArray, ::Tuple{}) = img
+restrict(img::AxisArray, ::Tuple{}) = img
+restrict(img::ImageMeta, ::Tuple{}) = img
 
-function restrict(img::AbstractImageDirect, region::Union{Dims, Vector{Int}}=coords_spatial(img))
-    A = data(img)
-    for dim in region
-        A = _restrict(A, dim)
-    end
-    props = copy(properties(img))
-    ps = copy(pixelspacing(img))
-    ind = findin(coords_spatial(img), region)
-    ps[ind] *= 2
-    props["pixelspacing"] = ps
-    Image(A, props)
+typealias RegionType Union{Dims,Vector{Int}}
+
+function restrict(img::ImageMeta, region::RegionType=coords_spatial(img))
+    shareproperties(img, restrict(data(img), region))
 end
-function restrict(A::AbstractArray, region::Union{Dims, Vector{Int}}=coords_spatial(A))
+
+function restrict{T,N}(img::AxisArray{T,N}, region::RegionType=coords_spatial(img))
+    inregion = falses(ndims(img))
+    inregion[[region...]] = true
+    inregiont = (inregion...,)::NTuple{N,Bool}
+    AxisArray(restrict(img.data, region), map(modax, axes(img), inregiont))
+end
+
+function restrict{Ax}(img::Union{AxisArray,ImageMetaAxis}, ::Type{Ax})
+    A = _restrict(img.data, axisdim(img, Ax))
+    AxisArray(A, replace_axis(modax(img[Ax]), axes(img)))
+end
+
+replace_axis(newax, axs) = _replace_axis(newax, axnametype(newax), axs...)
+@inline _replace_axis{Ax}(newax, ::Type{Ax}, ax::Ax, axs...) = (newax, _replace_axis(newax, Ax, axs...)...)
+@inline _replace_axis{Ax}(newax, ::Type{Ax}, ax, axs...) = (ax, _replace_axis(newax, Ax, axs...)...)
+_replace_axis{Ax}(newax, ::Type{Ax}) = ()
+
+axnametype{name}(ax::Axis{name}) = Axis{name}
+
+function modax(ax)
+    v = ax.val
+    veven = v[1]-step(v)/2 : 2*step(v) : v[end]+step(v)/2
+    return ax(isodd(length(v)) ? oftype(veven, v[1:2:end]) : veven)
+end
+
+modax(ax, inregion::Bool) = inregion ? modax(ax) : ax
+
+function restrict(A::AbstractArray, region::RegionType=coords_spatial(A))
     for dim in region
         A = _restrict(A, dim)
     end
     A
 end
 
-function restrict{S<:String}(img::AbstractImageDirect, region::Union{Tuple{Vararg{String}}, Vector{S}})
-    so = spatialorder(img)
-    regioni = Int[]
-    for i = 1:length(region)
-        push!(regioni, require_dimindex(img, region[i], so))
-    end
-    restrict(img, regioni)
-end
-
-function _restrict(A, dim)
+function _restrict{T,N}(A::AbstractArray{T,N}, dim)
     if size(A, dim) <= 2
         return A
     end
-    out = Array(typeof(A[1]/4+A[2]/2), ntuple(i->i==dim?restrict_size(size(A,dim)):size(A,i), ndims(A)))
+    newsz = ntuple(i->i==dim?restrict_size(size(A,dim)):size(A,i), Val{N})
+    out = Array{typeof(A[1]/4+A[2]/2)}(newsz)
     restrict!(out, A, dim)
     out
 end
@@ -1487,7 +775,7 @@ default is 8-connectivity in 2d, 27-connectivity in 3d, etc. You can specify the
 list of dimensions that you want to include in the connectivity, e.g., `region =
 [1,2]` would exclude the third dimension from filtering.
 """
-dilate(img::AbstractImageDirect, region=coords_spatial(img)) = shareproperties(img, dilate!(copy(data(img)), region))
+dilate(img::ImageMeta, region=coords_spatial(img)) = shareproperties(img, dilate!(copy(data(img)), region))
 """
 ```
 imge = erode(img, [region])
@@ -1498,36 +786,42 @@ default is 8-connectivity in 2d, 27-connectivity in 3d, etc. You can specify the
 list of dimensions that you want to include in the connectivity, e.g., `region =
 [1,2]` would exclude the third dimension from filtering.
 """
-erode(img::AbstractImageDirect, region=coords_spatial(img)) = shareproperties(img, erode!(copy(data(img)), region))
+erode(img::ImageMeta, region=coords_spatial(img)) = shareproperties(img, erode!(copy(data(img)), region))
 dilate(img::AbstractArray, region=coords_spatial(img)) = dilate!(copy(img), region)
 erode(img::AbstractArray, region=coords_spatial(img)) = erode!(copy(img), region)
 
 dilate!(maxfilt, region=coords_spatial(maxfilt)) = extremefilt!(data(maxfilt), Base.Order.Forward, region)
 erode!(minfilt, region=coords_spatial(minfilt)) = extremefilt!(data(minfilt), Base.Order.Reverse, region)
-function extremefilt!(extrfilt::AbstractArray, order::Ordering, region=coords_spatial(extrfilt))
-    for d = 1:ndims(extrfilt)
-        if size(extrfilt, d) == 1 || !in(d, region)
+function extremefilt!(A::AbstractArray, select::Function, region=coords_spatial(A))
+    inds = indices(A)
+    for d = 1:ndims(A)
+        if size(A, d) == 1 || !in(d, region)
             continue
         end
-        sz = [size(extrfilt,i) for i = 1:ndims(extrfilt)]
-        s = stride(extrfilt, d)
-        sz[d] = 1
-        @forcartesian i sz begin
-            k = cartesian_linear(extrfilt, i)
-            a2 = extrfilt[k]
-            a3 = extrfilt[k+s]
-            extrfilt[k] = extr(order, a2, a3)
-            for l = 2:size(extrfilt,d)-1
-                k += s
-                a1 = a2
-                a2 = a3
-                a3 = extrfilt[k+s]
-                extrfilt[k] = extr(order, a1, a2, a3)
-            end
-            extrfilt[k+s] = extr(order, a2, a3)
-        end
+        Rpre = CartesianRange(inds[1:d-1])
+        Rpost = CartesianRange(inds[d+1:end])
+        _extremefilt!(A, select, Rpre, inds[d], Rpost)
     end
-    extrfilt
+    A
+end
+
+@noinline function _extremefilt!(A, select, Rpre, inds, Rpost)
+    # TODO: improve the cache efficiency
+    for Ipost in Rpost, Ipre in Rpre
+        # first element along dim
+        i1 = first(inds)
+        a2, a3 = A[Ipre, i1, Ipost], A[Ipre, i1+1, Ipost]
+        A[Ipre, i1, Ipost] = select(a2, a3)
+        # interior along dim
+        for i = i1+2:last(inds)
+            a1, a2 = a2, a3
+            a3 = A[Ipre, i, Ipost]
+            A[Ipre, i-1, Ipost] = select(select(a1, a2), a3)
+        end
+        # last element along dim
+        A[Ipre, last(inds), Ipost] = select(a2, a3)
+    end
+    A
 end
 
 """
@@ -1582,196 +876,6 @@ extr(order::Ordering, x::RGB, y::RGB, z::RGB) = RGB(extr(order, x.r, y.r, z.r), 
 
 extr(order::Ordering, x::Color, y::Color) = extr(order, convert(RGB, x), convert(RGB, y))
 extr(order::Ordering, x::Color, y::Color, z::Color) = extr(order, convert(RGB, x), convert(RGB, y), convert(RGB, z))
-
-
-
-# Min max filter
-
-# This is a port of the Lemire min max filter as implemented by Bruno Luong
-# http://arxiv.org/abs/cs.DS/0610046
-# http://lemire.me/
-# http://www.mathworks.com/matlabcentral/fileexchange/24705-min-max-filter
-
-type Wedge{A <: AbstractArray}
-    buffer::A
-    size::Int
-    n::Int
-    first::Int
-    last::Int
-    mxn::Int
-end
-
-
-for N = 2:4
-    @eval begin
-    function extrema_filter{T <: Number}(A::Array{T, $N}, window::Array{Int, 1})
-
-        maxval_temp = copy(A); minval_temp = copy(A)
-
-        for dim = 1:$N
-
-            # For all but the last dimension
-            @nloops $(N-1) i maxval_temp begin
-
-                # Create index for full array (fa) length
-                @nexprs $(N)   j->(fa_{j} = 1:size(maxval_temp)[j])
-                @nexprs $(N-1) j->(fa_{j} = i_j)
-
-                # Create index for short array (sa) length
-                @nexprs $(N)   j->(sa_{j} = 1:size(maxval_temp)[j] - window[dim] + 1)
-                @nexprs $(N-1) j->(sa_{j} = i_j)
-
-                # Filter the last dimension
-                (@nref $N minval_temp sa) = min_filter(vec( @nref $N minval_temp fa), window[dim])
-                (@nref $N maxval_temp sa) = max_filter(vec( @nref $N maxval_temp fa), window[dim])
-
-            end
-
-            # Circular shift the dimensions
-            perm_idx = @compat mod.(1:$N, $N) .+ 1
-            maxval_temp = permutedims(maxval_temp, perm_idx)
-            minval_temp = permutedims(minval_temp, perm_idx)
-
-        end
-
-        # The dimensions to extract
-        @nexprs $N j->(a_{j} = 1:size(A, j)-window[j]+1)
-
-        # Extract set dimensions
-        maxval_out = @nref $N maxval_temp a
-        minval_out = @nref $N minval_temp a
-
-        return minval_out, maxval_out
-    end
-    end
-end
-
-
-function extrema_filter{T <: Number}(a::AbstractArray{T}, window::Int)
-
-    n = length(a)
-
-    # Initialise the output variables
-    # This is the running minimum and maximum over the specified window length
-    minval = zeros(T, 1, n-window+1)
-    maxval = zeros(T, 1, n-window+1)
-
-    # Initialise the internal wedges
-    # U[1], L[1] are the location of the global maximum and minimum
-    # U[2], L[2] are the maximum and minimum over (U1, inf)
-    L = Wedge(zeros(Int,1,window+1), window+1, 0, 1, 0, 0)          # Min
-    U = Wedge(zeros(Int,1,window+1), window+1, 0, 1, 0, 0)
-
-    for i = 2:n
-        if i > window
-            if !wedgeisempty(U)
-                maxval[i-window] = a[getfirst(U)]
-            else
-                maxval[i-window] = a[i-1]
-            end
-            if !wedgeisempty(L)
-                minval[i-window] = a[getfirst(L)]
-            else
-                minval[i-window] = a[i-1]
-            end
-        end # window
-
-        if a[i] > a[i-1]
-            pushback!(L, i-1)
-            if i==window+getfirst(L); L=popfront(L); end
-            while !wedgeisempty(U)
-                if a[i] <= a[getlast(U)]
-                    if i == window+getfirst(U); U = popfront(U); end
-                    break
-                end
-                U = popback(U)
-            end
-
-        else
-
-            pushback!(U, i-1)
-            if i==window+getfirst(U); U=popfront(U); end
-
-            while !wedgeisempty(L)
-                if a[i] >= a[getlast(L)]
-                    if i == window+getfirst(L); L = popfront(L); end
-                    break
-                end
-                L = popback(L)
-            end
-
-        end  # a>a-1
-
-    end # for i
-
-    i = n+1
-    if !wedgeisempty(U)
-        maxval[i-window] = a[getfirst(U)]
-    else
-        maxval[i-window] = a[i-1]
-    end
-
-    if !wedgeisempty(L)
-        minval[i-window] = a[getfirst(L)]
-    else
-        minval[i-window] = a[i-1]
-    end
-
-    return minval, maxval
-end
-
-
-function min_filter(a::AbstractArray, window::Int)
-
-    minval, maxval = extrema_filter(a, window)
-
-    return minval
-end
-
-
-function max_filter(a::AbstractArray, window::Int)
-
-    minval, maxval = extrema_filter(a, window)
-
-    return maxval
-end
-
-
-function wedgeisempty(X::Wedge)
-    X.n <= 0
-end
-
-function pushback!(X::Wedge, v)
-    X.last += 1
-    if X.last > X.size
-        X.last = 1
-    end
-    X.buffer[X.last] = v
-    X.n = X.n+1
-    X.mxn = max(X.mxn, X.n)
-end
-
-function getfirst(X::Wedge)
-    X.buffer[X.first]
-end
-
-function getlast(X::Wedge)
-    X.buffer[X.last]
-end
-
-function popfront(X::Wedge)
-    X.n = X.n-1
-    X.first = mod(X.first, X.size) + 1
-    return X
-end
-
-function popback(X::Wedge)
-    X.n = X.n-1
-    X.last = mod(X.last-2, X.size) + 1
-    return X
-end
-
-
 
 
 # phantom images

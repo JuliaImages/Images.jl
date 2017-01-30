@@ -1,7 +1,7 @@
 #### Elementwise manipulations (scaling/clamping/type conversion) ####
 
 # This file exists primarily to handle conversions for display and
-# saving to disk. Both of these operations require UFixed-valued
+# saving to disk. Both of these operations require Normed-valued
 # elements, but with display we always want to convert to 8-bit
 # whereas saving can handle 16-bit.
 # We also can't trust that user images are clamped properly.
@@ -41,7 +41,7 @@ end
 
 Base.map{C}(::ColorSaturated{C}, val::Union{Number,Gray}) = ifelse(val == 1, C(1,0,0), C(val,val,val))
 
-imgc = map(ColorSaturated{RGB{U8}}(), img)
+imgc = map(ColorSaturated{RGB{N0f8}}(), img)
 ```
 
 For pre-defined types see `MapNone`, `BitShift`, `ClampMinMax`, `ScaleMinMax`,
@@ -57,7 +57,12 @@ map(mapi::MapInfo, A::AbstractArray) = immap(mapi, A)
 
 ## MapNone
 "`MapNone(T)` is a `MapInfo` object that converts `x` to have type `T`."
-immutable MapNone{T} <: MapInfo{T}; end
+immutable MapNone{T} <: MapInfo{T}
+    function MapNone()
+        depwarn("MapNone is deprecated, use x->$T(x)", :MapNone)
+        new()
+    end
+end
 
 # Constructors
 MapNone{T}(::Type{T}) = MapNone{T}()
@@ -69,17 +74,17 @@ similar{T}(mapi::MapNone, ::Type{T}, ::Type) = MapNone{T}()
 # Implementation
 immap{T}(mapi::MapNone{T}, val::Union{Number,Colorant}) = convert(T, val)
 map1(mapi::Union{MapNone{RGB24}, MapNone{ARGB32}}, b::Bool) = ifelse(b, 0xffuf8, 0x00uf8)
-map1(mapi::Union{MapNone{RGB24},MapNone{ARGB32}}, val::Fractional) = convert(UFixed8, val)
+map1(mapi::Union{MapNone{RGB24},MapNone{ARGB32}}, val::Fractional) = convert(N0f8, val)
 map1{CT<:Colorant}(mapi::MapNone{CT}, val::Fractional) = convert(eltype(CT), val)
-
-immap{T<:Colorant}(mapi::MapNone{T}, img::AbstractImageIndexed{T}) = convert(Image{T}, img)
-immap{C<:Colorant}(mapi::MapNone{C}, img::AbstractImageDirect{C}) = img  # ambiguity resolution
-immap{T}(mapi::MapNone{T}, img::AbstractArray{T}) = img
 
 immap(::MapNone{UInt32}, val::RGB24)  = val.color
 immap(::MapNone{UInt32}, val::ARGB32) = val.color
 immap(::MapNone{RGB24},  val::UInt32) = reinterpret(RGB24,  val)
 immap(::MapNone{ARGB32}, val::UInt32) = reinterpret(ARGB32, val)
+
+# immap{T<:Colorant}(mapi::MapNone{T}, img::AbstractImageIndexed{T}) = convert(Image{T}, img)
+# immap{C<:Colorant}(mapi::MapNone{C}, img::AbstractImageDirect{C}) = img  # ambiguity resolution
+immap{T}(mapi::MapNone{T}, img::AbstractArray{T}) = img
 
 
 ## BitShift
@@ -89,14 +94,14 @@ It is particularly useful in converting high bit-depth images to 8-bit
 images for the purpose of display.  For example,
 
 ```
-map(BitShift(UFixed8, 8), 0xa2d5uf16) === 0xa2uf8
+map(BitShift(N0f8, 8), 0xa2d5uf16) === 0xa2uf8
 ```
 
-converts a `UFixed16` to the corresponding `UFixed8` by discarding the
+converts a `N0f16` to the corresponding `N0f8` by discarding the
 least significant byte.  However,
 
 ```
-map(BitShift(UFixed8, 7), 0xa2d5uf16) == 0xffuf8
+map(BitShift(N0f8, 7), 0xa2d5uf16) == 0xffuf8
 ```
 
 because `0xa2d5>>7 == 0x0145 > typemax(UInt8)`.
@@ -104,7 +109,12 @@ because `0xa2d5>>7 == 0x0145 > typemax(UInt8)`.
 When applicable, the main advantage of using `BitShift` rather than
 `MapNone` or `ScaleMinMax` is speed.
 """
-immutable BitShift{T,N} <: MapInfo{T} end
+immutable BitShift{T,N} <: MapInfo{T}
+    function BitShift()
+        depwarn("BitShift is deprecated, use x->x>>>$N", :BitShift)
+        new()
+    end
+end
 BitShift{T}(::Type{T}, n::Int) = BitShift{T,n}()  # note that this is not type-stable
 
 similar{S,T,N}(mapi::BitShift{S,N}, ::Type{T}, ::Type) = BitShift{T,N}()
@@ -112,12 +122,13 @@ similar{S,T,N}(mapi::BitShift{S,N}, ::Type{T}, ::Type) = BitShift{T,N}()
 # Implementation
 immutable BS{N} end
 _immap{T<:Unsigned,N}(::Type{T}, ::Type{BS{N}}, val::Unsigned) = (v = val>>>N; tm = oftype(val, typemax(T)); convert(T, ifelse(v > tm, tm, v)))
-_immap{T<:UFixed,N}(::Type{T}, ::Type{BS{N}}, val::UFixed) = reinterpret(T, _immap(FixedPointNumbers.rawtype(T), BS{N}, reinterpret(val)))
+_immap{T<:Normed,N}(::Type{T}, ::Type{BS{N}}, val::Normed) = reinterpret(T, _immap(FixedPointNumbers.rawtype(T), BS{N}, reinterpret(val)))
 immap{T<:Real,N}(mapi::BitShift{T,N}, val::Real) = _immap(T, BS{N}, val)
+immap{T<:Real,N}(mapi::BitShift{T,N}, val::Gray) = _immap(T, BS{N}, val.val)
 immap{T<:Real,N}(mapi::BitShift{Gray{T},N}, val::Gray) = Gray(_immap(T, BS{N}, val.val))
 map1{N}(mapi::Union{BitShift{RGB24,N},BitShift{ARGB32,N}}, val::Unsigned) = _immap(UInt8, BS{N}, val)
-map1{N}(mapi::Union{BitShift{RGB24,N},BitShift{ARGB32,N}}, val::UFixed) = _immap(UFixed8, BS{N}, val)
-map1{CT<:Colorant,N}(mapi::BitShift{CT,N}, val::UFixed) = _immap(eltype(CT), BS{N}, val)
+map1{N}(mapi::Union{BitShift{RGB24,N},BitShift{ARGB32,N}}, val::Normed) = _immap(N0f8, BS{N}, val)
+map1{CT<:Colorant,N}(mapi::BitShift{CT,N}, val::Normed) = _immap(eltype(CT), BS{N}, val)
 
 
 ## Clamp types
@@ -133,6 +144,11 @@ See also: `ClampMax`, `ClampMinMax`.
 """
 immutable ClampMin{T,From} <: AbstractClamp{T}
     min::From
+
+    function ClampMin(min)
+        depwarn("ClampMin is deprecated, use x->max(x, $min)", :ClampMin)
+        new(min)
+    end
 end
 ClampMin{T,From}(::Type{T}, min::From) = ClampMin{T,From}(min)
 ClampMin{T}(min::T) = ClampMin{T,T}(min)
@@ -144,12 +160,22 @@ See also: `ClampMin`, `ClampMinMax`.
 """
 immutable ClampMax{T,From} <: AbstractClamp{T}
     max::From
+
+    function ClampMax(max)
+        depwarn("ClampMax is deprecated, use x->min(x, $max)", :ClampMax)
+        new(max)
+    end
 end
 ClampMax{T,From}(::Type{T}, max::From) = ClampMax{T,From}(max)
 ClampMax{T}(max::T) = ClampMax{T,T}(max)
 immutable ClampMinMax{T,From} <: AbstractClamp{T}
     min::From
     max::From
+
+    function ClampMinMax(min, max)
+        depwarn("ClampMinMax is deprecated, use x->clamp(x, $min, $max)", :ClampMinMax)
+        new(min, max)
+    end
 end
 """
 `ClampMinMax(T, minvalue, maxvalue)` is a `MapInfo` object that clamps
@@ -165,10 +191,15 @@ ClampMinMax{T}(min::T, max::T) = ClampMinMax{T,T}(min,max)
 gamut.  For example,
 
 ```
-map(Clamp(RGB{U8}), RGB(1.2, -0.4, 0.6)) === RGB{U8}(1, 0, 0.6)
+map(Clamp(RGB{N0f8}), RGB(1.2, -0.4, 0.6)) === RGB{N0f8}(1, 0, 0.6)
 ```
 """
-immutable Clamp{T} <: AbstractClamp{T} end
+immutable Clamp{T} <: AbstractClamp{T}
+    function Clamp()
+        depwarn("Clamp is deprecated, use a colorspace-specific function (clamp01 for gray/RGB)", :Clamp)
+        new()
+    end
+end
 Clamp{T}(::Type{T}) = Clamp{T}()
 
 similar{T,F}(mapi::ClampMin, ::Type{T}, ::Type{F}) = ClampMin{T,F}(convert(F, mapi.min))
@@ -189,9 +220,9 @@ immap{T<:Fractional,F<:Fractional}(mapi::ClampMinMax{Gray{T},F}, val::Gray{F}) =
 immap{T<:Fractional,F<:Fractional}(mapi::ClampMin{Gray{T},Gray{F}}, val::Gray{F}) = convert(Gray{T}, max(val, mapi.min))
 immap{T<:Fractional,F<:Fractional}(mapi::ClampMax{Gray{T},Gray{F}}, val::Gray{F}) = convert(Gray{T}, min(val, mapi.max))
 immap{T<:Fractional,F<:Fractional}(mapi::ClampMinMax{Gray{T},Gray{F}}, val::Gray{F}) = convert(Gray{T},min(max(val, mapi.min), mapi.max))
-map1{T<:Union{RGB24,ARGB32},F<:Fractional}(mapi::ClampMin{T,F}, val::F) = convert(UFixed8, max(val, mapi.min))
-map1{T<:Union{RGB24,ARGB32},F<:Fractional}(mapi::ClampMax{T,F}, val::F) = convert(UFixed8, min(val, mapi.max))
-map1{T<:Union{RGB24,ARGB32},F<:Fractional}(mapi::ClampMinMax{T,F}, val::F) = convert(UFixed8,min(max(val, mapi.min), mapi.max))
+map1{T<:Union{RGB24,ARGB32},F<:Fractional}(mapi::ClampMin{T,F}, val::F) = convert(N0f8, max(val, mapi.min))
+map1{T<:Union{RGB24,ARGB32},F<:Fractional}(mapi::ClampMax{T,F}, val::F) = convert(N0f8, min(val, mapi.max))
+map1{T<:Union{RGB24,ARGB32},F<:Fractional}(mapi::ClampMinMax{T,F}, val::F) = convert(N0f8,min(max(val, mapi.min), mapi.max))
 map1{CT<:Colorant,F<:Fractional}(mapi::ClampMin{CT,F}, val::F) = convert(eltype(CT), max(val, mapi.min))
 map1{CT<:Colorant,F<:Fractional}(mapi::ClampMax{CT,F}, val::F) = convert(eltype(CT), min(val, mapi.max))
 map1{CT<:Colorant,F<:Fractional}(mapi::ClampMinMax{CT,F}, val::F) = convert(eltype(CT), min(max(val, mapi.min), mapi.max))
@@ -203,13 +234,10 @@ map1{CT<:AbstractRGB}(::Clamp{CT}, val::Real) = clamp01(eltype(CT), val)
 map1{P<:TransparentRGB}(::Clamp{P}, val::Real) = clamp01(eltype(P), val)
 
 # Also available as a stand-alone function
-clamp01{T}(::Type{T}, x::Real) = convert(T, min(max(x, zero(x)), one(x)))
-clamp01(x::Real) = clamp01(typeof(x), x)
-clamp01(x::Colorant) = clamp01(typeof(x), x)
-clamp01{Cdest<:AbstractRGB   }(::Type{Cdest}, x::AbstractRGB)    = (To = eltype(Cdest);
-    Cdest(clamp01(To, red(x)), clamp01(To, green(x)), clamp01(To, blue(x))))
-clamp01{Pdest<:TransparentRGB}(::Type{Pdest}, x::TransparentRGB) = (To = eltype(Pdest);
-    Pdest(clamp01(To, red(x)), clamp01(To, green(x)), clamp01(To, blue(x)), clamp01(To, alpha(x))))
+function ImageCore.clamp01{T}(::Type{T}, x::Real)
+    depwarn("clamp01(T, x) is deprecated, use x->T(clamp01(x))", :clamp01)
+    T(clamp01(x))
+end
 
 # clamp is generic for any colorspace; this version does the right thing for any RGB type
 clamp(x::Union{AbstractRGB, TransparentRGB}) = clamp01(x)
@@ -234,6 +262,7 @@ immutable ScaleMinMax{To,From,S<:AbstractFloat} <: MapInfo{To}
     s::S
 
     function ScaleMinMax(min, max, s)
+        depwarn("ScaleMinMax is deprecated, use scaleminmax([$To,] $min, $max)", :ScaleMinMax)
         min >= max && error("min must be smaller than max")
         new(min, max, s)
     end
@@ -251,23 +280,24 @@ ScaleMinMax{To,From<:Real}(::Type{To}, img::AbstractArray{Gray{From}}, mn::Real,
 ScaleMinMax{To,From<:Real,R<:Real}(::Type{To}, img::AbstractArray{From}, mn::Gray{R}, mx::Gray{R}) = ScaleMinMax(To, convert(From,mn.val), convert(From,mx.val), 1.0f0/(convert(Float32, convert(From,mx.val))-convert(Float32, convert(From,mn.val))))
 ScaleMinMax{To,From<:Real,R<:Real}(::Type{To}, img::AbstractArray{Gray{From}}, mn::Gray{R}, mx::Gray{R}) = ScaleMinMax(To, convert(From,mn.val), convert(From,mx.val), 1.0f0/(convert(Float32, convert(From,mx.val))-convert(Float32, convert(From,mn.val))))
 ScaleMinMax{To}(::Type{To}, img::AbstractArray) = ScaleMinMax(To, img, minfinite(img), maxfinite(img))
-ScaleMinMax{To,CV<:AbstractRGB}(::Type{To}, img::AbstractArray{CV}) = (imgr = reinterpret(eltype(CV), img); ScaleMinMax(To, minfinite(imgr), maxfinite(imgr)))
+ScaleMinMax{To<:Real,CV<:AbstractRGB}(::Type{To}, img::AbstractArray{CV}) = (imgr = channelview(img); ScaleMinMax(To, minfinite(imgr), maxfinite(imgr)))
+ScaleMinMax{To<:Colorant,CV<:AbstractRGB}(::Type{To}, img::AbstractArray{CV}) = (imgr = channelview(img); ScaleMinMax(To, minfinite(imgr), maxfinite(imgr)))
 
 similar{T,F,To,From,S}(mapi::ScaleMinMax{To,From,S}, ::Type{T}, ::Type{F}) = ScaleMinMax{T,F,S}(convert(F,mapi.min), convert(F.mapi.max), mapi.s)
 
 # Implementation
-function immap{To<:Union{Real,AbstractGray},From<:Union{Real,AbstractGray}}(mapi::ScaleMinMax{To,From}, val::From)
+function immap{To<:RealLike,From<:RealLike}(mapi::ScaleMinMax{To,From}, val::Union{Real,Colorant})
     t = clamp(gray(val), gray(mapi.min), gray(mapi.max))
     f = mapi.s*t - mapi.s*mapi.min  # better than mapi.s*(t-mapi.min) (overflow)
     convertsafely(To, f)
 end
-function immap{To<:Union{Real,AbstractGray},From<:Union{Real,AbstractGray}}(mapi::ScaleMinMax{To,From}, val::Union{Real,Colorant})
-    immap(mapi, convert(From, val))
-end
+# function immap{To<:RealLike,From<:RealLike}(mapi::ScaleMinMax{To,From}, val::Union{Real,Colorant})
+#     immap(mapi, convert(From, val))
+# end
 function map1{To<:Union{RGB24,ARGB32},From<:Real}(mapi::ScaleMinMax{To,From}, val::From)
     t = clamp(val, mapi.min, mapi.max)
     f = mapi.s*t - mapi.s*mapi.min
-    convert(UFixed8, f)
+    convert(N0f8, f)
 end
 function map1{To<:Colorant,From<:Real}(mapi::ScaleMinMax{To,From}, val::From)
     t = clamp(val, mapi.min, mapi.max)
@@ -293,6 +323,11 @@ color proportional to the clamped absolute value.
 """
 immutable ScaleSigned{T, S<:AbstractFloat} <: MapInfo{T}
     s::S
+
+    function ScaleSigned(s)
+        depwarn("ScaleSigned is deprecated, use scalesigned", :ScaleSigned)
+        new(s)
+    end
 end
 ScaleSigned{T}(::Type{T}, s::AbstractFloat) = ScaleSigned{T, typeof(s)}(s)
 
@@ -304,8 +339,8 @@ similar{T,To,S}(mapi::ScaleSigned{To,S}, ::Type{T}, ::Type) = ScaleSigned{T,S}(m
 immap{T}(mapi::ScaleSigned{T}, val::Real) = convert(T, clamppm(mapi.s*val))
 function immap{C<:AbstractRGB}(mapi::ScaleSigned{C}, val::Real)
     x = clamppm(mapi.s*val)
-    g = UFixed8(abs(x))
-    ifelse(x >= 0, C(g, zero(UFixed8), g), C(zero(UFixed8), g, zero(UFixed8)))
+    g = N0f8(abs(x))
+    ifelse(x >= 0, C(g, zero(N0f8), g), C(zero(N0f8), g, zero(N0f8)))
 end
 
 clamppm(x::Real) = ifelse(x >= 0, min(x, one(x)), max(x, -one(x)))
@@ -319,9 +354,14 @@ same algorithm for `ScaleMinMax`. When displaying a movie, the min/max
 will be recalculated for each frame, so this can result in
 inconsistent contrast scaling.
 """
-immutable ScaleAutoMinMax{T} <: MapInfo{T} end
+immutable ScaleAutoMinMax{T} <: MapInfo{T}
+    function ScaleAutoMinMax()
+        depwarn("ScaleAutoMinMax is deprecated, use scaleminmax as an argument to takemap", :ScaleAutoMinMax)
+        new()
+    end
+end
 ScaleAutoMinMax{T}(::Type{T}) = ScaleAutoMinMax{T}()
-ScaleAutoMinMax() = ScaleAutoMinMax{UFixed8}()
+ScaleAutoMinMax() = ScaleAutoMinMax{N0f8}()
 
 similar{T}(mapi::ScaleAutoMinMax, ::Type{T}, ::Type) = ScaleAutoMinMax{T}()
 
@@ -335,6 +375,10 @@ See also: `ScaleMinMax`.
 """
 immutable ScaleMinMaxNaN{To,From,S} <: MapInfo{To}
     smm::ScaleMinMax{To,From,S}
+    function ScaleMinMaxNaN(smm)
+        depwarn("ScaleMinMaxNaN is deprecated, use scaleminmax in conjunction with clamp01nan or x->ifelse(isnan(x), zero(x), x)", :ScaleMinMaxNaN)
+        new(smm)
+    end
 end
 
 """
@@ -342,7 +386,12 @@ end
 that clamps grayscale or color pixels to the interval `[0,1]`, sending
 `NaN` pixels to zero.
 """
-immutable Clamp01NaN{T} <: MapInfo{T} end
+immutable Clamp01NaN{T} <: MapInfo{T}
+    function Clamp01NaN()
+        depwarn("Clamp01NaN is deprecated, use clamp01nan", :Clamp01NaN)
+        new()
+    end
+end
 
 Clamp01NaN{T}(A::AbstractArray{T}) = Clamp01NaN{T}()
 
@@ -378,11 +427,11 @@ for SI in (MapInfo, AbstractClamp)
         @eval begin
             # Grayscale and GrayAlpha inputs
             immap(mapi::$ST{RGB24}, g::Gray) = immap(mapi, g.val)
-            immap(mapi::$ST{RGB24}, g::Real) = (x = map1(mapi, g); convert(RGB24, RGB{UFixed8}(x,x,x)))
+            immap(mapi::$ST{RGB24}, g::Real) = (x = map1(mapi, g); convert(RGB24, RGB{N0f8}(x,x,x)))
             function immap(mapi::$ST{RGB24}, g::AbstractFloat)
                 if isfinite(g)
                     x = map1(mapi, g)
-                    convert(RGB24, RGB{UFixed8}(x,x,x))
+                    convert(RGB24, RGB{N0f8}(x,x,x))
                 else
                     RGB24(0)
                 end
@@ -391,11 +440,11 @@ for SI in (MapInfo, AbstractClamp)
             immap(mapi::$ST{ARGB32}, g::Gray) = immap(mapi, g.val)
             function immap(mapi::$ST{ARGB32}, g::Real)
                 x = map1(mapi, g)
-                convert(ARGB32, ARGB{UFixed8}(x,x,x,0xffuf8))
+                convert(ARGB32, ARGB{N0f8}(x,x,x,0xffuf8))
             end
             function immap{G<:Gray}(mapi::$ST{ARGB32}, g::TransparentColor{G})
                 x = map1(mapi, gray(g))
-                convert(ARGB32, ARGB{UFixed8}(x,x,x,map1(mapi, g.alpha)))
+                convert(ARGB32, ARGB{N0f8}(x,x,x,map1(mapi, g.alpha)))
             end
         end
         for O in (:RGB, :BGR)
@@ -426,15 +475,15 @@ for SI in (MapInfo, AbstractClamp)
         @eval begin
             # AbstractRGB and abstract ARGB inputs
             immap(mapi::$ST{RGB24}, rgb::AbstractRGB) =
-                convert(RGB24, RGB{UFixed8}(map1(mapi, red(rgb)), map1(mapi, green(rgb)), map1(mapi, blue(rgb))))
+                convert(RGB24, RGB{N0f8}(map1(mapi, red(rgb)), map1(mapi, green(rgb)), map1(mapi, blue(rgb))))
             immap{C<:AbstractRGB, TC}(mapi::$ST{RGB24}, argb::TransparentColor{C,TC}) =
-                convert(RGB24, RGB{UFixed8}(map1(mapi, red(argb)), map1(mapi, green(argb)),
+                convert(RGB24, RGB{N0f8}(map1(mapi, red(argb)), map1(mapi, green(argb)),
                                             map1(mapi, blue(argb))))
             immap{C<:AbstractRGB, TC}(mapi::$ST{ARGB32}, argb::TransparentColor{C,TC}) =
-                convert(ARGB32, ARGB{UFixed8}(map1(mapi, red(argb)), map1(mapi, green(argb)),
+                convert(ARGB32, ARGB{N0f8}(map1(mapi, red(argb)), map1(mapi, green(argb)),
                                               map1(mapi, blue(argb)), map1(mapi, alpha(argb))))
             immap(mapi::$ST{ARGB32}, rgb::AbstractRGB) =
-                convert(ARGB32, ARGB{UFixed8}(map1(mapi, red(rgb)), map1(mapi, green(rgb)), map1(mapi, blue(rgb))))
+                convert(ARGB32, ARGB{N0f8}(map1(mapi, red(rgb)), map1(mapi, green(rgb)), map1(mapi, blue(rgb))))
         end
         for O in (:RGB, :BGR)
             @eval begin
@@ -449,10 +498,10 @@ for SI in (MapInfo, AbstractClamp)
                 immap{T, C<:AbstractRGB, TC}(mapi::$ST{$OA{T}}, argb::TransparentColor{C,TC}) =
                     $OA{T}(map1(mapi, red(argb)), map1(mapi, green(argb)),
                             map1(mapi, blue(argb)), map1(mapi, alpha(argb)))
-                immap{T}(mapi::$ST{$OA{T}}, argb::ARGB32) = immap(mapi, convert(RGBA{UFixed8}, argb))
+                immap{T}(mapi::$ST{$OA{T}}, argb::ARGB32) = immap(mapi, convert(RGBA{N0f8}, argb))
                 immap{T}(mapi::$ST{$OA{T}}, rgb::AbstractRGB) =
                     $OA{T}(map1(mapi, red(rgb)), map1(mapi, green(rgb)), map1(mapi, blue(rgb)))
-                immap{T}(mapi::$ST{$OA{T}}, rgb::RGB24) = immap(mapi, convert(RGB{UFixed8}, argb))
+                immap{T}(mapi::$ST{$OA{T}}, rgb::RGB24) = immap(mapi, convert(RGB{N0f8}, argb))
             end
         end
     end
@@ -465,26 +514,26 @@ function immap{T}(mapi::MapInfo{T}, img::AbstractArray)
     map!(mapi, out, img)
 end
 
-immap{C<:Colorant,R<:Real}(mapi::MapNone{C}, img::AbstractImageDirect{R}) = mapcd(mapi, img)  # ambiguity resolution
-immap{C<:Colorant,R<:Real}(mapi::MapInfo{C}, img::AbstractImageDirect{R}) = mapcd(mapi, img)
-function mapcd{C<:Colorant,R<:Real}(mapi::MapInfo{C}, img::AbstractImageDirect{R})
-    # For this case we have to check whether color is defined along an array axis
-    cd = colordim(img)
-    if cd > 0
-        dims = setdiff(1:ndims(img), cd)
-        out = similar(img, C, size(img)[dims])
-        map!(mapi, out, img, TypeConst{cd})
-    else
-        out = similar(img, C)
-        map!(mapi, out, img)
-    end
-    out   # note this isn't type-stable
-end
+# immap{C<:Colorant,R<:Real}(mapi::MapNone{C}, img::AbstractImageDirect{R}) = mapcd(mapi, img)  # ambiguity resolution
+# immap{C<:Colorant,R<:Real}(mapi::MapInfo{C}, img::AbstractImageDirect{R}) = mapcd(mapi, img)
+# function mapcd{C<:Colorant,R<:Real}(mapi::MapInfo{C}, img::AbstractImageDirect{R})
+#     # For this case we have to check whether color is defined along an array axis
+#     cd = colordim(img)
+#     if cd > 0
+#         dims = setdiff(1:ndims(img), cd)
+#         out = similar(img, C, size(img)[dims])
+#         map!(mapi, out, img, Val{cd})
+#     else
+#         out = similar(img, C)
+#         map!(mapi, out, img)
+#     end
+#     out   # note this isn't type-stable
+# end
 
-function immap{T<:Colorant}(mapi::MapInfo{T}, img::AbstractImageIndexed)
-    out = Image(Array(T, size(img)), properties(img))
-    map!(mapi, out, img)
-end
+# function immap{T<:Colorant}(mapi::MapInfo{T}, img::AbstractImageIndexed)
+#     out = Image(Array(T, size(img)), properties(img))
+#     map!(mapi, out, img)
+# end
 
 map!{T,T1,T2,N}(mapi::MapInfo{T1}, out::AbstractArray{T,N}, img::AbstractArray{T2,N}) =
     _map_a!(mapi, out, img)
@@ -509,49 +558,24 @@ take(mapi::MapInfo, img::AbstractArray) = mapi
 take{T}(mapi::ScaleAutoMinMax{T}, img::AbstractArray) = ScaleMinMax(T, img)
 
 # Indexed images (colormaps)
-map!{T,T1,N}(mapi::MapInfo{T}, out::AbstractArray{T,N}, img::AbstractImageIndexed{T1,N}) =
+map!{T,T1,N}(mapi::MapInfo{T}, out::AbstractArray{T,N}, img::IndirectArray{T1,N}) =
     _mapindx!(mapi, out, img)
-function _mapindx!{T,T1,N}(mapi::MapInfo{T}, out::AbstractArray{T,N}, img::AbstractImageIndexed{T1,N})
+function _mapindx!{T,T1,N}(mapi::MapInfo{T}, out::AbstractArray{T,N}, img::IndirectArray{T1,N})
     dimg = data(img)
     dout = data(out)
-    colmap = immap(mapi, img.cmap)
+    colmap = immap(mapi, dimg.values)
     for I in eachindex(dout, dimg)
-        @inbounds dout[I] = colmap[dimg[I]]
+        @inbounds dout[I] = colmap[dimg.index[I]]
     end
     out
-end
-
-# For when color is encoded along dimension CD
-# NC is the number of color channels
-# This is a very flexible implementation: color can be stored along any dimension, and it handles conversions to
-# many different colorspace representations.
-for (CT, NC) in ((Union{AbstractRGB,RGB24}, 3), (Union{RGBA,ARGB,ARGB32}, 4), (Union{AGray,GrayA,AGray32}, 2))
-    for N = 1:4
-        N1 = N+1
-        @eval begin
-function map!{T<:$CT,T1,T2,CD}(mapi::MapInfo{T}, out::AbstractArray{T1,$N}, img::AbstractArray{T2,$N1}, ::Type{TypeConst{CD}})
-    mi = take(mapi, img)
-    dimg = data(img)
-    dout = data(out)
-    # Set up the index along the color axis
-    # We really only need dimension CD, but this will suffice
-    @nexprs $NC k->(@nexprs $N1 d->(j_k_d = k))
-    # Loop over all the elements in the output, performing the conversion on each color component
-    @nloops $N i dout d->(d<CD ? (@nexprs $NC k->(j_k_d = i_d)) : (@nexprs $NC k->(j_k_{d+1} = i_d))) begin
-        @inbounds @nref($N, dout, i) = @ncall $NC T k->(map1(mi, @nref($N1, dimg, j_k)))
-    end
-    out
-end
-        end
-    end
 end
 
 
 #### MapInfo defaults
-# Each "client" can define its own methods. "clients" include UFixed,
+# Each "client" can define its own methods. "clients" include Normed,
 # RGB24/ARGB32, and ImageMagick
 
-const bitshiftto8 = ((UFixed10, 2), (UFixed12, 4), (UFixed14, 6), (UFixed16, 8))
+const bitshiftto8 = ((N6f10, 2), (N4f12, 4), (N2f14, 6), (N0f16, 8))
 
 # typealias GrayType{T<:Fractional} Union{T, Gray{T}}
 typealias GrayArray{T<:Union{Fractional,Bool}} Union{AbstractArray{T}, AbstractArray{Gray{T}}}
@@ -570,21 +594,21 @@ You can define your own rules for `mapinfo`.  For example, the
 `ImageMagick` package defines methods for how pixels values should be
 converted before saving images to disk.
 """
-mapinfo{T<:UFixed}(::Type{T}, img::AbstractArray{T}) = MapNone(img)
+mapinfo{T<:Normed}(::Type{T}, img::AbstractArray{T}) = MapNone(img)
 mapinfo{T<:AbstractFloat}(::Type{T}, img::AbstractArray{T}) = MapNone(img)
 
 # Grayscale methods
-mapinfo(::Type{UFixed8}, img::GrayArray{Bool}) = MapNone{UFixed8}()
-mapinfo(::Type{UFixed8}, img::GrayArray{UFixed8}) = MapNone{UFixed8}()
-mapinfo(::Type{Gray{UFixed8}}, img::GrayArray{UFixed8}) = MapNone{Gray{UFixed8}}()
-mapinfo(::Type{GrayA{UFixed8}}, img::AbstractArray{GrayA{UFixed8}}) = MapNone{GrayA{UFixed8}}()
+mapinfo(::Type{N0f8}, img::GrayArray{Bool}) = MapNone{N0f8}()
+mapinfo(::Type{N0f8}, img::GrayArray{N0f8}) = MapNone{N0f8}()
+mapinfo(::Type{Gray{N0f8}}, img::GrayArray{N0f8}) = MapNone{Gray{N0f8}}()
+mapinfo(::Type{GrayA{N0f8}}, img::AbstractArray{GrayA{N0f8}}) = MapNone{GrayA{N0f8}}()
 for (T,n) in bitshiftto8
-    @eval mapinfo(::Type{UFixed8}, img::GrayArray{$T}) = BitShift{UFixed8,$n}()
-    @eval mapinfo(::Type{Gray{UFixed8}}, img::GrayArray{$T}) = BitShift{Gray{UFixed8},$n}()
-    @eval mapinfo(::Type{GrayA{UFixed8}}, img::AbstractArray{GrayA{$T}}) = BitShift{GrayA{UFixed8},$n}()
+    @eval mapinfo(::Type{N0f8}, img::GrayArray{$T}) = BitShift{N0f8,$n}()
+    @eval mapinfo(::Type{Gray{N0f8}}, img::GrayArray{$T}) = BitShift{Gray{N0f8},$n}()
+    @eval mapinfo(::Type{GrayA{N0f8}}, img::AbstractArray{GrayA{$T}}) = BitShift{GrayA{N0f8},$n}()
 end
-mapinfo{T<:UFixed,F<:AbstractFloat}(::Type{T}, img::GrayArray{F}) = ClampMinMax(T, zero(F), one(F))
-mapinfo{T<:UFixed,F<:AbstractFloat}(::Type{Gray{T}}, img::GrayArray{F}) = ClampMinMax(Gray{T}, zero(F), one(F))
+mapinfo{T<:Normed,F<:AbstractFloat}(::Type{T}, img::GrayArray{F}) = ClampMinMax(T, zero(F), one(F))
+mapinfo{T<:Normed,F<:AbstractFloat}(::Type{Gray{T}}, img::GrayArray{F}) = ClampMinMax(Gray{T}, zero(F), one(F))
 mapinfo{T<:AbstractFloat, R<:Real}(::Type{T}, img::AbstractArray{R}) = MapNone(T)
 
 mapinfo(::Type{RGB24}, img::Union{AbstractArray{Bool}, BitArray}) = MapNone{RGB24}()
@@ -593,14 +617,14 @@ mapinfo{F<:Fractional}(::Type{RGB24}, img::GrayArray{F}) = ClampMinMax(RGB24, ze
 mapinfo{F<:Fractional}(::Type{ARGB32}, img::AbstractArray{F}) = ClampMinMax(ARGB32, zero(F), one(F))
 
 # Color->Color methods
-mapinfo(::Type{RGB{UFixed8}}, img) = MapNone{RGB{UFixed8}}()
-mapinfo(::Type{RGBA{UFixed8}}, img) = MapNone{RGBA{UFixed8}}()
+mapinfo(::Type{RGB{N0f8}}, img) = MapNone{RGB{N0f8}}()
+mapinfo(::Type{RGBA{N0f8}}, img) = MapNone{RGBA{N0f8}}()
 for (T,n) in bitshiftto8
-    @eval mapinfo(::Type{RGB{UFixed8}}, img::AbstractArray{RGB{$T}}) = BitShift{RGB{UFixed8},$n}()
-    @eval mapinfo(::Type{RGBA{UFixed8}}, img::AbstractArray{RGBA{$T}}) = BitShift{RGBA{UFixed8},$n}()
+    @eval mapinfo(::Type{RGB{N0f8}}, img::AbstractArray{RGB{$T}}) = BitShift{RGB{N0f8},$n}()
+    @eval mapinfo(::Type{RGBA{N0f8}}, img::AbstractArray{RGBA{$T}}) = BitShift{RGBA{N0f8},$n}()
 end
-mapinfo{F<:Fractional}(::Type{RGB{UFixed8}}, img::AbstractArray{RGB{F}}) = Clamp(RGB{UFixed8})
-mapinfo{F<:Fractional}(::Type{RGBA{UFixed8}}, img::AbstractArray{RGBA{F}}) = Clamp(RGBA{UFixed8})
+mapinfo{F<:Fractional}(::Type{RGB{N0f8}}, img::AbstractArray{RGB{F}}) = Clamp(RGB{N0f8})
+mapinfo{F<:Fractional}(::Type{RGBA{N0f8}}, img::AbstractArray{RGBA{F}}) = Clamp(RGBA{N0f8})
 
 
 
@@ -609,8 +633,8 @@ mapinfo(::Type{RGB24}, img::AbstractArray{RGB24}) = MapNone{RGB24}()
 mapinfo(::Type{ARGB32}, img::AbstractArray{ARGB32}) = MapNone{ARGB32}()
 for C in tuple(subtypes(AbstractRGB)..., Gray)
     C == RGB24 && continue
-    @eval mapinfo(::Type{RGB24}, img::AbstractArray{$C{UFixed8}}) = MapNone{RGB24}()
-    @eval mapinfo(::Type{ARGB32}, img::AbstractArray{$C{UFixed8}}) = MapNone{ARGB32}()
+    @eval mapinfo(::Type{RGB24}, img::AbstractArray{$C{N0f8}}) = MapNone{RGB24}()
+    @eval mapinfo(::Type{ARGB32}, img::AbstractArray{$C{N0f8}}) = MapNone{ARGB32}()
     for (T, n) in bitshiftto8
         @eval mapinfo(::Type{RGB24}, img::AbstractArray{$C{$T}}) = BitShift{RGB24, $n}()
         @eval mapinfo(::Type{ARGB32}, img::AbstractArray{$C{$T}}) = BitShift{ARGB32, $n}()
@@ -619,8 +643,8 @@ for C in tuple(subtypes(AbstractRGB)..., Gray)
     @eval mapinfo{F<:AbstractFloat}(::Type{ARGB32}, img::AbstractArray{$C{F}}) = ClampMinMax(ARGB32, zero(F), one(F))
     for AC in subtypes(TransparentColor)
         length(AC.parameters) == 2 || continue
-        @eval mapinfo(::Type{ARGB32}, img::AbstractArray{$AC{$C{UFixed8},UFixed8}}) = MapNone{ARGB32}()
-        @eval mapinfo(::Type{RGB24}, img::AbstractArray{$AC{$C{UFixed8},UFixed8}}) = MapNone{RGB24}()
+        @eval mapinfo(::Type{ARGB32}, img::AbstractArray{$AC{$C{N0f8},N0f8}}) = MapNone{ARGB32}()
+        @eval mapinfo(::Type{RGB24}, img::AbstractArray{$AC{$C{N0f8},N0f8}}) = MapNone{RGB24}()
         for (T, n) in bitshiftto8
             @eval mapinfo(::Type{ARGB32}, img::AbstractArray{$AC{$C{$T},$T}}) = BitShift{ARGB32, $n}()
             @eval mapinfo(::Type{RGB24}, img::AbstractArray{$AC{$C{$T},$T}}) = BitShift{RGB24, $n}()
@@ -642,17 +666,17 @@ mapinfo(::Type{UInt32}, img::Union{AbstractArray{Bool},BitArray}) = mapinfo(RGB2
 mapinfo(::Type{UInt32}, img::AbstractArray{UInt32}) = MapNone{UInt32}()
 
 
-# Clamping mapinfo client. Converts to RGB and uses UFixed, clamping
+# Clamping mapinfo client. Converts to RGB and uses Normed, clamping
 # floating-point values to [0,1].
-mapinfo{T<:UFixed}(::Type{Clamp}, img::AbstractArray{T}) = MapNone{T}()
-mapinfo{T<:AbstractFloat}(::Type{Clamp}, img::AbstractArray{T}) = ClampMinMax(UFixed8, zero(T), one(T))
+mapinfo{T<:Normed}(::Type{Clamp}, img::AbstractArray{T}) = MapNone{T}()
+mapinfo{T<:AbstractFloat}(::Type{Clamp}, img::AbstractArray{T}) = ClampMinMax(N0f8, zero(T), one(T))
 let handled = Set()
 for ACV in (Color, AbstractRGB)
     for CV in subtypes(ACV)
         (length(CV.parameters) == 1 && !(CV.abstract)) || continue
         CVnew = CV<:AbstractGray ? Gray : RGB
-        @eval mapinfo{T<:UFixed}(::Type{Clamp}, img::AbstractArray{$CV{T}}) = MapNone{$CVnew{T}}()
-        @eval mapinfo{CV<:$CV}(::Type{Clamp}, img::AbstractArray{CV}) = Clamp{$CVnew{UFixed8}}()
+        @eval mapinfo{T<:Normed}(::Type{Clamp}, img::AbstractArray{$CV{T}}) = MapNone{$CVnew{T}}()
+        @eval mapinfo{CV<:$CV}(::Type{Clamp}, img::AbstractArray{CV}) = Clamp{$CVnew{N0f8}}()
         CVnew = CV<:AbstractGray ? Gray : BGR
         AC, CA       = alphacolor(CV), coloralpha(CV)
         if AC in handled
@@ -661,30 +685,17 @@ for ACV in (Color, AbstractRGB)
         push!(handled, AC)
         ACnew, CAnew = alphacolor(CVnew), coloralpha(CVnew)
         @eval begin
-            mapinfo{T<:UFixed}(::Type{Clamp}, img::AbstractArray{$AC{T}}) = MapNone{$ACnew{T}}()
-            mapinfo{P<:$AC}(::Type{Clamp}, img::AbstractArray{P}) = Clamp{$ACnew{UFixed8}}()
-            mapinfo{T<:UFixed}(::Type{Clamp}, img::AbstractArray{$CA{T}}) = MapNone{$CAnew{T}}()
-            mapinfo{P<:$CA}(::Type{Clamp}, img::AbstractArray{P}) = Clamp{$CAnew{UFixed8}}()
+            mapinfo{T<:Normed}(::Type{Clamp}, img::AbstractArray{$AC{T}}) = MapNone{$ACnew{T}}()
+            mapinfo{P<:$AC}(::Type{Clamp}, img::AbstractArray{P}) = Clamp{$ACnew{N0f8}}()
+            mapinfo{T<:Normed}(::Type{Clamp}, img::AbstractArray{$CA{T}}) = MapNone{$CAnew{T}}()
+            mapinfo{P<:$CA}(::Type{Clamp}, img::AbstractArray{P}) = Clamp{$CAnew{N0f8}}()
         end
     end
 end
 end
-mapinfo(::Type{Clamp}, img::AbstractArray{RGB24}) = MapNone{RGB{UFixed8}}()
-mapinfo(::Type{Clamp}, img::AbstractArray{ARGB32}) = MapNone{BGRA{UFixed8}}()
+mapinfo(::Type{Clamp}, img::AbstractArray{RGB24}) = MapNone{RGB{N0f8}}()
+mapinfo(::Type{Clamp}, img::AbstractArray{ARGB32}) = MapNone{BGRA{N0f8}}()
 
-
-# Backwards-compatibility
-uint32color(img) = immap(mapinfo(UInt32, img), img)
-uint32color!(buf, img::AbstractArray) = map!(mapinfo(UInt32, img), buf, img)
-uint32color!(buf, img::AbstractArray, mi::MapInfo) = map!(mi, buf, img)
-uint32color!{T,N}(buf::Array{UInt32,N}, img::AbstractImageDirect{T,N}) =
-    map!(mapinfo(UInt32, img), buf, img)
-uint32color!{T,N,N1}(buf::Array{UInt32,N}, img::AbstractImageDirect{T,N1}) =
-    map!(mapinfo(UInt32, img), buf, img, TypeConst{colordim(img)})
-uint32color!{T,N}(buf::Array{UInt32,N}, img::AbstractImageDirect{T,N}, mi::MapInfo) =
-    map!(mi, buf, img)
-uint32color!{T,N,N1}(buf::Array{UInt32,N}, img::AbstractImageDirect{T,N1}, mi::MapInfo) =
-    map!(mi, buf, img, TypeConst{colordim(img)})
 
 """
 ```
@@ -694,26 +705,8 @@ imgsc = sc(img, min, max)
 
 Applies default or specified `ScaleMinMax` mapping to the image.
 """
-sc(img::AbstractArray) = immap(ScaleMinMax(UFixed8, img), img)
-sc(img::AbstractArray, mn::Real, mx::Real) = immap(ScaleMinMax(UFixed8, img, mn, mx), img)
+sc(img::AbstractArray) = immap(ScaleMinMax(N0f8, img), img)
+sc(img::AbstractArray, mn::Real, mx::Real) = immap(ScaleMinMax(N0f8, img, mn, mx), img)
 
-for (fn,T) in ((:float32, Float32), (:float64, Float64), (:ufixed8, UFixed8),
-               (:ufixed10, UFixed10), (:ufixed12, UFixed12), (:ufixed14, UFixed14),
-               (:ufixed16, UFixed16))
-    @eval begin
-        function $fn{C<:Colorant}(A::AbstractArray{C})
-            newC = eval(C.name.name){$T}
-            convert(Array{newC}, A)
-        end
-        $fn{C<:Colorant}(img::AbstractImage{C}) = shareproperties(img, $fn(data(img)))
-    end
-    if VERSION >= v"0.5.0"
-        @eval begin
-            $fn(x::Number) = convert($T, x)
-            $fn(str::AbstractString) = parse($T, str)
-        end
-    end
-end
-
-ufixedsc{T<:UFixed}(::Type{T}, img::AbstractImageDirect) = immap(mapinfo(T, img), img)
-ufixed8sc(img::AbstractImageDirect) = ufixedsc(UFixed8, img)
+ufixedsc{T<:Normed}(::Type{T}, img::AbstractArray) = immap(mapinfo(T, img), img)
+ufixed8sc(img::AbstractArray) = ufixedsc(N0f8, img)

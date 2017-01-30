@@ -28,11 +28,11 @@ facts("Exposure") do
         @fact hist --> [25, 5, 5, 5, 5, 5, 5, 5, 40]
 
         # Test the more typical case
-        img = reinterpret(Gray{U8}, [0x20,0x40,0x80,0xd0])
+        img = reinterpret(Gray{N0f8}, [0x20,0x40,0x80,0xd0])
         @fact imhist(img, 5) --> (0.0:0.2:1.0,[0,1,1,1,0,1,0])
-        img = reinterpret(Gray{U8}, [0x00,0x40,0x80,0xd0])
+        img = reinterpret(Gray{N0f8}, [0x00,0x40,0x80,0xd0])
         @fact imhist(img, 5) --> (0.0:0.2:1.0,[0,1,1,1,0,1,0])
-        img = reinterpret(Gray{U8}, [0x00,0x40,0x80,0xff])
+        img = reinterpret(Gray{N0f8}, [0x00,0x40,0x80,0xff])
         @fact imhist(img, 6) --> (0.0:0.2:1.2,[0,1,1,1,0,0,1,0])
     
     end
@@ -45,26 +45,26 @@ facts("Exposure") do
         @fact img == ret --> true
         @fact eltype(ret) == eltype(img) --> true
 
-        img = ones(Images.Gray{Images.U8}, 10, 10)
+        img = ones(Images.Gray{Images.N0f8}, 10, 10)
         ret = histeq(img, 100)
         @fact img == ret --> true
         @fact eltype(ret) == eltype(img) --> true
 
-        img = ones(Images.Gray{Images.U16}, 10, 10)
+        img = ones(Images.Gray{Images.N0f16}, 10, 10)
         ret = histeq(img, 100)
         @fact eltype(ret) == eltype(img) --> true
 
-        img = ones(Images.AGray{Images.U8}, 10, 10)
-        ret = histeq(img, 100)
-        @fact img == ret --> true
-        @fact eltype(ret) == eltype(img) --> true
-
-        img = ones(Images.RGB{Images.U8}, 10, 10)
+        img = ones(Images.AGray{Images.N0f8}, 10, 10)
         ret = histeq(img, 100)
         @fact img == ret --> true
         @fact eltype(ret) == eltype(img) --> true
 
-        img = ones(Images.RGB{Images.U16}, 10, 10)
+        img = ones(Images.RGB{Images.N0f8}, 10, 10)
+        ret = histeq(img, 100)
+        @fact img == ret --> true
+        @fact eltype(ret) == eltype(img) --> true
+
+        img = ones(Images.RGB{Images.N0f16}, 10, 10)
         ret = histeq(img, 100)
         @fact img == ret --> true
         @fact eltype(ret) == eltype(img) --> true
@@ -74,7 +74,7 @@ facts("Exposure") do
         @fact all(map((i, r) -> isapprox(i, r), img, ret)) --> true
         @fact eltype(ret) == eltype(img) --> true
 
-        img = ones(Images.ARGB{Images.U8}, 10, 10)
+        img = ones(Images.ARGB{Images.N0f8}, 10, 10)
         ret = histeq(img, 100)
         @fact img == ret --> true
         @fact eltype(ret) == eltype(img) --> true
@@ -124,26 +124,26 @@ facts("Exposure") do
         @fact img == ret --> true
         @fact eltype(ret) == eltype(img) --> true
 
-        img = ones(Images.Gray{Images.U8}, 10, 10)
+        img = ones(Images.Gray{Images.N0f8}, 10, 10)
         ret = adjust_gamma(img, 1)
         @fact img == ret --> true
         @fact eltype(ret) == eltype(img) --> true
 
-        img = ones(Images.Gray{Images.U16}, 10, 10)
+        img = ones(Images.Gray{Images.N0f16}, 10, 10)
         ret = adjust_gamma(img, 1)
         @fact eltype(ret) == eltype(img) --> true
 
-        img = ones(Images.AGray{Images.U8}, 10, 10)
-        ret = adjust_gamma(img, 1)
-        @fact img == ret --> true
-        @fact eltype(ret) == eltype(img) --> true
-
-        img = ones(Images.RGB{Images.U8}, 10, 10)
+        img = ones(Images.AGray{Images.N0f8}, 10, 10)
         ret = adjust_gamma(img, 1)
         @fact img == ret --> true
         @fact eltype(ret) == eltype(img) --> true
 
-        img = ones(Images.RGB{Images.U16}, 10, 10)
+        img = ones(Images.RGB{Images.N0f8}, 10, 10)
+        ret = adjust_gamma(img, 1)
+        @fact img == ret --> true
+        @fact eltype(ret) == eltype(img) --> true
+
+        img = ones(Images.RGB{Images.N0f16}, 10, 10)
         ret = adjust_gamma(img, 1)
         @fact img == ret --> true
         @fact eltype(ret) == eltype(img) --> true
@@ -153,7 +153,7 @@ facts("Exposure") do
         @fact all(map((i, r) -> isapprox(i, r), img, ret)) --> true
         @fact eltype(ret) == eltype(img) --> true
 
-        img = ones(Images.ARGB{Images.U8}, 10, 10)
+        img = ones(Images.ARGB{Images.N0f8}, 10, 10)
         ret = adjust_gamma(img, 1)
         @fact img == ret --> true
 
@@ -194,24 +194,24 @@ facts("Exposure") do
         @fact all(ret .== zero(eltype(img))) --> true
         @fact eltype(ret) == eltype(img) --> true
 
-        img = ones(Images.Gray{Images.U8}, 10, 10)
+        img = ones(Images.Gray{Images.N0f8}, 10, 10)
         ret = histmatch(img, img)
         @fact all(ret .== zero(eltype(img))) --> true
         @fact eltype(ret) == eltype(img) --> true
 
-        img = ones(Images.Gray{Images.U16}, 10, 10)
+        img = ones(Images.Gray{Images.N0f16}, 10, 10)
         ret = histmatch(img, img)
         @fact eltype(ret) == eltype(img) --> true
 
-        img = ones(Images.AGray{Images.U8}, 10, 10)
+        img = ones(Images.AGray{Images.N0f8}, 10, 10)
         ret = histmatch(img, img)
         @fact eltype(ret) == eltype(img) --> true
 
-        img = ones(Images.RGB{Images.U8}, 10, 10)
+        img = ones(Images.RGB{Images.N0f8}, 10, 10)
         ret = histmatch(img, img)
         @fact eltype(ret) == eltype(img) --> true
 
-        img = ones(Images.RGB{Images.U16}, 10, 10)
+        img = ones(Images.RGB{Images.N0f16}, 10, 10)
         ret = histmatch(img, img)
         @fact eltype(ret) == eltype(img) --> true
 
@@ -220,7 +220,7 @@ facts("Exposure") do
         @fact all(map((i, r) -> isapprox(zero(RGB), r, atol = 0.001), img, ret)) --> true
         @fact eltype(ret) == eltype(img) --> true
 
-        img = ones(Images.ARGB{Images.U8}, 10, 10)
+        img = ones(Images.ARGB{Images.N0f8}, 10, 10)
         ret = histmatch(img, img)
         @fact eltype(ret) == eltype(img) --> true
 
@@ -241,27 +241,27 @@ facts("Exposure") do
         @fact size(ret) == size(img) --> true
         @fact eltype(ret) == eltype(img) --> true
 
-        img = ones(Images.Gray{Images.U8}, 10, 10)
+        img = ones(Images.Gray{Images.N0f8}, 10, 10)
         ret = clahe(img, 100)
         @fact size(ret) == size(img) --> true
         @fact eltype(ret) == eltype(img) --> true
 
-        img = ones(Images.Gray{Images.U16}, 10, 10)
+        img = ones(Images.Gray{Images.N0f16}, 10, 10)
         ret = clahe(img, 100)
         @fact size(ret) == size(img) --> true
         @fact eltype(ret) == eltype(img) --> true
 
-        img = ones(Images.AGray{Images.U8}, 10, 10)
+        img = ones(Images.AGray{Images.N0f8}, 10, 10)
         ret = clahe(img, 100)
         @fact size(ret) == size(img) --> true
         @fact eltype(ret) == eltype(img) --> true
 
-        img = ones(Images.RGB{Images.U8}, 10, 10)
+        img = ones(Images.RGB{Images.N0f8}, 10, 10)
         ret = clahe(img, 100)
         @fact size(ret) == size(img) --> true
         @fact eltype(ret) == eltype(img) --> true
 
-        img = ones(Images.RGB{Images.U16}, 10, 10)
+        img = ones(Images.RGB{Images.N0f16}, 10, 10)
         ret = clahe(img, 100)
         @fact size(ret) == size(img) --> true
         @fact eltype(ret) == eltype(img) --> true
@@ -271,7 +271,7 @@ facts("Exposure") do
         @fact size(ret) == size(img) --> true
         @fact eltype(ret) == eltype(img) --> true
 
-        img = ones(Images.ARGB{Images.U8}, 10, 10)
+        img = ones(Images.ARGB{Images.N0f8}, 10, 10)
         ret = clahe(img, 100)
         @fact size(ret) == size(img) --> true
         @fact eltype(ret) == eltype(img) --> true
@@ -335,15 +335,15 @@ facts("Exposure") do
     context("Other") do 
 
         # Issue #282
-        img = convert(Images.Image{Gray{UFixed8}}, eye(2,2))
+        img = convert(Images.Image{Gray{N0f8}}, eye(2,2))
         imgs = Images.imstretch(img, 0.3, 0.4)
         @fact data(imgs) --> roughly(1./(1 + (0.3./(eye(2,2) + eps())).^0.4))
 
-        img = convert(Images.Image{Gray{UFixed16}}, [0.01164 0.01118; 0.01036 0.01187])
+        img = convert(Images.Image{Gray{N0f16}}, [0.01164 0.01118; 0.01036 0.01187])
         @fact data(imadjustintensity(img,[0.0103761, 0.0252166]))[2,1] --> 0.0
-        @fact eltype(imadjustintensity(img)) --> Gray{UFixed16}
+        @fact eltype(imadjustintensity(img)) --> Gray{N0f16}
 
-        img = convert(Images.Image{Gray{UFixed16}}, [0.01164 0.01118; 0.01036 0.01187])
+        img = convert(Images.Image{Gray{N0f16}}, [0.01164 0.01118; 0.01036 0.01187])
         @fact Images.complement(Gray(0.5)) == Gray(0.5) --> true
         @fact Images.complement(Gray(0.2)) == Gray(0.8) --> true
         @fact all(imcomplement(img) .== 1 - img) --> true

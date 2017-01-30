@@ -1,149 +1,48 @@
 ### Edge and Gradient Related Image Operations ###
 
-# Edge/gradient filters
+# Phase (angle of steepest gradient ascent), calculated from X and Y gradient images
+"""
+    phase(grad_x, grad_y) -> p
 
-"`kern1, kern2 = sobel()` returns Sobel filters for dimensions 1 and 2 of your image"
-function sobel()
-    f = [ -1.0  0.0  1.0
-          -2.0  0.0  2.0
-          -1.0  0.0  1.0 ]
-    return f', f
+Calculate the rotation angle of the gradient given by `grad_x` and
+`grad_y`. Equivalent to `atan2(-grad_y, grad_x)`, except that when both `grad_x` and
+`grad_y` are effectively zero, the corresponding angle is set to zero.
+"""
+function phase{T<:Number}(grad_x::T, grad_y::T, tol=sqrt(eps(T)))
+    atan2(-grad_y, grad_x) * ((abs(grad_x) > tol) | (abs(grad_y) > tol))
+end
+phase(grad_x::Number,   grad_y::Number)   = phase(promote(grad_x, grad_y)...)
+phase(grad_x::NumberLike, grad_y::NumberLike) = phase(gray(grad_x), gray(grad_y))
+
+phase(grad_x::AbstractRGB, grad_y::AbstractRGB) = phase(vecsum(grad_x), vecsum(grad_y))
+
+magnitude_phase(grad_x::NumberLike, grad_y::NumberLike) =
+    hypot(grad_x, grad_y), phase(grad_x, grad_y)
+
+function magnitude_phase(grad_x::AbstractRGB, grad_y::AbstractRGB)
+    gx, gy = vecsum(grad_x), vecsum(grad_y)
+    magnitude_phase(gx, gy)
 end
 
-"`kern1, kern2 = prewitt()` returns Prewitt filters for dimensions 1 and 2 of your image"
-function prewitt()
-    f = [ -1.0  0.0  1.0
-          -1.0  0.0  1.0
-          -1.0  0.0  1.0 ]
-    return f', f
+vecsum(c::AbstractRGB) = float(red(c)) + float(green(c)) + float(blue(c))
+
+## TODO? orientation seems nearly redundant with phase, deprecate?
+
+"""
+    orientation(grad_x, grad_y) -> orient
+
+Calculate the orientation angle of the strongest edge from gradient images
+given by `grad_x` and `grad_y`.  Equivalent to `atan2(grad_x, grad_y)`.  When
+both `grad_x` and `grad_y` are effectively zero, the corresponding angle is set to
+zero.
+"""
+function orientation{T<:Number}(grad_x::T, grad_y::T, tol=sqrt(eps(T)))
+    atan2(grad_x, grad_y) * ((abs(grad_x) > tol) | (abs(grad_y) > tol))
 end
+orientation(grad_x::Number,   grad_y::Number)   = orientation(promote(grad_x, grad_y)...)
+orientation(grad_x::NumberLike, grad_y::NumberLike) = orientation(gray(grad_x), gray(grad_y))
 
-# Consistent Gradient Operators
-# Ando Shigeru
-# IEEE Trans. Pat. Anal. Mach. Int., vol. 22 no 3, March 2000
-#
-# TODO: These coefficients were taken from the paper It would be nice
-#       to resolve the optimization problem and use higher precision
-#       versions, which might allow better separable approximations of
-#       ando4 and ando5.
-
-"""
-`kern1, kern2 = ando3()` returns optimal 3x3 filters for dimensions 1 and 2 of your image, as defined in
-Ando Shigeru, IEEE Trans. Pat. Anal. Mach. Int., vol. 22 no 3, March 2000.
-
-See also: `ando4`, `ando5`.
-"""
-function ando3()
-    f = [ -0.112737  0.0  0.112737
-          -0.274526  0.0  0.274526
-          -0.112737  0.0  0.112737 ]
-    return f', f
-end
-
-# Below, the ando4() and ando5() functions return filters with
-# the published filter values.  The ando4_sep() and ando5_sep()
-# functions return separable approximations to the corresponding
-# filters, estimated using the projection of the actual values on the
-# eigenvector corresponding to the largest eigenvalue of the SVD of
-# the original filter.
-
-"""
-`kern1, kern2 = ando4()` returns optimal 4x4 filters for dimensions 1 and 2 of your image, as defined in
-Ando Shigeru, IEEE Trans. Pat. Anal. Mach. Int., vol. 22 no 3, March 2000.
-
-See also: `ando4_sep`, `ando3`, `ando5`.
-"""
-function ando4()
-    f = [ -0.022116 -0.025526  0.025526  0.022116
-          -0.098381 -0.112984  0.112984  0.098381
-          -0.098381 -0.112984  0.112984  0.098381
-          -0.022116 -0.025526  0.025526  0.022116 ]
-    return f', f
-end
-
-"""
-`kern1, kern2 = ando4_sep()` returns separable approximations of the
-optimal 4x4 filters for dimensions 1 and 2 of your image, as defined
-in Ando Shigeru, IEEE Trans. Pat. Anal. Mach. Int., vol. 22 no 3,
-March 2000.
-
-See also: `ando4`.
-"""
-function ando4_sep()
-    f = [-0.022175974729759376 -0.025473821998749126 0.025473821998749126 0.022175974729759376
-         -0.09836750569692418  -0.11299599504060115  0.11299599504060115  0.09836750569692418
-         -0.09836750569692418  -0.11299599504060115  0.11299599504060115  0.09836750569692418
-         -0.022175974729759376 -0.025473821998749126 0.025473821998749126 0.022175974729759376]
-    return f', f
-end
-
-"""
-`kern1, kern2 = ando5()` returns optimal 5x5 filters for dimensions 1 and 2 of your image, as defined in
-Ando Shigeru, IEEE Trans. Pat. Anal. Mach. Int., vol. 22 no 3, March 2000.
-
-See also: `ando5_sep`, `ando3`, `ando4`.
-"""
-function ando5()
-    f = [ -0.003776 -0.010199  0.0  0.010199  0.003776
-          -0.026786 -0.070844  0.0  0.070844  0.026786
-          -0.046548 -0.122572  0.0  0.122572  0.046548
-          -0.026786 -0.070844  0.0  0.070844  0.026786
-          -0.003776 -0.010199  0.0  0.010199  0.003776 ]
-    return f', f
-end
-
-"""
-`kern1, kern2 = ando5_sep()` returns separable approximations of the
-optimal 5x5 filters for dimensions 1 and 2 of your image, as defined
-in Ando Shigeru, IEEE Trans. Pat. Anal. Mach. Int., vol. 22 no 3,
-March 2000.
-
-See also: `ando5`.
-"""
-function ando5_sep()
-    f = [-0.0038543900766123762 -0.0101692999709622   0.0  0.0101692999709622   0.0038543900766123762
-         -0.026843218687756566  -0.07082229291692607  0.0  0.07082229291692607  0.026843218687756566
-         -0.046468878396946627  -0.12260200818803602  0.0  0.12260200818803602  0.046468878396946627
-         -0.026843218687756566  -0.07082229291692607  0.0  0.07082229291692607  0.026843218687756566
-         -0.0038543900766123762 -0.0101692999709622   0.0  0.0101692999709622   0.0038543900766123762]
-    return f', f
-end
-
-# Image gradients in the X and Y direction
-"""
-```
-grad_x, grad_y = imgradients(img, [method], [border])
-```
-
-performs edge-detection filtering. `method` is one of `"sobel"`, `"prewitt"`, `"ando3"`,
-`"ando4"`, `"ando4_sep"`, `"ando5"`, or `"ando5_sep"`, defaulting to `"ando3"`
-(see the functions of the same name for more information).  `border` is any of
-the boundary conditions specified in `padarray`.
-
-Returns a tuple containing `x` (horizontal) and `y` (vertical) gradient images
-of the same size as `img`, calculated using the requested method and border.
-"""
-function imgradients(img::AbstractArray, method::AbstractString="ando3", border::AbstractString="replicate")
-    sx,sy = spatialorder(img)[1] == "x" ? (1,2) : (2,1)
-    s = (method == "sobel"     ? sobel() :
-         method == "prewitt"   ? prewitt() :
-         method == "ando3"     ? ando3() :
-         method == "ando4"     ? ando4() :
-         method == "ando5"     ? ando5() :
-         method == "ando4_sep" ? ando4_sep() :
-         method == "ando5_sep" ? ando5_sep() :
-         error("Unknown gradient method: $method"))
-
-    grad_x = imfilter(img, s[sx], border)
-    grad_y = imfilter(img, s[sy], border)
-
-    return grad_x, grad_y
-end
-
-function imgradients{T<:Color}(img::AbstractArray{T}, method::AbstractString="ando3", border::AbstractString="replicate")
-    # Remove Color information
-    imgradients(reinterpret(eltype(eltype(img)), img), method, border)
-end
+orientation(grad_x::AbstractRGB, grad_y::AbstractRGB) = orientation(vecsum(grad_x), vecsum(grad_y))
 
 # Magnitude of gradient, calculated from X and Y image gradients
 """
@@ -156,79 +55,37 @@ Equivalent to ``sqrt(grad_x.^2 + grad_y.^2)``.
 
 Returns a magnitude image the same size as `grad_x` and `grad_y`.
 """
-magnitude(grad_x::AbstractArray, grad_y::AbstractArray) =
-    @compat hypot.(grad_x, grad_y)
-magnitude(img1::AbstractImageDirect, img2::AbstractImageDirect) =
-    hypot(img1, img2)
+magnitude(grad_x::AbstractArray, grad_y::AbstractArray) = hypot.(grad_x, grad_y)
 
-# Phase (angle of steepest gradient ascent), calculated from X and Y gradient images
-"""
-```
-p = phase(grad_x, grad_y)
-```
+Base.hypot(x::AbstractRGB, y::AbstractRGB) = hypot(vecsum(x), vecsum(y))
 
-Calculates the rotation angle of the gradient images given by `grad_x` and
-`grad_y`. Equivalent to ``atan2(-grad_y, grad_x)``.  When both ``grad_x[i]`` and
-``grad_y[i]`` are zero, the corresponding angle is set to zero.
-
-Returns a phase image the same size as `grad_x` and `grad_y`, with values in [-pi,pi].
-"""
-function phase{T}(grad_x::AbstractArray{T}, grad_y::AbstractArray{T})
-    EPS = sqrt(eps(eltype(T)))
-    # Set phase to zero when both gradients are close to zero
-    reshape([atan2(-grad_y[i], grad_x[i]) * ((abs(grad_x[i]) > EPS) | (abs(grad_y[i]) > EPS))
-             for i=1:length(grad_x)], size(grad_x))
-end
-
-function phase(grad_x::AbstractImageDirect, grad_y::AbstractImageDirect)
-    img = copyproperties(grad_x, phase(data(grad_x), data(grad_y)))
-    img["limits"] = (-float(pi),float(pi))
-    img
-end
+phase(grad_x::AbstractArray, grad_y::AbstractArray) = phase.(grad_x, grad_y)
 
 # Orientation of the strongest edge at a point, calculated from X and Y gradient images
 # Note that this is perpendicular to the phase at that point, except where
 # both gradients are close to zero.
 
-"""
-```
-orient = orientation(grad_x, grad_y)
-```
-
-Calculates the orientation angle of the strongest edge from gradient images
-given by `grad_x` and `grad_y`.  Equivalent to ``atan2(grad_x, grad_y)``.  When
-both `grad_x[i]` and `grad_y[i]` are zero, the corresponding angle is set to
-zero.
-
-Returns a phase image the same size as `grad_x` and `grad_y`, with values in
-[-pi,pi].
-"""
-function orientation{T}(grad_x::AbstractArray{T}, grad_y::AbstractArray{T})
-    EPS = sqrt(eps(eltype(T)))
-    # Set orientation to zero when both gradients are close to zero
-    # (grad_y[i] should probably be negated here, but isn't for consistency with earlier releases)
-    reshape([atan2(grad_x[i], grad_y[i]) * ((abs(grad_x[i]) > EPS) | (abs(grad_y[i]) > EPS))
-             for i=1:length(grad_x)], size(grad_x))
-end
-
-function orientation(grad_x::AbstractImageDirect, grad_y::AbstractImageDirect)
-    img = copyproperties(grad_x, orientation(data(grad_x), data(grad_y)))
-    img["limits"] = (-float(pi),float(pi))
-    img
-end
+orientation{T}(grad_x::AbstractArray{T}, grad_y::AbstractArray{T}) = orientation.(grad_x, grad_y)
 
 # Return both the magnitude and phase in one call
 """
-`m, p = magnitude_phase(grad_x, grad_y)`
+    magnitude_phase(grad_x, grad_y) -> m, p
 
 Convenience function for calculating the magnitude and phase of the gradient
 images given in `grad_x` and `grad_y`.  Returns a tuple containing the magnitude
 and phase images.  See `magnitude` and `phase` for details.
 """
-magnitude_phase(grad_x::AbstractArray, grad_y::AbstractArray) = (magnitude(grad_x,grad_y), phase(grad_x,grad_y))
+function magnitude_phase{T}(grad_x::AbstractArray{T}, grad_y::AbstractArray{T})
+    m = similar(grad_x, eltype(T))
+    p = similar(m)
+    for I in eachindex(grad_x, grad_y)
+        m[I], p[I] = magnitude_phase(grad_x[I], grad_y[I])
+    end
+    m, p
+end
 
-# Return the magnituded and phase of the gradients in an image
-function magnitude_phase(img::AbstractArray, method::AbstractString="ando3", border::AbstractString="replicate")
+# Return the magnitude and phase of the gradients in an image
+function magnitude_phase(img::AbstractArray, method::Function=KernelFactors.ando3, border::AbstractString="replicate")
     grad_x, grad_y = imgradients(img, method, border)
     return magnitude_phase(grad_x, grad_y)
 end
@@ -546,21 +403,22 @@ Parameters :
                     as quantiles or absolute values
 
 """
-function canny{T}(img::AbstractArray{T, 2}, sigma::Number = 1.4, upperThreshold::Number = 0.90, lowerThreshold::Number = 0.10; percentile::Bool = true)
-    img_gray = convert(Image{Images.Gray{U8}}, img)
+function canny{T<:NumberLike}(img_gray::AbstractMatrix{T}, sigma::Number = 1.4, upperThreshold::Number = 0.90, lowerThreshold::Number = 0.10; percentile::Bool = true)
     img_grayf = imfilter_gaussian(img_gray, [sigma,sigma])
-    img_grad_x, img_grad_y = imgradients(img_grayf, "sobel")
+    img_grad_y, img_grad_x = imgradients(img_grayf, KernelFactors.sobel)
     img_mag, img_phase = magnitude_phase(img_grad_x, img_grad_y)
     img_nonMaxSup = thin_edges_nonmaxsup(img_mag, img_phase)
-    if percentile == true
+    if percentile
         upperThreshold = StatsBase.percentile(img_nonMaxSup[:], upperThreshold * 100)
         lowerThreshold = StatsBase.percentile(img_nonMaxSup[:], lowerThreshold * 100)
     end
     img_thresholded = hysteresis_thresholding(img_nonMaxSup, upperThreshold, lowerThreshold)
-    edges = map(i -> i < 0.9 ? zero(Gray{U8}) : one(Gray{U8}), img_thresholded)
+    S = eltype(img_thresholded)
+    edges = map(i -> i < 0.9 ? zero(S) : one(S), img_thresholded)
     edges
 end
 
+canny(img::AbstractMatrix, args...) = canny(convert(Array{Gray}, img), args...)
 
 function hysteresis_thresholding{T}(img_nonMaxSup::AbstractArray{T, 2}, upperThreshold::Number, lowerThreshold::Number)
     img_thresholded = map(i -> i > lowerThreshold ? i > upperThreshold ? 1.0 : 0.5 : 0.0, img_nonMaxSup)
@@ -585,4 +443,21 @@ function hysteresis_thresholding{T}(img_nonMaxSup::AbstractArray{T, 2}, upperThr
     end
     img_thresholded
 end
-0
+
+function padindexes{T,n}(img::AbstractArray{T,n}, dim, prepad, postpad, border::AbstractString)
+    M = size(img, dim)
+    I = Array(Int, M + prepad + postpad)
+    I = [(1 - prepad):(M + postpad);]
+    @compat if border == "replicate"
+        I = min.(max.(I, 1), M)
+    elseif border == "circular"
+        I = 1 .+ mod.(I .- 1, M)
+    elseif border == "symmetric"
+        I = [1:M; M:-1:1][1 .+ mod.(I .- 1, 2 * M)]
+    elseif border == "reflect"
+        I = [1:M; M-1:-1:2][1 .+ mod.(I .- 1, 2 * M - 2)]
+    else
+        error("unknown border condition")
+    end
+    I
+end

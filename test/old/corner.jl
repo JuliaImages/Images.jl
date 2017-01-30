@@ -113,7 +113,7 @@ facts("Corner") do
 		@fact all(Ac[12:28, 12:28]) --> false
 	end
 
-	context("Fast Corners") do 
+	context("Fast Corners") do
 
 		img = reshape(1:1:49, 7, 7)
 
@@ -152,7 +152,7 @@ facts("Corner") do
 		corners[4, end - 1] = true
 		@fact all(corners) --> true
 
-		img = gaussian2d(1.4)
+		img = parent(gaussian2d(1.4))
 		img = vcat(img, img)
 		img = hcat(img, img)
 		corners = fastcorners(img, 12, 0.05)
@@ -161,7 +161,7 @@ facts("Corner") do
 		@fact corners[5, 14] --> true
 		@fact corners[14, 5] --> true
 		@fact corners[14, 14] --> true
-		
+
 		@fact all(corners[:, 1:3] .== false) --> true
 		@fact all(corners[1:3, :] .== false) --> true
 		@fact all(corners[:, 16:end] .== false) --> true

@@ -12,9 +12,9 @@ end
 @everywhere function test287(img)
     return 0;
 end
-Imgs = Array(Images.Image{RGB{Float64}}, 2);
-Imgs[1] = convert(Images.Image{RGB}, rand(100, 100, 3));
-Imgs[2] = convert(Images.Image{RGB}, rand(100, 100, 3));
+Imgs = Array{Matrix{RGB{Float64}}}(2);
+Imgs[1] = rand(RGB{Float64}, 100, 100)
+Imgs[2] = rand(RGB{Float64}, 100, 100)
 
 let Imgs = Imgs;
     ret = pmap(i -> test287(Imgs[i]), 1:2);
