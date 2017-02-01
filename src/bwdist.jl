@@ -1,218 +1,204 @@
-using Base.Cartesian
+module FeatureTransform
+
+export feature_transform, distance_transform
 
 """
-    bwdist(I::AbstractArray{Bool, N}) -> F, D
+    feature_transform(I::AbstractArray{Bool, N}, [w=nothing]) -> F
 
-Compute the euclidean distance and feature transform of a binary image,
-where `F` is trhe feature transform (the closest feature pixel map)
-and `D` is the euclidean distance transform of `I`.
+Compute the feature transform of a binary image `I`, finding the
+closest "feature" (positions where `I` is `true`) for each location in
+`I`.  Specifically, `F[i]` is a `CartesianIndex` encoding the position
+closest to `i` for which `I[F[i]]` is `true`.  In cases where two or
+more features in `I` have the same distance from `i`, an arbitrary
+feature is chosen. If `I` has no `true` values, then all locations are
+mapped to an index where each coordinate is `typemin(Int)`.
 
-Implemented according to
-'A Linear Time Algorithm for Computing
-Exact Euclidean Distance Transforms of
-Binary Images in Arbitrary Dimensions' [Maurer et al., 2003]
-(DOI: 10.1109/TPAMI.2003.1177156)
+Optionally specify the weight `w` assigned to each coordinate.  For
+example, if `I` corresponds to an image where voxels are anisotropic,
+`w` could be the voxel spacing along each coordinate axis. The default
+value of `nothing` is equivalent to `w=(1,1,...)`.
+
+See also: [`distance_transform`](@ref).
+
+# Citation
+
+'A Linear Time Algorithm for Computing Exact Euclidean Distance
+Transforms of Binary Images in Arbitrary Dimensions' [Maurer et al.,
+2003] (DOI: 10.1109/TPAMI.2003.1177156)
 """
-function bwdist{N}(I::AbstractArray{Bool, N})
-    sizeI = size(I)
-    # generate temporary arrays
-    tempArray = Array{Int}(length(I) + 1)
+function feature_transform{N}(I::AbstractArray{Bool,N}, w::Union{Void,NTuple{N}}=nothing)
+    # To allocate temporary storage for voronoift!, compute one
+    # element (so we have the proper type)
+    fi = first(CartesianRange(indices(I)))
+    drft = DistRFT(fi, w, (), Base.tail(fi.I))
+    tmp = Vector{typeof(drft)}(0)
 
-    # F and D
-    F = zeros(Int, sizeI)
-    D = zeros(Float64, sizeI)
-    stride = collect(strides(F))
+    # Allocate the output
+    F = similar(I, CartesianIndex{N})
 
-    _computeft!(F, I, stride)
+    # Compute the feature transform (recursive algorithm)
+    computeft!(F, I, w, CartesianIndex(()), tmp)
 
-    if N > 1
-        for i = 1:N
-            sizeF = size(F)
-            _voronoift!(F, I, sizeF, stride, tempArray)
-            (F, stride) = permutedimsubs(F, sizeF)
+    F
+end
+
+"""
+    distance_transform(F::AbstractArray{CartesianIndex}, [w=nothing]) -> D
+
+Compute the distance transform of `F`, where each element `F[i]`
+represents a "target" or "feature" location assigned to `i`.
+Specifically, `D[i]` is the distance between `i` and `F[i]`.
+Optionally specify the weight `w` assigned to each coordinate; the
+default value of `nothing` is equivalent to `w=(1,1,...)`.
+
+See also: [`feature_transform`](@ref).
+"""
+function distance_transform{N}(F::AbstractArray{CartesianIndex{N},N}, w::Union{Void,NTuple{N}}=nothing)
+    # To allocate the proper output type, compute the distance for one element
+    R = CartesianRange(indices(F))
+    dst = wnorm2(zero(eltype(R)), w)
+    D = similar(F, typeof(sqrt(dst)))
+
+    _null = nullindex(F)
+    @inbounds for i in R
+        fi = F[i]
+        D[i] = fi == _null ? Inf : sqrt(wnorm2(fi - i, w))
+    end
+
+    D
+end
+
+function computeft!{K}(F, I, w, jpost::CartesianIndex{K}, tmp)
+    _null = nullindex(F)
+    if K == ndims(I)-1
+        # Fig. 2, lines 2-8
+        @inbounds @simd for i1 in indices(I, 1)
+            F[i1, jpost] = ifelse(I[i1, jpost], CartesianIndex(i1, jpost), _null)
         end
     else
-        sizeF = size(F)
-        _voronoift!(F, I, sizeF, stride, tempArray)
+        # Fig. 2, lines 10-12
+        for i1 in indices(I, ndims(I) - K)
+            computeft!(F, I, w, CartesianIndex(i1, jpost), tmp)
+        end
     end
-
-    @inbounds for i in eachindex(F)
-        D[i] = euclidean(ind2sub(sizeI, F[i]), subindex(sizeI, i))
+    # Fig. 2, lines 14-20
+    indspre = ftfront(indices(F), jpost)  # discards the trailing indices of F
+    for jpre in CartesianRange(indspre)
+        voronoift!(F, I, w, jpre, jpost, tmp)
     end
-
-    return (F, D)
+    F
 end
 
-@inline subindex(dims::Tuple, i::Int) = ind2sub(dims, i)
-@inline subindex(dims::Tuple, i::CartesianIndex) = i.I
-
-"""
-    \_computeft!(F::AbstractArray{Int, N}, I::AbstractArray{Bool, N}, stride::AbstractArray{Int})
-
-Compute F_0, indicating the closest feature voxel in the 0th dimension where
-for each voxel x in I `F_0(x) = x if x = 1 and 0 otherwise`,
-in the parlance of Maurer et al. 2003.
-"""
-function _computeft!(F::AbstractArray{Int}, I::AbstractArray{Bool}, stride::AbstractArray{Int})
-    @inbounds @simd for i in eachindex(F)
-        F[i] = ifelse(I[i], stridedGetindex(i, stride), 0)
-    end
-end
-
-@inline stridedGetindex(i::Int, stride::AbstractArray{Int}) = i
-@inline stridedGetindex(i::CartesianIndex, stride::AbstractArray{Int}) = stridedSub2Ind(stride, i.I)
-
-"""
-    \_voronoift!(F::AbstractArray{Int, N}, I::AbstractArray{Bool, N}, sizeF::Tuple, stride::AbstractArray{Int}, g::AbstractArray{Int})
-
-Compute the partial Voronoi diagram along the first dimension of `F`,
-using `g` as a temporary array, following Maurer et al. 2003.
-"""
-@generated function _voronoift!{N}(F::AbstractArray{Int, N}, I::AbstractArray{Bool, N}, sizeF::Tuple, stride::AbstractArray{Int}, g::AbstractArray{Int})
-  quote
-    @inbounds @nloops $N d j -> (j == 1 ? 0 : 1:sizeF[j]) begin
-      l = 0
-
-      @inbounds for i = 1:sizeF[1]
-        f = (@nref $N F j -> (j == 1 ? i : d_j))
-        if f != 0
-          if l < 2
-            l += 1
-            g[l] = f
-          else
-            while l >= 2 && removeft(g[l-1], g[l], f, d_2, sizeF)
-              l -= 1
+function voronoift!(F, I, w, jpre, jpost, tmp)
+    d = length(jpre)+1
+    _null = nullindex(F)
+    empty!(tmp)
+    for i in indices(I, d)
+        # Fig 3, lines 3-13
+        xi = CartesianIndex(jpre, i, jpost)
+        @inbounds fi = F[xi]
+        if fi != _null
+            fidist = DistRFT(fi, w, jpre, jpost)
+            if length(tmp) < 2
+                push!(tmp, fidist)
+            else
+                @inbounds while length(tmp) >= 2 && removeft(tmp[end-1], tmp[end], fidist)
+                    pop!(tmp)
+                end
+                push!(tmp, fidist)
             end
-            l += 1
-            g[l] = f
-          end
-          g[l] = f
         end
-      end
-
-      n_s = l
-      if n_s != 0
-        l = 1
-        @inbounds @fastmath for d_1 = 1:sizeF[1]
-          # This makes the index x from subscripts d_{1, ...}
-          x = 1
-          (@nexprs $N j -> x = x + (d_j - 1) * stride[j])
-          while l < n_s && (sqeuclidean(x, g[l], sizeF) > sqeuclidean(x, g[l+1], sizeF))
-            l += 1
-          end
-          (@nref $N F d) = g[l]
+    end
+    nS = length(tmp)
+    nS == 0 && return F
+    # Fig 3, lines 18-24
+    l = 1
+    @inbounds fthis = tmp[l].fi
+    for i in indices(I, d)
+        xi = CartesianIndex(jpre, i, jpost)
+        d2this = wnorm2(xi-fthis, w)
+        while l < nS
+            @inbounds fnext = tmp[l+1].fi
+            d2next = wnorm2(xi-fnext, w)
+            if d2this > d2next
+                d2this, fthis = d2next, fnext
+                l += 1
+            else
+                break
+            end
         end
-      end
+        @inbounds F[xi] = fthis
     end
-  end
+    F
+end
+
+## Utilities
+
+# Stores a feature location and its distance from the hyperplane Rd
+immutable DistRFT{N,T}
+    fi::CartesianIndex{N}
+    dist2::T
+    d::Int  # the coordinate in dimension d
 end
 
 """
-    removeft(u::Int, v::Int, w::Int, r::Int, dims::Tuple)
+    DistRFT(fi::CartesianIndex, w, jpre, jpost)
 
-Calculate whether we should remove a feature pixel from the Voronoi diagram.
+Bundles a feature `fi` together with its distance from the line Rd,
+where Rd is specified by `(jpre..., :, jpost...)`. `w` is the
+weighting applied to each coordinate, and must be `nothing` or be a
+tuple with the same number of coordiantes as `fi`.
+
 """
-function removeft(u::Int, v::Int, w::Int, r::Int, dims::Tuple)
-    @inbounds begin
-        uIdx = ind2sub(dims, u)
-        vIdx = ind2sub(dims, v)
-        wIdx = ind2sub(dims, w)
+function DistRFT(fi::CartesianIndex, w, jpre::CartesianIndex, jpost::CartesianIndex)
+    d2pre, ipost, wpost = dist2pre(fi.I, w, jpre.I)
+    d2post = wnorm2(CartesianIndex(ipost) - jpost, wpost)
+    @inbounds fid = fi[length(jpre)+1]
+    DistRFT(fi, d2pre + d2post, fid)
+end
+DistRFT(fi::CartesianIndex, w, jpre::Tuple, jpost::Tuple) =
+    DistRFT(fi, w, CartesianIndex(jpre), CartesianIndex(jpost))
 
-        a = vIdx[1] - uIdx[1]
-        b = wIdx[1] - vIdx[1]
-        c = a + b
-
-        return c*distance2(vIdx[2], r) - b*distance2(uIdx[2], r) - a*distance2(wIdx[2], r) - a*b*c > 0
-    end
+@inline function removeft(u, v, w)
+    a, b, c = v.d-u.d, w.d-v.d, w.d-u.d
+    c*v.dist2 - b*u.dist2 - a*w.dist2 > a*b*c
 end
 
 """
-    circperm(t::Tuple)
+    ftfront(inds, j::CartesianIndex{K})
 
-Circularly shift the data in the tuple.
+Discard the last `K+1` elements of the tuple `inds`.
 """
-circperm(t::Tuple) = _circperm(t)
-@inline _circperm(t::Tuple) = _circperm(t...)
-@inline _circperm(t1, trest...) = (trest..., t1)
+ftfront(inds, j::CartesianIndex) = _ftfront((), inds, j)
+_ftfront{N}(out, inds::NTuple{N}, j::CartesianIndex{N}) = Base.front(out)
+@inline _ftfront(out, inds, j) = _ftfront((out..., inds[1]), Base.tail(inds), j)
 
-"""
-    permutedimsubs(F::AbstractArray{Int, N}, sizeF::Tuple) -> B, stride
-
-Permute the dimensions of an array and those of the linear indices stored in that array,
-and returning `B` as the permuted array and `stride` indicating `strides(B)`.
-"""
-function permutedimsubs(F::AbstractArray{Int}, sizeF::Tuple)
-    B = transpose(F)
-
-    stride = collect(strides(B))
-    @inbounds for i in eachindex(B)
-        B[i] = B[i] == 0 ? 0 : stridedSub2Ind(stride, circperm(ind2sub(sizeF, B[i])))
-    end
-
-    return (B, stride)
-end
+nullindex{T,N}(A::AbstractArray{T,N}) = typemin(Int)*one(CartesianIndex{N})
 
 """
-    stridedSub2Ind(stride::AbstractArray{Int}, i::Tuple)
+    wnorm2(x::CartesianIndex, w)
 
-Compute the index for given subindices using an array's strides.
-
-Replacing `sub2ind` in order to reduce memory consumption.
+Compute `∑ (w[i]*x[i])^2`.  Specifying `nothing` for `w` is equivalent to `w = (1,1,...)`.
 """
-function stridedSub2Ind(stride::AbstractArray{Int}, i::Tuple)
-    s = 1
-    @inbounds @fastmath @simd for j in eachindex(i)
-        ij = i[j] - 1
-        stridej = stride[j]
-        s = s + ij * stridej
-    end
-    return s
-end
+wnorm2(x::CartesianIndex, w) = _wnorm2(0, x.I, w)
+_wnorm2(s, ::Tuple{}, ::Void)    = s
+_wnorm2(s, ::Tuple{}, ::Tuple{}) = s
+@inline _wnorm2(s, x, w::Void) = _wnorm2(s + sqr(x[1]), Base.tail(x), w)
+@inline _wnorm2(s, x, w) = _wnorm2(s + sqr(w[1]*x[1]), Base.tail(x), Base.tail(w))
 
 """
-    distance2(u::Int, r::Int, dims::Tuple)
+    dist2pre(x, w, jpre) -> s, xpost, wpost
 
-Calculate the Squared Euclidean distance of u, given by a linear index, to a row index.
+`s` is equivalent to `wnorm2(x[1:length(jpre)]-jpre, w)`. `xpost` and
+`wpost` contain the trailing indices of `x` and `w` (skipping the
+element `length(jpre)+1`).
 """
-@inline distance2(u::Int, r::Int) = abs2(u - r)
+dist2pre(x::Tuple, w, jpre) = _dist2pre(0, x, w, jpre)
+_dist2pre(s, x, w::Void, ::Tuple{}) = s, Base.tail(x), w
+_dist2pre(s, x, w,       ::Tuple{}) = s, Base.tail(x), Base.tail(w)
+@inline _dist2pre(s, x, w::Void, jpre) = _dist2pre(s + sqr(x[1]-jpre[1]), Base.tail(x), w, Base.tail(jpre))
+@inline _dist2pre(s, x, w, jpre) = _dist2pre(s + sqr(w[1]*(x[1]-jpre[1])), Base.tail(x), Base.tail(w), Base.tail(jpre))
 
-"""
-    sqeuclidean(x::Int, g::Int, dims::Tuple)
+@inline sqr(x) = x*x
 
-Calculate the Squared Euclidean Distance between linear indices.
-"""
-function sqeuclidean(x::Int, g::Int, dims::Tuple)
-    x_subs = ind2sub(dims, x)
-    g_subs = ind2sub(dims, g)
-    return sqeuclidean(x_subs, g_subs)
-end
-
-"""
-    sqeuclidean(x::Tuple, g::Tuple)
-
-Calculate the Squared Euclidean Distance between cartesian indices.
-"""
-function sqeuclidean(x_subs::Tuple, g_subs::Tuple)
-    # taken from Distances.jl
-    s = 0
-    @inbounds @simd for I in eachindex(x_subs, g_subs)
-        xi = x_subs[I]
-        gi = g_subs[I]
-        s = s + abs2(xi - gi)
-    end
-    return s
-end
-
-"""
-    euclidean(x::Int, g::Int, dims::Tuple)
-
-Calculate the Euclidean Distance between linear indices.
-"""
-euclidean(x::Int, g::Int, dims::Tuple) = sqrt(sqeuclidean(x, g, dims))
-
-"""
-    euclidean(x::Int, g::CartesianIndex, dims::Tuple)
-
-Calculate the Euclidean Distance between cartesian indices.
-"""
-euclidean(x::Tuple, g::Tuple) = sqrt(sqeuclidean(x, g))
+end # module

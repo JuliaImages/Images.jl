@@ -66,6 +66,7 @@ include("showmime.jl")
 include("corner.jl")
 include("distances.jl")
 include("bwdist.jl")
+using .FeatureTransform
 include("deprecated.jl")
 
 export # types
@@ -158,7 +159,8 @@ export # types
     imgaussiannoise,
     imlineardiffusion,
     imROF,
-    bwdist,
+    feature_transform,
+    distance_transform,
 
     #Exposure
     complement,
@@ -233,7 +235,7 @@ Algorithms:
     - Edge detection: `imedge`, `imgradients`, `thin_edges`, `magnitude`, `phase`, `magnitudephase`, `orientation`, `canny`
     - Corner detection: `imcorner`, `harris`, `shi_tomasi`, `kitchen_rosenfeld`, `meancovs`, `gammacovs`, `fastcorners`
     - Blob detection: `blob_LoG`, `findlocalmaxima`, `findlocalminima`
-    - Morphological operations: `dilate`, `erode`, `closing`, `opening`, `tophat`, `bothat`, `morphogradient`, `morpholaplace`
+    - Morphological operations: `dilate`, `erode`, `closing`, `opening`, `tophat`, `bothat`, `morphogradient`, `morpholaplace`, `feature_transform`, `distance_transform`
     - Connected components: `label_components`, `component_boxes`, `component_lengths`, `component_indices`, `component_subscripts`, `component_centroids`
     - Interpolation: `bilinear_interpolation`
 
