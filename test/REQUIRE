@@ -2,6 +2,5 @@
 FactCheck
 @windows ImageMagick
 @linux ImageMagick
-# @osx QuartzImageIO
-@osx ImageMagick
+@osx QuartzImageIO
 OffsetArrays
