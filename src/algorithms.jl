@@ -321,8 +321,8 @@ sadn{T}(A::AbstractArray{T}, B::AbstractArray{T}) = sad(A, B)/length(A)
 `C = ncc(A, B)` computes the normalized cross-correlation of `A` and `B`.
 """
 function ncc{T}(A::AbstractArray{T}, B::AbstractArray{T})
-    Am = (data(A).-mean(data(A)))[:]
-    Bm = (data(B).-mean(data(B)))[:]
+    Am = (A.-mean(A))[:]
+    Bm = (B.-mean(B))[:]
     return dot(Am,Bm)/(norm(Am)*norm(Bm))
 end
 
@@ -756,7 +756,7 @@ function imROF(img::AbstractArray, lambda::Number, iterations::Integer)
             copy!(outsl, imROF(imsl, lambda, iterations))
         end
     else
-        out = shareproperties(img, imROF(data(img), lambda, iterations))
+        out = shareproperties(img, imROF(img, lambda, iterations))
     end
     out
 end
@@ -790,8 +790,8 @@ erode(img::ImageMeta, region=coords_spatial(img)) = shareproperties(img, erode!(
 dilate(img::AbstractArray, region=coords_spatial(img)) = dilate!(copy(img), region)
 erode(img::AbstractArray, region=coords_spatial(img)) = erode!(copy(img), region)
 
-dilate!(maxfilt, region=coords_spatial(maxfilt)) = extremefilt!(data(maxfilt), Base.Order.Forward, region)
-erode!(minfilt, region=coords_spatial(minfilt)) = extremefilt!(data(minfilt), Base.Order.Reverse, region)
+dilate!(maxfilt, region=coords_spatial(maxfilt)) = extremefilt!(maxfilt, Base.Order.Forward, region)
+erode!(minfilt, region=coords_spatial(minfilt)) = extremefilt!(minfilt, Base.Order.Reverse, region)
 function extremefilt!(A::AbstractArray, select::Function, region=coords_spatial(A))
     inds = indices(A)
     for d = 1:ndims(A)

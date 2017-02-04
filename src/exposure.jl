@@ -33,7 +33,7 @@ imcomplement(img::ImageMeta) = copyproperties(img, imcomplement(data(img)))
 complement(x) = one(x)-x
 complement(x::TransparentColor) = typeof(x)(complement(color(x)), alpha(x))
 
-imhist{T<:Colorant}(img::AbstractArray{T}, nbins::Integer = 400) = imhist(convert(Array{Gray}, data(img)), nbins)
+imhist{T<:Colorant}(img::AbstractArray{T}, nbins::Integer = 400) = imhist(convert(Array{Gray}, img), nbins)
 
 function imhist{T<:NumberLike}(img::AbstractArray{T}, nbins::Integer = 400)
     minval = minfinite(img)
