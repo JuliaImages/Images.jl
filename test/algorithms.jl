@@ -400,6 +400,10 @@ using Base.Test
         img = zeros(10,10)
         img2 = Images.imresize(img, (5,5))
         @test length(img2) == 25
+        img = rand(RGB{Float32}, 10, 10)
+        img2 = Images.imresize(img, (6,7))
+        @test size(img2) == (6,7)
+        @test eltype(img2) == RGB{Float32}
     end
 
     @testset "Interpolations" begin
