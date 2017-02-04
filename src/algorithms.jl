@@ -138,7 +138,7 @@ function entropy(img::AbstractArray{Bool}; kind=:shannon)
     (0 < p < 1) ? - p*logᵦ(p) - (1-p)*logᵦ(1-p) : zero(p)
 end
 
-entropy{C<:AbstractGray}(img::AbstractArray{C}; kind=:shannon) = entropy(raw(img), kind=kind)
+entropy{C<:AbstractGray}(img::AbstractArray{C}; kind=:shannon) = entropy(channelview(img), kind=kind)
 
 # functions red, green, and blue
 for (funcname, fieldname) in ((:red, :r), (:green, :g), (:blue, :b))
@@ -321,8 +321,8 @@ sadn{T}(A::AbstractArray{T}, B::AbstractArray{T}) = sad(A, B)/length(A)
 `C = ncc(A, B)` computes the normalized cross-correlation of `A` and `B`.
 """
 function ncc{T}(A::AbstractArray{T}, B::AbstractArray{T})
-    Am = (data(A).-mean(data(A)))[:]
-    Bm = (data(B).-mean(data(B)))[:]
+    Am = (A.-mean(A))[:]
+    Bm = (B.-mean(B))[:]
     return dot(Am,Bm)/(norm(Am)*norm(Bm))
 end
 
@@ -333,8 +333,9 @@ macro test_approx_eq_sigma_eps(A, B, sigma, eps)
             error("Sizes ", size($(esc(A))), " and ",
                   size($(esc(B))), " do not match")
         end
-        Af = imfilter_gaussian($(esc(A)), $(esc(sigma)))
-        Bf = imfilter_gaussian($(esc(B)), $(esc(sigma)))
+        kern = KernelFactors.IIRGaussian($(esc(sigma)))
+        Af = imfilter($(esc(A)), kern, NA())
+        Bf = imfilter($(esc(B)), kern, NA())
         diffscale = max(maxabsfinite($(esc(A))), maxabsfinite($(esc(B))))
         d = sad(Af, Bf)
         if d > length(Af)*diffscale*($(esc(eps)))
@@ -368,8 +369,9 @@ function test_approx_eq_sigma_eps{T<:Real}(A::AbstractArray, B::AbstractArray,
     if length(sigma) != ndims(A)
         error("Invalid sigma in test_approx_eq_sigma_eps. Should be ndims(A)-length vector of the number of pixels to blur.  Got: $sigma")
     end
-    Af = imfilter_gaussian(A, sigma)
-    Bf = imfilter_gaussian(B, sigma)
+    kern = KernelFactors.IIRGaussian(sigma)
+    Af = imfilter(A, kern, NA())
+    Bf = imfilter(B, kern, NA())
     diffscale = max(maxabsfinite(A), maxabsfinite(B))
     d = sad(Af, Bf)
     diffpct = d / (length(Af) * diffscale)
@@ -545,12 +547,12 @@ function restrict(A::AbstractArray, region::RegionType=coords_spatial(A))
     A
 end
 
-function _restrict{T,N}(A::AbstractArray{T,N}, dim)
+function _restrict{T,N}(A::AbstractArray{T,N}, dim::Integer)
     if size(A, dim) <= 2
         return A
     end
     newsz = ntuple(i->i==dim?restrict_size(size(A,dim)):size(A,i), Val{N})
-    out = Array{typeof(A[1]/4+A[2]/2)}(newsz)
+    out = Array{typeof(A[1]/4+A[2]/2),N}(newsz)
     restrict!(out, A, dim)
     out
 end
@@ -658,8 +660,7 @@ end
 restrict_size(len::Integer) = isodd(len) ? (len+1)>>1 : (len>>1)+1
 
 ## imresize
-function imresize!(resized, original)
-    assert2d(original)
+function imresize!(resized, original::AbstractMatrix)
     scale1 = (size(original,1)-1)/(size(resized,1)-0.999f0)
     scale2 = (size(original,2)-1)/(size(resized,2)-0.999f0)
     for jr = 0:size(resized,2)-1
@@ -756,7 +757,7 @@ function imROF(img::AbstractArray, lambda::Number, iterations::Integer)
             copy!(outsl, imROF(imsl, lambda, iterations))
         end
     else
-        out = shareproperties(img, imROF(data(img), lambda, iterations))
+        out = shareproperties(img, imROF(img, lambda, iterations))
     end
     out
 end
@@ -790,8 +791,8 @@ erode(img::ImageMeta, region=coords_spatial(img)) = shareproperties(img, erode!(
 dilate(img::AbstractArray, region=coords_spatial(img)) = dilate!(copy(img), region)
 erode(img::AbstractArray, region=coords_spatial(img)) = erode!(copy(img), region)
 
-dilate!(maxfilt, region=coords_spatial(maxfilt)) = extremefilt!(data(maxfilt), Base.Order.Forward, region)
-erode!(minfilt, region=coords_spatial(minfilt)) = extremefilt!(data(minfilt), Base.Order.Reverse, region)
+dilate!(maxfilt, region=coords_spatial(maxfilt)) = extremefilt!(maxfilt, max, region)
+erode!(minfilt, region=coords_spatial(minfilt)) = extremefilt!(minfilt, min, region)
 function extremefilt!(A::AbstractArray, select::Function, region=coords_spatial(A))
     inds = indices(A)
     for d = 1:ndims(A)
@@ -1040,14 +1041,15 @@ by a factor `downsample` and `sigma` for the gaussian kernel.
 """
 function gaussian_pyramid{T}(img::AbstractArray{T, 2}, n_scales::Int, downsample::Real, sigma::Real)
     prev = img
-    img_smoothed_main = imfilter_gaussian(prev, [sigma, sigma])
+    kerng = KernelFactors.IIRGaussian(sigma)
+    img_smoothed_main = imfilter(prev, (kerng,kerng), NA())
     pyramid = typeof(img_smoothed_main)[]
     push!(pyramid, img_smoothed_main)
     prev_h, prev_w = size(img)
     for i in 1:n_scales
         next_h = ceil(Int, prev_h / downsample)
         next_w = ceil(Int, prev_w / downsample)
-        img_smoothed = imfilter_gaussian(prev, [sigma, sigma])
+        img_smoothed = imfilter(prev, (kerng, kerng), NA())
         img_scaled = imresize(img_smoothed, (next_h, next_w))
         push!(pyramid, img_scaled)
         prev = img_scaled

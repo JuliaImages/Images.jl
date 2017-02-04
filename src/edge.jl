@@ -232,7 +232,7 @@ CoordOffset(x::Float64) = ((frac,i) = modf(x); CoordOffset(sign(frac), round(Int
 (+)(off::CoordOffset, x::Number) = x + off.i + off.s*off.f
 
 # Precalculate x and y offsets relative to centre pixel for each orientation angle
-function _calc_discrete_offsets(θ, radius, transposed)
+function _calc_discrete_offsets(θ, radius)
 
     θ_count = round(Int, 2π/θ)
     θ = 2π/θ_count
@@ -241,14 +241,8 @@ function _calc_discrete_offsets(θ, radius, transposed)
     # x and y offset of points at specified radius and angles
     # from each reference position.
 
-    @compat if transposed
-        # θ′ = -π/2 - θ
-        xoffs = [CoordOffset(-x) for x in  radius * sin.(angles)]
-        yoffs = [CoordOffset( y) for y in  radius * cos.(angles)]
-    else
-        xoffs = [CoordOffset( x) for x in  radius * cos.(angles)]
-        yoffs = [CoordOffset(-y) for y in  radius * sin.(angles)]
-    end
+    xoffs = [CoordOffset( x) for x in  radius * cos.(angles)]
+    yoffs = [CoordOffset(-y) for y in  radius * sin.(angles)]
 
     return θ, xoffs, yoffs
 end
@@ -285,7 +279,7 @@ end
 
 # Core edge thinning algorithm using nonmaximal suppression
 function thin_edges_nonmaxsup_core!{T}(out::AbstractArray{T,2}, location::AbstractArray{Point,2},
-                                       img::AbstractArray{T,2}, gradientangles, radius, border, theta)
+                                       img::AbstractArray{T,2}, gradientangles::AbstractMatrix, radius, border, theta)
     calc_subpixel = !isempty(location)
 
     # Error checking
@@ -294,8 +288,7 @@ function thin_edges_nonmaxsup_core!{T}(out::AbstractArray{T,2}, location::Abstra
     radius < 1.0 && error("radius must be >= 1")
 
     # Precalculate x and y offsets relative to centre pixel for each orientation angle
-    transposed = spatialorder(img)[1] == "x"
-    θ, xoffs, yoffs = _calc_discrete_offsets(theta, radius, transposed)
+    θ, xoffs, yoffs = _calc_discrete_offsets(theta, radius)
     iθ = 1/θ
 
     # Indexes to use for border handling
@@ -330,8 +323,7 @@ function thin_edges_nonmaxsup_core!{T}(out::AbstractArray{T,2}, location::Abstra
 
                     # location where maxima of fitted parabola occurs
                     r = -b/2a
-                    location[y,x] = transposed ? Point(y + r*yoffs[or], x + r*xoffs[or]) :
-                                                 Point(x + r*xoffs[or], y + r*yoffs[or])
+                    location[y,x] = Point(x + r*xoffs[or], y + r*yoffs[or])
 
                     if T<:AbstractFloat
                         # Store the interpolated value
@@ -351,39 +343,36 @@ end
 
 
 # Main function call when subpixel location of edges is not needed
-function thin_edges_nonmaxsup!{A<:AbstractArray,B<:AbstractArray}(out::A, img::A, gradientangles::B, border::AbstractString="replicate";
-                                                                  radius::Float64=1.35, theta=pi/180)
-    properties(out) != properties(img) && error("Input and output arrays must have the same properties")
-    thin_edges_nonmaxsup_core!(data(out), Array(Point,(0,0)), img, gradientangles, radius, border, theta)
-    out
+function thin_edges_nonmaxsup!(out, img, gradientangles, border::AbstractString="replicate";
+                               radius::Float64=1.35, theta=pi/180)
+    thin_edges_nonmaxsup_core!(out, Matrix{Point}(0,0), img, gradientangles, radius, border, theta)
 end
 
-function thin_edges_nonmaxsup{T}(img::AbstractArray{T,2}, gradientangles::AbstractArray, border::AbstractString="replicate";
+function thin_edges_nonmaxsup(img, gradientangles, border::AbstractString="replicate";
                                  radius::Float64=1.35, theta=pi/180)
     (height,width) = size(img)
-    out = zeros(T, height, width)
-    thin_edges_nonmaxsup_core!(out, Array(Point,(0,0)), img, gradientangles, radius, border, theta)
-    copyproperties(img, out)
+    out = zeros(eltype(img), height, width)
+    thin_edges_nonmaxsup_core!(out, Matrix{Point}(0,0), img, gradientangles, radius, border, theta)
 end
 
 # Main function call when subpixel location of edges is desired
-function thin_edges_nonmaxsup_subpix!{A<:AbstractArray, B<:AbstractArray, C<:AbstractArray}(out::A, location::B, img::A, gradientangles::C,
-                                     border::AbstractString="replicate"; radius::Float64=1.35, theta=pi/180)
-    properties(out) != properties(img) && error("Input and output arrays must have the same properties")
+function thin_edges_nonmaxsup_subpix!(out, location, img, gradientangles,
+                                      border::AbstractString="replicate";
+                                      radius::Float64=1.35, theta=pi/180)
     eltype(location) != Point && error("Preallocated subpixel location array/image must have element type Graphics.Point")
 
-    thin_edges_nonmaxsup_core!(data(out), data(location), img, gradientangles, radius, border, theta)
+    thin_edges_nonmaxsup_core!(out, location, img, gradientangles, radius, border, theta)
     img, location
 end
 
-function thin_edges_nonmaxsup_subpix{T}(img::AbstractArray{T}, gradientangles::AbstractArray,
-                                        border::AbstractString="replicate"; radius::Float64=1.35, theta=pi/180)
+function thin_edges_nonmaxsup_subpix(img, gradientangles,
+                                     border::AbstractString="replicate";
+                                     radius::Float64=1.35, theta=pi/180)
     (height,width) = size(img)
-    out = zeros(T, height, width)
+    out = zeros(eltype(img), height, width)
     location = zeros(Point, height, width)
     thin_edges_nonmaxsup_core!(out, location, img, gradientangles, radius, border, theta)
-
-    copyproperties(img, out), copyproperties(img, location)
+    out, location
 end
 
 """
@@ -404,7 +393,7 @@ Parameters :
 
 """
 function canny{T<:NumberLike}(img_gray::AbstractMatrix{T}, sigma::Number = 1.4, upperThreshold::Number = 0.90, lowerThreshold::Number = 0.10; percentile::Bool = true)
-    img_grayf = imfilter_gaussian(img_gray, [sigma,sigma])
+    img_grayf = imfilter(img_gray, KernelFactors.IIRGaussian((sigma,sigma)), NA())
     img_grad_y, img_grad_x = imgradients(img_grayf, KernelFactors.sobel)
     img_mag, img_phase = magnitude_phase(img_grad_x, img_grad_y)
     img_nonMaxSup = thin_edges_nonmaxsup(img_mag, img_phase)
