@@ -74,3 +74,5 @@ end
 
 Base.@deprecate_binding LabeledArray ColorizedArray
 @deprecate ColorizedArray{T,N}(intensity::AbstractArray{T,N}, label::AbstractArray, colors::Vector{RGB}) ColorizedArray(intensity, IndirectArray(label, colors))
+
+@deprecate imcomplement(img::AbstractArray) complement.(img)

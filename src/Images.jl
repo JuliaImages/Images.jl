@@ -159,12 +159,12 @@ export # types
     imROF,
 
     #Exposure
+    complement,
     imhist,
     histeq,
     adjust_gamma,
     histmatch,
     clahe,
-    imcomplement,
     imadjustintensity,
     imstretch,
     cliphist,
