@@ -11,7 +11,6 @@ ImageMetadata
 IndirectArrays
 MappedArrays
 SIUnits
-Zlib
 Graphics 0.1
 FileIO
 Compat 0.9.1
