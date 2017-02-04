@@ -5,10 +5,11 @@
    `[0,1]`. This is equivalent to `map(ScaleMinMax(eltype(img), minval,
    maxval), img)`.  (minval,maxval) defaults to `extrema(img)`.
 """
-imadjustintensity{T}(img::AbstractArray{T}, range) = map(ScaleMinMax(T, range...), img)
-imadjustintensity{T}(img::AbstractArray{T}) = map(ScaleAutoMinMax(T), img)
+imadjustintensity{T}(img::AbstractArray{T}, range::Tuple{Any,Any}) = map(scaleminmax(T, range...), img)
+imadjustintensity(img::AbstractArray, range::AbstractArray) = imadjustintensity(img, (range...,))
+imadjustintensity(img::AbstractArray) = map(takemap(scaleminmax, img), img)
 
-_imstretch{T}(img::AbstractArray{T}, m::Number, slope::Number) = shareproperties(img, map(i -> 1 / (1 + (m / (i + eps(T))) ^ slope), img))
+_imstretch{T}(img::AbstractArray{T}, m::Number, slope::Number) = map(i -> 1 / (1 + (m / (i + eps(T))) ^ slope), img)
 
 """
 `imgs = imstretch(img, m, slope)` enhances or reduces (for
@@ -19,6 +20,7 @@ intensity is `1/(1+(m/(p+eps))^slope)`.
 This assumes the input `img` has intensities between 0 and 1.
 """
 imstretch(img::AbstractArray, m::Number, slope::Number) = _imstretch(float(img), m, slope)
+imstretch(img::ImageMeta, m::Number, slope::Number) = shareproperties(img, imstretch(data(img), m, slope))
 
 """
 ```
