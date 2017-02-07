@@ -1,3 +1,7 @@
+# v0.7
+
+Add `feature_transform` and `distance_transform`
+
 # v0.6
 
 Images has been rewritten essentially from scratch for this
