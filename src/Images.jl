@@ -47,10 +47,12 @@ using IndirectArrays, MappedArrays
 const is_little_endian = ENDIAN_BOM == 0x04030201
 
 @reexport using ImageCore
+@reexport using ImageTransformations
 @reexport using ImageAxes
 @reexport using ImageMetadata
 @reexport using ImageFiltering
 
+import ImageTransformations: restrict
 using ImageMetadata: ImageMetaAxis
 
 using Base.Cartesian  # TODO: delete this

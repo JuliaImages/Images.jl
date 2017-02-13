@@ -219,6 +219,9 @@ using Base.Test
         @test img2 ≈ A
     end
 
+    # functionality moved to ImageTransformations
+    # tests are here as well to make sure everything
+    # is exported properly.
     @testset "Restriction" begin
         imgcol = colorview(RGB, rand(3,5,6))
         A = reshape([convert(UInt16, i) for i = 1:60], 4, 5, 3)
@@ -396,6 +399,9 @@ using Base.Test
         @test norm((P-Q)[:]) < 1e-10
     end
 
+    # functionality moved to ImageTransformations
+    # tests are here as well to make sure everything
+    # is exported properly.
     @testset "Image resize" begin
         img = zeros(10,10)
         img2 = Images.imresize(img, (5,5))

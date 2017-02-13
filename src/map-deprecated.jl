@@ -285,6 +285,12 @@ ScaleMinMax{To<:Colorant,CV<:AbstractRGB}(::Type{To}, img::AbstractArray{CV}) = 
 
 similar{T,F,To,From,S}(mapi::ScaleMinMax{To,From,S}, ::Type{T}, ::Type{F}) = ScaleMinMax{T,F,S}(convert(F,mapi.min), convert(F.mapi.max), mapi.s)
 
+# these functions are moved to ImageTransformations
+convertsafely{T<:AbstractFloat}(::Type{T}, val) = convert(T, val)
+convertsafely{T<:Integer}(::Type{T}, val::Integer) = convert(T, val)
+convertsafely{T<:Integer}(::Type{T}, val::AbstractFloat) = round(T, val)
+convertsafely{T}(::Type{T}, val) = convert(T, val)
+
 # Implementation
 function immap{To<:RealLike,From<:RealLike}(mapi::ScaleMinMax{To,From}, val::Union{Real,Colorant})
     t = clamp(gray(val), gray(mapi.min), gray(mapi.max))
