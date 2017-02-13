@@ -506,7 +506,7 @@ function restrict{T,N}(img::AxisArray{T,N}, region::RegionType=coords_spatial(im
 end
 
 function restrict{Ax}(img::Union{AxisArray,ImageMetaAxis}, ::Type{Ax})
-    A = ImageTransformations._restrict(img.data, axisdim(img, Ax))
+    A = restrict(img.data, axisdim(img, Ax))
     AxisArray(A, replace_axis(modax(img[Ax]), axes(img)))
 end
 
