@@ -43,6 +43,7 @@ import Graphics
 import Graphics: width, height, Point
 using StatsBase  # TODO: eliminate this dependency
 using IndirectArrays, MappedArrays
+using Compat.TypeUtils
 
 const is_little_endian = ENDIAN_BOM == 0x04030201
 

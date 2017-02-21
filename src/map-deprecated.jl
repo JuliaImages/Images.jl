@@ -18,6 +18,11 @@
 # map1(mapi::MapInfo{T}, x) is designed to allow T<:Color to work on
 #    scalars x::Fractional
 
+hasparameters{T}(::Type{T}, n) = !isabstract(T) && length(T.parameters) ∈ n
+
+isdefined(:UnionAll) && include_string("""
+hasparameters(::UnionAll, n) = false
+""")
 
 # Dispatch-based elementwise manipulations
 """
@@ -428,7 +433,7 @@ end
 # This essentially "vectorizes" map over a single pixel's color channels using map1
 for SI in (MapInfo, AbstractClamp)
     for ST in subtypes(SI)
-        ST.abstract && continue
+        isabstract(ST) && continue
         ST == ScaleSigned && continue  # ScaleSigned gives an RGB from a scalar, so don't "vectorize" it
         @eval begin
             # Grayscale and GrayAlpha inputs
@@ -648,7 +653,7 @@ for C in tuple(subtypes(AbstractRGB)..., Gray)
     @eval mapinfo{F<:AbstractFloat}(::Type{RGB24}, img::AbstractArray{$C{F}}) = ClampMinMax(RGB24, zero(F), one(F))
     @eval mapinfo{F<:AbstractFloat}(::Type{ARGB32}, img::AbstractArray{$C{F}}) = ClampMinMax(ARGB32, zero(F), one(F))
     for AC in subtypes(TransparentColor)
-        length(AC.parameters) == 2 || continue
+        hasparameters(AC, 2) || continue
         @eval mapinfo(::Type{ARGB32}, img::AbstractArray{$AC{$C{N0f8},N0f8}}) = MapNone{ARGB32}()
         @eval mapinfo(::Type{RGB24}, img::AbstractArray{$AC{$C{N0f8},N0f8}}) = MapNone{RGB24}()
         for (T, n) in bitshiftto8
@@ -679,7 +684,7 @@ mapinfo{T<:AbstractFloat}(::Type{Clamp}, img::AbstractArray{T}) = ClampMinMax(N0
 let handled = Set()
 for ACV in (Color, AbstractRGB)
     for CV in subtypes(ACV)
-        (length(CV.parameters) == 1 && !(CV.abstract)) || continue
+        hasparameters(CV, 1) || continue
         CVnew = CV<:AbstractGray ? Gray : RGB
         @eval mapinfo{T<:Normed}(::Type{Clamp}, img::AbstractArray{$CV{T}}) = MapNone{$CVnew{T}}()
         @eval mapinfo{CV<:$CV}(::Type{Clamp}, img::AbstractArray{CV}) = Clamp{$CVnew{N0f8}}()
