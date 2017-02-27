@@ -876,21 +876,34 @@ Returns a  gaussian pyramid of scales `n_scales`, each downsampled
 by a factor `downsample` and `sigma` for the gaussian kernel.
 
 """
-function gaussian_pyramid{T}(img::AbstractArray{T, 2}, n_scales::Int, downsample::Real, sigma::Real)
-    prev = img
+function gaussian_pyramid{T,N}(img::AbstractArray{T,N}, n_scales::Int, downsample::Real, sigma::Real)
     kerng = KernelFactors.IIRGaussian(sigma)
-    img_smoothed_main = imfilter(prev, (kerng,kerng), NA())
-    pyramid = typeof(img_smoothed_main)[]
-    push!(pyramid, img_smoothed_main)
-    prev_h, prev_w = size(img)
-    for i in 1:n_scales
-        next_h = ceil(Int, prev_h / downsample)
-        next_w = ceil(Int, prev_w / downsample)
-        img_smoothed = imfilter(prev, (kerng, kerng), NA())
-        img_scaled = imresize(img_smoothed, (next_h, next_w))
+    kern = ntuple(d->kerng, Val{N})
+    gaussian_pyramid(img, n_scales, downsample, kern)
+end
+
+function gaussian_pyramid{T,N}(img::AbstractArray{T,N}, n_scales::Int, downsample::Real, kern::NTuple{N,Any})
+    # To guarantee inferability, we make sure that we do at least one
+    # round of smoothing and resizing
+    img_smoothed_main = imfilter(img, kern, NA())
+    img_scaled = pyramid_scale(img_smoothed_main, downsample)
+    prev = convert(typeof(img_scaled), img)
+    pyramid = typeof(img_scaled)[prev]
+    if n_scales > 1
+        # Take advantage of the work we've already done
         push!(pyramid, img_scaled)
         prev = img_scaled
-        prev_h, prev_w = size(img_scaled)
+    end
+    for i in 2:n_scales
+        img_smoothed = imfilter(prev, kern, NA())
+        img_scaled = pyramid_scale(img_smoothed, downsample)
+        push!(pyramid, img_scaled)
+        prev = img_scaled
     end
     pyramid
+end
+
+function pyramid_scale(img, downsample)
+    sz_next = map(s->ceil(Int, s/downsample), size(img))
+    imresize(img, sz_next)
 end
