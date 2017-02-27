@@ -194,14 +194,6 @@ facts("Algorithms") do
         @fact isapprox(pyramid[2][10, 10], 1.0, atol = 0.01) --> true "test HgqMZk"
         @fact isapprox(pyramid[3][5, 5], 1.0, atol = 0.05) --> true "test 98smZ2"
         @fact isapprox(pyramid[4][3, 3], 0.9, atol = 0.025) --> true "test NXNu7G"
-
-        for p in pyramid
-            h, w = size(p)
-            @fact all(Bool[isapprox(v, 0, atol = 0.06) for v in p[1, :]]) --> true "test n8h7aF"
-            @fact all(Bool[isapprox(v, 0, atol = 0.06) for v in p[:, 1]]) --> true "test EMA9Jn"
-            @fact all(Bool[isapprox(v, 0, atol = 0.06) for v in p[h, :]]) --> true "test cG3BfH"
-            @fact all(Bool[isapprox(v, 0, atol = 0.06) for v in p[:, w]]) --> true "test LcETLO"
-        end
     end
 
     context("fft and ifft") do
