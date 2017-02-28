@@ -471,6 +471,32 @@ using Base.Test
         @test B[40,10]==1
         @test B[50,10]==1
 
+        A = [0.0, 0.0, 1.0, 0.0, 0.0,
+             0.0, 1.0, 1.0, 0.0, 0.0,
+             1.0, 0.0, 0.0, 1.0, 1.0,
+             0.0, 0.0, 0.0, 0.0, 0.0,
+             0.0, 0.0, 1.0, 0.0, 0.0]
+        A = reshape(A, 5, 5)
+        A = convert(Array{Images.Gray}, A)
+
+        B = [0.0, 0.0, 1.0, 0.0, 0.0,
+             0.0, 1.0, 0.0, 1.0, 0.0,
+             1.0, 0.0, 0.0, 0.0, 1.0,
+             0.0, 1.0, 0.0, 1.0, 0.0,
+             0.0, 0.0, 1.0, 0.0, 0.0]
+        B = reshape(B, 5, 5)
+        B = convert(Array{Images.Gray}, B)
+
+        C = [0.0, 0.0, 1.0, 0.0, 0.0,
+             0.0, 1.0, 1.0, 1.0, 0.0,
+             1.0, 1.0, 1.0, 1.0, 1.0,
+             0.0, 1.0, 1.0, 1.0, 0.0,
+             0.0, 0.0, 1.0, 0.0, 0.0]
+        C = reshape(C, 5, 5)
+        C = convert(Array{Images.Gray}, C)
+
+        @test B==convexhull(A, "hull boundary")
+        @test C==convexhull(A, "filled hull")
     end
 
 end
