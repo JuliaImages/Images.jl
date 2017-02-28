@@ -6,6 +6,5 @@ include("corner.jl")
 include("bwdist.jl")
 include("distances.jl")
 include("writemime.jl")
-
 info("\n\nBeginning of tests with deprecation warnings\n\n")
 include("old/runtests.jl")

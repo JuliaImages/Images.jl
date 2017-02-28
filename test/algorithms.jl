@@ -438,6 +438,41 @@ using Base.Test
 
     end
 
+    @testset "Convex Hull" begin
+        println("Convex hull tests running")
+        A = zeros(50, 30)
+        A= convert(Array{Images.Gray}, A)
+        A[25,1]=1
+        A[1,10]=1
+        A[10,10]=1
+        A[10,30]=1
+        A[40,30]=1
+        A[40,10]=1
+        A[50,10]=1
+        B = convexhull(A, "hull boundary")
+        @test size(B)==size(A)
+        @test typeof(B)==typeof(A)
+        @test B[25,1]==1
+        @test B[1,10]==1
+        @test B[10,10]==0
+        @test B[10,30]==1
+        @test B[40,30]==1
+        @test B[40,10]==0
+        @test B[50,10]==1
+
+        B = convexhull(A, "filled hull")
+        @test size(B)==size(A)
+        @test typeof(B)==typeof(A)
+        @test B[25,1]==1
+        @test B[1,10]==1
+        @test B[10,10]==1
+        @test B[10,30]==1
+        @test B[40,30]==1
+        @test B[40,10]==1
+        @test B[50,10]==1
+
+    end
+
 end
 
 nothing
