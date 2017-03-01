@@ -1,10 +1,16 @@
 """
 ```
 chull = convexhull(img)
-chull = convexhull(img, "hull boundary/filled hull")
+chull = convexhull(img, "points/boundary/filled")
 ```
 
 Computes the convex hull of a binary image.
+The function can return either of these-
+- vector of vertices of the convex hull
+- image with boundary pixels marked
+- image with convex hull filled
+
+In case the image isn't a binary image, it considers pixel intensity<255 as black.
 """
 
 function drawline{T<:ColorTypes.Gray}(img::AbstractArray{T, 2}, y0::Int, x0::Int, y1::Int, x1::Int, color)
@@ -34,55 +40,27 @@ function drawline{T<:ColorTypes.Gray}(img::AbstractArray{T, 2}, y0::Int, x0::Int
 end
 
 
-function convexhull{T<:Images.Gray}(img::AbstractArray{T, 2}, returntype="hull boundary")
+function convexhull{T<:Images.Gray}(img::AbstractArray{T, 2}, returntype="points")
 
-    if returntype!="hull boundary" && returntype!="filled hull"
+    if returntype!="points" && returntype!="boundary" && returntype!="filled"
         error("Invalid argument returntype")
     end
 
-    points = []
-    h, w = size(img)
+    function getboundarypoints{T<:Images.Gray}(img::AbstractArray{T, 2})
 
-    #just store first and last point in each row for computing convex hull
-    for i in 1:h
-        first_point_found=false
-        last_point_found=false
-        first_point=[]
-        last_point=[]
-        for j in 1:w
-            if !first_point_found && img[i, j]==1
-                first_point=[i, j]
-                first_point_found=true
+        points = CartesianIndex{2}[]
 
-            elseif first_point_found && img[i, j]==1
-                last_point=[i, j]
-                last_point_found=true
+        for i in indices(img, 1)
+            ones = find(img[i,:] .==1)
+
+            if length(ones) == 1
+                push!(points, CartesianIndex{2}(i, minimum(ones)))
+            elseif length(ones)!=0
+                push!(points, CartesianIndex{2}(i, minimum(ones)))
+                push!(points, CartesianIndex{2}(i, maximum(ones)))
             end
         end
-        if first_point_found
-            push!(points, first_point)
-        end
-        if last_point_found
-            push!(points, last_point)
-        end
-    end
-
-    # Used Graham scan algorithm
-
-    last_point=[-1, -1]
-    for i in 1:h
-        for j in 1:w
-            if img[i,j]==1 && j>last_point[2]
-                last_point=[i, j]
-            elseif img[i,j]==1 && j==last_point[2] && i>last_point[1]
-                last_point=[i, j]
-            end
-        end
-    end
-
-    function right_oriented(a, b)
-        ref=last_point
-        ((a[2]-ref[2])*(b[1]-ref[1])-(b[2]-ref[2])*(a[1]-ref[1])<0) ? true : false
+        return points
     end
 
     function right_oriented(ref, a, b)
@@ -93,41 +71,94 @@ function convexhull{T<:Images.Gray}(img::AbstractArray{T, 2}, returntype="hull b
         ((a[2]-c[2])*(b[1]-c[1])-(b[2]-c[2])*(a[1]-c[1])==0) ? true : false
     end
 
-    for i in 1:size(points)[1]
-        if(points[i]==last_point)
-            deleteat!(points, i)
-            break
-        end
-    end
+    dist2(a, b) = sum(abs2, (a-b).I)
 
-    #angular sort wrt last_point
-    sort!(points, lt=right_oriented)
+    function angularsort!(ref, points, img)
+        last_point = ref
 
-    #if polar angle of 2 points wrt last_point is same, just keep farther point
-    i=0
-    while i<=size(points)[1]
-        i=i+1
-        if i+1>size(points)[1]
-            break
-        end
-
-        if(collinear(last_point,points[i], points[i+1]))
-            if (points[i][1]-last_point[1])^2 + (points[i][2]-last_point[2])^2< (points[i+1][1]-last_point[1])^2 + (points[i+1][2]-last_point[2])^2
+        for i in eachindex(points)
+            if points[i]==last_point
                 deleteat!(points, i)
-            else 
-                deleteat!(points, i+1)
+                break
             end
-            i=i-1
+        end
+
+        sort!(points, lt=(a, b) -> right_oriented(last_point, a, b))
+
+        i=0
+        while i<=length(points)
+            i=i+1
+            if i+1>length(points)
+                break
+            end
+
+            if collinear(last_point, points[i], points[i+1])
+                if dist2(last_point, points[i]) < dist2(last_point, points[i+1])
+                    deleteat!(points, i)
+                else
+                    deleteat!(points, i+1)
+                end
+                i=i-1
+            end
         end
     end
 
-    n_points=size(points)[1]
+    function drawboundary(convex_hull, img)
+        chull = zeros(T, size(img))
+        for point in convex_hull
+            chull[point]=1
+        end
+
+        for i in 1:length(convex_hull)-1
+            chull=drawline(chull, convex_hull[i][1], convex_hull[i][2], convex_hull[i+1][1], convex_hull[i+1][2], 1)
+        end
+        chull=drawline(chull, convex_hull[1][1], convex_hull[1][2], convex_hull[end][1], convex_hull[end][2], 1)
+
+        return chull
+    end
+
+    function fillhull(convex_hull, img)
+        chull = zeros(T, size(img))
+        for point in convex_hull
+            chull[point]=1
+        end
+
+        for i in 1:length(convex_hull)-1
+            chull=drawline(chull, convex_hull[i][1], convex_hull[i][2], convex_hull[i+1][1], convex_hull[i+1][2], 1)
+        end
+        chull=drawline(chull, convex_hull[1][1], convex_hull[1][2], convex_hull[end][1], convex_hull[end][2], 1)
+
+        for i in indices(img, 1)
+            ones = find(chull[i,:] .==1)
+            if length(ones) >= 2
+                first = CartesianIndex{2}(i, ones[1])
+                last = CartesianIndex{2}(i, ones[end])
+                chull=drawline(chull, first[1], first[2], last[1], last[2], 1)
+            end
+        end
+
+        return chull
+    end
+
+
+    # Used Graham scan algorithm
+
+    points = getboundarypoints(img)
+    last_point = CartesianIndex{2}(1, 1)
+    for point in points
+        if point[2]>last_point[2] || (point[2]==last_point[2] && point[1]>last_point[1])
+            last_point=point
+        end
+    end
+    angularsort!(last_point, points, img)
+
+    n_points=length(points)
 
     if n_points<3
         error("Not enough points to compute convex hull.")
     end
 
-    convex_hull=[]
+    convex_hull=CartesianIndex{2}[]
     push!(convex_hull, last_point)
     push!(convex_hull, points[1])
     push!(convex_hull, points[2])
@@ -139,44 +170,12 @@ function convexhull{T<:Images.Gray}(img::AbstractArray{T, 2}, returntype="hull b
         push!(convex_hull, points[i])
     end
 
-
-    chull = zeros(T, h, w)
-    for i = 1:size(convex_hull)[1]
-        chull[convex_hull[i][1], convex_hull[i][2]]=1
-    end
-
-    for i=1:size(convex_hull)[1]-1
-        chull=drawline(chull, convex_hull[i][1], convex_hull[i][2], convex_hull[i+1][1], convex_hull[i+1][2], 1)
-    end
-    chull=drawline(chull, convex_hull[1][1], convex_hull[1][2], convex_hull[end][1], convex_hull[end][2], 1)
-
-    if returntype=="hull boundary"
-        return chull
-    end
-
-    # fill convex hull
-    for i in 1:h
-        first_point_found=false
-        last_point_found=false
-        first_point=[]
-        last_point=[]
-        for j in 1:w
-            if !first_point_found && chull[i, j]==1
-                first_point=[i, j]
-                first_point_found=true
-
-            elseif first_point_found && chull[i, j]==1
-                last_point=[i, j]
-                last_point_found=true
-            end
-        end
-        if first_point_found && last_point_found
-            chull=drawline(chull, first_point[1], first_point[2], last_point[1], last_point[2], 1)
-        end
-    end
-
-    if returntype=="filled hull"
-        return chull
+    if returntype=="points"
+        return convex_hull
+    elseif returntype=="boundary"
+        return drawboundary(convex_hull, img)
+    elseif returntype=="filled"
+        return fillhull(convex_hull, img)
     end
 
 end

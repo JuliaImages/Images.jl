@@ -449,7 +449,7 @@ using Base.Test
         A[40,30]=1
         A[40,10]=1
         A[50,10]=1
-        B = convexhull(A, "hull boundary")
+        B = convexhull(A, "boundary")
         @test size(B)==size(A)
         @test typeof(B)==typeof(A)
         @test B[25,1]==1
@@ -460,7 +460,7 @@ using Base.Test
         @test B[40,10]==0
         @test B[50,10]==1
 
-        B = convexhull(A, "filled hull")
+        B = convexhull(A, "filled")
         @test size(B)==size(A)
         @test typeof(B)==typeof(A)
         @test B[25,1]==1
@@ -495,8 +495,8 @@ using Base.Test
         C = reshape(C, 5, 5)
         C = convert(Array{Images.Gray}, C)
 
-        @test B==convexhull(A, "hull boundary")
-        @test C==convexhull(A, "filled hull")
+        @test B==convexhull(A, "boundary")
+        @test C==convexhull(A, "filled")
     end
 
 end
