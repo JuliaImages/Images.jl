@@ -286,7 +286,8 @@ function clahe{C}(img::AbstractArray{C, 2}, nbins::Integer = 100; xblocks::Integ
     img_padded = imresize(img, (y_padded, x_padded))
 
     hist_equalised_img = _clahe(img_padded, nbins, xblocks, yblocks, clip)
-    imresize(hist_equalised_img, (h, w))
+    out = similar(img)
+    ImageTransformations.imresize!(out, hist_equalised_img)
 end
 
 function clahe(img::ImageMeta, nbins::Integer = 100; xblocks::Integer = 8, yblocks::Integer = 8, clip::Number = 3)
@@ -309,7 +310,7 @@ function _clahe{C}(img::AbstractArray{C, 2}, nbins::Integer = 100, xblocks::Inte
             _, histogram = imhist(temp_block, edges)
             clipped_hist = cliphist(histogram[2:end - 1], clip)
             cdf = cumsum(clipped_hist)
-            n_cdf = cdf / cdf[end]
+            n_cdf = cdf / max(convert(eltype(cdf), 1), cdf[end])
             push!(temp_cdf, n_cdf)
         end
     end

@@ -4,6 +4,7 @@ Colors 0.7.0
 ColorVectorSpace 0.2
 FixedPointNumbers 0.3.0
 ImageCore
+ImageTransformations
 ImageFiltering
 AxisArrays
 ImageAxes

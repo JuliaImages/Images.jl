@@ -189,24 +189,24 @@ using Base.Test
         int_sum = boxdiff(int_img, CartesianIndex((4, 4)), CartesianIndex((8, 8)))
         @test int_sum == 1400
 
-        img = zeros(40, 40)
-        img[10:30, 10:30] = 1
+        img = zeros(70, 70)
+        img[20:51, 20:51] = 1
         pyramid = gaussian_pyramid(img, 3, 2, 1.0)
-        @test size(pyramid[1]) == (40, 40)
-        @test size(pyramid[2]) == (20, 20)
-        @test size(pyramid[3]) == (10, 10)
-        @test size(pyramid[4]) == (5, 5)
-        @test isapprox(pyramid[1][20, 20], 1.0, atol = 0.01)
-        @test isapprox(pyramid[2][10, 10], 1.0, atol = 0.01)
-        @test isapprox(pyramid[3][5, 5], 1.0, atol = 0.05)
-        @test isapprox(pyramid[4][3, 3], 0.9, atol = 0.025)
+        @test size(pyramid[1]) == (70, 70)
+        @test size(pyramid[2]) == (35, 35)
+        @test size(pyramid[3]) == (18, 18)
+        @test size(pyramid[4]) == (9, 9)
+        @test pyramid[1][35, 35] == 1.0
+        @test isapprox(pyramid[2][18, 18], 1.0, atol = 1e-5)
+        @test isapprox(pyramid[3][9, 9], 1.0, atol = 1e-3)
+        @test isapprox(pyramid[4][5, 5], 0.99, atol = 0.01)
 
         for p in pyramid
             h, w = size(p)
-            @test all(Bool[isapprox(v, 0, atol = 0.06) for v in p[1, :]])
-            @test all(Bool[isapprox(v, 0, atol = 0.06) for v in p[:, 1]])
-            @test all(Bool[isapprox(v, 0, atol = 0.06) for v in p[h, :]])
-            @test all(Bool[isapprox(v, 0, atol = 0.06) for v in p[:, w]])
+            @test all(Bool[isapprox(v, 0, atol = 0.01) for v in p[1, :]])
+            @test all(Bool[isapprox(v, 0, atol = 0.01) for v in p[:, 1]])
+            @test all(Bool[isapprox(v, 0, atol = 0.01) for v in p[h, :]])
+            @test all(Bool[isapprox(v, 0, atol = 0.01) for v in p[:, w]])
         end
     end
 
@@ -219,6 +219,9 @@ using Base.Test
         @test img2 ≈ A
     end
 
+    # functionality moved to ImageTransformations
+    # tests are here as well to make sure everything
+    # is exported properly.
     @testset "Restriction" begin
         imgcol = colorview(RGB, rand(3,5,6))
         A = reshape([convert(UInt16, i) for i = 1:60], 4, 5, 3)
@@ -396,6 +399,9 @@ using Base.Test
         @test norm((P-Q)[:]) < 1e-10
     end
 
+    # functionality moved to ImageTransformations
+    # tests are here as well to make sure everything
+    # is exported properly.
     @testset "Image resize" begin
         img = zeros(10,10)
         img2 = Images.imresize(img, (5,5))
