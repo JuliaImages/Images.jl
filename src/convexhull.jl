@@ -73,7 +73,7 @@ function convexhull{T<:Images.Gray}(img::AbstractArray{T, 2}, returntype="points
 
     dist2(a, b) = sum(abs2, (a-b).I)
 
-    function angularsort!(ref, points, img)
+    function angularsort!(points, ref, img)
         last_point = ref
 
         for i in eachindex(points)
@@ -150,7 +150,7 @@ function convexhull{T<:Images.Gray}(img::AbstractArray{T, 2}, returntype="points
             last_point=point
         end
     end
-    angularsort!(last_point, points, img)
+    angularsort!(points, last_point, img)
 
     n_points=length(points)
 
