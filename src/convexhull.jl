@@ -46,6 +46,14 @@ function convexhull{T<:Images.Gray}(img::AbstractArray{T, 2}, returntype="points
         error("Invalid argument returntype")
     end
 
+    for i in CartesianRange(size(img))
+        if img[i]!=0 && img[i]!=1
+            warn("Input image isn't binary!")
+            warn("Function considers pixel intensity<255 as black")
+            break
+        end
+    end
+
     function getboundarypoints{T<:Images.Gray}(img::AbstractArray{T, 2})
 
         points = CartesianIndex{2}[]
