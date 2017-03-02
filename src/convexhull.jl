@@ -1,14 +1,8 @@
 """
 ```
 chull = convexhull(img)
-chull = convexhull(img, "points/boundary/filled")
 ```
-
-Computes the convex hull of a binary image.
-The function can return either of these-
-- vector of vertices of the convex hull
-- image with boundary pixels marked
-- image with convex hull filled
+Computes the convex hull of a binary image and returns the vertices of convex hull as a CartesianIndex array.
 
 In case the image isn't a binary image, it considers pixel intensity<255 as black.
 """
