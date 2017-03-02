@@ -3,21 +3,11 @@
 chull = convexhull(img)
 ```
 Computes the convex hull of a binary image and returns the vertices of convex hull as a CartesianIndex array.
-
-In case the image isn't a binary image, it considers pixel intensity<255 as black.
 """
 
-function convexhull{T<:Images.Gray}(img::AbstractArray{T, 2})
+function convexhull{T<:Union{Bool,Gray{Bool}}}(img::AbstractArray{T, 2})
 
-    for i in CartesianRange(size(img))
-        if img[i]!=0 && img[i]!=1
-            warn("Input image isn't binary!")
-            warn("Function considers pixel intensity<255 as black")
-            break
-        end
-    end
-
-    function getboundarypoints{T<:Images.Gray}(img::AbstractArray{T, 2})
+    function getboundarypoints{T<:Union{Bool,Gray{Bool}}}(img::AbstractArray{T, 2})
 
         points = CartesianIndex{2}[]
 
@@ -104,5 +94,4 @@ function convexhull{T<:Images.Gray}(img::AbstractArray{T, 2})
     end
 
     return convex_hull
-
 end
