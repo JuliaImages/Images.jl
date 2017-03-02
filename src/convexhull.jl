@@ -24,11 +24,11 @@ function convexhull{T<:Union{Bool,Gray{Bool}}}(img::AbstractArray{T, 2})
     end
 
     function right_oriented(ref, a, b)
-        ((a[2]-ref[2])*(b[1]-ref[1])-(b[2]-ref[2])*(a[1]-ref[1])<0) ? true : false
+        (a[2]-ref[2])*(b[1]-ref[1])-(b[2]-ref[2])*(a[1]-ref[1])<0
     end
 
     function collinear(a, b, c)
-        ((a[2]-c[2])*(b[1]-c[1])-(b[2]-c[2])*(a[1]-c[1])==0) ? true : false
+        (a[2]-c[2])*(b[1]-c[1])-(b[2]-c[2])*(a[1]-c[1])==0
     end
 
     dist2(a, b) = sum(abs2, (a-b).I)
