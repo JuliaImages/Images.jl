@@ -13,38 +13,7 @@ The function can return either of these-
 In case the image isn't a binary image, it considers pixel intensity<255 as black.
 """
 
-function drawline{T<:ColorTypes.Gray}(img::AbstractArray{T, 2}, y0::Int, x0::Int, y1::Int, x1::Int, color)
-    dx = abs(x1 - x0)
-    dy = abs(y1 - y0)
- 
-    sx = x0 < x1 ? 1 : -1
-    sy = y0 < y1 ? 1 : -1;
- 
-    err = (dx > dy ? dx : -dy) / 2
-    
-    while true
-        img[y0, x0] = color
-        (x0 != x1 || y0 != y1) || break
-        e2 = err
-        if e2 > -dx
-            err -= dy
-            x0 += sx
-        end
-        if e2 < dy
-            err += dx
-            y0 += sy
-        end
-    end
-
-    img
-end
-
-
-function convexhull{T<:Images.Gray}(img::AbstractArray{T, 2}, returntype="points")
-
-    if returntype!="points" && returntype!="boundary" && returntype!="filled"
-        error("Invalid argument returntype")
-    end
+function convexhull{T<:Images.Gray}(img::AbstractArray{T, 2})
 
     for i in CartesianRange(size(img))
         if img[i]!=0 && img[i]!=1
@@ -111,44 +80,6 @@ function convexhull{T<:Images.Gray}(img::AbstractArray{T, 2}, returntype="points
         end
     end
 
-    function drawboundary(convex_hull, img)
-        chull = zeros(T, size(img))
-        for point in convex_hull
-            chull[point]=1
-        end
-
-        for i in 1:length(convex_hull)-1
-            chull=drawline(chull, convex_hull[i][1], convex_hull[i][2], convex_hull[i+1][1], convex_hull[i+1][2], 1)
-        end
-        chull=drawline(chull, convex_hull[1][1], convex_hull[1][2], convex_hull[end][1], convex_hull[end][2], 1)
-
-        return chull
-    end
-
-    function fillhull(convex_hull, img)
-        chull = zeros(T, size(img))
-        for point in convex_hull
-            chull[point]=1
-        end
-
-        for i in 1:length(convex_hull)-1
-            chull=drawline(chull, convex_hull[i][1], convex_hull[i][2], convex_hull[i+1][1], convex_hull[i+1][2], 1)
-        end
-        chull=drawline(chull, convex_hull[1][1], convex_hull[1][2], convex_hull[end][1], convex_hull[end][2], 1)
-
-        for i in indices(img, 1)
-            ones = find(chull[i,:] .==1)
-            if length(ones) >= 2
-                first = CartesianIndex{2}(i, ones[1])
-                last = CartesianIndex{2}(i, ones[end])
-                chull=drawline(chull, first[1], first[2], last[1], last[2], 1)
-            end
-        end
-
-        return chull
-    end
-
-
     # Used Graham scan algorithm
 
     points = getboundarypoints(img)
@@ -178,12 +109,6 @@ function convexhull{T<:Images.Gray}(img::AbstractArray{T, 2}, returntype="points
         push!(convex_hull, points[i])
     end
 
-    if returntype=="points"
-        return convex_hull
-    elseif returntype=="boundary"
-        return drawboundary(convex_hull, img)
-    elseif returntype=="filled"
-        return fillhull(convex_hull, img)
-    end
+    return convex_hull
 
 end

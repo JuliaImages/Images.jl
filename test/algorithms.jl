@@ -439,7 +439,6 @@ using Base.Test
     end
 
     @testset "Convex Hull" begin
-        println("Convex hull tests running")
         A = zeros(50, 30)
         A= convert(Array{Images.Gray}, A)
         A[25,1]=1
@@ -449,27 +448,15 @@ using Base.Test
         A[40,30]=1
         A[40,10]=1
         A[50,10]=1
-        B = convexhull(A, "boundary")
-        @test size(B)==size(A)
-        @test typeof(B)==typeof(A)
-        @test B[25,1]==1
-        @test B[1,10]==1
-        @test B[10,10]==0
-        @test B[10,30]==1
-        @test B[40,30]==1
-        @test B[40,10]==0
-        @test B[50,10]==1
-
-        B = convexhull(A, "filled")
-        @test size(B)==size(A)
-        @test typeof(B)==typeof(A)
-        @test B[25,1]==1
-        @test B[1,10]==1
-        @test B[10,10]==1
-        @test B[10,30]==1
-        @test B[40,30]==1
-        @test B[40,10]==1
-        @test B[50,10]==1
+        B = convexhull(A)
+        C = CartesianIndex{}[]
+        push!(C, CartesianIndex{}(25,1))
+        push!(C, CartesianIndex{}(1,10))
+        push!(C, CartesianIndex{}(10,30))
+        push!(C, CartesianIndex{}(40,30))
+        push!(C, CartesianIndex{}(50,10))
+        @test typeof(B)==Array{CartesianIndex{2},1}
+        @test sort(B)==sort(C)
 
         A = [0.0, 0.0, 1.0, 0.0, 0.0,
              0.0, 1.0, 1.0, 0.0, 0.0,
@@ -478,25 +465,15 @@ using Base.Test
              0.0, 0.0, 1.0, 0.0, 0.0]
         A = reshape(A, 5, 5)
         A = convert(Array{Images.Gray}, A)
-
-        B = [0.0, 0.0, 1.0, 0.0, 0.0,
-             0.0, 1.0, 0.0, 1.0, 0.0,
-             1.0, 0.0, 0.0, 0.0, 1.0,
-             0.0, 1.0, 0.0, 1.0, 0.0,
-             0.0, 0.0, 1.0, 0.0, 0.0]
-        B = reshape(B, 5, 5)
-        B = convert(Array{Images.Gray}, B)
-
-        C = [0.0, 0.0, 1.0, 0.0, 0.0,
-             0.0, 1.0, 1.0, 1.0, 0.0,
-             1.0, 1.0, 1.0, 1.0, 1.0,
-             0.0, 1.0, 1.0, 1.0, 0.0,
-             0.0, 0.0, 1.0, 0.0, 0.0]
-        C = reshape(C, 5, 5)
-        C = convert(Array{Images.Gray}, C)
-
-        @test B==convexhull(A, "boundary")
-        @test C==convexhull(A, "filled")
+        B = convexhull(A)
+        C = CartesianIndex{}[]
+        push!(C, CartesianIndex{}(1,3))
+        push!(C, CartesianIndex{}(2,2))
+        push!(C, CartesianIndex{}(3,1))
+        push!(C, CartesianIndex{}(3,5))
+        push!(C, CartesianIndex{}(5,3))
+        @test typeof(B)==Array{CartesianIndex{2},1}
+        @test sort(B)==sort(C)
     end
 
 end
