@@ -66,8 +66,8 @@ function convexhull{T<:Union{Bool,Gray{Bool}}}(img::AbstractArray{T, 2})
 
     # Used Graham scan algorithm
 
-    points = getboundarypoints(img)
-    last_point = CartesianIndex{2}(1, 1)
+    points=getboundarypoints(img)
+    last_point=CartesianIndex(map(r->first(r)-1, indices(img)))
     for point in points
         if point[2]>last_point[2] || (point[2]==last_point[2] && point[1]>last_point[1])
             last_point=point
