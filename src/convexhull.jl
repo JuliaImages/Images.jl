@@ -7,21 +7,20 @@ Computes the convex hull of a binary image and returns the vertices of convex hu
 
 function convexhull{T<:Union{Bool,Gray{Bool}}}(img::AbstractArray{T, 2})
 
-    function getboundarypoints{T<:Union{Bool,Gray{Bool}}}(img::AbstractArray{T, 2})
-
+    function getboundarypoints(img)
         points = CartesianIndex{2}[]
-
-        for i in indices(img, 1)
-            ones = find(img[i,:] .==1)
-
-            if length(ones) == 1
-                push!(points, CartesianIndex{2}(i, minimum(ones)))
-            elseif length(ones)!=0
-                push!(points, CartesianIndex{2}(i, minimum(ones)))
-                push!(points, CartesianIndex{2}(i, maximum(ones)))
+        for j = indices(img, 2)
+            v = Base.view(img, :, j)
+            i1 = findfirst(v)
+            if i1 != 0
+                i2 = findlast(v)
+                push!(points, CartesianIndex(i1, j))
+                if i1 != i2
+                    push!(points, CartesianIndex(i2, j))
+                end
             end
         end
-        return points
+        points
     end
 
     function right_oriented(ref, a, b)
