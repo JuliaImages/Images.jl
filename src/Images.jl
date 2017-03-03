@@ -162,7 +162,7 @@ export # types
     imROF,
     feature_transform,
     distance_transform,
-    convexhull
+    convexhull,
 
     #Exposure
     complement,
