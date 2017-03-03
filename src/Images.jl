@@ -70,6 +70,7 @@ include("distances.jl")
 include("bwdist.jl")
 using .FeatureTransform
 include("deprecated.jl")
+include("houghtranform.jl")
 
 export # types
     BlobLoG,
@@ -210,7 +211,10 @@ export # types
     hausdorff_distance,
 
     # phantoms
-    shepp_logan
+    shepp_logan,
+
+    #feature_detection
+    hough_transform_standard
 
 _length(A::AbstractArray) = length(linearindices(A))
 _length(A) = length(A)
@@ -240,6 +244,7 @@ Algorithms:
     - Morphological operations: `dilate`, `erode`, `closing`, `opening`, `tophat`, `bothat`, `morphogradient`, `morpholaplace`, `feature_transform`, `distance_transform`
     - Connected components: `label_components`, `component_boxes`, `component_lengths`, `component_indices`, `component_subscripts`, `component_centroids`
     - Interpolation: `bilinear_interpolation`
+    - Feature detection: `hough_transform_standard`
 
 Test images and phantoms (see also TestImages.jl):
 
