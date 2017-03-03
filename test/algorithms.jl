@@ -440,7 +440,7 @@ using Base.Test
 
     @testset "Convex Hull" begin
         A = zeros(50, 30)
-        A= convert(Array{Images.Gray}, A)
+        A= convert(Array{Bool}, A)
         A[25,1]=1
         A[1,10]=1
         A[10,10]=1
@@ -448,7 +448,7 @@ using Base.Test
         A[40,30]=1
         A[40,10]=1
         A[50,10]=1
-        B = convexhull(A)
+        B = @inferred convexhull(A)
         C = CartesianIndex{}[]
         push!(C, CartesianIndex{}(25,1))
         push!(C, CartesianIndex{}(1,10))
@@ -464,8 +464,8 @@ using Base.Test
              0.0, 0.0, 0.0, 0.0, 0.0,
              0.0, 0.0, 1.0, 0.0, 0.0]
         A = reshape(A, 5, 5)
-        A = convert(Array{Images.Gray}, A)
-        B = convexhull(A)
+        A = convert(Array{Bool}, A)
+        B = B = @inferred convexhull(A)
         C = CartesianIndex{}[]
         push!(C, CartesianIndex{}(1,3))
         push!(C, CartesianIndex{}(2,2))
