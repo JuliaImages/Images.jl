@@ -468,7 +468,6 @@ using Base.Test
         B = B = @inferred convexhull(A)
         C = CartesianIndex{}[]
         push!(C, CartesianIndex{}(1,3))
-        push!(C, CartesianIndex{}(2,2))
         push!(C, CartesianIndex{}(3,1))
         push!(C, CartesianIndex{}(3,5))
         push!(C, CartesianIndex{}(5,3))
