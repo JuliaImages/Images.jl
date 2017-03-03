@@ -403,7 +403,7 @@ function canny{T<:NumberLike}(img_gray::AbstractMatrix{T}, sigma::Number = 1.4, 
     end
     img_thresholded = hysteresis_thresholding(img_nonMaxSup, upperThreshold, lowerThreshold)
     S = eltype(img_thresholded)
-    edges = map(i -> i < 0.9 ? zero(S) : one(S), img_thresholded)
+    edges = map(i -> i < 0.9 ? zero(Bool) : one(Bool), img_thresholded)
     edges
 end
 

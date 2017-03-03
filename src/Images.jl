@@ -211,7 +211,10 @@ export # types
     hausdorff_distance,
 
     # phantoms
-    shepp_logan
+    shepp_logan,
+
+    #feature_detection
+    hough_transform_standard
 
 _length(A::AbstractArray) = length(linearindices(A))
 _length(A) = length(A)

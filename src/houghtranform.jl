@@ -1,18 +1,25 @@
 
-
-function is_binary_image{T}(img::AbstractArray{T,2})
-    for pix in CartesianRange(size(img))
-        if img[pix] != 0.0 && img[pix] != 1.0
-            return false
+#function to compute local maximum lines with values > threshold and return a vector containing them
+function findlocalmaxima(accumulator_matrix::Array{Integer,2},threshold::Integer)
+    validLines = Vector{CartesianIndex}(0)
+    for val in CartesianRange(size(accumulator_matrix))
+        if  accumulator_matrix[val] > threshold &&
+            accumulator_matrix[val] > accumulator_matrix[val[1],val[2] - 1] &&
+            accumulator_matrix[val] >= accumulator_matrix[val[1],val[2] + 1] &&
+            accumulator_matrix[val] > accumulator_matrix[val[1] - 1,val[2]] &&
+            accumulator_matrix[val] >= accumulator_matrix[val[1] + 1,val[2]]
+            push!(validLines,val)
         end
     end
-    return true
+    validLines
 end
 
 """
+```
 lines = hough_transform_standard(image, rho, theta, min_theta, max_theta, threshold, linesMax)
+```
 
-Returns an array of tuples corresponding to the tuples of (r,t) where r and t are parameters for normal form of line:
+Returns an vector of tuples corresponding to the tuples of (r,t) where r and t are parameters for normal form of line:
     x*cos(t) + y*sin(t) = r
 
 r = length of perpendicular from (0,0) to the line
@@ -31,32 +38,28 @@ Parameters:
 
 """
 
-function hough_transform_standard{T}(
+function hough_transform_standard{T<:Union{Bool,Gray{Bool}}}(
             img::AbstractArray{T,2},
-            rho::Float64, theta::Float64,
-            min_theta::Float64, max_theta::Float64,
-            threshold::Int64, linesMax::Int64)
+            rho::Number, theta::Number,
+            min_theta::Number, max_theta::Number,
+            threshold::Integer, linesMax::Integer)
    
     theta > 0 || error("theta threshold must be positive")
     rho > 0 || error("radius threshold must be positive")
     min_theta < max_theta || error("max_theta must be greater than min_theta")
 
-    if ! is_binary_image(img)
-        img = canny(img)
-    end
+    width = size(img)[2]
+    height = size(img)[1]
+    irho = 1 / rho;
+    numangle::Int = round((max_theta - min_theta)/theta)
+    numrho::Int = round(((width + height)*2 + 1)/rho)
 
-    width::Int64 = size(img)[2]
-    height::Int64 = size(img)[1]
-    irho::Float64 = 1 / rho;
-    numangle::Int64 = round((max_theta - min_theta)/theta)
-    numrho::Int64 = round(((width + height)*2 + 1)/rho)
-
-    accumulator_matrix = Array{Int64}(numangle + 2, numrho + 2)
+    accumulator_matrix = Array{Integer}(numangle + 2, numrho + 2)
     fill!(accumulator_matrix, 0)
 
     #Pre-Computed sines and cosines in tables
-    tabsin = Array{Float64}(numangle)
-    tabcos = Array{Float64}(numangle)
+    tabsin = Vector{Number}(numangle)
+    tabcos = Vector{Number}(numangle)
     for i in 1:numangle
         tabsin[i] = (sin(min_theta + (i-1)*theta) * irho)
         tabcos[i] = (cos(min_theta + (i-1)*theta) * irho)
@@ -64,34 +67,26 @@ function hough_transform_standard{T}(
 
 
     #Hough Transform implementation
+    constadd::Int = round((numrho -1)/2)
     for pix in CartesianRange(size(img))
-        if img[pix] == 1.0
+        if img[pix]
             for i in 1:numangle
-                dist::Int64 = round((pix[1] * tabsin[i] + pix[2] * tabcos[i]))
-                dist += round((numrho -1)/2)
+                dist::Int = round((pix[1] * tabsin[i] + pix[2] * tabcos[i]))
+                dist += constadd
                 accumulator_matrix[i + 1, dist + 1] += 1
             end
         end
     end
 
     #Finding local maximum lines
-    validLines = Array{CartesianIndex}(0)
-    for val in CartesianRange(size(accumulator_matrix))
-        if  accumulator_matrix[val] > threshold &&
-            accumulator_matrix[val] > accumulator_matrix[val[1],val[2] - 1] &&
-            accumulator_matrix[val] >= accumulator_matrix[val[1],val[2] + 1] &&
-            accumulator_matrix[val] > accumulator_matrix[val[1] - 1,val[2]] &&
-            accumulator_matrix[val] >= accumulator_matrix[val[1] + 1,val[2]]
-            push!(validLines,val)
-        end
-    end
+    validLines = findlocalmaxima(accumulator_matrix, threshold)
 
     #Sorting by value in accumulator_matrix
     sort!(validLines, by = (x)->accumulator_matrix[x], rev = true)
 
-    linesMax = min(linesMax, size(validLines)[1])
+    linesMax = min(linesMax, length(validLines))
 
-    lines = Array{Tuple{Float64,Float64}}(0)
+    lines = Vector{Tuple{Number,Number}}(0)
 
     #Getting lines with Maximum value in accumulator_matrix && size(lines) < linesMax
     for l in 1:linesMax
