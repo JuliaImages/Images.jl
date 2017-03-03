@@ -86,7 +86,7 @@ function convexhull{T<:Union{Bool,Gray{Bool}}}(img::AbstractArray{T, 2})
     push!(convex_hull, points[2])
 
     for i in 3:n_points
-        while (right_oriented(convex_hull[end],convex_hull[end-1], points[i]))
+        while (right_oriented(convex_hull[end],convex_hull[end-1], points[i]) || collinear(convex_hull[end],convex_hull[end-1], points[i]))
             pop!(convex_hull)
         end
         push!(convex_hull, points[i])
