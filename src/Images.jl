@@ -70,6 +70,7 @@ include("distances.jl")
 include("bwdist.jl")
 using .FeatureTransform
 include("deprecated.jl")
+include("convexhull.jl")
 
 export # types
     BlobLoG,
@@ -163,6 +164,7 @@ export # types
     imROF,
     feature_transform,
     distance_transform,
+    convexhull,
 
     #Exposure
     complement,
@@ -237,7 +239,7 @@ Algorithms:
     - Edge detection: `imedge`, `imgradients`, `thin_edges`, `magnitude`, `phase`, `magnitudephase`, `orientation`, `canny`
     - Corner detection: `imcorner`, `harris`, `shi_tomasi`, `kitchen_rosenfeld`, `meancovs`, `gammacovs`, `fastcorners`
     - Blob detection: `blob_LoG`, `findlocalmaxima`, `findlocalminima`
-    - Morphological operations: `dilate`, `erode`, `closing`, `opening`, `tophat`, `bothat`, `morphogradient`, `morpholaplace`, `feature_transform`, `distance_transform`
+    - Morphological operations: `dilate`, `erode`, `closing`, `opening`, `tophat`, `bothat`, `morphogradient`, `morpholaplace`, `feature_transform`, `distance_transform`, `convexhull`
     - Connected components: `label_components`, `component_boxes`, `component_lengths`, `component_indices`, `component_subscripts`, `component_centroids`
     - Interpolation: `bilinear_interpolation`
 
