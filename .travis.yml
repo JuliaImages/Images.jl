@@ -5,6 +5,9 @@ os:
 julia:
     - 0.5
     - nightly
+matrix:
+  allow_failures:
+    - julia: nightly
 notifications:
     email: false
 # script:
@@ -12,6 +15,5 @@ notifications:
 #     - julia -e 'Pkg.clone(pwd()); Pkg.build("Images")'
 #     - julia -e 'Pkg.test("Images", coverage=true)'
 after_success:
-    - if [ $TRAVIS_JULIA_VERSION = "0.5" ] && [ $TRAVIS_OS_NAME = "linux" ]; then
-         julia -e 'cd(Pkg.dir("Images")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())';
-      fi
+    # push coverage results to Codecov
+    - julia -e 'cd(Pkg.dir("Images")); Pkg.add("Coverage"); using Coverage; Codecov.submit(Codecov.process_folder())'

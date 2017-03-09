@@ -6,7 +6,7 @@ An image processing library for [Julia](http://julialang.org/).
 
 [![Build Status](https://travis-ci.org/JuliaImages/Images.jl.svg?branch=master)](https://travis-ci.org/JuliaImages/Images.jl)
 [![Build status](https://ci.appveyor.com/api/projects/status/github/JuliaImages/Images.jl?svg=true&branch=master)](https://ci.appveyor.com/project/timholy/images-jl/branch/master)
-[![Coverage Status](https://coveralls.io/repos/JuliaImages/Images.jl/badge.png?branch=master)](https://coveralls.io/r/JuliaImages/Images.jl?branch=master)
+[![codecov](https://codecov.io/gh/JuliaImages/Images.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/JuliaImages/Images.jl)
 
 ## Documentation
 
