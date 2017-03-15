@@ -402,7 +402,7 @@ function canny{T<:NumberLike}(img_gray::AbstractMatrix{T}, sigma::Number = 1.4, 
         lowerThreshold = StatsBase.percentile(img_nonMaxSup[:], lowerThreshold * 100)
     end
     img_thresholded = hysteresis_thresholding(img_nonMaxSup, upperThreshold, lowerThreshold)
-    edges = map(i -> i < 0.9 ? zero(Bool) : one(Bool), img_thresholded)
+    edges = map(i -> i >= 0.9, img_thresholded)
     edges
 end
 
