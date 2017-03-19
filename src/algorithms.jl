@@ -889,7 +889,7 @@ function gaussian_pyramid{T,N}(img::AbstractArray{T,N}, n_scales::Int, downsampl
     img_scaled = pyramid_scale(img_smoothed_main, downsample)
     prev = convert(typeof(img_scaled), img)
     pyramid = typeof(img_scaled)[prev]
-    if n_scales > 1
+    if n_scales ≥ 1
         # Take advantage of the work we've already done
         push!(pyramid, img_scaled)
         prev = img_scaled
