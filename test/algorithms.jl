@@ -208,6 +208,11 @@ using Base.Test
             @test all(Bool[isapprox(v, 0, atol = 0.01) for v in p[h, :]])
             @test all(Bool[isapprox(v, 0, atol = 0.01) for v in p[:, w]])
         end
+
+        #608
+        pyramidlevel1 = gaussian_pyramid(rand(32,32), 1, 2, 1.0)
+        @test length(pyramidlevel1) == 2
+        @test size.(pyramidlevel1) == [(32,32), (16,16)]
     end
 
     @testset "fft and ifft" begin
