@@ -418,6 +418,7 @@ function canny{T<:NumberLike, N<:Union{NumberLike,Percentile{NumberLike}}}(img_g
     edges
 end
 
+canny{T<:NumberLike, N<:Union{NumberLike,Percentile{NumberLike}}}(img_gray::AbstractMatrix{T}, threshold::Tuple{N,N})=canny(img_gray, 1.4, threshold)
 canny(img::AbstractMatrix, args...) = canny(convert(Array{Gray}, img), args...)
 
 function hysteresis_thresholding{T}(img_nonMaxSup::AbstractArray{T, 2}, upperThreshold::Number, lowerThreshold::Number)
