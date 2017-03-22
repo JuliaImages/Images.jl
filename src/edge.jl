@@ -376,6 +376,16 @@ function thin_edges_nonmaxsup_subpix(img, gradientangles,
 end
 
 """
+Percentile - Used to pass arguments to functions as a percentile rather than an absolute value
+
+e.g.,   canny(img, 1.4, (0.8,0.2)) uses absolute threshold
+        canny(img, 1.4, (Percentile(0.8), Percentile(0.2))) uses quantiles of the edge magnitude image as threshold
+
+"""
+immutable Percentile{T} <: Real p::T end
+
+
+"""
 ```
 canny_edges = canny(img, sigma = 1.4, upperThreshold = 0.80, lowerThreshold = 0.20)
 ```
@@ -385,21 +395,23 @@ Performs Canny Edge Detection on the input image.
 Parameters :
 
   sigma :           Specifies the standard deviation of the gaussian filter
-  upperThreshold :  Upper bound for hysteresis thresholding
-  lowerThreshold :  Lower bound for hysteresis thresholding
+  threshold:        Tuple of upper bound and lower bound for hysteresis thresholding
   astype :          Specifies return type of result
   percentile :      Specifies if upperThreshold and lowerThreshold should be used
                     as quantiles or absolute values
 
 """
-function canny{T<:NumberLike}(img_gray::AbstractMatrix{T}, sigma::Number = 1.4, upperThreshold::Number = 0.90, lowerThreshold::Number = 0.10; percentile::Bool = false)
+function canny{T<:NumberLike, N<:Union{NumberLike,Percentile{NumberLike}}}(img_gray::AbstractMatrix{T}, sigma::Number = 1.4, threshold::Tuple{N,N}=(0.8,0.2))
     img_grayf = imfilter(img_gray, KernelFactors.IIRGaussian((sigma,sigma)), NA())
     img_grad_y, img_grad_x = imgradients(img_grayf, KernelFactors.sobel)
     img_mag, img_phase = magnitude_phase(img_grad_x, img_grad_y)
     img_nonMaxSup = thin_edges_nonmaxsup(img_mag, img_phase)
-    if percentile
-        upperThreshold = StatsBase.percentile(img_nonMaxSup[:], upperThreshold * 100)
-        lowerThreshold = StatsBase.percentile(img_nonMaxSup[:], lowerThreshold * 100)
+    if N<:Percentile{}
+        upperThreshold = StatsBase.percentile(img_nonMaxSup[:], threshold[1].p)
+        lowerThreshold = StatsBase.percentile(img_nonMaxSup[:], threshold[2].p)
+    else
+        upperThreshold = threshold[1]
+        lowerThreshold = threshold[2]
     end
     img_thresholded = hysteresis_thresholding(img_nonMaxSup, upperThreshold, lowerThreshold)
     edges = map(i -> i >= 0.9, img_thresholded)

@@ -75,6 +75,7 @@ include("convexhull.jl")
 export # types
     BlobLoG,
     ColorizedArray,
+    Percentile,
 
     # macros
     @test_approx_eq_sigma_eps,
