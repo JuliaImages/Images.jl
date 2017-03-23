@@ -376,16 +376,6 @@ function thin_edges_nonmaxsup_subpix(img, gradientangles,
 end
 
 """
-Percentile - Used to pass arguments to functions as a percentile rather than an absolute value
-
-e.g.,   canny(img, 1.4, (0.8,0.2)) uses absolute threshold
-        canny(img, 1.4, (Percentile(0.8), Percentile(0.2))) uses quantiles of the edge magnitude image as threshold
-
-"""
-immutable Percentile{T} <: Real p::T end
-
-
-"""
 ```
 canny_edges = canny(img, sigma = 1.4, upperThreshold = 0.80, lowerThreshold = 0.20)
 ```
@@ -401,7 +391,7 @@ Parameters :
                     as quantiles or absolute values
 
 """
-function canny{T<:NumberLike, N<:Union{NumberLike,Percentile{NumberLike}}}(img_gray::AbstractMatrix{T}, sigma::Number = 1.4, threshold::Tuple{N,N}=(0.8,0.2))
+function canny{T<:NumberLike, N<:Union{NumberLike,Percentile{NumberLike}}}(img_gray::AbstractMatrix{T}, threshold::Tuple{N,N}, sigma::Number = 1.4)
     img_grayf = imfilter(img_gray, KernelFactors.IIRGaussian((sigma,sigma)), NA())
     img_grad_y, img_grad_x = imgradients(img_grayf, KernelFactors.sobel)
     img_mag, img_phase = magnitude_phase(img_grad_x, img_grad_y)
@@ -418,7 +408,6 @@ function canny{T<:NumberLike, N<:Union{NumberLike,Percentile{NumberLike}}}(img_g
     edges
 end
 
-canny{T<:NumberLike, N<:Union{NumberLike,Percentile{NumberLike}}}(img_gray::AbstractMatrix{T}, threshold::Tuple{N,N})=canny(img_gray, 1.4, threshold)
 canny(img::AbstractMatrix, args...) = canny(convert(Array{Gray}, img), args...)
 
 function hysteresis_thresholding{T}(img_nonMaxSup::AbstractArray{T, 2}, upperThreshold::Number, lowerThreshold::Number)

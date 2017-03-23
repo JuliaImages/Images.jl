@@ -57,6 +57,15 @@ using ImageMetadata: ImageMetaAxis
 
 using Base.Cartesian  # TODO: delete this
 
+"""
+Percentile - Used to pass arguments to functions as a percentile rather than an absolute value
+
+e.g.,   canny(img, 1.4, (0.8,0.2)) uses absolute threshold
+        canny(img, 1.4, (Percentile(0.8), Percentile(0.2))) uses quantiles of the edge magnitude image as threshold
+
+"""
+immutable Percentile{T} <: Real p::T end
+
 include("map-deprecated.jl")
 include("overlays-deprecated.jl")
 include("labeledarrays.jl")
