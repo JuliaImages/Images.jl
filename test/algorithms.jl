@@ -77,9 +77,9 @@ using Base.Test
              NaN 6 5 4]
         mf = meanfinite(A, 1)
         @test isnan(mf[1])
-        @test_approx_eq mf[1,2:end] [3.5 3.5 3.5]
-        @test_approx_eq meanfinite(A, 2) [2, 5]'
-        @test_approx_eq meanfinite(A, (1,2)) [3.5]
+        @test mf[1,2:end] ≈ [3.5,3.5,3.5]
+        @test meanfinite(A, 2) ≈ reshape([2, 5], 2, 1)
+        @test meanfinite(A, (1,2)) ≈ [3.5]
         @test minfinite(A) == 1
         @test maxfinite(A) == 6
         @test maxabsfinite(A) == 6

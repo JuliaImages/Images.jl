@@ -27,9 +27,12 @@ end
 # axes, and therefore allows `label` to be of lower dimensionality
 # than `intensity`.
 
+intensitytype{C<:Colorant,N,A<:AbstractArray,L<:AbstractArray}(::Type{ColorizedArray{C,N,A,L}}) = A
+labeltype{C<:Colorant,N,A<:AbstractArray,L<:AbstractArray}(::Type{ColorizedArray{C,N,A,L}}) = L
+
 Base.size(A::ColorizedArray) = size(A.intensity)
 Base.indices(A::ColorizedArray) = indices(A.intensity)
-Base.linearindexing(A::ColorizedArray) = Base.linearindexing(Base.linearindexing(A.intensity), Base.linearindexing(A.label))
+@compat Base.IndexStyle{CA<:ColorizedArray}(::Type{CA}) = IndexStyle(IndexStyle(intensitytype(CA)), IndexStyle(labeltype(CA)))
 
 @inline function Base.getindex(A::ColorizedArray, i::Integer)
     @boundscheck checkbounds(A, i)

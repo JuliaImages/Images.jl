@@ -143,8 +143,8 @@ global checkboard
             # Test that orientation is perpendicular to gradient
             aorient = orientation(agx, agy)
             @test all((cos.(agphase) .* cos.(aorient) .+
-                       sin.(agphase) .* sin.(aorient) .< EPS) |
-                      ((agphase .== 0.0) & (aorient .== 0.0)))
+                       sin.(agphase) .* sin.(aorient) .< EPS) .|
+                      ((agphase .== 0.0) .& (aorient .== 0.0)))
                       # this part is where both are zero because there is no gradient
 
             ## Checkerboard with Gray pixels
@@ -166,8 +166,8 @@ global checkboard
             # Test that orientation is perpendicular to gradient
             orientg = orientation(gxg, gyg)
             @test all((cos.(gphaseg) .* cos.(orientg) .+
-                       sin.(gphaseg) .* sin.(orientg) .< EPS) |
-                      ((gphaseg .== 0.0) & (orientg .== 0.0)))
+                       sin.(gphaseg) .* sin.(orientg) .< EPS) .|
+                      ((gphaseg .== 0.0) .& (orientg .== 0.0)))
                       # this part is where both are zero because there is no gradient
 
             ## Checkerboard with RBG pixels
@@ -189,8 +189,8 @@ global checkboard
             # Test that orientation is perpendicular to gradient
             orient_rgb = orientation(gx_rgb, gy_rgb)
             @test all((cos.(gphase_rgb) .* cos.(orient_rgb) .+
-                       sin.(gphase_rgb) .* sin.(orient_rgb) .< EPS) |
-                      ((gphase_rgb .== 0.0) & (orient_rgb .== 0.0)))
+                       sin.(gphase_rgb) .* sin.(orient_rgb) .< EPS) .|
+                      ((gphase_rgb .== 0.0) .& (orient_rgb .== 0.0)))
                       # this part is where both are zero because there is no gradient
 
             ## Checkerboard Image with RBG{Float64} pixels
@@ -212,8 +212,8 @@ global checkboard
             # Test that orientation is perpendicular to gradient
             orient_rgb = orientation(gx_rgb, gy_rgb)
             @test all((cos.(gphase_rgb) .* cos.(orient_rgb) .+
-                       sin.(gphase_rgb) .* sin.(orient_rgb) .< EPS) |
-                      ((gphase_rgb .== 0.0) & (orient_rgb .== 0.0)))
+                       sin.(gphase_rgb) .* sin.(orient_rgb) .< EPS) .|
+                      ((gphase_rgb .== 0.0) .& (orient_rgb .== 0.0)))
                       # this part is where both are zero because there is no gradient
         end
     end
@@ -242,8 +242,8 @@ global checkboard
             # Test that orientation is perpendicular to gradient
             aorient = orientation(agx, agy)
             @test all((cos.(agphase) .* cos.(aorient) .+
-                       sin.(agphase) .* sin.(aorient) .< EPS) |
-                      ((agphase .== 0.0) & (aorient .== 0.0)))
+                       sin.(agphase) .* sin.(aorient) .< EPS) .|
+                      ((agphase .== 0.0) .& (aorient .== 0.0)))
                     # this part is where both are zero because there is no gradient
         end
     end

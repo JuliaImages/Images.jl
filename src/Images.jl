@@ -32,11 +32,11 @@ using Reexport
 using ColorVectorSpace, FileIO
 export load, save
 import Colors: Fractional, red, green, blue
-typealias AbstractGray{T}                    Color{T,1}
-typealias TransparentRGB{C<:AbstractRGB,T}   TransparentColor{C,T,4}
-typealias TransparentGray{C<:AbstractGray,T} TransparentColor{C,T,2}
-typealias NumberLike                         Union{Number,AbstractGray}
-typealias RealLike                           Union{Real,AbstractGray}
+@compat const AbstractGray{T}                    = Color{T,1}
+@compat const TransparentRGB{C<:AbstractRGB,T}   = TransparentColor{C,T,4}
+@compat const TransparentGray{C<:AbstractGray,T} = TransparentColor{C,T,2}
+const NumberLike = Union{Number,AbstractGray}
+const RealLike = Union{Real,AbstractGray}
 import Graphics
 import Graphics: width, height, Point
 using StatsBase  # TODO: eliminate this dependency
