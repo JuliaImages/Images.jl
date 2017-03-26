@@ -1,48 +1,58 @@
-facts("show (MIME)") do
+using Images, Colors, FixedPointNumbers
+using Base.Test
+
+@testset "show (MIME)" begin
     # Test that we remembered to turn off Colors.jl's colorswatch display
-    @fact mimewritable(MIME("image/svg+xml"), rand(Gray{U8}, 5, 5)) --> false
-    @fact mimewritable(MIME("image/svg+xml"), rand(RGB{U8},  5, 5)) --> false
-    @fact mimewritable(MIME("image/png"), rand(Gray{U8}, 5, 5)) --> true
-    @fact mimewritable(MIME("image/png"), rand(RGB{U8},  5, 5)) --> true
+    @test !mimewritable(MIME("image/svg+xml"), rand(Gray{N0f8}, 5, 5))
+    @test !mimewritable(MIME("image/svg+xml"), rand(RGB{N0f8},  5, 5))
+    @test mimewritable(MIME("image/png"), rand(Gray{N0f8}, 5, 5))
+    @test mimewritable(MIME("image/png"), rand(RGB{N0f8},  5, 5))
     workdir = joinpath(tempdir(), "Images")
     if !isdir(workdir)
         mkdir(workdir)
     end
-    context("no compression or expansion") do
-        A = U8[0.01 0.99; 0.25 0.75]
+    @testset "no compression or expansion" begin
+        A = N0f8[0.01 0.99; 0.25 0.75]
         fn = joinpath(workdir, "writemime.png")
         open(fn, "w") do file
-            @compat show(file, MIME("image/png"), grayim(A), minpixels=0, maxpixels=typemax(Int))
+            show(file, MIME("image/png"), Gray.(A), minpixels=0, maxpixels=typemax(Int))
         end
-        b = convert(Image{Gray{U8}}, load(fn))
-        @fact data(b) --> A
+        b = load(fn)
+        @test b == A
     end
-    context("small images (expansion)") do
-        A = U8[0.01 0.99; 0.25 0.75]
+    @testset "small images (expansion)" begin
+        A = N0f8[0.01 0.99; 0.25 0.75]
         fn = joinpath(workdir, "writemime.png")
         open(fn, "w") do file
-            @compat show(file, MIME("image/png"), grayim(A), minpixels=5, maxpixels=typemax(Int))
+            show(file, MIME("image/png"), Gray.(A), minpixels=5, maxpixels=typemax(Int))
         end
-        b = convert(Image{Gray{U8}}, load(fn))
-        @fact data(b) --> A[[1,1,2,2],[1,1,2,2]]
+        @test load(fn) == A[[1,1,2,2],[1,1,2,2]]
     end
-    context("big images (use of restrict)") do
-        A = U8[0.01 0.4 0.99; 0.25 0.8 0.75; 0.6 0.2 0.0]
+    @testset "big images (use of restrict)" begin
+        A = N0f8[0.01 0.4 0.99; 0.25 0.8 0.75; 0.6 0.2 0.0]
         Ar = restrict(A)
         fn = joinpath(workdir, "writemime.png")
         open(fn, "w") do file
-            @compat show(file, MIME("image/png"), grayim(A), minpixels=0, maxpixels=5)
+            show(file, MIME("image/png"), Gray.(A), minpixels=0, maxpixels=5)
         end
-        b = convert(Image{Gray{U8}}, load(fn))
-        @fact data(b) --> convert(Array{U8}, Ar)
+        @test load(fn) == N0f8.(Ar)
         # a genuinely big image (tests the defaults)
-        abig = grayim(rand(UInt8, 1024, 1023))
+        abig = colorview(Gray, normedview(rand(UInt8, 1024, 1023)))
         fn = joinpath(workdir, "big.png")
         open(fn, "w") do file
-            @compat show(file, MIME("image/png"), abig, maxpixels=10^6)
+            show(file, MIME("image/png"), abig, maxpixels=10^6)
         end
-        b = convert(Image{Gray{U8}}, load(fn))
-        abigui = convert(Array{UFixed8,2}, data(restrict(abig, (1,2))))
-        @fact data(b) --> abigui
+        b = load(fn)
+        @test b == N0f8.(restrict(abig, (1,2)))
+    end
+    @testset "display matrix of images" begin
+        img() = colorview(Gray, rand([0.250 0.5; 0.75 1.0], rand(2:10), rand(2:10)))
+        io = IOBuffer()
+        # test that these methods don't fail
+        show(io, MIME"text/html"(), [img() for i=1:2])
+        show(io, MIME"text/html"(), [img() for i=1:2, j=1:2])
+        show(io, MIME"text/html"(), [img() for i=1:2, j=1:2, k=1:2])
     end
 end
+
+nothing

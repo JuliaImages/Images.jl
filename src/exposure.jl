@@ -5,10 +5,11 @@
    `[0,1]`. This is equivalent to `map(ScaleMinMax(eltype(img), minval,
    maxval), img)`.  (minval,maxval) defaults to `extrema(img)`.
 """
-imadjustintensity{T}(img::AbstractArray{T}, range) = map(ScaleMinMax(T, range...), img)
-imadjustintensity{T}(img::AbstractArray{T}) = map(ScaleAutoMinMax(T), img)
+imadjustintensity{T}(img::AbstractArray{T}, range::Tuple{Any,Any}) = map(scaleminmax(T, range...), img)
+imadjustintensity(img::AbstractArray, range::AbstractArray) = imadjustintensity(img, (range...,))
+imadjustintensity(img::AbstractArray) = map(takemap(scaleminmax, img), img)
 
-_imstretch{T}(img::AbstractArray{T}, m::Number, slope::Number) = shareproperties(img, map(i -> 1 / (1 + (m / (i + eps(T))) ^ slope), img))
+_imstretch{T}(img::AbstractArray{T}, m::Number, slope::Number) = map(i -> 1 / (1 + (m / (i + eps(T))) ^ slope), img)
 
 """
 `imgs = imstretch(img, m, slope)` enhances or reduces (for
@@ -19,6 +20,7 @@ intensity is `1/(1+(m/(p+eps))^slope)`.
 This assumes the input `img` has intensities between 0 and 1.
 """
 imstretch(img::AbstractArray, m::Number, slope::Number) = _imstretch(float(img), m, slope)
+imstretch(img::ImageMeta, m::Number, slope::Number) = shareproperties(img, imstretch(data(img), m, slope))
 
 """
 ```
@@ -29,13 +31,13 @@ Returns the complement of an image.
 """
 imcomplement{T}(img::AbstractArray{T}) = map(complement, img)
 
-imcomplement(img::AbstractImage) = copyproperties(img, imcomplement(data(img)))
+imcomplement(img::ImageMeta) = copyproperties(img, imcomplement(data(img)))
 complement(x) = one(x)-x
 complement(x::TransparentColor) = typeof(x)(complement(color(x)), alpha(x))
 
-imhist{T<:Colorant}(img::AbstractArray{T}, nbins::Integer = 400) = imhist(convert(Array{Gray}, data(img)), nbins)
+imhist{T<:Colorant}(img::AbstractArray{T}, nbins::Integer = 400) = imhist(convert(Array{Gray}, img), nbins)
 
-function imhist{T<:Union{Gray,Number}}(img::AbstractArray{T}, nbins::Integer = 400)
+function imhist{T<:NumberLike}(img::AbstractArray{T}, nbins::Integer = 400)
     minval = minfinite(img)
     maxval = maxfinite(img)
     imhist(img, nbins, minval, maxval)
@@ -57,7 +59,7 @@ maximum values present in the image are taken.
 `count[end]` is the number satisfying `x >= edges[end]`. Consequently,
 `length(count) == length(edges)+1`.
 """
-function imhist(img::AbstractArray, nbins::Integer, minval::Union{Gray,Real}, maxval::Union{Gray,Real})
+function imhist(img::AbstractArray, nbins::Integer, minval::RealLike, maxval::RealLike)
     edges = StatsBase.histrange([Float64(minval), Float64(maxval)], nbins, :left)
     imhist(img, edges)
 end
@@ -78,7 +80,7 @@ function imhist(img::AbstractArray, edges::Range)
     edges, histogram
 end
 
-function _histeq_pixel_rescale{T<:Union{Gray,Number}}(pixel::T, cdf, minval, maxval)
+function _histeq_pixel_rescale{T<:NumberLike}(pixel::T, cdf, minval, maxval)
     n = length(cdf)
     bin_pixel = clamp(ceil(Int, (pixel - minval) * length(cdf) / (maxval - minval)), 1, n)
     rescaled_pixel = minval + ((cdf[bin_pixel] - cdf[1]) * (maxval - minval) / (cdf[end] - cdf[1]))
@@ -114,7 +116,7 @@ If minval and maxval are specified then intensities are equalized to the range
 (minval, maxval). The default values are 0 and 1.
 
 """
-function histeq(img::AbstractArray, nbins::Integer, minval::Union{Number,Gray}, maxval::Union{Number,Gray})
+function histeq(img::AbstractArray, nbins::Integer, minval::RealLike, maxval::RealLike)
     bins, histogram = imhist(img, nbins, minval, maxval)
     cdf = cumsum(histogram[2:end-1])
     img_shape = size(img)
@@ -132,16 +134,16 @@ function histeq(img::AbstractArray, nbins::Integer)
     histeq(img, nbins, zero(T), one(T))
 end
 
-function histeq(img::AbstractImage, nbins::Integer, minval::Union{Number,Gray}, maxval::Union{Number,Gray})
+function histeq(img::ImageMeta, nbins::Integer, minval::RealLike, maxval::RealLike)
     newimg = histeq(data(img), nbins, minval, maxval)
     shareproperties(img, newimg)
 end
 
-histeq(img::AbstractImage, nbins::Integer) = shareproperties(img, histeq(data(img), nbins))
+histeq(img::ImageMeta, nbins::Integer) = shareproperties(img, histeq(data(img), nbins))
 
-adjust_gamma(img::AbstractImage, gamma::Number) = shareproperties(img, adjust_gamma(data(img), gamma))
+adjust_gamma(img::ImageMeta, gamma::Number) = shareproperties(img, adjust_gamma(data(img), gamma))
 
-_gamma_pixel_rescale{T<:Union{Gray, Number}}(pixel::T, gamma::Number) = pixel ^ gamma
+_gamma_pixel_rescale{T<:NumberLike}(pixel::T, gamma::Number) = pixel ^ gamma
 
 function _gamma_pixel_rescale{C<:Color}(pixel::C, gamma::Number)
     yiq = convert(YIQ, pixel)
@@ -173,7 +175,7 @@ This is the combined with the I and Q channels and the resulting image converted
 type as the input.
 
 """
-function adjust_gamma{T<:FixedPointNumbers.UFixed}(img::AbstractArray{Gray{T}}, gamma::Number)
+function adjust_gamma{T<:FixedPointNumbers.Normed}(img::AbstractArray{Gray{T}}, gamma::Number)
     raw_type = FixedPointNumbers.rawtype(T)
     gamma_inv = 1.0 / gamma
     table = zeros(T, typemax(raw_type) + 1)
@@ -215,9 +217,9 @@ Returns a grayscale histogram matched image with a granularity of `nbins` number
 matched and `oimg` is the image having the desired histogram to be matched to.
 
 """
-histmatch(img::AbstractImage, oimg::AbstractArray, nbins::Integer = 400) = shareproperties(img, histmatch(data(img), oimg, nbins))
+histmatch(img::ImageMeta, oimg::AbstractArray, nbins::Integer = 400) = shareproperties(img, histmatch(data(img), oimg, nbins))
 
-_hist_match_pixel{T<:Union{Gray, Number}}(pixel::T, bins, lookup_table) = T(bins[lookup_table[searchsortedlast(bins, pixel)]])
+_hist_match_pixel{T<:NumberLike}(pixel::T, bins, lookup_table) = T(bins[lookup_table[searchsortedlast(bins, pixel)]])
 
 function _hist_match_pixel{T<:Color}(pixel::T, bins, lookup_table)
     yiq = convert(YIQ, pixel)
@@ -284,10 +286,11 @@ function clahe{C}(img::AbstractArray{C, 2}, nbins::Integer = 100; xblocks::Integ
     img_padded = imresize(img, (y_padded, x_padded))
 
     hist_equalised_img = _clahe(img_padded, nbins, xblocks, yblocks, clip)
-    imresize(hist_equalised_img, (h, w))
+    out = similar(img)
+    ImageTransformations.imresize!(out, hist_equalised_img)
 end
 
-function clahe(img::AbstractImage, nbins::Integer = 100; xblocks::Integer = 8, yblocks::Integer = 8, clip::Number = 3)
+function clahe(img::ImageMeta, nbins::Integer = 100; xblocks::Integer = 8, yblocks::Integer = 8, clip::Number = 3)
     shareproperties(clahe(data(img), nbins, xblocks = xblocks, yblocks = yblocks, clip = clip), img)
 end
 
@@ -307,7 +310,7 @@ function _clahe{C}(img::AbstractArray{C, 2}, nbins::Integer = 100, xblocks::Inte
             _, histogram = imhist(temp_block, edges)
             clipped_hist = cliphist(histogram[2:end - 1], clip)
             cdf = cumsum(clipped_hist)
-            n_cdf = cdf / cdf[end]
+            n_cdf = cdf / max(convert(eltype(cdf), 1), cdf[end])
             push!(temp_cdf, n_cdf)
         end
     end
@@ -394,16 +397,16 @@ function _clahe{C}(img::AbstractArray{C, 2}, nbins::Integer = 100, xblocks::Inte
     res_img
 end
 
-_clahe_pixel_rescale{T<:Union{Gray, Number}}(pixel::T, cdf, edges) = cdf[searchsortedlast(edges, pixel, Base.Order.Forward)]
+_clahe_pixel_rescale{T<:NumberLike}(pixel::T, cdf, edges) = cdf[searchsortedlast(edges, pixel, Base.Order.Forward)]
 
-function _clahe_pixel_rescale{T<:Union{Gray, Number}}(pixel::T, first, second, edges, pos, length)
+function _clahe_pixel_rescale{T<:NumberLike}(pixel::T, first, second, edges, pos, length)
     id = searchsortedlast(edges, pixel, Base.Order.Forward)
     f = first[id]
     s = second[id]
     T(((length - pos) * f + (pos - 1) * s) / (length - 1))
 end
 
-function _clahe_pixel_rescale{T<:Union{Gray, Number}}(pixel::T, top_left, top_right, bot_left, bot_right, edges, i, j, w, h)
+function _clahe_pixel_rescale{T<:NumberLike}(pixel::T, top_left, top_right, bot_left, bot_right, edges, i, j, w, h)
     id = searchsortedlast(edges, pixel, Base.Order.Forward)
     tl = top_left[id]
     tr = top_right[id]
