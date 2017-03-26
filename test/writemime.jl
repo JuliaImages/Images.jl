@@ -45,6 +45,14 @@ using Base.Test
         b = load(fn)
         @test b == N0f8.(restrict(abig, (1,2)))
     end
+    @testset "display matrix of images" begin
+        img() = colorview(Gray, rand([0.250 0.5; 0.75 1.0], rand(2:10), rand(2:10)))
+        io = IOBuffer()
+        # test that these methods don't fail
+        show(io, MIME"text/html"(), [img() for i=1:2])
+        show(io, MIME"text/html"(), [img() for i=1:2, j=1:2])
+        show(io, MIME"text/html"(), [img() for i=1:2, j=1:2, k=1:2])
+    end
 end
 
 nothing
