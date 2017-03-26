@@ -1,3 +1,12 @@
+# v0.9
+
+Breaking changes:
+- Return type of `canny` is now an `Array{Bool}`
+
+Feature additions:
+- `convexhull`
+- MIME"text/html" output for arrays-of-images
+
 # v0.7
 
 Add `feature_transform` and `distance_transform`
