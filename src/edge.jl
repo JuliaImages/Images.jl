@@ -385,7 +385,7 @@ Performs Canny Edge Detection on the input image.
 Parameters :
 
   sigma :           Specifies the standard deviation of the gaussian filter
-  threshold:        Tuple of upper bound and lower bound for hysteresis thresholding
+  (upper, lower) :  Bounds for hysteresis thresholding
   astype :          Specifies return type of result
   percentile :      Specifies if upperThreshold and lowerThreshold should be used
                     as quantiles or absolute values
