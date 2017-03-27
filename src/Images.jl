@@ -60,8 +60,8 @@ using Base.Cartesian  # TODO: delete this
 """
 Percentile - Used to pass arguments to functions as a percentile rather than an absolute value
 
-e.g.,   canny(img, 1.4, (0.8,0.2)) uses absolute threshold
-        canny(img, 1.4, (Percentile(0.8), Percentile(0.2))) uses quantiles of the edge magnitude image as threshold
+e.g.,   canny(img, 1.4, (80, 20)) uses absolute threshold
+        canny(img, 1.4, (Percentile(80), Percentile(20))) uses percentiles of the edge magnitude image as threshold
 
 """
 immutable Percentile{T} <: Real p::T end

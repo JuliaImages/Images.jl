@@ -384,12 +384,9 @@ Performs Canny Edge Detection on the input image.
 
 Parameters :
 
-  sigma :           Specifies the standard deviation of the gaussian filter
   (upper, lower) :  Bounds for hysteresis thresholding
-  astype :          Specifies return type of result
-  percentile :      Specifies if upperThreshold and lowerThreshold should be used
-                    as quantiles or absolute values
-
+  sigma :           Specifies the standard deviation of the gaussian filter
+  
 """
 function canny{T<:NumberLike, N<:Union{NumberLike,Percentile{NumberLike}}}(img_gray::AbstractMatrix{T}, threshold::Tuple{N,N}, sigma::Number = 1.4)
     img_grayf = imfilter(img_gray, KernelFactors.IIRGaussian((sigma,sigma)), NA())
