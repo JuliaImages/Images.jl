@@ -496,12 +496,25 @@ for SI in (MapInfo, AbstractClamp)
             immap(mapi::$ST{ARGB32}, rgb::AbstractRGB) =
                 convert(ARGB32, ARGB{N0f8}(map1(mapi, red(rgb)), map1(mapi, green(rgb)), map1(mapi, blue(rgb))))
         end
-        for O in (:RGB, :BGR)
+        if ST == Clamp01NaN
+            for O in (:RGB, :BGR)
+                @eval begin
+                    immap{T,C<:AbstractRGB, TC}(mapi::$ST{$O{T}}, argb::TransparentColor{C,TC}) =
+                        $O{T}(map1(mapi, red(argb)), map1(mapi, green(argb)), map1(mapi, blue(argb)))
+                end
+            end
             @eval begin
-                immap{T}(mapi::$ST{$O{T}}, rgb::AbstractRGB) =
-                    $O{T}(map1(mapi, red(rgb)), map1(mapi, green(rgb)), map1(mapi, blue(rgb)))
-                immap{T,C<:AbstractRGB, TC}(mapi::$ST{$O{T}}, argb::TransparentColor{C,TC}) =
-                    $O{T}(map1(mapi, red(argb)), map1(mapi, green(argb)), map1(mapi, blue(argb)))
+                immap{T}(mapi::$ST{BGR{T}}, rgb::AbstractRGB) =
+                    BGR{T}(map1(mapi, red(rgb)), map1(mapi, green(rgb)), map1(mapi, blue(rgb)))
+            end
+        else
+            for O in (:RGB, :BGR)
+                @eval begin
+                    immap{T}(mapi::$ST{$O{T}}, rgb::AbstractRGB) =
+                        $O{T}(map1(mapi, red(rgb)), map1(mapi, green(rgb)), map1(mapi, blue(rgb)))
+                    immap{T,C<:AbstractRGB, TC}(mapi::$ST{$O{T}}, argb::TransparentColor{C,TC}) =
+                        $O{T}(map1(mapi, red(argb)), map1(mapi, green(argb)), map1(mapi, blue(argb)))
+                end
             end
         end
         for OA in (:RGBA, :ARGB, :BGRA)
