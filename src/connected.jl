@@ -214,7 +214,7 @@ function push!(sets::DisjointMinSets)
 end
 
 function minlabel(sets::DisjointMinSets)
-    out = Array(Int, length(sets.parents))
+    out = Vector{Int}(length(sets.parents))
     k = 0
     for i = 1:length(sets.parents)
         if sets.parents[i] == i

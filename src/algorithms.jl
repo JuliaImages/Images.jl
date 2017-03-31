@@ -9,9 +9,11 @@ Compat.@dep_vectorize_2arg Gray hypot
 meanfinite{T<:Real}(A::AbstractArray{T}, region) = _meanfinite(A, T, region)
 meanfinite{CT<:Colorant}(A::AbstractArray{CT}, region) = _meanfinite(A, eltype(CT), region)
 function _meanfinite{T<:AbstractFloat}(A::AbstractArray, ::Type{T}, region)
-    sz = Base.reduced_dims(A, region)
-    K = zeros(Int, sz)
-    S = zeros(eltype(A), sz)
+    inds = Base.reduced_indices(A, region)
+    K = similar(Array{Int}, inds)
+    S = similar(Array{eltype(A)}, inds)
+    fill!(K, 0)
+    fill!(S, zero(eltype(A)))
     sumfinite!(S, K, A)
     S./K
 end
@@ -422,7 +424,7 @@ See also: [`BlobLoG`](@ref).
 """
 function blob_LoG{T,N}(img::AbstractArray{T,N}, σs, edges::Tuple{Vararg{Bool}}=(true, ntuple(d->false, Val{N})...))
     sigmas = sort(σs)
-    img_LoG = Array(Float64, length(sigmas), size(img)...)
+    img_LoG = Array{Float64}(length(sigmas), size(img)...)
     colons = ntuple(d->Colon(), Val{N})
     @inbounds for isigma in eachindex(sigmas)
         img_LoG[isigma,colons...] = (-sigmas[isigma]) * imfilter(img, Kernel.LoG(sigmas[isigma]))
@@ -492,7 +494,7 @@ findlocalminima(img::AbstractArray, region=coords_spatial(img), edges=true) =
 restrict(img::AxisArray, ::Tuple{}) = img
 restrict(img::ImageMeta, ::Tuple{}) = img
 
-typealias RegionType Union{Dims,Vector{Int}}
+const RegionType = Union{Dims,Vector{Int}}
 
 function restrict(img::ImageMeta, region::RegionType=coords_spatial(img))
     shareproperties(img, restrict(data(img), region))

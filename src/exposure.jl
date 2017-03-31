@@ -22,16 +22,6 @@ This assumes the input `img` has intensities between 0 and 1.
 imstretch(img::AbstractArray, m::Number, slope::Number) = _imstretch(float(img), m, slope)
 imstretch(img::ImageMeta, m::Number, slope::Number) = shareproperties(img, imstretch(data(img), m, slope))
 
-"""
-```
-complement_img = imcomplement(img)
-```
-
-Returns the complement of an image.
-"""
-imcomplement{T}(img::AbstractArray{T}) = map(complement, img)
-
-imcomplement(img::ImageMeta) = copyproperties(img, imcomplement(data(img)))
 complement(x) = one(x)-x
 complement(x::TransparentColor) = typeof(x)(complement(color(x)), alpha(x))
 

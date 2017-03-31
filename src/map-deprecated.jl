@@ -18,6 +18,11 @@
 # map1(mapi::MapInfo{T}, x) is designed to allow T<:Color to work on
 #    scalars x::Fractional
 
+hasparameters{T}(::Type{T}, n) = !isabstract(T) && length(T.parameters) ∈ n
+
+isdefined(:UnionAll) && include_string("""
+hasparameters(::UnionAll, n) = false
+""")
 
 # Dispatch-based elementwise manipulations
 """
@@ -47,7 +52,7 @@ imgc = map(ColorSaturated{RGB{N0f8}}(), img)
 For pre-defined types see `MapNone`, `BitShift`, `ClampMinMax`, `ScaleMinMax`,
 `ScaleAutoMinMax`, and `ScaleSigned`.
 """
-abstract MapInfo{T}
+@compat abstract type MapInfo{T} end
 eltype{T}(mapi::MapInfo{T}) = T
 
 ## Centralize calls to map, to reduce the potential for ambiguity
@@ -58,9 +63,9 @@ map(mapi::MapInfo, A::AbstractArray) = immap(mapi, A)
 ## MapNone
 "`MapNone(T)` is a `MapInfo` object that converts `x` to have type `T`."
 immutable MapNone{T} <: MapInfo{T}
-    function MapNone()
+    function (::Type{MapNone{T}}){T}()
         depwarn("MapNone is deprecated, use x->$T(x)", :MapNone)
-        new()
+        new{T}()
     end
 end
 
@@ -110,9 +115,9 @@ When applicable, the main advantage of using `BitShift` rather than
 `MapNone` or `ScaleMinMax` is speed.
 """
 immutable BitShift{T,N} <: MapInfo{T}
-    function BitShift()
+    function (::Type{BitShift{T,N}}){T,N}()
         depwarn("BitShift is deprecated, use x->x>>>$N", :BitShift)
-        new()
+        new{T,N}()
     end
 end
 BitShift{T}(::Type{T}, n::Int) = BitShift{T,n}()  # note that this is not type-stable
@@ -135,7 +140,7 @@ map1{CT<:Colorant,N}(mapi::BitShift{CT,N}, val::Normed) = _immap(eltype(CT), BS{
 # The Clamp types just enforce bounds, but do not scale or offset
 
 # Types and constructors
-abstract AbstractClamp{T} <: MapInfo{T}
+@compat abstract type AbstractClamp{T} <: MapInfo{T} end
 """
 `ClampMin(T, minvalue)` is a `MapInfo` object that clamps pixel values
 to be greater than or equal to `minvalue` before converting to type `T`.
@@ -145,9 +150,9 @@ See also: `ClampMax`, `ClampMinMax`.
 immutable ClampMin{T,From} <: AbstractClamp{T}
     min::From
 
-    function ClampMin(min)
+    function (::Type{ClampMin{T,From}}){T,From}(min)
         depwarn("ClampMin is deprecated, use x->max(x, $min)", :ClampMin)
-        new(min)
+        new{T,From}(min)
     end
 end
 ClampMin{T,From}(::Type{T}, min::From) = ClampMin{T,From}(min)
@@ -161,9 +166,9 @@ See also: `ClampMin`, `ClampMinMax`.
 immutable ClampMax{T,From} <: AbstractClamp{T}
     max::From
 
-    function ClampMax(max)
+    function (::Type{ClampMax{T,From}}){T,From}(max)
         depwarn("ClampMax is deprecated, use x->min(x, $max)", :ClampMax)
-        new(max)
+        new{T,From}(max)
     end
 end
 ClampMax{T,From}(::Type{T}, max::From) = ClampMax{T,From}(max)
@@ -172,9 +177,9 @@ immutable ClampMinMax{T,From} <: AbstractClamp{T}
     min::From
     max::From
 
-    function ClampMinMax(min, max)
+    function (::Type{ClampMinMax{T,From}}){T,From}(min, max)
         depwarn("ClampMinMax is deprecated, use x->clamp(x, $min, $max)", :ClampMinMax)
-        new(min, max)
+        new{T,From}(min, max)
     end
 end
 """
@@ -195,9 +200,9 @@ map(Clamp(RGB{N0f8}), RGB(1.2, -0.4, 0.6)) === RGB{N0f8}(1, 0, 0.6)
 ```
 """
 immutable Clamp{T} <: AbstractClamp{T}
-    function Clamp()
+    function (::Type{Clamp{T}}){T}()
         depwarn("Clamp is deprecated, use a colorspace-specific function (clamp01 for gray/RGB)", :Clamp)
-        new()
+        new{T}()
     end
 end
 Clamp{T}(::Type{T}) = Clamp{T}()
@@ -261,10 +266,10 @@ immutable ScaleMinMax{To,From,S<:AbstractFloat} <: MapInfo{To}
     max::From
     s::S
 
-    function ScaleMinMax(min, max, s)
+    function (::Type{ScaleMinMax{To,From,S}}){To,From,S}(min, max, s)
         depwarn("ScaleMinMax is deprecated, use scaleminmax([$To,] $min, $max)", :ScaleMinMax)
         min >= max && error("min must be smaller than max")
-        new(min, max, s)
+        new{To,From,S}(min, max, s)
     end
 end
 
@@ -330,9 +335,9 @@ color proportional to the clamped absolute value.
 immutable ScaleSigned{T, S<:AbstractFloat} <: MapInfo{T}
     s::S
 
-    function ScaleSigned(s)
+    function (::Type{ScaleSigned{T,S}}){T,S}(s)
         depwarn("ScaleSigned is deprecated, use scalesigned", :ScaleSigned)
-        new(s)
+        new{T,S}(s)
     end
 end
 ScaleSigned{T}(::Type{T}, s::AbstractFloat) = ScaleSigned{T, typeof(s)}(s)
@@ -361,9 +366,9 @@ will be recalculated for each frame, so this can result in
 inconsistent contrast scaling.
 """
 immutable ScaleAutoMinMax{T} <: MapInfo{T}
-    function ScaleAutoMinMax()
+    function (::Type{ScaleAutoMinMax{T}}){T}()
         depwarn("ScaleAutoMinMax is deprecated, use scaleminmax as an argument to takemap", :ScaleAutoMinMax)
-        new()
+        new{T}()
     end
 end
 ScaleAutoMinMax{T}(::Type{T}) = ScaleAutoMinMax{T}()
@@ -381,9 +386,9 @@ See also: `ScaleMinMax`.
 """
 immutable ScaleMinMaxNaN{To,From,S} <: MapInfo{To}
     smm::ScaleMinMax{To,From,S}
-    function ScaleMinMaxNaN(smm)
+    function (::Type{ScaleMinMaxNaN{To,From,S}}){To,From,S}(smm)
         depwarn("ScaleMinMaxNaN is deprecated, use scaleminmax in conjunction with clamp01nan or x->ifelse(isnan(x), zero(x), x)", :ScaleMinMaxNaN)
-        new(smm)
+        new{To,From,S}(smm)
     end
 end
 
@@ -393,9 +398,9 @@ that clamps grayscale or color pixels to the interval `[0,1]`, sending
 `NaN` pixels to zero.
 """
 immutable Clamp01NaN{T} <: MapInfo{T}
-    function Clamp01NaN()
+    function (::Type{Clamp01NaN{T}}){T}()
         depwarn("Clamp01NaN is deprecated, use clamp01nan", :Clamp01NaN)
-        new()
+        new{T}()
     end
 end
 
@@ -428,7 +433,7 @@ end
 # This essentially "vectorizes" map over a single pixel's color channels using map1
 for SI in (MapInfo, AbstractClamp)
     for ST in subtypes(SI)
-        ST.abstract && continue
+        isabstract(ST) && continue
         ST == ScaleSigned && continue  # ScaleSigned gives an RGB from a scalar, so don't "vectorize" it
         @eval begin
             # Grayscale and GrayAlpha inputs
@@ -491,12 +496,25 @@ for SI in (MapInfo, AbstractClamp)
             immap(mapi::$ST{ARGB32}, rgb::AbstractRGB) =
                 convert(ARGB32, ARGB{N0f8}(map1(mapi, red(rgb)), map1(mapi, green(rgb)), map1(mapi, blue(rgb))))
         end
-        for O in (:RGB, :BGR)
+        if ST == Clamp01NaN
+            for O in (:RGB, :BGR)
+                @eval begin
+                    immap{T,C<:AbstractRGB, TC}(mapi::$ST{$O{T}}, argb::TransparentColor{C,TC}) =
+                        $O{T}(map1(mapi, red(argb)), map1(mapi, green(argb)), map1(mapi, blue(argb)))
+                end
+            end
             @eval begin
-                immap{T}(mapi::$ST{$O{T}}, rgb::AbstractRGB) =
-                    $O{T}(map1(mapi, red(rgb)), map1(mapi, green(rgb)), map1(mapi, blue(rgb)))
-                immap{T,C<:AbstractRGB, TC}(mapi::$ST{$O{T}}, argb::TransparentColor{C,TC}) =
-                    $O{T}(map1(mapi, red(argb)), map1(mapi, green(argb)), map1(mapi, blue(argb)))
+                immap{T}(mapi::$ST{BGR{T}}, rgb::AbstractRGB) =
+                    BGR{T}(map1(mapi, red(rgb)), map1(mapi, green(rgb)), map1(mapi, blue(rgb)))
+            end
+        else
+            for O in (:RGB, :BGR)
+                @eval begin
+                    immap{T}(mapi::$ST{$O{T}}, rgb::AbstractRGB) =
+                        $O{T}(map1(mapi, red(rgb)), map1(mapi, green(rgb)), map1(mapi, blue(rgb)))
+                    immap{T,C<:AbstractRGB, TC}(mapi::$ST{$O{T}}, argb::TransparentColor{C,TC}) =
+                        $O{T}(map1(mapi, red(argb)), map1(mapi, green(argb)), map1(mapi, blue(argb)))
+                end
             end
         end
         for OA in (:RGBA, :ARGB, :BGRA)
@@ -584,7 +602,7 @@ end
 const bitshiftto8 = ((N6f10, 2), (N4f12, 4), (N2f14, 6), (N0f16, 8))
 
 # typealias GrayType{T<:Fractional} Union{T, Gray{T}}
-typealias GrayArray{T<:Union{Fractional,Bool}} Union{AbstractArray{T}, AbstractArray{Gray{T}}}
+@compat const GrayArray{T<:Union{Fractional,Bool}} = Union{AbstractArray{T}, AbstractArray{Gray{T}}}
 # note, though, that we need to override for AbstractImage in case the
 # "colorspace" property is defined differently
 
@@ -648,7 +666,7 @@ for C in tuple(subtypes(AbstractRGB)..., Gray)
     @eval mapinfo{F<:AbstractFloat}(::Type{RGB24}, img::AbstractArray{$C{F}}) = ClampMinMax(RGB24, zero(F), one(F))
     @eval mapinfo{F<:AbstractFloat}(::Type{ARGB32}, img::AbstractArray{$C{F}}) = ClampMinMax(ARGB32, zero(F), one(F))
     for AC in subtypes(TransparentColor)
-        length(AC.parameters) == 2 || continue
+        hasparameters(AC, 2) || continue
         @eval mapinfo(::Type{ARGB32}, img::AbstractArray{$AC{$C{N0f8},N0f8}}) = MapNone{ARGB32}()
         @eval mapinfo(::Type{RGB24}, img::AbstractArray{$AC{$C{N0f8},N0f8}}) = MapNone{RGB24}()
         for (T, n) in bitshiftto8
@@ -679,7 +697,7 @@ mapinfo{T<:AbstractFloat}(::Type{Clamp}, img::AbstractArray{T}) = ClampMinMax(N0
 let handled = Set()
 for ACV in (Color, AbstractRGB)
     for CV in subtypes(ACV)
-        (length(CV.parameters) == 1 && !(CV.abstract)) || continue
+        hasparameters(CV, 1) || continue
         CVnew = CV<:AbstractGray ? Gray : RGB
         @eval mapinfo{T<:Normed}(::Type{Clamp}, img::AbstractArray{$CV{T}}) = MapNone{$CVnew{T}}()
         @eval mapinfo{CV<:$CV}(::Type{Clamp}, img::AbstractArray{CV}) = Clamp{$CVnew{N0f8}}()

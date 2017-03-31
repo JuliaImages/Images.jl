@@ -7,21 +7,19 @@ if VERSION >= v"0.6.0-dev.1024"
 else
     import Base.take
 end
-import Base.Order: Ordering, ForwardOrdering, ReverseOrdering
-import Base: ==, .==, +, -, *, /, .+, .-, .*, ./, .^, .<, .>
-import Base: abs, atan2, clamp, convert, copy, copy!, ctranspose, delete!, done,
+import Base: +, -, *
+import Base: abs, atan2, clamp, convert, copy, copy!, ctranspose, delete!,
              eltype, fft, get, getindex, haskey, hypot,
              ifft, imag, length, linearindexing, map, map!, maximum, mimewritable,
-             minimum, next, ndims, one, parent, permutedims, real, reinterpret,
+             minimum, ndims, one, parent, permutedims, real, reinterpret,
              reshape, resize!,
-             setindex!, show, showcompact, similar, size, slice, sqrt, squeeze,
-             start, strides, sub, sum, write, zero
-if VERSION < v"0.5.0-dev+4490"
-    import Base: float32, float64
-else
-    export float32, float64
-end
+             setindex!, show, showcompact, similar, size, sqrt, squeeze,
+             strides, sum, write, zero
+
+export float32, float64
+
 using Base: depwarn
+using Base.Order: Ordering, ForwardOrdering, ReverseOrdering
 
 using Compat
 import Compat.view
@@ -34,15 +32,16 @@ using Reexport
 using ColorVectorSpace, FileIO
 export load, save
 import Colors: Fractional, red, green, blue
-typealias AbstractGray{T}                    Color{T,1}
-typealias TransparentRGB{C<:AbstractRGB,T}   TransparentColor{C,T,4}
-typealias TransparentGray{C<:AbstractGray,T} TransparentColor{C,T,2}
-typealias NumberLike                         Union{Number,AbstractGray}
-typealias RealLike                           Union{Real,AbstractGray}
+@compat const AbstractGray{T}                    = Color{T,1}
+@compat const TransparentRGB{C<:AbstractRGB,T}   = TransparentColor{C,T,4}
+@compat const TransparentGray{C<:AbstractGray,T} = TransparentColor{C,T,2}
+const NumberLike = Union{Number,AbstractGray}
+const RealLike = Union{Real,AbstractGray}
 import Graphics
 import Graphics: width, height, Point
 using StatsBase  # TODO: eliminate this dependency
 using IndirectArrays, MappedArrays
+using Compat.TypeUtils
 
 const is_little_endian = ENDIAN_BOM == 0x04030201
 
