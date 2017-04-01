@@ -394,11 +394,9 @@ function canny{T<:NumberLike, N<:Union{NumberLike,Percentile{NumberLike}}}(img_g
     img_mag, img_phase = magnitude_phase(img_grad_x, img_grad_y)
     img_nonMaxSup = thin_edges_nonmaxsup(img_mag, img_phase)
     if N<:Percentile{}
-        upperThreshold = StatsBase.percentile(img_nonMaxSup[:], threshold[1].p)
-        lowerThreshold = StatsBase.percentile(img_nonMaxSup[:], threshold[2].p)
+        upperThreshold ,lowerThreshold = StatsBase.percentile(img_nonMaxSup[:], [threshold[i].p for i=1:2])
     else
-        upperThreshold = threshold[1]
-        lowerThreshold = threshold[2]
+        upperThreshold, lowerThreshold = threshold
     end
     img_thresholded = hysteresis_thresholding(img_nonMaxSup, upperThreshold, lowerThreshold)
     edges = map(i -> i >= 0.9, img_thresholded)
