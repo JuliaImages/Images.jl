@@ -78,7 +78,7 @@ Base.@deprecate_binding LabeledArray ColorizedArray
 @deprecate imcomplement(img::AbstractArray) complement.(img)
 
 function canny{T<:NumberLike}(img_gray::AbstractMatrix{T}, sigma::Number = 1.4, upperThreshold::Number = 0.90, lowerThreshold::Number = 0.10; percentile::Bool = true)
-    depwarn("canny(img, sigma, upperThreshold, lowerThreshold; percentile=true) is deprecated.\n Please use canny(img, (upperThreshold, lowerThreshold), sigma) or canny(img, (Percentile(upperThreshold), Percentile(lowerThreshold)), sigma)",:canny)
+    depwarn("canny(img, sigma, $upperThreshold, $lowerThreshold; percentile=$percentile) is deprecated.\n Please use canny(img, ($upperThreshold, $lowerThreshold), sigma) or canny(img, (Percentile($(100*upperThreshold)), Percentile($(100*lowerThreshold))), sigma)",:canny)
     if percentile==true
         canny(img_gray, (Percentile(100*upperThreshold), Percentile(100*lowerThreshold)), sigma)
     else
