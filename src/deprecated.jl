@@ -76,3 +76,12 @@ Base.@deprecate_binding LabeledArray ColorizedArray
 @deprecate ColorizedArray{T,N}(intensity::AbstractArray{T,N}, label::AbstractArray, colors::Vector{RGB}) ColorizedArray(intensity, IndirectArray(label, colors))
 
 @deprecate imcomplement(img::AbstractArray) complement.(img)
+
+function canny{T<:NumberLike}(img_gray::AbstractMatrix{T}, sigma::Number = 1.4, upperThreshold::Number = 0.90, lowerThreshold::Number = 0.10; percentile::Bool = true)
+    depwarn("canny(img, sigma, $upperThreshold, $lowerThreshold; percentile=$percentile) is deprecated.\n Please use canny(img, ($upperThreshold, $lowerThreshold), sigma) or canny(img, (Percentile($(100*upperThreshold)), Percentile($(100*lowerThreshold))), sigma)",:canny)
+    if percentile==true
+        canny(img_gray, (Percentile(100*upperThreshold), Percentile(100*lowerThreshold)), sigma)
+    else
+        canny(img_gray, (upperThreshold, lowerThreshold), sigma)
+    end
+end

@@ -56,6 +56,16 @@ using ImageMetadata: ImageMetaAxis
 
 using Base.Cartesian  # TODO: delete this
 
+"""
+    Percentile(x)
+
+Indicate that `x` should be interpreted as a [percentile](https://en.wikipedia.org/wiki/Percentile) rather than an absolute value. For example,
+
+- `canny(img, 1.4, (80, 20))` uses absolute thresholds on the edge magnitude image
+- `canny(img, 1.4, (Percentile(80), Percentile(20)))` uses percentiles of the edge magnitude image as threshold
+"""
+immutable Percentile{T} <: Real p::T end
+
 include("map-deprecated.jl")
 include("overlays-deprecated.jl")
 include("labeledarrays.jl")
@@ -74,6 +84,7 @@ include("convexhull.jl")
 export # types
     BlobLoG,
     ColorizedArray,
+    Percentile,
 
     # macros
     @test_approx_eq_sigma_eps,

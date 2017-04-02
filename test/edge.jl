@@ -32,21 +32,21 @@ global checkboard
     @testset "Canny Edge Detection" begin
         #General Checks
         img = zeros(10, 10)
-        edges = canny(img)
+        edges = canny(img, (0.8, 0.2))
         @test eltype(edges) == Bool
         @test all(! edges)
 
         #Box Edges
 
         img[2:end-1, 2:end-1] = 1
-        edges = canny(img)
+        edges = canny(img, (Percentile(80), Percentile(20)))
         @test all(edges[2:end-1, 2])
         @test all(edges[2:end-1, end-1])
         @test all(edges[2, 2:end-1])
         @test all(edges[end-1, 2:end-1])
         @test all(! edges[3:end-2, 3:end-2])
 
-        edges = canny(img, 1.4, 0.9/8, 0.2/8, percentile = false)
+        edges = canny(img, (0.9/8, 0.2/8), 1.4)
         @test all(edges[2:end-1, 2])
         @test all(edges[2:end-1, end-1])
         @test all(edges[2, 2:end-1])
@@ -55,7 +55,7 @@ global checkboard
 
         #Checkerboard - Corners are not detected as Edges!
         img = checkerboard(Gray, 5, 3)
-        edges = canny(img, 1.4, 0.8, 0.2)
+        edges = canny(img, (Percentile(80), Percentile(20)), 1.4)
         @test eltype(edges) == Bool
         id = [1,2,3,4,6,7,8,9,10,12,13,14,15]
         @test all(! edges[id, id])
@@ -72,7 +72,7 @@ global checkboard
         img[diagind(img)] = 1
         img[diagind(img, 1)] = 1
         img[diagind(img, -1)] = 1
-        edges = canny(img)
+        edges = canny(img, (Percentile(80),Percentile(20)))
         @test eltype(edges) == Bool
         @test all(edges[diagind(edges, 2)])
         @test all(edges[diagind(edges, -2)])
