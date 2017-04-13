@@ -266,6 +266,9 @@ using Base.Test
         img1 = colorview(RGB, fill(0.9, 3, 5, 5))
         img2 = colorview(RGB, fill(N0f8(0.9), 3, 5, 5))
         @test isapprox(channelview(restrict(img1)), channelview(restrict(img2)), rtol=0.01)
+
+        imgmeta = ImageMeta(imgcol, Dict(:myprop=>1))
+        @test restrict(imgmeta, [1, 2]) == @inferred(restrict(imgmeta, (1, 2)))
     end
 
     @testset "Erode/ dilate" begin
