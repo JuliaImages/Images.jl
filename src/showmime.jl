@@ -50,7 +50,7 @@ function _show_odd{T<:ColorantMatrix, N}(io::IO, m::MIME"text/html", imgs::Abstr
     colons = ([Colon() for i=1:(N-1)]...)
     for i = 1:size(imgs, 1)
         write(io, "<td style='text-align:center;vertical-align:middle; margin: 0.5em;border:1px #90999f solid;border-collapse:collapse'>")
-        _show_even(io, m, view(imgs, i, colons...)) # show even
+        _show_even(io, m, view(imgs, colons..., i)) # show even
         write(io, "</td>")
     end
 end
@@ -62,7 +62,7 @@ function _show_even{T<:ColorantMatrix, N}(io::IO, m::MIME"text/html", imgs::Abst
     write(io, "<tbody>")
     for i = 1:size(imgs, 1)
         write(io, "<tr>")
-        _show_odd(io, m, view(imgs, i, colons...)) # show odd
+        _show_odd(io, m, view(imgs, colons..., i)) # show odd
         write(io, "</tr>")
     end
     write(io, "</tbody>")
