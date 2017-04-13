@@ -35,9 +35,9 @@ end
 map8(c::Colorant) = mapc(N0f8, c)
 map8(x::Number) = N0f8(x)
 
-@compat const ColorantArray{T<:Colorant,N} = AbstractArray{T,N}
+@compat const ColorantMatrix{T<:Colorant} = AbstractMatrix{T}
 
-function _show_odd{T<:ColorantArray}(io::IO, m::MIME"text/html", imgs::AbstractArray{T, 1})
+function _show_odd{T<:ColorantMatrix}(io::IO, m::MIME"text/html", imgs::AbstractArray{T, 1})
     # display a vector of images in a row
     for j = 1:length(imgs)
         write(io, "<td style='text-align:center;vertical-align:middle; margin: 0.5em;border:1px #90999f solid;border-collapse:collapse'>")
@@ -46,7 +46,7 @@ function _show_odd{T<:ColorantArray}(io::IO, m::MIME"text/html", imgs::AbstractA
     end
 end
 
-function _show_odd{T<:ColorantArray, N}(io::IO, m::MIME"text/html", imgs::AbstractArray{T, N})
+function _show_odd{T<:ColorantMatrix, N}(io::IO, m::MIME"text/html", imgs::AbstractArray{T, N})
     colons = ([Colon() for i=1:(N-1)]...)
     for i = 1:size(imgs, 1)
         write(io, "<td style='text-align:center;vertical-align:middle; margin: 0.5em;border:1px #90999f solid;border-collapse:collapse'>")
@@ -55,7 +55,7 @@ function _show_odd{T<:ColorantArray, N}(io::IO, m::MIME"text/html", imgs::Abstra
     end
 end
 
-function _show_even{T<:ColorantArray, N}(io::IO, m::MIME"text/html", imgs::AbstractArray{T, N}, center=true)
+function _show_even{T<:ColorantMatrix, N}(io::IO, m::MIME"text/html", imgs::AbstractArray{T, N}, center=true)
     colons = ([Colon() for i=1:(N-1)]...)
     centering = center ? " style='margin: auto'" : ""
     write(io, "<table$centering>")
@@ -69,7 +69,7 @@ function _show_even{T<:ColorantArray, N}(io::IO, m::MIME"text/html", imgs::Abstr
     write(io, "</table>")
 end
 
-function Base.show{T<:ColorantArray, N}(io::IO, m::MIME"text/html", imgs::AbstractArray{T, N})
+function Base.show{T<:ColorantMatrix, N}(io::IO, m::MIME"text/html", imgs::AbstractArray{T, N})
     if N % 2 == 1
         write(io, "<table>")
         write(io, "<tbody>")
