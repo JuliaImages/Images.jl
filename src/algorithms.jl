@@ -494,13 +494,15 @@ findlocalminima(img::AbstractArray, region=coords_spatial(img), edges=true) =
 restrict(img::AxisArray, ::Tuple{}) = img
 restrict(img::ImageMeta, ::Tuple{}) = img
 
-const RegionType = Union{Dims,Vector{Int}}
+restrict(img::ImageMeta, region::Vector{Int}) = restrict(img, (region...))
 
-function restrict(img::ImageMeta, region::RegionType=coords_spatial(img))
+function restrict(img::ImageMeta, region::Dims=coords_spatial(img))
     shareproperties(img, restrict(data(img), region))
 end
 
-function restrict{T,N}(img::AxisArray{T,N}, region::RegionType=coords_spatial(img))
+restrict(img::AxisArray, region::Vector{Int}) = restrict(img, (region...))
+
+function restrict{T,N}(img::AxisArray{T,N}, region::Dims=coords_spatial(img))
     inregion = falses(ndims(img))
     inregion[[region...]] = true
     inregiont = (inregion...,)::NTuple{N,Bool}
