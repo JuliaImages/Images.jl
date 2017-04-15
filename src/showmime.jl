@@ -16,7 +16,10 @@ mimewritable{C<:Color}(::MIME"image/svg+xml", img::AbstractMatrix{C}) = false
 # Really large images can make display very slow, so we shrink big
 # images.  Conversely, tiny images don't show up well, so in such
 # cases we repeat pixels.
-function Base.show{C<:Colorant}(io::IO, mime::MIME"image/png", img::AbstractMatrix{C}; mapi=x->map8(clamp01nan(x)), minpixels=10^4, maxpixels=10^6)
+function Base.show{C<:Colorant}(io::IO, mime::MIME"image/png", img::AbstractMatrix{C};
+                                minpixels=10^4, maxpixels=10^6,
+                                # Jupyter seemingly can't handle 16-bit colors:
+                                mapi=x->mapc(N0f8, clamp01nan(csnormalize(x))))
     while _length(img) > maxpixels
         img = restrict(img)  # big images
     end
@@ -31,9 +34,10 @@ function Base.show{C<:Colorant}(io::IO, mime::MIME"image/png", img::AbstractMatr
     save(Stream(format"PNG", io), img, mapi=mapi)
 end
 
-# Jupyter seemingly can't handle 16-bit colors
-map8(c::Colorant) = mapc(N0f8, c)
-map8(x::Number) = N0f8(x)
+# Not all colorspaces are supported by all backends, so reduce types to a minimum
+csnormalize(c::AbstractGray) = Gray(c)
+csnormalize(c::Color) = RGB(c)
+csnormalize(c::Colorant) = RGBA(c)
 
 @compat const ColorantMatrix{T<:Colorant} = AbstractMatrix{T}
 
