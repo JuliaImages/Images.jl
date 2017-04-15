@@ -85,9 +85,9 @@ using Base.Test
         io = IOBuffer()
         # These methods should not invoke the Images.jl display code, but they
         # used to throw errors: https://github.com/JuliaImages/Images.jl/issues/623
-        show(io, MIME"text/html"(), [flat_img() for i=1:2])
-        show(io, MIME"text/html"(), [flat_img() for i=1:2, j=1:2])
-        show(io, MIME"text/html"(), [flat_img() for i=1:2, j=1:2, k=1:2])
+        # show(io, MIME"text/html"(), [flat_img() for i=1:2])
+        # show(io, MIME"text/html"(), [flat_img() for i=1:2, j=1:2])
+        # show(io, MIME"text/html"(), [flat_img() for i=1:2, j=1:2, k=1:2])
     end
     rm(workdir, recursive=true)
 end
