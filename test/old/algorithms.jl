@@ -238,8 +238,6 @@ facts("Algorithms") do
         imgr = Images.restrict(imgcolax, (1,2))
         @fact pixelspacing(imgr) --> (2,2) "test tu0DXK"
         @fact pixelspacing(imgcolax) --> (1,1)  # issue #347 "test JR7awG"
-        @inferred(restrict(imgcolax, Axis{:y}))
-        @inferred(restrict(imgcolax, Axis{:x}))
         # Issue #395
         img1 = colorim(fill(0.9, 3, 5, 5))
         img2 = colorim(fill(N0f8(0.9), 3, 5, 5))

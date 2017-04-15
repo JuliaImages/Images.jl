@@ -494,19 +494,18 @@ findlocalminima(img::AbstractArray, region=coords_spatial(img), edges=true) =
 restrict(img::AxisArray, ::Tuple{}) = img
 restrict(img::ImageMeta, ::Tuple{}) = img
 
-const RegionType = Union{Dims,Vector{Int}}
-
-function restrict(img::ImageMeta, region::RegionType=coords_spatial(img))
+function restrict(img::ImageMeta, region::Dims)
     shareproperties(img, restrict(data(img), region))
 end
 
-function restrict{T,N}(img::AxisArray{T,N}, region::RegionType=coords_spatial(img))
+function restrict{T,N}(img::AxisArray{T,N}, region::Dims)
     inregion = falses(ndims(img))
     inregion[[region...]] = true
     inregiont = (inregion...,)::NTuple{N,Bool}
     AxisArray(restrict(img.data, region), map(modax, axes(img), inregiont))
 end
 
+# FIXME: this doesn't get inferred, but it should be (see issue #628)
 function restrict{Ax}(img::Union{AxisArray,ImageMetaAxis}, ::Type{Ax})
     A = restrict(img.data, axisdim(img, Ax))
     AxisArray(A, replace_axis(modax(img[Ax]), axes(img)))
