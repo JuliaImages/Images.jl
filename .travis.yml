@@ -2,6 +2,7 @@ language: julia
 os:
     - linux
     - osx
+dist: trusty  # for a more recent ImageMagick
 julia:
     - 0.5
     - nightly
