@@ -317,16 +317,12 @@ facts("Core") do
         a = RGB{Float64}[RGB(1,1,0)]
         af = reinterpret(Float64, a)
         @fact vec(af) --> [1.0,1.0,0.0] "test M3uyLv"
-        @fact size(af) --> (3,1) "test pLunxL"
-        @fact_throws DimensionMismatch reinterpret(Float32, a) "test 2GvyKZ"
         anew = reinterpret(RGB, af)
         @fact anew --> a "test ekkFD4"
         anew = reinterpret(RGB, vec(af))
         @fact anew[1] --> a[1] "test FLyINs"
-        @fact ndims(anew) --> 0 "test JQCoAo"
         anew = reinterpret(RGB{Float64}, af)
         @fact anew --> a "test VU6f3n"
-        @fact_throws DimensionMismatch reinterpret(RGB{Float32}, af) "test 86GKXq"
         Au8 = rand(0x00:0xff, 3, 5, 4)
         A8 = reinterpret(N0f8, Au8)
         rawrgb8 = reinterpret(RGB, A8)
