@@ -17,21 +17,22 @@ The threshold is assumed to be a percentile value unless `percentile` is set to 
 """
 function imcorner(img::AbstractArray; method::Function = harris, args...)
     responses = method(img; args...)
-    corners = falses(size(img))
-    maxima = map(CartesianIndex{2}, findlocalmaxima(responses))
+    corners = similar(img, Bool)
+    fill!(corners, false)
+    maxima = map(CartesianIndex, findlocalmaxima(responses))
     for m in maxima corners[m] = true end
     corners
 end
 
-function imcorner(img::AbstractArray, threshold, percentile; method::Function = harris, args...)
+function imcorner(img::AbstractArray, threshold; method::Function = harris, args...)
     responses = method(img; args...)
+    map(i -> i > threshold, responses)
+end
 
-    if percentile == true
-        threshold = StatsBase.percentile(vec(responses), threshold * 100)
-    end
-
-    corners = map(i -> i > threshold, responses)
-    corners
+function imcorner(img::AbstractArray, thresholdp::Percentile; method::Function = harris, args...)
+    responses = method(img; args...)
+    threshold = StatsBase.percentile(vec(responses), thresholdp.p)
+    map(i -> i > threshold, responses)
 end
 
 """

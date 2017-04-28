@@ -9,10 +9,13 @@ using Base.Test, Images, Colors, FixedPointNumbers
     	img[4:17, 4:17] = 1
     	img[8:13, 8:13] = 0
 
-    	expected_corners = zeros(20, 20)
-    	ids = map(CartesianIndex{2}, [(4, 4), (4, 17), (17, 4), (17, 17), (8, 8), (8, 13), (13, 8), (13, 13)])
-    	for id in ids expected_corners[id] = 1 end
     	corners = imcorner(img, method = harris)
+        expected_corners = falses(20, 20)
+        ids = map(CartesianIndex{2}, [(4, 4), (4, 17), (17, 4), (17, 17), (8, 8), (8, 13),
+                                      (13, 8), (13, 13)])
+        for id in ids expected_corners[id] = true end
+        expected_harris = copy(expected_corners)
+
     	for id in ids @test corners[id]  end
     	@test sum(corners .!= expected_corners) < 3
     	corners = imcorner(img, method = shi_tomasi)
@@ -28,7 +31,7 @@ using Base.Test, Images, Colors, FixedPointNumbers
     end
 
     @testset "Harris" begin
-	Ac = imcorner(A, 0.99, true, method = harris)
+	Ac = imcorner(A, Percentile(99), method = harris)
 	# check corners
 	@test Ac[16,16]
 	@test Ac[16,26]
@@ -63,7 +66,7 @@ using Base.Test, Images, Colors, FixedPointNumbers
     end
 
     @testset "Shi-Tomasi" begin
-	Ac = imcorner(A, 0.99, true, method = shi_tomasi)
+	Ac = imcorner(A, Percentile(99), method = shi_tomasi)
 	# check corners
 	@test Ac[16,16]
 	@test Ac[16,26]
@@ -100,7 +103,7 @@ using Base.Test, Images, Colors, FixedPointNumbers
     @testset "Kitchen-Rosenfeld" begin
 	A[10:30, 10:30] = 1
 	A[15:25, 15:25] = 0
-	Ac = imcorner(A, 0.99, true, method = kitchen_rosenfeld)
+	Ac = imcorner(A, Percentile(99), method = kitchen_rosenfeld)
 	@test Ac[10, 10]
 	@test Ac[10, 30]
 	@test Ac[30, 10]
