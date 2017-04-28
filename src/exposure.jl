@@ -22,6 +22,12 @@ This assumes the input `img` has intensities between 0 and 1.
 imstretch(img::AbstractArray, m::Number, slope::Number) = _imstretch(float(img), m, slope)
 imstretch(img::ImageMeta, m::Number, slope::Number) = shareproperties(img, imstretch(data(img), m, slope))
 
+"""
+    y = complement(x)
+
+Take the complement `1-x` of `x`.  If `x` is a color with an alpha channel,
+the alpha channel is left untouched.
+"""
 complement(x) = one(x)-x
 complement(x::TransparentColor) = typeof(x)(complement(color(x)), alpha(x))
 

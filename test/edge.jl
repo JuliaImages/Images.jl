@@ -4,6 +4,18 @@ global checkboard
 
 @testset "Edge" begin
 
+    @testset "imedge" begin
+        img = zeros(8, 10)
+        img[:, 5] = 1
+        grad_y, grad_x, mag, orient = imedge(img)
+        @test all(x->x==0, grad_y)
+        target_x = zeros(8, 10); target_x[:, 4] = 0.5; target_x[:, 6] = -0.5
+        @test grad_x == target_x
+        @test mag == abs.(grad_x)
+        target_orient = zeros(8, 10); target_orient[:, 6] = pi
+        @test orient ≈ target_orient
+    end
+
     EPS = 1e-14
 
     kernelmethods = (KernelFactors.sobel, KernelFactors.prewitt, KernelFactors.ando3,

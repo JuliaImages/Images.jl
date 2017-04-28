@@ -1,3 +1,21 @@
+# v0.10
+
+New features:
+
+- added `Percentile` to disambiguate the interpretation of
+  thresholds. A raw number `x` will now be interpreted as an absolute
+  threshold, whereas `Percentile(x)` (with `0 <= x <= 100`) will
+  choose an absolute threshold based on the distribution of values in
+  the input array.
+
+API changes:
+
+- `canny` passes the threshold as a 2-tuple and uses `Percentile`
+  rather than a `percentile` keyword. It now issues a deprecation
+  warning when used with default arguments.
+
+- `imcorner` now uses `Percentile`. The old syntax issues a deprecation warning.
+
 # v0.9
 
 Breaking changes:

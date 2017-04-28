@@ -93,20 +93,19 @@ end
 # Return the x-y gradients and magnitude and phase of gradients in an image
 """
 ```
-grad_x, grad_y, mag, orient = imedge(img, [method], [border])
+grad_y, grad_x, mag, orient = imedge(img, kernelfun=KernelFactors.ando3, border="replicate")
 ```
 
-Edge-detection filtering. `method` is one of `"sobel"`, `"prewitt"`, `"ando3"`,
-`"ando4"`, `"ando4_sep"`, `"ando5"`, or `"ando5_sep"`, defaulting to `"ando3"`
-(see the functions of the same name for more information).  `border` is any of
-the boundary conditions specified in `padarray`.
+Edge-detection filtering. `kernelfun` is a valid kernel function for
+[`imgradients`](@ref), defaulting to [`KernelFactors.ando3`](@ref).
+`border` is any of the boundary conditions specified in `padarray`.
 
 Returns a tuple `(grad_x, grad_y, mag, orient)`, which are the horizontal
 gradient, vertical gradient, and the magnitude and orientation of the strongest
 edge, respectively.
 """
-function imedge(img::AbstractArray, method::AbstractString="ando3", border::AbstractString="replicate")
-    grad_x, grad_y = imgradients(img, method, border)
+function imedge(img::AbstractArray, kernelfun=KernelFactors.ando3, border::AbstractString="replicate")
+    grad_x, grad_y = imgradients(img, kernelfun, border)
     mag = magnitude(grad_x, grad_y)
     orient = orientation(grad_x, grad_y)
     return (grad_x, grad_y, mag, orient)
@@ -386,7 +385,7 @@ Parameters :
 
   (upper, lower) :  Bounds for hysteresis thresholding
   sigma :           Specifies the standard deviation of the gaussian filter
-  
+
 """
 function canny{T<:NumberLike, N<:Union{NumberLike,Percentile{NumberLike}}}(img_gray::AbstractMatrix{T}, threshold::Tuple{N,N}, sigma::Number = 1.4)
     img_grayf = imfilter(img_gray, KernelFactors.IIRGaussian((sigma,sigma)), NA())
