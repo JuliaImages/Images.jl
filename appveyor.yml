@@ -16,11 +16,6 @@ notifications:
     on_build_failure: false
     on_build_status_changed: false
 
-# matrix:
-#   allow_failures:
-     - JULIA_URL: "https://julialangnightlies-s3.julialang.org/bin/winnt/x86/julia-latest-win32.exe"
-     - JULIA_URL: "https://julialangnightlies-s3.julialang.org/bin/winnt/x64/julia-latest-win64.exe"
-
 install:
   - ps: "[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12"
 # if there's a newer build queued for the same PR, cancel this one
