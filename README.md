@@ -1,5 +1,7 @@
 # Images.jl
 
+[![Join the chat at https://gitter.im/JuliaImages/Images.jl](https://badges.gitter.im/JuliaImages/Images.jl.svg)](https://gitter.im/JuliaImages/Images.jl?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 An image processing library for [Julia](http://julialang.org/).
 
 ## Project Status
