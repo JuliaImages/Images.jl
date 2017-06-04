@@ -175,6 +175,7 @@ export # types
     feature_transform,
     distance_transform,
     convexhull,
+    otsu_threshold,
 
     #Exposure
     complement,
