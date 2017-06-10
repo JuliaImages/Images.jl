@@ -915,7 +915,7 @@ thres = otsu_threshold(img)
 thres = otsu_threshold(img, bins)
 ```
 
-Computes treshold for grayscale image using Otsu's method.  
+Computes threshold for grayscale image using Otsu's method.  
   
 Parameters:  
 -    img         = Grayscale input image    
@@ -987,4 +987,34 @@ function otsu_threshold{T<:AbstractFloat}(img::AbstractArray{Gray{T}, 2}, bins::
 
     # returns the bin center
     return (2*thres-1)/(2*bins)
+end
+
+"""
+```
+thres = adaptive_threshold(img, block_size, offset, [method]; sigma)
+```
+
+Computes a threshold mask for grayscale image using local neighbourhood of pixels. 
+  
+Parameters:  
+-    img         = Grayscale input image    
+-    block_size  = Size(must of odd) of pixel neighbourhood used for calculating threshold.  
+-    offset      = Constant subtracted from mean/median/gaussian weighted mean of local neighbourhood to compute threshold
+-    method      = Method used to compute threshold (Mean / Median / Gaussian)
+-    sigma       = standard deviation for kernel if "gaussian" method is used
+    
+"""
+function adaptive_threshold{T<:Gray}(img::AbstractArray{T, 2}, block_size::Int, offset::Float64, method = "mean"; sigma::Float64 = (block_size - 1) / 6.0)
+    
+    if method == "mean"
+        kernel = centered(fill(1/block_size^2, (block_size, block_size)))
+        thres = imfilter(img, kernel)
+    elseif method == "median"
+        thres = mapwindow(median!, img, (block_size, block_size))
+    elseif method == "gaussian"
+        kernel = centered(Kernel.gaussian((sigma, sigma), (block_size, block_size)))
+        thres = imfilter(img, kernel)
+    end
+    
+    return thres - offset
 end
