@@ -922,22 +922,21 @@ Parameters:
 -    bins        = Number of bins used to compute the histogram. Needed for floating-point images.    
     
 """
-function otsu_threshold{T<:FixedPointNumbers.Normed}(img::AbstractArray{Gray{T}, 2})
-    bins::Int = 2^T.parameters[2]
-    histogram = zeros(Float64, bins)
-    for v in img
-        histogram[gray(v).i + 1] += 1
-    end
-    histogram = histogram./sum(histogram)
+function otsu_threshold{T<:Gray}(img::AbstractArray{T, 2}, bins::Int = 256)
+
+    min, max = extrema(img)
+    edges, counts = imhist(img, linspace(gray(min), gray(max), bins))
+    histogram = zeros(Float64, bins+1)
+    histogram = counts./sum(counts)
 
     ω0 = 0
     μ0 = 0
     μt = 0
-    μT = sum((1:bins).*histogram)
+    μT = sum((1:(bins+1)).*histogram)
     max_σb=0.0
     thres=1
 
-    for t in 1:bins-1
+    for t in 1:bins
         ω0 += histogram[t]
         ω1 = 1 - ω0
         μt += t*histogram[t]
@@ -950,43 +949,7 @@ function otsu_threshold{T<:FixedPointNumbers.Normed}(img::AbstractArray{Gray{T},
         end
     end
 
-    return T((thres-1)/bins)
-end
-
-function otsu_threshold{T<:AbstractFloat}(img::AbstractArray{Gray{T}, 2}, bins::Integer)
-    
-    histogram = zeros(Float64, bins)
-    for v in img
-        index::Int = round(gray(v)*bins + 1)
-        if index == bins + 1
-            index = bins
-        end
-        histogram[index] += 1
-    end
-    histogram=histogram./sum(histogram)
-
-    ω0 = 0
-    μ0 = 0
-    μt = 0
-    μT = sum((1:bins).*histogram)
-    max_σb=0.0
-    thres=1
-
-    for t in 1:bins-1
-        ω0 += histogram[t]
-        ω1 = 1 - ω0
-        μt += t*histogram[t]
-
-        σb = (μT*ω0-μt)^2/(ω0*ω1)
-
-        if(σb > max_σb)
-            max_σb = σb
-            thres = t
-        end
-    end
-
-    # returns the bin center
-    return (2*thres-1)/(2*bins)
+    return T((edges[thres-1]+edges[thres])/2)
 end
 
 """
