@@ -177,6 +177,7 @@ export # types
     convexhull,
     otsu_threshold,
     adaptive_threshold,
+    threshold,
 
     #Exposure
     complement,

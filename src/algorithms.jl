@@ -984,3 +984,48 @@ function adaptive_threshold{T<:Gray}(img::AbstractArray{T, 2}, block_size::Int, 
     
     return convert(Array{T, 2}, thres - offset)
 end
+
+"""
+```
+threshold(img, thres, [method])
+```
+
+Applies thresholding to grayscale image. The threshold can be a single global threshold or a threshold mask image.
+  
+Parameters:  
+-    img         = Grayscale input image    
+-    thres       = Threshold used. Can be a global threshold or a threshold mask image.
+-    method      = Thresholding type
+    1. standard: f(x, thres) = 1 if x > thres else 0
+    2. inverted: f(x, thres) = 0 if x > thres else 0
+    3. truncate: f(x, thres) = thres if x > thres else x
+    4. truncate_inverted: f(x, thres) = x if x > thres else thres
+    
+"""
+function threshold{T<:Gray}(img::AbstractArray{T, 2}, thres::T, method = "standard")
+
+    if method == "standard"
+        return map(x -> x>thres ? one(T) : zero(T), img)
+    elseif method == "inverted"
+        return map(x -> x>thres ? zero(T) : one(T), img)
+    elseif method == "truncate"
+        return map(x -> x>thres ? thres : x, img)
+    elseif method == "truncate_inverted"
+        return map(x -> x>thres ? x : thres, img)
+    end
+
+end
+
+function threshold{T<:Gray}(img::AbstractArray{T, 2}, thres::AbstractArray{T, 2}, method = "standard")
+
+    if method == "standard"
+        return map( (x,y) -> x>y ? one(T) : zero(T), img, thres)
+    elseif method == "inverted"
+        return map( (x,y) -> x>y ? zero(T) : one(T), img, thres)
+    elseif method == "truncate"
+        return map( (x,y) -> x>y ? y : x, img, thres)
+    elseif method == "truncate_inverted"
+        return map( (x,y) -> x>y ? x : y, img, thres)
+    end
+
+end
