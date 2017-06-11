@@ -967,17 +967,20 @@ Parameters:
 -    sigma       = standard deviation for kernel if "gaussian" method is used
     
 """
-function adaptive_threshold{T<:Gray}(img::AbstractArray{T, 2}, block_size::Int, offset::Float64, method = "mean"; sigma::Float64 = (block_size - 1) / 6.0)
+function adaptive_threshold{T<:Gray}(img::AbstractArray{T, 2}, block_size::Int, offset::Real, method = "mean"; sigma::Float64 = (block_size - 1) / 6.0)
+
+    block_size>0 || error("block_size must greater than zero and odd\n")
+    isodd(block_size) || error("block_size must be odd\n")
     
     if method == "mean"
         kernel = centered(fill(1/block_size^2, (block_size, block_size)))
         thres = imfilter(img, kernel)
     elseif method == "median"
-        thres = mapwindow(median!, img, (block_size, block_size))
+        thres = mapwindow(median!, map(x->gray(x), img), (block_size, block_size))
     elseif method == "gaussian"
-        kernel = centered(Kernel.gaussian((sigma, sigma), (block_size, block_size)))
+        kernel = Kernel.gaussian((sigma, sigma), (block_size, block_size))
         thres = imfilter(img, kernel)
     end
     
-    return thres - offset
+    return convert(Array{T, 2}, thres - offset)
 end
