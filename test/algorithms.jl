@@ -1,4 +1,4 @@
-using Images, Colors, FixedPointNumbers, OffsetArrays
+using Images, Colors, FixedPointNumbers, OffsetArrays, TestImages
 using Base.Test
 
 @testset "Algorithms" begin
@@ -488,6 +488,61 @@ using Base.Test
         push!(C, CartesianIndex{}(5,3))
         @test typeof(B)==Array{CartesianIndex{2},1}
         @test sort(B)==sort(C)
+    end
+
+    @testset "Thresholding" begin
+
+        #otsu_threshold
+        img = testimage("cameraman")
+        thres = otsu_threshold(img)
+        @test typeof(thres) == eltype(img)
+        @test_approx_eq_eps gray(thres) convert(N0f8, 87/256) eps(N0f8)
+        thres = otsu_threshold(img, 512)
+        @test typeof(thres) == eltype(img)
+        @test_approx_eq_eps gray(thres) convert(N0f8, 87/256) eps(N0f8)
+
+        img = map(x->convert(ColorTypes.Gray{Float64}, x), img)
+        thres = otsu_threshold(img)
+        @test typeof(thres) == eltype(img)
+        @test_approx_eq_eps gray(thres) 87/256 0.01
+        thres = otsu_threshold(img, 512)
+        @test typeof(thres) == eltype(img)
+        @test_approx_eq_eps gray(thres) 87/256 0.01
+
+        #adaptive_threshold
+        img = colorview(Gray, rand(5, 5))
+        for i in 1:5
+            for j in 1:5
+                img[i,j]=(i+j)%2
+            end
+        end
+        thres = adaptive_threshold(img, 3, 0)
+        @test eltype(thres) == eltype(img)
+        @test size(thres) == size(img)
+        for i in 2:4
+            for j in 2:4
+                @test_approx_eq gray(thres[i,j]) (4+(i+j)%2)/9
+            end
+        end
+
+        #threshold
+        img = colorview(Gray, rand(5, 5))
+        for i in 1:5
+            for j in 1:5
+                img[i,j]=(i+j)/10
+            end
+        end
+
+        thres = colorview(Gray, fill(0.5, (5,5)))
+        img2 = threshold(img, thres)
+        @test eltype(img2) == eltype(img)
+        @test size(img2) == size(img)
+        for i in 1:5
+            for j in 1:5
+                @test_approx_eq gray(img2[i,j]) img[i,j]>thres[i,j]?1.0:0.0
+            end
+        end
+
     end
 
 end
