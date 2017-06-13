@@ -20,18 +20,22 @@ function Base.show{C<:Colorant}(io::IO, mime::MIME"image/png", img::AbstractMatr
                                 minpixels=10^4, maxpixels=10^6,
                                 # Jupyter seemingly can't handle 16-bit colors:
                                 mapi=x->mapc(N0f8, clamp01nan(csnormalize(x))))
-    while _length(img) > maxpixels
-        img = restrict(img)  # big images
+    if !get(io, :full_fidelity, false)
+        while _length(img) > maxpixels
+            img = restrict(img)  # big images
+        end
+        npix = _length(img)
+        if npix < minpixels
+            # Tiny images
+            fac = ceil(Int, sqrt(minpixels/npix))
+            r = ones(Int, ndims(img))
+            r[[coords_spatial(img)...]] = fac
+            img = repeat(img, inner=r)
+        end
+        save(Stream(format"PNG", io), img, mapi=mapi)
+    else
+        save(Stream(format"PNG", io), img)
     end
-    npix = _length(img)
-    if npix < minpixels
-        # Tiny images
-        fac = ceil(Int, sqrt(minpixels/npix))
-        r = ones(Int, ndims(img))
-        r[[coords_spatial(img)...]] = fac
-        img = repeat(img, inner=r)
-    end
-    save(Stream(format"PNG", io), img, mapi=mapi)
 end
 
 # Not all colorspaces are supported by all backends, so reduce types to a minimum

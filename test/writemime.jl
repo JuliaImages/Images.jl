@@ -19,6 +19,59 @@ using Base.Test
         end
         b = load(fn)
         @test b == A
+
+
+        # img = fill(HSV{Float64}(0.5, 0.5, 0.5), 1, 1)
+        # fn = joinpath(workdir, "writemime.png")
+        # open(fn, "w") do file
+        #     show(IOContext(file, :full_fidelity=>true), MIME("image/png"), img, minpixels=0, maxpixels=typemax(Int))
+        # end
+        # b = load(fn)
+        # @test b == img
+
+        img = fill(RGB{N0f16}(1,0,0), 1, 1)
+        open(fn, "w") do file
+            show(IOContext(file, :full_fidelity=>true), MIME("image/png"), img, minpixels=0, maxpixels=typemax(Int))
+        end
+        b = load(fn)
+        @test b == img
+
+        # img = fill(RGBA{Float32}(1,0,0,0.5), 1, 1)
+        # open(fn, "w") do file
+        #     show(IOContext(file, :full_fidelity=>true), MIME("image/png"), img, minpixels=0, maxpixels=typemax(Int))
+        # end
+        # b = load(fn)
+        # @test b == img
+
+        # img = Gray.([0.1 0.2; -0.5 0.8])
+        # open(fn, "w") do file
+        #     show(IOContext(file, :full_fidelity=>true), MIME("image/png"), img, minpixels=0, maxpixels=typemax(Int))
+        # end
+        # b = load(fn)
+        # @test b == img
+        
+        A = N0f8[0.01 0.99; 0.25 0.75]
+        fn = joinpath(workdir, "writemime.png")
+        open(fn, "w") do file
+            show(IOContext(file, :full_fidelity=>true), MIME("image/png"), Gray.(A), minpixels=5, maxpixels=typemax(Int))
+        end
+        @test load(fn) == A
+
+        A = N0f8[0.01 0.4 0.99; 0.25 0.8 0.75; 0.6 0.2 0.0]
+        fn = joinpath(workdir, "writemime.png")
+        open(fn, "w") do file
+            show(IOContext(file, :full_fidelity=>true), MIME("image/png"), Gray.(A), minpixels=0, maxpixels=5)
+        end
+        @test load(fn) == A
+
+        # a genuinely big image (tests the defaults)
+        abig = colorview(Gray, normedview(rand(UInt8, 1024, 1023)))
+        fn = joinpath(workdir, "big.png")
+        open(fn, "w") do file
+            show(IOContext(file, :full_fidelity=>true), MIME("image/png"), abig, maxpixels=10^6)
+        end
+        b = load(fn)
+        @test b == abig 
     end
     @testset "colorspace normalization" begin
         img = fill(HSV{Float64}(0.5, 0.5, 0.5), 1, 1)
