@@ -20,35 +20,12 @@ using Base.Test
         b = load(fn)
         @test b == A
 
-
-        # img = fill(HSV{Float64}(0.5, 0.5, 0.5), 1, 1)
-        # fn = joinpath(workdir, "writemime.png")
-        # open(fn, "w") do file
-        #     show(IOContext(file, :full_fidelity=>true), MIME("image/png"), img, minpixels=0, maxpixels=typemax(Int))
-        # end
-        # b = load(fn)
-        # @test b == img
-
         img = fill(RGB{N0f16}(1,0,0), 1, 1)
         open(fn, "w") do file
             show(IOContext(file, :full_fidelity=>true), MIME("image/png"), img, minpixels=0, maxpixels=typemax(Int))
         end
         b = load(fn)
         @test b == img
-
-        # img = fill(RGBA{Float32}(1,0,0,0.5), 1, 1)
-        # open(fn, "w") do file
-        #     show(IOContext(file, :full_fidelity=>true), MIME("image/png"), img, minpixels=0, maxpixels=typemax(Int))
-        # end
-        # b = load(fn)
-        # @test b == img
-
-        # img = Gray.([0.1 0.2; -0.5 0.8])
-        # open(fn, "w") do file
-        #     show(IOContext(file, :full_fidelity=>true), MIME("image/png"), img, minpixels=0, maxpixels=typemax(Int))
-        # end
-        # b = load(fn)
-        # @test b == img
         
         A = N0f8[0.01 0.99; 0.25 0.75]
         fn = joinpath(workdir, "writemime.png")
