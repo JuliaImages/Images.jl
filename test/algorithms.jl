@@ -54,7 +54,7 @@ using Base.Test
         A = zeros(Int,9,9,9); A[5,4:6,5] = 1;
         blobs = blob_LoG(A,[1.0], [1.,3.,1.])
         @test length(blobs) == 1
-        @test blobs[1].location == CartesianIndex((3,3,3))
+        @test blobs[1].location == CartesianIndex((5,5,5))
 
     end
 
