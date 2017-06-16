@@ -407,7 +407,7 @@ end
 Find "blobs" in an N-D image using the negative Lapacian of Gaussians
 with the specifed vector or tuple of σ values. The algorithm searches for places
 where the filtered image (for a particular σ) is at a peak compared to all
-spatially- and σ-adjacent voxels.
+spatially- and σ-adjacent voxels, where σ is `σscales[i] * σshape` for some i.
 
 The optional `edges` argument controls whether peaks on the edges are
 included. `edges` can be `true` or `false`, or a N+1-tuple in which
