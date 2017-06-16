@@ -402,12 +402,13 @@ immutable BlobLoG{T,S,N}
 end
 
 """
-    blob_LoG(img, σscales, [edges], σshape) -> Vector{BlobLoG}
+    blob_LoG(img, σscales, [edges], [σshape]) -> Vector{BlobLoG}
 
 Find "blobs" in an N-D image using the negative Lapacian of Gaussians
 with the specifed vector or tuple of σ values. The algorithm searches for places
 where the filtered image (for a particular σ) is at a peak compared to all
 spatially- and σ-adjacent voxels, where σ is `σscales[i] * σshape` for some i.
+By default, `σshape` is an ntuple of 1s.
 
 The optional `edges` argument controls whether peaks on the edges are
 included. `edges` can be `true` or `false`, or a N+1-tuple in which

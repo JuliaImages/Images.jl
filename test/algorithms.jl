@@ -52,9 +52,15 @@ using Base.Test
         @test blobs[1].location == CartesianIndex((5,5,5))
         # kinda anisotropic image
         A = zeros(Int,9,9,9); A[5,4:6,5] = 1;
-        blobs = blob_LoG(A,[1.0], [1.,3.,1.])
+        blobs = blob_LoG(A,2.^[1.,0,0.5], [1.,3.,1.])
         @test length(blobs) == 1
         @test blobs[1].location == CartesianIndex((5,5,5))
+        A = zeros(Int,9,9,9); A[1,1,4:6] = 1;
+        blobs = filter(b->b.amplitude > 0.1, blob_LoG(A, 2.0.^[0.5,0,1], true, [1.,1.,3.]))
+        @test length(blobs) == 1
+        @test blobs[1].location == CartesianIndex((1,1,5))
+        @test filter(b->b.amplitude > 0.1, blob_LoG(A, 2.0.^[0.5,0,1], (true, true, true, false), [1.,1.,3.])) == blobs
+        @test isempty(blob_LoG(A, 2.0.^[0,1], (false, true, false, false), [1.,1.,3.]))
 
     end
 
