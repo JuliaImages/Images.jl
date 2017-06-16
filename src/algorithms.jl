@@ -402,7 +402,7 @@ immutable BlobLoG{T,S,N}
 end
 
 """
-    blob_LoG(img, σbase, [edges], σfactors) -> Vector{BlobLoG}
+    blob_LoG(img, σscales, [edges], σshape) -> Vector{BlobLoG}
 
 Find "blobs" in an N-D image using the negative Lapacian of Gaussians
 with the specifed vector or tuple of σ values. The algorithm searches for places
@@ -422,22 +422,22 @@ International Journal of Computer Vision, 30(2), 79–116.
 
 See also: [`BlobLoG`](@ref).
 """
-function blob_LoG{T,N}(img::AbstractArray{T,N}, σbase::Union{AbstractVector,Tuple},
-   edges::Tuple{Vararg{Bool}}=(true, ntuple(d->false, Val{N})...), σfactors=ntuple(d->1, Val{N}))
-    sigmas = sort(σbase)
+function blob_LoG{T,N}(img::AbstractArray{T,N}, σscales::Union{AbstractVector,Tuple},
+                       edges::Tuple{Vararg{Bool}}=(true, ntuple(d->false, Val{N})...), σshape=ntuple(d->1, Val{N}))
+    sigmas = sort(σscales)
     img_LoG = Array{Float64}(length(sigmas), size(img)...)
     colons = ntuple(d->Colon(), Val{N})
     @inbounds for isigma in eachindex(sigmas)
-        img_LoG[isigma,colons...] = (-sigmas[isigma]) * imfilter(img, Kernel.LoG(ntuple(i->sigmas[isigma]*σfactors[i],Val{N})))
+        img_LoG[isigma,colons...] = (-sigmas[isigma]) * imfilter(img, Kernel.LoG(ntuple(i->sigmas[isigma]*σshape[i],Val{N})))
     end
     maxima = findlocalmaxima(img_LoG, 1:ndims(img_LoG), edges)
     [BlobLoG(CartesianIndex(tail(x.I)), sigmas[x[1]], img_LoG[x]) for x in maxima]
 end
-blob_LoG{T,N}(img::AbstractArray{T,N}, σbase, edges::Bool, σfactors=ntuple(d->1, Val{N})) =
- blob_LoG(img, σbase, (edges, ntuple(d->edges,Val{N})...), σfactors)
+blob_LoG{T,N}(img::AbstractArray{T,N}, σscales, edges::Bool, σshape=ntuple(d->1, Val{N})) =
+    blob_LoG(img, σscales, (edges, ntuple(d->edges,Val{N})...), σshape)
 
-blob_LoG{T,N}(img::AbstractArray{T,N}, σbase, σfactors=ntuple(d->1, Val{N})) =
- blob_LoG(img, σbase, (true, ntuple(d->false,Val{N})...), σfactors)
+blob_LoG{T,N}(img::AbstractArray{T,N}, σscales, σshape=ntuple(d->1, Val{N})) =
+    blob_LoG(img, σscales, (true, ntuple(d->false,Val{N})...), σshape)
 
 findlocalextrema{T,N}(img::AbstractArray{T,N}, region, edges::Bool, order) = findlocalextrema(img, region, ntuple(d->edges,Val{N}), order)
 
