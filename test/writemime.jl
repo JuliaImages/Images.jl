@@ -26,7 +26,7 @@ using Base.Test
         end
         b = load(fn)
         @test b == img
-        
+
         A = N0f8[0.01 0.99; 0.25 0.75]
         fn = joinpath(workdir, "writemime.png")
         open(fn, "w") do file
@@ -48,7 +48,7 @@ using Base.Test
             show(IOContext(file, :full_fidelity=>true), MIME("image/png"), abig, maxpixels=10^6)
         end
         b = load(fn)
-        @test b == abig 
+        @test b == abig
     end
     @testset "colorspace normalization" begin
         img = fill(HSV{Float64}(0.5, 0.5, 0.5), 1, 1)
