@@ -1002,7 +1002,7 @@ Parameters:
     4. truncate_inverted: f(x, thres) = x if x > thres else thres
     
 """
-function threshold{T<:Union{Gray,Real}, N}(img::AbstractArray{T, N}, thres::T, method = "standard")
+function threshold{T<:Union{Gray,Real}, N, S<:Union{Gray,Real}}(img::AbstractArray{T, N}, thres::S, method = "standard")
 
     if method == "standard"
         return map(x -> x>thres ? one(T) : zero(T), img)
@@ -1016,7 +1016,7 @@ function threshold{T<:Union{Gray,Real}, N}(img::AbstractArray{T, N}, thres::T, m
 
 end
 
-function threshold{T<:Gray, N}(img::AbstractArray{T, N}, thres::AbstractArray{T, N}, method = "standard")
+function threshold{T<:Union{Gray,Real}, N, S<:Union{Gray,Real}}(img::AbstractArray{T, N}, thres::AbstractArray{S, N}, method = "standard")
 
     if method == "standard"
         return map( (x,y) -> x>y ? one(T) : zero(T), img, thres)
