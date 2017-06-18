@@ -22,7 +22,6 @@ using Base: depwarn
 using Base.Order: Ordering, ForwardOrdering, ReverseOrdering
 
 using Compat
-import Compat.view
 
 # "deprecated imports" are below
 
@@ -66,8 +65,6 @@ Indicate that `x` should be interpreted as a [percentile](https://en.wikipedia.o
 """
 immutable Percentile{T} <: Real p::T end
 
-include("map-deprecated.jl")
-include("overlays-deprecated.jl")
 include("labeledarrays.jl")
 include("algorithms.jl")
 include("exposure.jl")
@@ -79,7 +76,6 @@ include("corner.jl")
 include("distances.jl")
 include("bwdist.jl")
 using .FeatureTransform
-include("deprecated.jl")
 include("convexhull.jl")
 
 export # types
