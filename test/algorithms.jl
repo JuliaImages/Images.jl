@@ -509,6 +509,14 @@ using Base.Test
         @test typeof(thres) == eltype(img)
         @test_approx_eq_eps gray(thres) 87/256 0.01
 
+        img = map(x->convert(Float64, x), img)
+        thres = otsu_threshold(img)
+        @test typeof(thres) == eltype(img)
+        @test_approx_eq_eps gray(thres) 87/256 0.01
+        thres = otsu_threshold(img, 512)
+        @test typeof(thres) == eltype(img)
+        @test_approx_eq_eps gray(thres) 87/256 0.01
+
         #adaptive_threshold
         img = colorview(Gray, rand(5, 5))
         for i in 1:5

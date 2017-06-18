@@ -922,11 +922,10 @@ Parameters:
 -    bins        = Number of bins used to compute the histogram. Needed for floating-point images.    
     
 """
-function otsu_threshold{T<:Gray}(img::AbstractArray{T, 2}, bins::Int = 256)
+function otsu_threshold{T<:Union{Gray,Union}}(img::AbstractArray{T, 2}, bins::Int = 256)
 
     min, max = extrema(img)
     edges, counts = imhist(img, linspace(gray(min), gray(max), bins))
-    histogram = zeros(Float64, bins+1)
     histogram = counts./sum(counts)
 
     ω0 = 0
