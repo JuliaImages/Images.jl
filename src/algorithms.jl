@@ -986,7 +986,7 @@ end
 
 """
 ```
-threshold(img, thres, [method])
+imgbool = threshold(img, thres, [method])
 ```
 
 Applies thresholding to grayscale image. The threshold can be a single global threshold or a threshold mask image.
