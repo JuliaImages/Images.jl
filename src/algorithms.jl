@@ -922,7 +922,7 @@ Parameters:
 -    bins        = Number of bins used to compute the histogram. Needed for floating-point images.    
     
 """
-function otsu_threshold{T<:Union{Gray,Union}}(img::AbstractArray{T, 2}, bins::Int = 256)
+function otsu_threshold{T<:Union{Gray,Real}}(img::AbstractArray{T, 2}, bins::Int = 256)
 
     min, max = extrema(img)
     edges, counts = imhist(img, linspace(gray(min), gray(max), bins))
@@ -966,7 +966,7 @@ Parameters:
 -    sigma       = standard deviation for kernel if "gaussian" method is used
     
 """
-function adaptive_threshold{T<:Gray}(img::AbstractArray{T, 2}, block_size::Int, offset::Real, method = "mean"; sigma::Float64 = (block_size - 1) / 6.0)
+function adaptive_threshold{T<:Union{Gray,Real}}(img::AbstractArray{T, 2}, block_size::Int, offset::Real, method = "mean"; sigma::Float64 = (block_size - 1) / 6.0)
 
     block_size>0 || error("block_size must greater than zero and odd\n")
     isodd(block_size) || error("block_size must be odd\n")
@@ -1001,7 +1001,7 @@ Parameters:
     4. truncate_inverted: f(x, thres) = x if x > thres else thres
     
 """
-function threshold{T<:Gray}(img::AbstractArray{T, 2}, thres::T, method = "standard")
+function threshold{T<:Union{Gray,Real}}(img::AbstractArray{T, 2}, thres::T, method = "standard")
 
     if method == "standard"
         return map(x -> x>thres ? one(T) : zero(T), img)
