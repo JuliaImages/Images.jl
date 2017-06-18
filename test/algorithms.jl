@@ -517,6 +517,10 @@ using Base.Test
         @test typeof(thres) == eltype(img)
         @test_approx_eq_eps gray(thres) 87/256 0.01
 
+        #test for multidimension arrays
+        img = rand(Float64, 10, 10, 3)
+        @test otsu_threshold(img) == otsu_threshold(cat(1, img[:,:,1], img[:,:,2], img[:,:,3]))
+
         #adaptive_threshold
         img = colorview(Gray, rand(5, 5))
         for i in 1:5
