@@ -63,7 +63,7 @@ using Base.Test
             show(file, MIME("image/png"), img, minpixels=0, maxpixels=typemax(Int))
         end
         b = load(fn)
-        @test isa(b, Matrix{RGB{N0f8}}) && b[1] == RGB(1,0,0)
+        @test eltype(b) <: AbstractRGB && eltype(eltype(b)) == N0f8 && b[1] == RGB(1,0,0)
         img = fill(RGBA{Float32}(1,0,0,0.5), 1, 1)
         open(fn, "w") do file
             show(file, MIME("image/png"), img, minpixels=0, maxpixels=typemax(Int))
