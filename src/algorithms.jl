@@ -974,12 +974,12 @@ function adaptive_threshold{T<:Union{Gray,Real}, N}(img::AbstractArray{T, N}, bl
     if method == "mean"
         kernel1 = fill(1/block_size, block_size)
         kernel = kernelfactors(map(centered, ntuple(d->kernel1, ndims(img))))
-        thres = imfilter(img, kernel)
+        thres = imfilter(img, kernel, NA())
     elseif method == "median"
         thres = mapwindow(median!, map(x->gray(x), img), ntuple(x->block_size, ndims(img)))
     elseif method == "gaussian"
         kernel = Kernel.gaussian(ntuple(x->sigma, ndims(img)), ntuple(x->block_size, ndims(img)))
-        thres = imfilter(img, kernel)
+        thres = imfilter(img, kernel, NA())
     end
     
     return convert(Array{T, N}, thres - offset)
