@@ -520,41 +520,6 @@ using Base.Test
         #test for multidimension arrays
         img = rand(Float64, 10, 10, 3)
         @test otsu_threshold(img) == otsu_threshold(cat(1, img[:,:,1], img[:,:,2], img[:,:,3]))
-
-        #adaptive_threshold
-        img = colorview(Gray, rand(5, 5))
-        for i in 1:5
-            for j in 1:5
-                img[i,j]=(i+j)%2
-            end
-        end
-        thres = adaptive_threshold(img, 3, 0)
-        @test eltype(thres) == eltype(img)
-        @test size(thres) == size(img)
-        for i in 2:4
-            for j in 2:4
-                @test gray(thres[i,j]) ≈ (4+(i+j)%2)/9
-            end
-        end
-
-        #threshold
-        img = colorview(Gray, rand(5, 5))
-        for i in 1:5
-            for j in 1:5
-                img[i,j]=(i+j)/10
-            end
-        end
-
-        thres = colorview(Gray, fill(0.5, (5,5)))
-        img2 = threshold(img, thres)
-        @test eltype(img2) == eltype(img)
-        @test size(img2) == size(img)
-        for i in 1:5
-            for j in 1:5
-                @test gray(img2[i,j]) == (img[i,j]>thres[i,j])
-            end
-        end
-
     end
 
 end
