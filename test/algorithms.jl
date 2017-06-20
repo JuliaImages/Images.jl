@@ -1,4 +1,4 @@
-using Images, Colors, FixedPointNumbers, OffsetArrays
+using Images, Colors, FixedPointNumbers, OffsetArrays, TestImages
 using Base.Test
 
 @testset "Algorithms" begin
@@ -488,6 +488,38 @@ using Base.Test
         push!(C, CartesianIndex{}(5,3))
         @test typeof(B)==Array{CartesianIndex{2},1}
         @test sort(B)==sort(C)
+    end
+
+    @testset "Thresholding" begin
+
+        #otsu_threshold
+        img = testimage("cameraman")
+        thres = otsu_threshold(img)
+        @test typeof(thres) == eltype(img)
+        @test ≈(gray(thres), convert(N0f8, 87/256), atol=eps(N0f8))
+        thres = otsu_threshold(img, 512)
+        @test typeof(thres) == eltype(img)
+        @test ≈(gray(thres), convert(N0f8, 87/256), atol=eps(N0f8))
+
+        img = map(x->convert(Gray{Float64}, x), img)
+        thres = otsu_threshold(img)
+        @test typeof(thres) == eltype(img)
+        @test ≈(gray(thres), 87/256, atol=0.01)
+        thres = otsu_threshold(img, 512)
+        @test typeof(thres) == eltype(img)
+        @test ≈(gray(thres), 87/256, atol=0.01)
+
+        img = map(x->convert(Float64, x), img)
+        thres = otsu_threshold(img)
+        @test typeof(thres) == eltype(img)
+        @test ≈(gray(thres), 87/256, atol=0.01)
+        thres = otsu_threshold(img, 512)
+        @test typeof(thres) == eltype(img)
+        @test ≈(gray(thres), 87/256, atol=0.01)
+
+        #test for multidimension arrays
+        img = rand(Float64, 10, 10, 3)
+        @test otsu_threshold(img) == otsu_threshold(cat(1, img[:,:,1], img[:,:,2], img[:,:,3]))
     end
 
 end

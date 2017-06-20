@@ -908,3 +908,45 @@ function pyramid_scale(img, downsample)
     sz_next = map(s->ceil(Int, s/downsample), size(img))
     imresize(img, sz_next)
 end
+
+"""
+```
+thres = otsu_threshold(img)
+thres = otsu_threshold(img, bins)
+```
+
+Computes threshold for grayscale image using Otsu's method.  
+  
+Parameters:  
+-    img         = Grayscale input image    
+-    bins        = Number of bins used to compute the histogram. Needed for floating-point images.    
+    
+"""
+function otsu_threshold{T<:Union{Gray,Real}, N}(img::AbstractArray{T, N}, bins::Int = 256)
+
+    min, max = extrema(img)
+    edges, counts = imhist(img, linspace(gray(min), gray(max), bins))
+    histogram = counts./sum(counts)
+
+    ω0 = 0
+    μ0 = 0
+    μt = 0
+    μT = sum((1:(bins+1)).*histogram)
+    max_σb=0.0
+    thres=1
+
+    for t in 1:bins
+        ω0 += histogram[t]
+        ω1 = 1 - ω0
+        μt += t*histogram[t]
+
+        σb = (μT*ω0-μt)^2/(ω0*ω1)
+
+        if(σb > max_σb)
+            max_σb = σb
+            thres = t
+        end
+    end
+
+    return T((edges[thres-1]+edges[thres])/2)
+end
