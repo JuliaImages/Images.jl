@@ -496,26 +496,26 @@ using Base.Test
         img = testimage("cameraman")
         thres = otsu_threshold(img)
         @test typeof(thres) == eltype(img)
-        @test ≈(gray(thres), convert(N0f8, 87/256), eps(N0f8))
+        @test ≈(gray(thres), convert(N0f8, 87/256), atol=eps(N0f8))
         thres = otsu_threshold(img, 512)
         @test typeof(thres) == eltype(img)
-        @test ≈(gray(thres), convert(N0f8, 87/256), eps(N0f8))
+        @test ≈(gray(thres), convert(N0f8, 87/256), atol=eps(N0f8))
 
         img = map(x->convert(Gray{Float64}, x), img)
         thres = otsu_threshold(img)
         @test typeof(thres) == eltype(img)
-        @test ≈(gray(thres), 87/256, 0.01)
+        @test ≈(gray(thres), 87/256, atol=0.01)
         thres = otsu_threshold(img, 512)
         @test typeof(thres) == eltype(img)
-        @test ≈(gray(thres), 87/256, 0.01)
+        @test ≈(gray(thres), 87/256, atol=0.01)
 
         img = map(x->convert(Float64, x), img)
         thres = otsu_threshold(img)
         @test typeof(thres) == eltype(img)
-        @test ≈(gray(thres), 87/256, 0.01)
+        @test ≈(gray(thres), 87/256, atol=0.01)
         thres = otsu_threshold(img, 512)
         @test typeof(thres) == eltype(img)
-        @test ≈(gray(thres), 87/256, 0.01)
+        @test ≈(gray(thres), 87/256, atol=0.01)
 
         #test for multidimension arrays
         img = rand(Float64, 10, 10, 3)
@@ -551,7 +551,7 @@ using Base.Test
         @test size(img2) == size(img)
         for i in 1:5
             for j in 1:5
-                @test gray(img2[i,j]) == img[i,j]>thresh[i,j]
+                @test gray(img2[i,j]) == (img[i,j]>thres[i,j])
             end
         end
 
