@@ -5,10 +5,6 @@ using Requires
     if Juno.isactive()
         Juno.media(Images.ColorantMatrix, Media.Graphical)
 
-        function Juno.render(e::Juno.Editor, img::Images.ColorantMatrix)
-            Juno.render(e, nothing)
-        end
-
         function Juno.render(pane::Juno.PlotPane, img::Images.ColorantMatrix)
             Juno.render(pane, HTML("<img src=\"data:image/png;base64,$(stringmime(MIME("image/png"), img))\">"))
         end
