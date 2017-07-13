@@ -1,4 +1,4 @@
-julia 0.5
+julia 0.6.0
 Reexport
 Colors 0.7.0
 ColorVectorSpace 0.2
@@ -15,5 +15,5 @@ SIUnits
 Graphics 0.1
 FileIO
 Compat 0.19
-StatsBase   # for histrange
+StatsBase 0.14   # for histrange
 Requires

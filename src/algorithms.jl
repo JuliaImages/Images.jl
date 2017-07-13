@@ -121,7 +121,7 @@ The base β of the logarithm (a.k.a. entropy unit) is one of the following:
 """
 entropy(img::AbstractArray; kind=:shannon) = entropy(_log(kind), img)
 function entropy{Log<:Function}(logᵦ::Log, img)
-    hist = StatsBase.fit(Histogram, vec(img), nbins=256)
+    hist = StatsBase.fit(Histogram, vec(img), nbins=256, closed=:right)
     counts = hist.weights
     p = counts / length(img)
     logp = logᵦ.(p)
