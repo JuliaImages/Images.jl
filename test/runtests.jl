@@ -12,6 +12,3 @@ include("distances.jl")
 include("writemime.jl")
 
 end
-
-info("\n\nBeginning of tests with deprecation warnings\n\n")
-include("old/runtests.jl")

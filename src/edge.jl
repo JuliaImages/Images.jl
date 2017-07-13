@@ -432,7 +432,7 @@ function padindexes{T,n}(img::AbstractArray{T,n}, dim, prepad, postpad, border::
     M = size(img, dim)
     I = Vector{Int}(M + prepad + postpad)
     I = [(1 - prepad):(M + postpad);]
-    @compat if border == "replicate"
+    if border == "replicate"
         I = min.(max.(I, 1), M)
     elseif border == "circular"
         I = 1 .+ mod.(I .- 1, M)

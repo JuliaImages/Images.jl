@@ -242,7 +242,7 @@ function _histmatch(img::AbstractArray, oedges::Range, ohist::AbstractArray{Int}
     ocdf = cumsum(ohist)
     norm_ocdf = ocdf / ocdf[end]
     lookup_table = zeros(Int, length(norm_cdf))
-    @compat for I in eachindex(cdf)
+    for I in eachindex(cdf)
         lookup_table[I] = indmin(abs.(norm_ocdf .- norm_cdf[I]))
     end
     hist_matched_img = similar(img)
