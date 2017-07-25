@@ -287,6 +287,9 @@ using Base.Test
         img1 = colorview(RGB, fill(0.9, 3, 5, 5))
         img2 = colorview(RGB, fill(N0f8(0.9), 3, 5, 5))
         @test isapprox(channelview(restrict(img1)), channelview(restrict(img2)), rtol=0.01)
+        # Issue #655
+        tmp = AxisArray(rand(1080,1120,5,10), (:x, :y, :z, :t), (0.577, 0.5770, 5, 2));
+        @test size(restrict(tmp, 2), 2) == 561
     end
 
     @testset "Erode/ dilate" begin

@@ -526,7 +526,7 @@ axnametype{name}(ax::Axis{name}) = Axis{name}
 
 function modax(ax)
     v = ax.val
-    veven = v[1]-step(v)/2 : 2*step(v) : v[end]+step(v)/2
+    veven = linspace(v[1]-step(v)/2, v[end]+step(v)/2, length(v)÷2 + 1)
     return ax(isodd(length(v)) ? oftype(veven, v[1:2:end]) : veven)
 end
 
@@ -921,12 +921,12 @@ thres = otsu_threshold(img)
 thres = otsu_threshold(img, bins)
 ```
 
-Computes threshold for grayscale image using Otsu's method.  
-  
-Parameters:  
--    img         = Grayscale input image    
--    bins        = Number of bins used to compute the histogram. Needed for floating-point images.    
-    
+Computes threshold for grayscale image using Otsu's method.
+
+Parameters:
+-    img         = Grayscale input image
+-    bins        = Number of bins used to compute the histogram. Needed for floating-point images.
+
 """
 function otsu_threshold{T<:Union{Gray,Real}, N}(img::AbstractArray{T, N}, bins::Int = 256)
 
