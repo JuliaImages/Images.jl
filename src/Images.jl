@@ -49,6 +49,7 @@ const is_little_endian = ENDIAN_BOM == 0x04030201
 @reexport using ImageAxes
 @reexport using ImageMetadata
 @reexport using ImageFiltering
+@reexport using ImageMorphology
 
 import ImageTransformations: restrict
 using ImageMetadata: ImageMetaAxis

@@ -6,6 +6,7 @@ FixedPointNumbers 0.3.0
 ImageCore
 ImageTransformations 0.2.2
 ImageFiltering
+ImageMorphology
 AxisArrays
 ImageAxes
 ImageMetadata
