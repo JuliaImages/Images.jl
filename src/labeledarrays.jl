@@ -1,4 +1,4 @@
-immutable ColorizedArray{C<:Colorant,N,A<:AbstractArray,L<:AbstractArray} <: AbstractArray{C,N}
+struct ColorizedArray{C<:Colorant,N,A<:AbstractArray,L<:AbstractArray} <: AbstractArray{C,N}
     intensity::A
     label::L
 end
@@ -17,7 +17,7 @@ associated with that point's label.
 
 This computation is performed lazily, as to be suitable even for large arrays.
 """
-function ColorizedArray{C<:Colorant,N}(intensity, label::IndirectArray{C,N})
+function ColorizedArray(intensity, label::IndirectArray{C,N}) where {C<:Colorant,N}
     indices(intensity) == indices(label) || throw(DimensionMismatch("intensity and label must have the same indices, got $(indices(intensity)) and $(indices(label))"))
     CI = typeof(one(C)*zero(eltype(intensity)))
     ColorizedArray{CI,N,typeof(intensity),typeof(label)}(intensity, label)
@@ -27,19 +27,19 @@ end
 # axes, and therefore allows `label` to be of lower dimensionality
 # than `intensity`.
 
-intensitytype{C<:Colorant,N,A<:AbstractArray,L<:AbstractArray}(::Type{ColorizedArray{C,N,A,L}}) = A
-labeltype{C<:Colorant,N,A<:AbstractArray,L<:AbstractArray}(::Type{ColorizedArray{C,N,A,L}}) = L
+intensitytype(::Type{ColorizedArray{C,N,A,L}}) where {C<:Colorant,N,A<:AbstractArray,L<:AbstractArray} = A
+labeltype(::Type{ColorizedArray{C,N,A,L}}) where {C<:Colorant,N,A<:AbstractArray,L<:AbstractArray} = L
 
 Base.size(A::ColorizedArray) = size(A.intensity)
 Base.indices(A::ColorizedArray) = indices(A.intensity)
-@compat Base.IndexStyle{CA<:ColorizedArray}(::Type{CA}) = IndexStyle(IndexStyle(intensitytype(CA)), IndexStyle(labeltype(CA)))
+Base.IndexStyle(::Type{CA}) where {CA<:ColorizedArray} = IndexStyle(IndexStyle(intensitytype(CA)), IndexStyle(labeltype(CA)))
 
 @inline function Base.getindex(A::ColorizedArray, i::Integer)
     @boundscheck checkbounds(A, i)
     @inbounds ret = A.intensity[i]*A.label[i]
     ret
 end
-@inline function Base.getindex{C,N}(A::ColorizedArray{C,N}, I::Vararg{Int,N})
+@inline function Base.getindex(A::ColorizedArray{C,N}, I::Vararg{Int,N}) where {C,N}
     @boundscheck checkbounds(A, I...)
     @inbounds ret = A.intensity[I...]*A.label[I...]
     ret

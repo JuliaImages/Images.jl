@@ -22,12 +22,12 @@ global checkboard
                      KernelFactors.ando4, KernelFactors.ando5)
 
     ## Checkerboard array, used to test image gradients
-    white{T}(::Type{T}) = one(T)
-    black{T}(::Type{T}) = zero(T)
-    white{T<:Unsigned}(::Type{T}) = typemax(T)
-    black{T<:Unsigned}(::Type{T}) = typemin(T)
+    white(::Type{T}) where {T} = one(T)
+    black(::Type{T}) where {T} = zero(T)
+    white(::Type{T}) where {T<:Unsigned} = typemax(T)
+    black(::Type{T}) where {T<:Unsigned} = typemin(T)
 
-    function checkerboard{T}(::Type{T}, sq_width::Integer, count::Integer)
+    function checkerboard(::Type{T}, sq_width::Integer, count::Integer) where T
         wh = fill(white(T), (sq_width,sq_width))
         bk = fill(black(T), (sq_width,sq_width))
         bw = [wh bk; bk wh]

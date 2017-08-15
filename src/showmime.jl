@@ -5,21 +5,21 @@
 # This is used by IJulia (for example) to display images
 
 # mimewriteable to PNG if 2D colorant array
-mimewritable{C<:Colorant}(::MIME"image/png", img::AbstractMatrix{C}) = true
+mimewritable(::MIME"image/png", img::AbstractMatrix{C}) where {C<:Colorant} = true
 
 # Colors.jl turns on SVG display of colors, which leads to poor
 # performance and weird spacing if you're displaying images. We need
 # to disable that here.
 # See https://github.com/JuliaLang/IJulia.jl/issues/229 and Images #548
-mimewritable{C<:Color}(::MIME"image/svg+xml", img::AbstractMatrix{C}) = false
+mimewritable(::MIME"image/svg+xml", img::AbstractMatrix{C}) where {C<:Color} = false
 
 # Really large images can make display very slow, so we shrink big
 # images.  Conversely, tiny images don't show up well, so in such
 # cases we repeat pixels.
-function Base.show{C<:Colorant}(io::IO, mime::MIME"image/png", img::AbstractMatrix{C};
-                                minpixels=10^4, maxpixels=10^6,
-                                # Jupyter seemingly can't handle 16-bit colors:
-                                mapi=x->mapc(N0f8, clamp01nan(csnormalize(x))))
+function Base.show(io::IO, mime::MIME"image/png", img::AbstractMatrix{C};
+                   minpixels=10^4, maxpixels=10^6,
+                   # Jupyter seemingly can't handle 16-bit colors:
+                   mapi=x->mapc(N0f8, clamp01nan(csnormalize(x)))) where C<:Colorant
     if !get(io, :full_fidelity, false)
         while _length(img) > maxpixels
             img = restrict(img)  # big images
@@ -43,9 +43,9 @@ csnormalize(c::AbstractGray) = Gray(c)
 csnormalize(c::Color) = RGB(c)
 csnormalize(c::Colorant) = RGBA(c)
 
-@compat const ColorantMatrix{T<:Colorant} = AbstractMatrix{T}
+const ColorantMatrix{T<:Colorant} = AbstractMatrix{T}
 
-function _show_odd{T<:ColorantMatrix}(io::IO, m::MIME"text/html", imgs::AbstractArray{T, 1})
+function _show_odd(io::IO, m::MIME"text/html", imgs::AbstractArray{T, 1}) where T<:ColorantMatrix
     # display a vector of images in a row
     for j in eachindex(imgs)
         write(io, "<td style='text-align:center;vertical-align:middle; margin: 0.5em;border:1px #90999f solid;border-collapse:collapse'>")
@@ -54,7 +54,7 @@ function _show_odd{T<:ColorantMatrix}(io::IO, m::MIME"text/html", imgs::Abstract
     end
 end
 
-function _show_odd{T<:ColorantMatrix, N}(io::IO, m::MIME"text/html", imgs::AbstractArray{T, N})
+function _show_odd(io::IO, m::MIME"text/html", imgs::AbstractArray{T, N}) where {T<:ColorantMatrix, N}
     colons = ([Colon() for i=1:(N-1)]...)
     for i in indices(imgs, N)
         write(io, "<td style='text-align:center;vertical-align:middle; margin: 0.5em;border:1px #90999f solid;border-collapse:collapse'>")
@@ -63,7 +63,7 @@ function _show_odd{T<:ColorantMatrix, N}(io::IO, m::MIME"text/html", imgs::Abstr
     end
 end
 
-function _show_even{T<:ColorantMatrix, N}(io::IO, m::MIME"text/html", imgs::AbstractArray{T, N}, center=true)
+function _show_even(io::IO, m::MIME"text/html", imgs::AbstractArray{T, N}, center=true) where {T<:ColorantMatrix, N}
     colons = ([Colon() for i=1:(N-1)]...)
     centering = center ? " style='margin: auto'" : ""
     write(io, "<table$centering>")
@@ -77,7 +77,7 @@ function _show_even{T<:ColorantMatrix, N}(io::IO, m::MIME"text/html", imgs::Abst
     write(io, "</table>")
 end
 
-function Base.show{T<:ColorantMatrix, N}(io::IO, m::MIME"text/html", imgs::AbstractArray{T, N})
+function Base.show(io::IO, m::MIME"text/html", imgs::AbstractArray{T, N}) where {T<:ColorantMatrix, N}
     if N % 2 == 1
         write(io, "<table>")
         write(io, "<tbody>")

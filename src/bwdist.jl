@@ -26,7 +26,7 @@ See also: [`distance_transform`](@ref).
 Transforms of Binary Images in Arbitrary Dimensions' [Maurer et al.,
 2003] (DOI: 10.1109/TPAMI.2003.1177156)
 """
-function feature_transform{N}(I::AbstractArray{Bool,N}, w::Union{Void,NTuple{N}}=nothing)
+function feature_transform(I::AbstractArray{Bool,N}, w::Union{Void,NTuple{N}}=nothing) where N
     # To allocate temporary storage for voronoift!, compute one
     # element (so we have the proper type)
     fi = first(CartesianRange(indices(I)))
@@ -53,7 +53,7 @@ default value of `nothing` is equivalent to `w=(1,1,...)`.
 
 See also: [`feature_transform`](@ref).
 """
-function distance_transform{N}(F::AbstractArray{CartesianIndex{N},N}, w::Union{Void,NTuple{N}}=nothing)
+function distance_transform(F::AbstractArray{CartesianIndex{N},N}, w::Union{Void,NTuple{N}}=nothing) where N
     # To allocate the proper output type, compute the distance for one element
     R = CartesianRange(indices(F))
     dst = wnorm2(zero(eltype(R)), w)
@@ -68,7 +68,7 @@ function distance_transform{N}(F::AbstractArray{CartesianIndex{N},N}, w::Union{V
     D
 end
 
-function computeft!{K}(F, I, w, jpost::CartesianIndex{K}, tmp)
+function computeft!(F, I, w, jpost::CartesianIndex{K}, tmp) where K
     _null = nullindex(F)
     if K == ndims(I)-1
         # Fig. 2, lines 2-8
@@ -135,7 +135,7 @@ end
 ## Utilities
 
 # Stores a feature location and its distance from the hyperplane Rd
-immutable DistRFT{N,T}
+struct DistRFT{N,T}
     fi::CartesianIndex{N}
     dist2::T
     d::Int  # the coordinate in dimension d
@@ -170,10 +170,10 @@ end
 Discard the last `K+1` elements of the tuple `inds`.
 """
 ftfront(inds, j::CartesianIndex) = _ftfront((), inds, j)
-_ftfront{N}(out, inds::NTuple{N}, j::CartesianIndex{N}) = Base.front(out)
+_ftfront(out, inds::NTuple{N}, j::CartesianIndex{N}) where {N} = Base.front(out)
 @inline _ftfront(out, inds, j) = _ftfront((out..., inds[1]), Base.tail(inds), j)
 
-nullindex{T,N}(A::AbstractArray{T,N}) = typemin(Int)*one(CartesianIndex{N})
+nullindex(A::AbstractArray{T,N}) where {T,N} = typemin(Int)*one(CartesianIndex{N})
 
 """
     wnorm2(x::CartesianIndex, w)

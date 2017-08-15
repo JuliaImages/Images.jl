@@ -8,7 +8,7 @@ Calculate the rotation angle of the gradient given by `grad_x` and
 `grad_y`. Equivalent to `atan2(-grad_y, grad_x)`, except that when both `grad_x` and
 `grad_y` are effectively zero, the corresponding angle is set to zero.
 """
-function phase{T<:Number}(grad_x::T, grad_y::T, tol=sqrt(eps(T)))
+function phase(grad_x::T, grad_y::T, tol=sqrt(eps(T))) where T<:Number
     atan2(-grad_y, grad_x) * ((abs(grad_x) > tol) | (abs(grad_y) > tol))
 end
 phase(grad_x::Number,   grad_y::Number)   = phase(promote(grad_x, grad_y)...)
@@ -36,7 +36,7 @@ given by `grad_x` and `grad_y`.  Equivalent to `atan2(grad_x, grad_y)`.  When
 both `grad_x` and `grad_y` are effectively zero, the corresponding angle is set to
 zero.
 """
-function orientation{T<:Number}(grad_x::T, grad_y::T, tol=sqrt(eps(T)))
+function orientation(grad_x::T, grad_y::T, tol=sqrt(eps(T))) where T<:Number
     atan2(grad_x, grad_y) * ((abs(grad_x) > tol) | (abs(grad_y) > tol))
 end
 orientation(grad_x::Number,   grad_y::Number)   = orientation(promote(grad_x, grad_y)...)
@@ -65,7 +65,7 @@ phase(grad_x::AbstractArray, grad_y::AbstractArray) = phase.(grad_x, grad_y)
 # Note that this is perpendicular to the phase at that point, except where
 # both gradients are close to zero.
 
-orientation{T}(grad_x::AbstractArray{T}, grad_y::AbstractArray{T}) = orientation.(grad_x, grad_y)
+orientation(grad_x::AbstractArray{T}, grad_y::AbstractArray{T}) where {T} = orientation.(grad_x, grad_y)
 
 # Return both the magnitude and phase in one call
 """
@@ -75,7 +75,7 @@ Convenience function for calculating the magnitude and phase of the gradient
 images given in `grad_x` and `grad_y`.  Returns a tuple containing the magnitude
 and phase images.  See `magnitude` and `phase` for details.
 """
-function magnitude_phase{T}(grad_x::AbstractArray{T}, grad_y::AbstractArray{T})
+function magnitude_phase(grad_x::AbstractArray{T}, grad_y::AbstractArray{T}) where T
     m = similar(grad_x, eltype(T))
     p = similar(m)
     for I in eachindex(grad_x, grad_y)
@@ -149,9 +149,9 @@ mag[mag .< 0.5] = 0.0  # Threshold magnitude image
 thinned, subpix =  thin_edges_subpix(mag, grad_angle)
 ```
 """
-thin_edges{T}(img::AbstractArray{T,2}, gradientangles::AbstractArray, border::AbstractString="replicate") =
+thin_edges(img::AbstractArray{T,2}, gradientangles::AbstractArray, border::AbstractString="replicate") where {T} =
     thin_edges_nonmaxsup(img, gradientangles, border)
-thin_edges_subpix{T}(img::AbstractArray{T,2}, gradientangles::AbstractArray, border::AbstractString="replicate") =
+thin_edges_subpix(img::AbstractArray{T,2}, gradientangles::AbstractArray, border::AbstractString="replicate") where {T} =
     thin_edges_nonmaxsup_subpix(img, gradientangles, border)
 
 # Code below is related to non-maximal suppression, and was ported to Julia from
@@ -217,7 +217,7 @@ end
 
 # Used to encode the sign, integral, and fractional components of
 # an offset from a coordinate
-immutable CoordOffset
+struct CoordOffset
     s::Int      # sign
     i::Int      # integer part
     f::Float64  # fractional part
@@ -277,8 +277,8 @@ function _interp_offset(img::AbstractArray, x::Integer, y::Integer, xoff::CoordO
 end
 
 # Core edge thinning algorithm using nonmaximal suppression
-function thin_edges_nonmaxsup_core!{T}(out::AbstractArray{T,2}, location::AbstractArray{Point,2},
-                                       img::AbstractArray{T,2}, gradientangles::AbstractMatrix, radius, border, theta)
+function thin_edges_nonmaxsup_core!(out::AbstractArray{T,2}, location::AbstractArray{Point,2},
+                                    img::AbstractArray{T,2}, gradientangles::AbstractMatrix, radius, border, theta) where T
     calc_subpixel = !isempty(location)
 
     # Error checking
@@ -387,7 +387,7 @@ Parameters :
   sigma :           Specifies the standard deviation of the gaussian filter
 
 """
-function canny{T<:NumberLike, N<:Union{NumberLike,Percentile{NumberLike}}}(img_gray::AbstractMatrix{T}, threshold::Tuple{N,N}, sigma::Number = 1.4)
+function canny(img_gray::AbstractMatrix{T}, threshold::Tuple{N,N}, sigma::Number = 1.4) where {T<:NumberLike, N<:Union{NumberLike,Percentile{NumberLike}}}
     img_grayf = imfilter(img_gray, KernelFactors.IIRGaussian((sigma,sigma)), NA())
     img_grad_y, img_grad_x = imgradients(img_grayf, KernelFactors.sobel)
     img_mag, img_phase = magnitude_phase(img_grad_x, img_grad_y)
@@ -404,7 +404,7 @@ end
 
 canny(img::AbstractMatrix, args...) = canny(convert(Array{Gray}, img), args...)
 
-function hysteresis_thresholding{T}(img_nonMaxSup::AbstractArray{T, 2}, upperThreshold::Number, lowerThreshold::Number)
+function hysteresis_thresholding(img_nonMaxSup::AbstractArray{T, 2}, upperThreshold::Number, lowerThreshold::Number) where T
     img_thresholded = map(i -> i > lowerThreshold ? i > upperThreshold ? 1.0 : 0.5 : 0.0, img_nonMaxSup)
     queue = CartesianIndex{2}[]
     R = CartesianRange(size(img_thresholded))
@@ -428,7 +428,7 @@ function hysteresis_thresholding{T}(img_nonMaxSup::AbstractArray{T, 2}, upperThr
     img_thresholded
 end
 
-function padindexes{T,n}(img::AbstractArray{T,n}, dim, prepad, postpad, border::AbstractString)
+function padindexes(img::AbstractArray{T,n}, dim, prepad, postpad, border::AbstractString) where {T,n}
     M = size(img, dim)
     I = Vector{Int}(M + prepad + postpad)
     I = [(1 - prepad):(M + postpad);]

@@ -2,11 +2,7 @@ __precompile__(true)  # because of ImageAxes/ImageMeta
 
 module Images
 
-if VERSION >= v"0.6.0-dev.1024"
-    import Base.Iterators.take
-else
-    import Base.take
-end
+import Base.Iterators.take
 import Base: +, -, *
 import Base: abs, atan2, clamp, convert, copy, copy!, ctranspose, delete!,
              eltype, fft, get, getindex, haskey, hypot,
@@ -31,9 +27,9 @@ using Reexport
 using ColorVectorSpace, FileIO
 export load, save
 import Colors: Fractional, red, green, blue
-@compat const AbstractGray{T}                    = Color{T,1}
-@compat const TransparentRGB{C<:AbstractRGB,T}   = TransparentColor{C,T,4}
-@compat const TransparentGray{C<:AbstractGray,T} = TransparentColor{C,T,2}
+const AbstractGray{T}                    = Color{T,1}
+const TransparentRGB{C<:AbstractRGB,T}   = TransparentColor{C,T,4}
+const TransparentGray{C<:AbstractGray,T} = TransparentColor{C,T,2}
 const NumberLike = Union{Number,AbstractGray}
 const RealLike = Union{Real,AbstractGray}
 import Graphics
@@ -64,7 +60,7 @@ Indicate that `x` should be interpreted as a [percentile](https://en.wikipedia.o
 - `canny(img, 1.4, (80, 20))` uses absolute thresholds on the edge magnitude image
 - `canny(img, 1.4, (Percentile(80), Percentile(20)))` uses percentiles of the edge magnitude image as threshold
 """
-immutable Percentile{T} <: Real p::T end
+struct Percentile{T} <: Real p::T end
 
 include("labeledarrays.jl")
 include("algorithms.jl")

@@ -170,7 +170,7 @@ end
 
 # Copied directly from DataStructures.jl, but specialized
 # to always make the parent be the smallest label
-immutable DisjointMinSets
+struct DisjointMinSets
     parents::Vector{Int}
 
     DisjointMinSets(n::Integer) = new([1:n;])

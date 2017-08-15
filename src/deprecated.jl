@@ -1,4 +1,4 @@
-function canny{T<:NumberLike}(img_gray::AbstractMatrix{T}, sigma::Number = 1.4, upperThreshold::Number = 0.90, lowerThreshold::Number = 0.10; percentile::Bool = true)
+function canny(img_gray::AbstractMatrix{T}, sigma::Number = 1.4, upperThreshold::Number = 0.90, lowerThreshold::Number = 0.10; percentile::Bool = true) where T<:NumberLike
     depwarn("canny(img, sigma, $upperThreshold, $lowerThreshold; percentile=$percentile) is deprecated.\n Please use canny(img, ($upperThreshold, $lowerThreshold), sigma) or canny(img, (Percentile($(100*upperThreshold)), Percentile($(100*lowerThreshold))), sigma)",:canny)
     if percentile
         canny(img_gray, (Percentile(100*upperThreshold), Percentile(100*lowerThreshold)), sigma)

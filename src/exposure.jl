@@ -5,11 +5,11 @@
    `[0,1]`. This is equivalent to `map(ScaleMinMax(eltype(img), minval,
    maxval), img)`.  (minval,maxval) defaults to `extrema(img)`.
 """
-imadjustintensity{T}(img::AbstractArray{T}, range::Tuple{Any,Any}) = map(scaleminmax(T, range...), img)
+imadjustintensity(img::AbstractArray{T}, range::Tuple{Any,Any}) where {T} = map(scaleminmax(T, range...), img)
 imadjustintensity(img::AbstractArray, range::AbstractArray) = imadjustintensity(img, (range...,))
 imadjustintensity(img::AbstractArray) = map(takemap(scaleminmax, img), img)
 
-_imstretch{T}(img::AbstractArray{T}, m::Number, slope::Number) = map(i -> 1 / (1 + (m / (i + eps(T))) ^ slope), img)
+_imstretch(img::AbstractArray{T}, m::Number, slope::Number) where {T} = map(i -> 1 / (1 + (m / (i + eps(T))) ^ slope), img)
 
 """
 `imgs = imstretch(img, m, slope)` enhances or reduces (for
@@ -31,9 +31,9 @@ the alpha channel is left untouched.
 complement(x) = one(x)-x
 complement(x::TransparentColor) = typeof(x)(complement(color(x)), alpha(x))
 
-imhist{T<:Colorant}(img::AbstractArray{T}, nbins::Integer = 400) = imhist(convert(Array{Gray}, img), nbins)
+imhist(img::AbstractArray{T}, nbins::Integer = 400) where {T<:Colorant} = imhist(convert(Array{Gray}, img), nbins)
 
-function imhist{T<:NumberLike}(img::AbstractArray{T}, nbins::Integer = 400)
+function imhist(img::AbstractArray{T}, nbins::Integer = 400) where T<:NumberLike
     minval = minfinite(img)
     maxval = maxfinite(img)
     imhist(img, nbins, minval, maxval)
@@ -76,18 +76,18 @@ function imhist(img::AbstractArray, edges::Range)
     edges, histogram
 end
 
-function _histeq_pixel_rescale{T<:NumberLike}(pixel::T, cdf, minval, maxval)
+function _histeq_pixel_rescale(pixel::T, cdf, minval, maxval) where T<:NumberLike
     n = length(cdf)
     bin_pixel = clamp(ceil(Int, (pixel - minval) * length(cdf) / (maxval - minval)), 1, n)
     rescaled_pixel = minval + ((cdf[bin_pixel] - cdf[1]) * (maxval - minval) / (cdf[end] - cdf[1]))
     convert(T, rescaled_pixel)
 end
-function _histeq_pixel_rescale{C<:Color}(pixel::C, cdf, minval, maxval)
+function _histeq_pixel_rescale(pixel::C, cdf, minval, maxval) where C<:Color
     yiq = convert(YIQ, pixel)
     y = _histeq_pixel_rescale(yiq.y, cdf, minval, maxval)
     convert(C, YIQ(y, yiq.i, yiq.q))
 end
-function _histeq_pixel_rescale{C<:TransparentColor}(pixel::C, cdf, minval, maxval)
+function _histeq_pixel_rescale(pixel::C, cdf, minval, maxval) where C<:TransparentColor
     base_colorant_type(C)(_histeq_pixel_rescale(color(pixel), cdf, minval, maxval), alpha(pixel))
 end
 
@@ -139,15 +139,15 @@ histeq(img::ImageMeta, nbins::Integer) = shareproperties(img, histeq(data(img), 
 
 adjust_gamma(img::ImageMeta, gamma::Number) = shareproperties(img, adjust_gamma(data(img), gamma))
 
-_gamma_pixel_rescale{T<:NumberLike}(pixel::T, gamma::Number) = pixel ^ gamma
+_gamma_pixel_rescale(pixel::T, gamma::Number) where {T<:NumberLike} = pixel ^ gamma
 
-function _gamma_pixel_rescale{C<:Color}(pixel::C, gamma::Number)
+function _gamma_pixel_rescale(pixel::C, gamma::Number) where C<:Color
     yiq = convert(YIQ, pixel)
     y = _gamma_pixel_rescale(yiq.y, gamma)
     convert(C, YIQ(y, yiq.i, yiq.q))
 end
 
-function _gamma_pixel_rescale{C<:TransparentColor}(pixel::C, gamma::Number)
+function _gamma_pixel_rescale(pixel::C, gamma::Number) where C<:TransparentColor
     base_colorant_type(C)(_gamma_pixel_rescale(color(pixel), gamma), alpha(pixel))
 end
 
@@ -171,7 +171,7 @@ This is the combined with the I and Q channels and the resulting image converted
 type as the input.
 
 """
-function adjust_gamma{T<:FixedPointNumbers.Normed}(img::AbstractArray{Gray{T}}, gamma::Number)
+function adjust_gamma(img::AbstractArray{Gray{T}}, gamma::Number) where T<:FixedPointNumbers.Normed
     raw_type = FixedPointNumbers.rawtype(T)
     gamma_inv = 1.0 / gamma
     table = zeros(T, typemax(raw_type) + 1)
@@ -185,8 +185,8 @@ function adjust_gamma{T<:FixedPointNumbers.Normed}(img::AbstractArray{Gray{T}}, 
     gamma_corrected_img
 end
 
-adjust_gamma{T<:Number}(img::AbstractArray{T}, gamma::Number) = _adjust_gamma(img, gamma, Float64)
-adjust_gamma{T<:Colorant}(img::AbstractArray{T}, gamma::Number) = _adjust_gamma(img, gamma, T)
+adjust_gamma(img::AbstractArray{T}, gamma::Number) where {T<:Number} = _adjust_gamma(img, gamma, Float64)
+adjust_gamma(img::AbstractArray{T}, gamma::Number) where {T<:Colorant} = _adjust_gamma(img, gamma, T)
 
 function _adjust_gamma(img::AbstractArray, gamma::Number, C::Type)
     gamma_corrected_img = zeros(C, size(img))
@@ -196,7 +196,7 @@ function _adjust_gamma(img::AbstractArray, gamma::Number, C::Type)
     gamma_corrected_img
 end
 
-function adjust_gamma{T<:Number}(img::AbstractArray{T}, gamma::Number, minval::Number, maxval::Number)
+function adjust_gamma(img::AbstractArray{T}, gamma::Number, minval::Number, maxval::Number) where T<:Number
     gamma_corrected_img = zeros(Float64, size(img))
     for I in eachindex(img)
         gamma_corrected_img[I] = _gamma_pixel_rescale(img[I], gamma, minval, maxval)
@@ -215,17 +215,17 @@ matched and `oimg` is the image having the desired histogram to be matched to.
 """
 histmatch(img::ImageMeta, oimg::AbstractArray, nbins::Integer = 400) = shareproperties(img, histmatch(data(img), oimg, nbins))
 
-_hist_match_pixel{T<:NumberLike}(pixel::T, bins, lookup_table) = T(bins[lookup_table[searchsortedlast(bins, pixel)]])
+_hist_match_pixel(pixel::T, bins, lookup_table) where {T<:NumberLike} = T(bins[lookup_table[searchsortedlast(bins, pixel)]])
 
-function _hist_match_pixel{T<:Color}(pixel::T, bins, lookup_table)
+function _hist_match_pixel(pixel::T, bins, lookup_table) where T<:Color
     yiq = convert(YIQ, pixel)
     y = _hist_match_pixel(yiq.y, bins, lookup_table)
     convert(T, YIQ(y, yiq.i, yiq.q))
 end
 
-_hist_match_pixel{T<:TransparentColor}(pixel::T, bins, lookup_table) = base_colorant_type(T)(_hist_match_pixel(color(pixel), bins, lookup_table), alpha(pixel))
+_hist_match_pixel(pixel::T, bins, lookup_table) where {T<:TransparentColor} = base_colorant_type(T)(_hist_match_pixel(color(pixel), bins, lookup_table), alpha(pixel))
 
-function histmatch{T<:Colorant}(img::AbstractArray{T}, oimg::AbstractArray, nbins::Integer = 400)
+function histmatch(img::AbstractArray{T}, oimg::AbstractArray, nbins::Integer = 400) where T<:Colorant
     el_gray = graytype(eltype(img))
     oedges, ohist = imhist(oimg, nbins, zero(el_gray), one(el_gray))
     _histmatch(img, oedges, ohist)
@@ -274,7 +274,7 @@ the granularity of histogram calculation of each local region. `clip` specifies 
 The excess in the histogram bins with value exceeding `clip` is redistributed among the other bins.
 
 """
-function clahe{C}(img::AbstractArray{C, 2}, nbins::Integer = 100; xblocks::Integer = 8, yblocks::Integer = 8, clip::Number = 3)
+function clahe(img::AbstractArray{C, 2}, nbins::Integer = 100; xblocks::Integer = 8, yblocks::Integer = 8, clip::Number = 3) where C
     h, w = size(img)
     y_padded = ceil(Int, h / (2 * yblocks)) * 2 * yblocks
     x_padded = ceil(Int, w / (2 * xblocks)) * 2 * xblocks
@@ -290,7 +290,7 @@ function clahe(img::ImageMeta, nbins::Integer = 100; xblocks::Integer = 8, ybloc
     shareproperties(clahe(data(img), nbins, xblocks = xblocks, yblocks = yblocks, clip = clip), img)
 end
 
-function _clahe{C}(img::AbstractArray{C, 2}, nbins::Integer = 100, xblocks::Integer = 8, yblocks::Integer = 8, clip::Number = 3)
+function _clahe(img::AbstractArray{C, 2}, nbins::Integer = 100, xblocks::Integer = 8, yblocks::Integer = 8, clip::Number = 3) where C
     h, w = size(img)
     xb = 0:1:xblocks - 1
     yb = 0:1:yblocks - 1
@@ -393,16 +393,16 @@ function _clahe{C}(img::AbstractArray{C, 2}, nbins::Integer = 100, xblocks::Inte
     res_img
 end
 
-_clahe_pixel_rescale{T<:NumberLike}(pixel::T, cdf, edges) = cdf[searchsortedlast(edges, pixel, Base.Order.Forward)]
+_clahe_pixel_rescale(pixel::T, cdf, edges) where {T<:NumberLike} = cdf[searchsortedlast(edges, pixel, Base.Order.Forward)]
 
-function _clahe_pixel_rescale{T<:NumberLike}(pixel::T, first, second, edges, pos, length)
+function _clahe_pixel_rescale(pixel::T, first, second, edges, pos, length) where T<:NumberLike
     id = searchsortedlast(edges, pixel, Base.Order.Forward)
     f = first[id]
     s = second[id]
     T(((length - pos) * f + (pos - 1) * s) / (length - 1))
 end
 
-function _clahe_pixel_rescale{T<:NumberLike}(pixel::T, top_left, top_right, bot_left, bot_right, edges, i, j, w, h)
+function _clahe_pixel_rescale(pixel::T, top_left, top_right, bot_left, bot_right, edges, i, j, w, h) where T<:NumberLike
     id = searchsortedlast(edges, pixel, Base.Order.Forward)
     tl = top_left[id]
     tr = top_right[id]
@@ -413,13 +413,13 @@ function _clahe_pixel_rescale{T<:NumberLike}(pixel::T, top_left, top_right, bot_
     T(((h - j) * r1 + (j - 1) * r2) / (h - 1))
 end
 
-function _clahe_pixel_rescale{C<:Color}(pixel::C, args...)
+function _clahe_pixel_rescale(pixel::C, args...) where C<:Color
     yiq = convert(YIQ, pixel)
     y = _clahe_pixel_rescale(yiq.y, args...)
     convert(C, YIQ(y, yiq.i, yiq.q))
 end
 
-function _clahe_pixel_rescale{C<:TransparentColor}(pixel::C, args...)
+function _clahe_pixel_rescale(pixel::C, args...) where C<:TransparentColor
     base_colorant_type(C)(_clahe_pixel_rescale(color(pixel), args...), alpha(pixel))
 end
 
@@ -431,7 +431,7 @@ clipped_hist = cliphist(hist, clip)
 Clips the histogram above a certain value `clip`. The excess left in the bins
 exceeding `clip` is redistributed among the remaining bins.
 """
-function cliphist{T}(hist::AbstractArray{T, 1}, clip::Number)
+function cliphist(hist::AbstractArray{T, 1}, clip::Number) where T
     hist_length = length(hist)
     excess = sum(map(i -> i > clip ? i - clip : zero(i - clip), hist))
     increase = excess / hist_length
