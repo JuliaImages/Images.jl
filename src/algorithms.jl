@@ -606,6 +606,9 @@ function imROF(img::AbstractArray, lambda::Number, iterations::Integer)
     out
 end
 
+# morphological operations for ImageMeta
+dilate(img::ImageMeta, region=coords_spatial(img)) = shareproperties(img, dilate!(copy(data(img)), region))
+erode(img::ImageMeta, region=coords_spatial(img)) = shareproperties(img, erode!(copy(data(img)), region))
 
 # what are these `extr` functions? TODO: documentation
 
