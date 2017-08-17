@@ -5,7 +5,7 @@ chull = convexhull(img)
 Computes the convex hull of a binary image and returns the vertices of convex hull as a CartesianIndex array.
 """
 
-function convexhull{T<:Union{Bool,Gray{Bool}}}(img::AbstractArray{T, 2})
+function convexhull(img::AbstractArray{T, 2}) where T<:Union{Bool,Gray{Bool}}
 
     function getboundarypoints(img)
         points = CartesianIndex{2}[]

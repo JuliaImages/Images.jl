@@ -79,7 +79,7 @@ function kitchen_rosenfeld(img::AbstractArray; border::AbstractString = "replica
     map(kr, grad_x, grad_y, grad_xx, grad_xy, grad_yy)
 end
 
-function kr{T<:Real}(x::T, y::T, xx::T, xy::T, yy::T)
+function kr(x::T, y::T, xx::T, xy::T, yy::T) where T<:Real
     num = xx*y*y + yy*x*x - 2*xy*x*y
     denom = x*x + y*y
     ifelse(denom == 0, zero(num)/one(denom), -num/denom)
@@ -107,7 +107,7 @@ Performs FAST Corner Detection. `n` is the number of contiguous pixels
 which need to be greater (lesser) than intensity + threshold (intensity - threshold)
 for a pixel to be marked as a corner. The default value for n is 12.
 """
-function fastcorners{T}(img::AbstractArray{T}, n::Int = 12, threshold::Float64 = 0.15)
+function fastcorners(img::AbstractArray{T}, n::Int = 12, threshold::Float64 = 0.15) where T
     img_padded = padarray(img, Fill(0, (3,3)))
     corner = falses(size(img))
     R = CartesianRange(size(img))

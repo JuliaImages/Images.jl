@@ -6,9 +6,9 @@ Compat.@dep_vectorize_2arg Gray hypot
 """
 `M = meanfinite(img, region)` calculates the mean value along the dimensions listed in `region`, ignoring any non-finite values.
 """
-meanfinite{T<:Real}(A::AbstractArray{T}, region) = _meanfinite(A, T, region)
-meanfinite{CT<:Colorant}(A::AbstractArray{CT}, region) = _meanfinite(A, eltype(CT), region)
-function _meanfinite{T<:AbstractFloat}(A::AbstractArray, ::Type{T}, region)
+meanfinite(A::AbstractArray{T}, region) where {T<:Real} = _meanfinite(A, T, region)
+meanfinite(A::AbstractArray{CT}, region) where {CT<:Colorant} = _meanfinite(A, eltype(CT), region)
+function _meanfinite(A::AbstractArray, ::Type{T}, region) where T<:AbstractFloat
     inds = Base.reduced_indices(A, region)
     K = similar(Array{Int}, inds)
     S = similar(Array{eltype(A)}, inds)
@@ -33,7 +33,7 @@ value are included in the tallies of `S` and `K`.
 
 Note that the pixel mean is just S./K.
 """
-function sumfinite!{T,N}(S, K, A::AbstractArray{T,N})
+function sumfinite!(S, K, A::AbstractArray{T,N}) where {T,N}
     check_reducedims(S, A)
     isempty(A) && return S, K
     indices(S) == indices(K) || throw(DimensionMismatch("S and K must have identical indices"))
@@ -69,18 +69,14 @@ function sumfinite!{T,N}(S, K, A::AbstractArray{T,N})
     end
     S, K
 end
-if VERSION < v"0.6.0-dev.693"
-    _newindexer(shape, inds) = Base.Broadcast.newindexer(shape, inds)
-else
-    _newindexer(shape, inds) = Base.Broadcast.shapeindexer(shape, inds)
-end
+_newindexer(shape, inds) = Base.Broadcast.shapeindexer(shape, inds)
 
-function Base.var{C<:AbstractGray}(A::AbstractArray{C}; kwargs...)
+function Base.var(A::AbstractArray{C}; kwargs...) where C<:AbstractGray
     imgc = channelview(A)
     base_colorant_type(C)(var(imgc; kwargs...))
 end
 
-function Base.var{C<:Colorant,N}(A::AbstractArray{C,N}; kwargs...)
+function Base.var(A::AbstractArray{C,N}; kwargs...) where {C<:Colorant,N}
     imgc = channelview(A)
     colons = ntuple(d->Colon(), Val{N})
     inds1 = indices(imgc, 1)
@@ -93,7 +89,7 @@ function Base.var{C<:Colorant,N}(A::AbstractArray{C,N}; kwargs...)
     base_colorant_type(C)(vals...)
 end
 
-Base.std{C<:Colorant}(A::AbstractArray{C}; kwargs...) = mapc(sqrt, var(A; kwargs...))
+Base.std(A::AbstractArray{C}; kwargs...) where {C<:Colorant} = mapc(sqrt, var(A; kwargs...))
 
 # Entropy for grayscale (intensity) images
 function _log(kind::Symbol)
@@ -120,7 +116,7 @@ The base β of the logarithm (a.k.a. entropy unit) is one of the following:
 - `:hartley` (log base 10), or use logᵦ = log10
 """
 entropy(img::AbstractArray; kind=:shannon) = entropy(_log(kind), img)
-function entropy{Log<:Function}(logᵦ::Log, img)
+function entropy(logᵦ::Log, img) where Log<:Function
     hist = StatsBase.fit(Histogram, vec(img), nbins=256, closed=:right)
     counts = hist.weights
     p = counts / length(img)
@@ -140,13 +136,13 @@ function entropy(img::AbstractArray{Bool}; kind=:shannon)
     (0 < p < 1) ? - p*logᵦ(p) - (1-p)*logᵦ(1-p) : zero(p)
 end
 
-entropy{C<:AbstractGray}(img::AbstractArray{C}; kind=:shannon) = entropy(channelview(img), kind=kind)
+entropy(img::AbstractArray{C}; kind=:shannon) where {C<:AbstractGray} = entropy(channelview(img), kind=kind)
 
 # functions red, green, and blue
 for (funcname, fieldname) in ((:red, :r), (:green, :g), (:blue, :b))
     fieldchar = string(fieldname)[1]
     @eval begin
-        function $funcname{CV<:Color}(img::AbstractArray{CV})
+        function $funcname(img::AbstractArray{CV}) where CV<:Color
             T = eltype(CV)
             out = Array(T, size(img))
             for i = 1:length(img)
@@ -170,7 +166,7 @@ end
 """
 `m = minfinite(A)` calculates the minimum value in `A`, ignoring any values that are not finite (Inf or NaN).
 """
-function minfinite{T}(A::AbstractArray{T})
+function minfinite(A::AbstractArray{T}) where T
     ret = sentinel_min(T)
     for a in A
         ret = minfinite_scalar(a, ret)
@@ -188,7 +184,7 @@ end
 """
 `m = maxfinite(A)` calculates the maximum value in `A`, ignoring any values that are not finite (Inf or NaN).
 """
-function maxfinite{T}(A::AbstractArray{T})
+function maxfinite(A::AbstractArray{T}) where T
     ret = sentinel_max(T)
     for a in A
         ret = maxfinite_scalar(a, ret)
@@ -206,7 +202,7 @@ end
 """
 `m = maxabsfinite(A)` calculates the maximum absolute value in `A`, ignoring any values that are not finite (Inf or NaN).
 """
-function maxabsfinite{T}(A::AbstractArray{T})
+function maxabsfinite(A::AbstractArray{T}) where T
     ret = sentinel_min(typeof(abs(A[1])))
     for a in A
         ret = maxfinite_scalar(abs(a), ret)
@@ -214,36 +210,36 @@ function maxabsfinite{T}(A::AbstractArray{T})
     ret
 end
 
-minfinite_scalar{T}(a::T, b::T) = isfinite(a) ? (b < a ? b : a) : b
-maxfinite_scalar{T}(a::T, b::T) = isfinite(a) ? (b > a ? b : a) : b
-minfinite_scalar{T<:Union{Integer,FixedPoint}}(a::T, b::T) = b < a ? b : a
-maxfinite_scalar{T<:Union{Integer,FixedPoint}}(a::T, b::T) = b > a ? b : a
+minfinite_scalar(a::T, b::T) where {T} = isfinite(a) ? (b < a ? b : a) : b
+maxfinite_scalar(a::T, b::T) where {T} = isfinite(a) ? (b > a ? b : a) : b
+minfinite_scalar(a::T, b::T) where {T<:Union{Integer,FixedPoint}} = b < a ? b : a
+maxfinite_scalar(a::T, b::T) where {T<:Union{Integer,FixedPoint}} = b > a ? b : a
 minfinite_scalar(a, b) = minfinite_scalar(promote(a, b)...)
 maxfinite_scalar(a, b) = maxfinite_scalar(promote(a, b)...)
 
-function minfinite_scalar{C<:AbstractRGB}(c1::C, c2::C)
+function minfinite_scalar(c1::C, c2::C) where C<:AbstractRGB
     C(minfinite_scalar(c1.r, c2.r),
       minfinite_scalar(c1.g, c2.g),
       minfinite_scalar(c1.b, c2.b))
 end
-function maxfinite_scalar{C<:AbstractRGB}(c1::C, c2::C)
+function maxfinite_scalar(c1::C, c2::C) where C<:AbstractRGB
     C(maxfinite_scalar(c1.r, c2.r),
       maxfinite_scalar(c1.g, c2.g),
       maxfinite_scalar(c1.b, c2.b))
 end
 
-sentinel_min{T<:Union{Integer,FixedPoint}}(::Type{T}) = typemax(T)
-sentinel_max{T<:Union{Integer,FixedPoint}}(::Type{T}) = typemin(T)
-sentinel_min{T<:AbstractFloat}(::Type{T}) = convert(T, NaN)
-sentinel_max{T<:AbstractFloat}(::Type{T}) = convert(T, NaN)
-sentinel_min{C<:AbstractRGB}(::Type{C}) = _sentinel_min(C, eltype(C))
-_sentinel_min{C<:AbstractRGB,T}(::Type{C},::Type{T}) = (s = sentinel_min(T); C(s,s,s))
-sentinel_max{C<:AbstractRGB}(::Type{C}) = _sentinel_max(C, eltype(C))
-_sentinel_max{C<:AbstractRGB,T}(::Type{C},::Type{T}) = (s = sentinel_max(T); C(s,s,s))
-sentinel_min{C<:AbstractGray}(::Type{C}) = _sentinel_min(C, eltype(C))
-_sentinel_min{C<:AbstractGray,T}(::Type{C},::Type{T}) = C(sentinel_min(T))
-sentinel_max{C<:AbstractGray}(::Type{C}) = _sentinel_max(C, eltype(C))
-_sentinel_max{C<:AbstractGray,T}(::Type{C},::Type{T}) = C(sentinel_max(T))
+sentinel_min(::Type{T}) where {T<:Union{Integer,FixedPoint}} = typemax(T)
+sentinel_max(::Type{T}) where {T<:Union{Integer,FixedPoint}} = typemin(T)
+sentinel_min(::Type{T}) where {T<:AbstractFloat} = convert(T, NaN)
+sentinel_max(::Type{T}) where {T<:AbstractFloat} = convert(T, NaN)
+sentinel_min(::Type{C}) where {C<:AbstractRGB} = _sentinel_min(C, eltype(C))
+_sentinel_min(::Type{C},::Type{T}) where {C<:AbstractRGB,T} = (s = sentinel_min(T); C(s,s,s))
+sentinel_max(::Type{C}) where {C<:AbstractRGB} = _sentinel_max(C, eltype(C))
+_sentinel_max(::Type{C},::Type{T}) where {C<:AbstractRGB,T} = (s = sentinel_max(T); C(s,s,s))
+sentinel_min(::Type{C}) where {C<:AbstractGray} = _sentinel_min(C, eltype(C))
+_sentinel_min(::Type{C},::Type{T}) where {C<:AbstractGray,T} = C(sentinel_min(T))
+sentinel_max(::Type{C}) where {C<:AbstractGray} = _sentinel_max(C, eltype(C))
+_sentinel_max(::Type{C},::Type{T}) where {C<:AbstractGray,T} = C(sentinel_max(T))
 
 
 # FIXME: replace with IntegralImage
@@ -288,41 +284,41 @@ ssd(A::AbstractArray, B::AbstractArray) = sumdiff(abs2, A, B)
 "`s = sad(A, B)` computes the sum-of-absolute differences over arrays/images A and B"
 sad(A::AbstractArray, B::AbstractArray) = sumdiff(abs, A, B)
 
-difftype{T<:Integer}(::Type{T}) = Int
-difftype{T<:Real}(::Type{T}) = Float32
+difftype(::Type{T}) where {T<:Integer} = Int
+difftype(::Type{T}) where {T<:Real} = Float32
 difftype(::Type{Float64}) = Float64
-difftype{CV<:Colorant}(::Type{CV}) = difftype(CV, eltype(CV))
-difftype{CV<:RGBA,T<:Real}(::Type{CV}, ::Type{T}) = RGBA{Float32}
-difftype{CV<:RGBA}(::Type{CV}, ::Type{Float64}) = RGBA{Float64}
-difftype{CV<:BGRA,T<:Real}(::Type{CV}, ::Type{T}) = BGRA{Float32}
-difftype{CV<:BGRA}(::Type{CV}, ::Type{Float64}) = BGRA{Float64}
-difftype{CV<:AbstractGray,T<:Real}(::Type{CV}, ::Type{T}) = Gray{Float32}
-difftype{CV<:AbstractGray}(::Type{CV}, ::Type{Float64}) = Gray{Float64}
-difftype{CV<:AbstractRGB,T<:Real}(::Type{CV}, ::Type{T}) = RGB{Float32}
-difftype{CV<:AbstractRGB}(::Type{CV}, ::Type{Float64}) = RGB{Float64}
+difftype(::Type{CV}) where {CV<:Colorant} = difftype(CV, eltype(CV))
+difftype(::Type{CV}, ::Type{T}) where {CV<:RGBA,T<:Real} = RGBA{Float32}
+difftype(::Type{CV}, ::Type{Float64}) where {CV<:RGBA} = RGBA{Float64}
+difftype(::Type{CV}, ::Type{T}) where {CV<:BGRA,T<:Real} = BGRA{Float32}
+difftype(::Type{CV}, ::Type{Float64}) where {CV<:BGRA} = BGRA{Float64}
+difftype(::Type{CV}, ::Type{T}) where {CV<:AbstractGray,T<:Real} = Gray{Float32}
+difftype(::Type{CV}, ::Type{Float64}) where {CV<:AbstractGray} = Gray{Float64}
+difftype(::Type{CV}, ::Type{T}) where {CV<:AbstractRGB,T<:Real} = RGB{Float32}
+difftype(::Type{CV}, ::Type{Float64}) where {CV<:AbstractRGB} = RGB{Float64}
 
-accum{T<:Integer}(::Type{T}) = Int
+accum(::Type{T}) where {T<:Integer} = Int
 accum(::Type{Float32})    = Float32
-accum{T<:Real}(::Type{T}) = Float64
-accum{C<:Colorant}(::Type{C}) = base_colorant_type(C){accum(eltype(C))}
+accum(::Type{T}) where {T<:Real} = Float64
+accum(::Type{C}) where {C<:Colorant} = base_colorant_type(C){accum(eltype(C))}
 
-graytype{T<:Number}(::Type{T}) = T
-graytype{C<:AbstractGray}(::Type{C}) = C
-graytype{C<:Colorant}(::Type{C}) = Gray{eltype(C)}
+graytype(::Type{T}) where {T<:Number} = T
+graytype(::Type{C}) where {C<:AbstractGray} = C
+graytype(::Type{C}) where {C<:Colorant} = Gray{eltype(C)}
 
 # normalized by Array size
 "`s = ssdn(A, B)` computes the sum-of-squared differences over arrays/images A and B, normalized by array size"
-ssdn{T}(A::AbstractArray{T}, B::AbstractArray{T}) = ssd(A, B)/length(A)
+ssdn(A::AbstractArray{T}, B::AbstractArray{T}) where {T} = ssd(A, B)/length(A)
 
 # normalized by Array size
 "`s = sadn(A, B)` computes the sum-of-absolute differences over arrays/images A and B, normalized by array size"
-sadn{T}(A::AbstractArray{T}, B::AbstractArray{T}) = sad(A, B)/length(A)
+sadn(A::AbstractArray{T}, B::AbstractArray{T}) where {T} = sad(A, B)/length(A)
 
 # normalized cross correlation
 """
 `C = ncc(A, B)` computes the normalized cross-correlation of `A` and `B`.
 """
-function ncc{T}(A::AbstractArray{T}, B::AbstractArray{T})
+function ncc(A::AbstractArray{T}, B::AbstractArray{T}) where T
     Am = (A.-mean(A))[:]
     Bm = (B.-mean(B))[:]
     return dot(Am,Bm)/(norm(Am)*norm(Bm))
@@ -351,10 +347,10 @@ end
 #   sigma: tuple of ints... how many pixels to blur
 #   eps: error allowance
 # returns: percentage difference on match, error otherwise
-function test_approx_eq_sigma_eps{T<:Real}(A::AbstractArray, B::AbstractArray,
-                                  sigma::AbstractVector{T} = ones(ndims(A)),
-                                  eps::AbstractFloat = 1e-2,
-                                  expand_arrays::Bool = true)
+function test_approx_eq_sigma_eps(A::AbstractArray, B::AbstractArray,
+                         sigma::AbstractVector{T} = ones(ndims(A)),
+                         eps::AbstractFloat = 1e-2,
+                         expand_arrays::Bool = true) where T<:Real
     if size(A) != size(B)
         if expand_arrays
             newsize = map(max, size(A), size(B))
@@ -395,7 +391,7 @@ Note that the radius is equal to σ√2.
 
 See also: [`blob_LoG`](@ref).
 """
-immutable BlobLoG{T,S,N}
+struct BlobLoG{T,S,N}
     location::CartesianIndex{N}
     σ::S
     amplitude::T
@@ -423,8 +419,8 @@ International Journal of Computer Vision, 30(2), 79–116.
 
 See also: [`BlobLoG`](@ref).
 """
-function blob_LoG{T,N}(img::AbstractArray{T,N}, σscales::Union{AbstractVector,Tuple},
-                       edges::Tuple{Vararg{Bool}}=(true, ntuple(d->false, Val{N})...), σshape=ntuple(d->1, Val{N}))
+function blob_LoG(img::AbstractArray{T,N}, σscales::Union{AbstractVector,Tuple},
+                  edges::Tuple{Vararg{Bool}}=(true, ntuple(d->false, Val{N})...), σshape=ntuple(d->1, Val{N})) where {T,N}
     sigmas = sort(σscales)
     img_LoG = Array{Float64}(length(sigmas), size(img)...)
     colons = ntuple(d->Colon(), Val{N})
@@ -434,15 +430,15 @@ function blob_LoG{T,N}(img::AbstractArray{T,N}, σscales::Union{AbstractVector,T
     maxima = findlocalmaxima(img_LoG, 1:ndims(img_LoG), edges)
     [BlobLoG(CartesianIndex(tail(x.I)), sigmas[x[1]], img_LoG[x]) for x in maxima]
 end
-blob_LoG{T,N}(img::AbstractArray{T,N}, σscales, edges::Bool, σshape=ntuple(d->1, Val{N})) =
+blob_LoG(img::AbstractArray{T,N}, σscales, edges::Bool, σshape=ntuple(d->1, Val{N})) where {T,N} =
     blob_LoG(img, σscales, (edges, ntuple(d->edges,Val{N})...), σshape)
 
-blob_LoG{T,N}(img::AbstractArray{T,N}, σscales, σshape=ntuple(d->1, Val{N})) =
+blob_LoG(img::AbstractArray{T,N}, σscales, σshape=ntuple(d->1, Val{N})) where {T,N} =
     blob_LoG(img, σscales, (true, ntuple(d->false,Val{N})...), σshape)
 
-findlocalextrema{T,N}(img::AbstractArray{T,N}, region, edges::Bool, order) = findlocalextrema(img, region, ntuple(d->edges,Val{N}), order)
+findlocalextrema(img::AbstractArray{T,N}, region, edges::Bool, order) where {T,N} = findlocalextrema(img, region, ntuple(d->edges,Val{N}), order)
 
-function findlocalextrema{T<:Union{Gray,Number},N}(img::AbstractArray{T,N}, region::Union{Tuple{Int,Vararg{Int}},Vector{Int},UnitRange{Int},Int}, edges::NTuple{N,Bool}, order::Base.Order.Ordering)
+function findlocalextrema(img::AbstractArray{T,N}, region::Union{Tuple{Int,Vararg{Int}},Vector{Int},UnitRange{Int},Int}, edges::NTuple{N,Bool}, order::Base.Order.Ordering) where {T<:Union{Gray,Number},N}
     issubset(region,1:ndims(img)) || throw(ArgumentError("invalid region"))
     extrema = Array{CartesianIndex{N}}(0)
     edgeoffset = CartesianIndex(map(!, edges))
@@ -504,7 +500,7 @@ function restrict(img::ImageMeta, region::Dims)
     shareproperties(img, restrict(data(img), region))
 end
 
-function restrict{T,N}(img::AxisArray{T,N}, region::Dims)
+function restrict(img::AxisArray{T,N}, region::Dims) where {T,N}
     inregion = falses(ndims(img))
     inregion[[region...]] = true
     inregiont = (inregion...,)::NTuple{N,Bool}
@@ -512,17 +508,17 @@ function restrict{T,N}(img::AxisArray{T,N}, region::Dims)
 end
 
 # FIXME: this doesn't get inferred, but it should be (see issue #628)
-function restrict{Ax}(img::Union{AxisArray,ImageMetaAxis}, ::Type{Ax})
+function restrict(img::Union{AxisArray,ImageMetaAxis}, ::Type{Ax}) where Ax
     A = restrict(img.data, axisdim(img, Ax))
     AxisArray(A, replace_axis(modax(img[Ax]), axes(img)))
 end
 
 replace_axis(newax, axs) = _replace_axis(newax, axnametype(newax), axs...)
-@inline _replace_axis{Ax}(newax, ::Type{Ax}, ax::Ax, axs...) = (newax, _replace_axis(newax, Ax, axs...)...)
-@inline _replace_axis{Ax}(newax, ::Type{Ax}, ax, axs...) = (ax, _replace_axis(newax, Ax, axs...)...)
-_replace_axis{Ax}(newax, ::Type{Ax}) = ()
+@inline _replace_axis(newax, ::Type{Ax}, ax::Ax, axs...) where {Ax} = (newax, _replace_axis(newax, Ax, axs...)...)
+@inline _replace_axis(newax, ::Type{Ax}, ax, axs...) where {Ax} = (ax, _replace_axis(newax, Ax, axs...)...)
+_replace_axis(newax, ::Type{Ax}) where {Ax} = ()
 
-axnametype{name}(ax::Axis{name}) = Axis{name}
+axnametype(ax::Axis{name}) where {name} = Axis{name}
 
 function modax(ax)
     v = ax.val
@@ -533,7 +529,7 @@ end
 modax(ax, inregion::Bool) = inregion ? modax(ax) : ax
 
 
-function imlineardiffusion{T}(img::Array{T,2}, dt::AbstractFloat, iterations::Integer)
+function imlineardiffusion(img::Array{T,2}, dt::AbstractFloat, iterations::Integer) where T
     u = img
     f = imlaplacian()
     for i = dt:dt:dt*iterations
@@ -542,21 +538,21 @@ function imlineardiffusion{T}(img::Array{T,2}, dt::AbstractFloat, iterations::In
     u
 end
 
-function imgaussiannoise{T}(img::AbstractArray{T}, variance::Number, mean::Number)
+function imgaussiannoise(img::AbstractArray{T}, variance::Number, mean::Number) where T
     return img + sqrt(variance)*randn(size(img)) + mean
 end
 
-imgaussiannoise{T}(img::AbstractArray{T}, variance::Number) = imgaussiannoise(img, variance, 0)
-imgaussiannoise{T}(img::AbstractArray{T}) = imgaussiannoise(img, 0.01, 0)
+imgaussiannoise(img::AbstractArray{T}, variance::Number) where {T} = imgaussiannoise(img, variance, 0)
+imgaussiannoise(img::AbstractArray{T}) where {T} = imgaussiannoise(img, 0.01, 0)
 
 # image gradients
 
 # forward and backward differences
 # can be very helpful for discretized continuous models
-forwarddiffy{T}(u::Array{T,2}) = [u[2:end,:]; u[end,:]] - u
-forwarddiffx{T}(u::Array{T,2}) = [u[:,2:end] u[:,end]] - u
-backdiffy{T}(u::Array{T,2}) = u - [u[1,:]; u[1:end-1,:]]
-backdiffx{T}(u::Array{T,2}) = u - [u[:,1] u[:,1:end-1]]
+forwarddiffy(u::Array{T,2}) where {T} = [u[2:end,:]; u[end,:]] - u
+forwarddiffx(u::Array{T,2}) where {T} = [u[:,2:end] u[:,end]] - u
+backdiffy(u::Array{T,2}) where {T} = u - [u[1,:]; u[1:end-1,:]]
+backdiffx(u::Array{T,2}) where {T} = u - [u[:,1] u[:,1:end-1]]
 
 """
 ```
@@ -568,7 +564,7 @@ Variation (TV) denoising or TV regularization. `lambda` is the regularization
 coefficient for the derivative, and `iterations` is the number of relaxation
 iterations taken. 2d only.
 """
-function imROF{T}(img::Array{T,2}, lambda::Number, iterations::Integer)
+function imROF(img::Array{T,2}, lambda::Number, iterations::Integer) where T
     # Total Variation regularized image denoising using the primal dual algorithm
     # Also called Rudin Osher Fatemi (ROF) model
     # lambda: regularization parameter
@@ -719,10 +715,10 @@ references of the integral image, irrespective of the size of the window, given 
 
 The sum of pixels in the area denoted by * is given by S = D + A - B - C.
 """
-boxdiff{T}(int_img::AbstractArray{T, 2}, y::UnitRange, x::UnitRange) = boxdiff(int_img, y.start, x.start, y.stop, x.stop)
-boxdiff{T}(int_img::AbstractArray{T, 2}, tl::CartesianIndex, br::CartesianIndex) = boxdiff(int_img, tl[1], tl[2], br[1], br[2])
+boxdiff(int_img::AbstractArray{T, 2}, y::UnitRange, x::UnitRange) where {T} = boxdiff(int_img, y.start, x.start, y.stop, x.stop)
+boxdiff(int_img::AbstractArray{T, 2}, tl::CartesianIndex, br::CartesianIndex) where {T} = boxdiff(int_img, tl[1], tl[2], br[1], br[2])
 
-function boxdiff{T}(int_img::AbstractArray{T, 2}, tl_y::Integer, tl_x::Integer, br_y::Integer, br_x::Integer)
+function boxdiff(int_img::AbstractArray{T, 2}, tl_y::Integer, tl_x::Integer, br_y::Integer, br_x::Integer) where T
     sum = int_img[br_y, br_x]
     sum -= tl_x > 1 ? int_img[br_y, tl_x - 1] : zero(T)
     sum -= tl_y > 1 ? int_img[tl_y - 1, br_x] : zero(T)
@@ -742,7 +738,7 @@ The interpolation is done in one direction first and then the values obtained
 are used to do the interpolation in the second direction.
 
 """
-function bilinear_interpolation{T}(img::AbstractArray{T, 2}, y::Number, x::Number)
+function bilinear_interpolation(img::AbstractArray{T, 2}, y::Number, x::Number) where T
     y_min = floor(Int, y)
     x_min = floor(Int, x)
     y_max = ceil(Int, y)
@@ -769,11 +765,7 @@ function bilinear_interpolation{T}(img::AbstractArray{T, 2}, y::Number, x::Numbe
 
 end
 
-if VERSION < v"0.5.0-dev+4754"
-    chkbounds(::Type{Bool}, img, x, y)  = checkbounds(Bool, size(img, 1), y) && checkbounds(Bool, size(img, 2), x)
-else
-    chkbounds(::Type{Bool}, img, x, y) = checkbounds(Bool, img, x, y)
-end
+chkbounds(::Type{Bool}, img, x, y) = checkbounds(Bool, img, x, y)
 
 """
 ```
@@ -784,13 +776,13 @@ Returns a  gaussian pyramid of scales `n_scales`, each downsampled
 by a factor `downsample` and `sigma` for the gaussian kernel.
 
 """
-function gaussian_pyramid{T,N}(img::AbstractArray{T,N}, n_scales::Int, downsample::Real, sigma::Real)
+function gaussian_pyramid(img::AbstractArray{T,N}, n_scales::Int, downsample::Real, sigma::Real) where {T,N}
     kerng = KernelFactors.IIRGaussian(sigma)
     kern = ntuple(d->kerng, Val{N})
     gaussian_pyramid(img, n_scales, downsample, kern)
 end
 
-function gaussian_pyramid{T,N}(img::AbstractArray{T,N}, n_scales::Int, downsample::Real, kern::NTuple{N,Any})
+function gaussian_pyramid(img::AbstractArray{T,N}, n_scales::Int, downsample::Real, kern::NTuple{N,Any}) where {T,N}
     # To guarantee inferability, we make sure that we do at least one
     # round of smoothing and resizing
     img_smoothed_main = imfilter(img, kern, NA())
@@ -829,7 +821,7 @@ Parameters:
 -    bins        = Number of bins used to compute the histogram. Needed for floating-point images.
 
 """
-function otsu_threshold{T<:Union{Gray,Real}, N}(img::AbstractArray{T, N}, bins::Int = 256)
+function otsu_threshold(img::AbstractArray{T, N}, bins::Int = 256) where {T<:Union{Gray,Real}, N}
 
     min, max = extrema(img)
     edges, counts = imhist(img, linspace(gray(min), gray(max), bins))
