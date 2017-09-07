@@ -376,7 +376,7 @@ end
 
 """
 ```
-canny_edges = canny(img, sigma = 1.4, upperThreshold = 0.80, lowerThreshold = 0.20)
+canny_edges = canny(img, (upper, lower), sigma=1.4)
 ```
 
 Performs Canny Edge Detection on the input image.
@@ -386,6 +386,11 @@ Parameters :
   (upper, lower) :  Bounds for hysteresis thresholding
   sigma :           Specifies the standard deviation of the gaussian filter
 
+# Example
+
+```julia
+imgedg = canny(img, (Percentile(80), Percentile(20)))
+```
 """
 function canny(img_gray::AbstractMatrix{T}, threshold::Tuple{N,N}, sigma::Number = 1.4) where {T<:NumberLike, N<:Union{NumberLike,Percentile{NumberLike}}}
     img_grayf = imfilter(img_gray, KernelFactors.IIRGaussian((sigma,sigma)), NA())
@@ -402,7 +407,8 @@ function canny(img_gray::AbstractMatrix{T}, threshold::Tuple{N,N}, sigma::Number
     edges
 end
 
-canny(img::AbstractMatrix, args...) = canny(convert(Array{Gray}, img), args...)
+canny(img::AbstractMatrix, threshold::Tuple{N,N}, args...) where {N<:Union{NumberLike,Percentile{NumberLike}}} =
+    canny(convert(Array{Gray}, img), args...)
 
 function hysteresis_thresholding(img_nonMaxSup::AbstractArray{T, 2}, upperThreshold::Number, lowerThreshold::Number) where T
     img_thresholded = map(i -> i > lowerThreshold ? i > upperThreshold ? 1.0 : 0.5 : 0.0, img_nonMaxSup)

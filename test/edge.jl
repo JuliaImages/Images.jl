@@ -121,6 +121,10 @@ global checkboard
         @test all(thresholded[:, 1:2] .== 0.9)
         @test all(thresholded[8:10, :] .== 0.9)
         @test all(thresholded[:, 8:10] .== 0.9)
+
+        # Issue #665
+        @test_throws MethodError canny(rand(4, 5))
+        @test isa(canny(rand(4, 5), (0.8, 0.2)), Matrix{Bool})
     end
 
     SZ=5
