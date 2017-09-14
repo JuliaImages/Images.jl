@@ -1,107 +1,88 @@
-__precompile__(true)
+__precompile__(true)  # because of ImageAxes/ImageMeta
 
 module Images
 
-VERSION >= v"0.4.0" && import Base.take
-import Base.Order: Ordering, ForwardOrdering, ReverseOrdering
-import Base: ==, .==, +, -, *, /, .+, .-, .*, ./, .^, .<, .>
-import Base: atan2, clamp, convert, copy, copy!, ctranspose, delete!, done,
-             eltype, fft, float32, float64, get, getindex, haskey, hypot,
-             ifft, length, linearindexing, map, map!, maximum, mimewritable,
-             minimum, next, ndims, one, parent, permutedims, reinterpret, resize!,
-             setindex!, show, showcompact, similar, size, slice, sqrt, squeeze,
-             start, strides, sub, sum, write, writemime, zero
+import Base.Iterators.take
+import Base: +, -, *
+import Base: abs, atan2, clamp, convert, copy, copy!, ctranspose, delete!,
+             eltype, fft, get, getindex, haskey, hypot,
+             ifft, imag, length, linearindexing, map, map!, maximum, mimewritable,
+             minimum, ndims, one, parent, permutedims, real, reinterpret,
+             reshape, resize!,
+             setindex!, show, showcompact, similar, size, sqrt, squeeze,
+             strides, sum, write, zero
+
+export float32, float64
+
+using Base: depwarn
+using Base.Order: Ordering, ForwardOrdering, ReverseOrdering
+
+using Compat
+
 # "deprecated imports" are below
 
-using Colors, ColorVectorSpace, FixedPointNumbers, FileIO
+using Reexport
+@reexport using FixedPointNumbers
+@reexport using Colors
+using ColorVectorSpace, FileIO
+export load, save
 import Colors: Fractional, red, green, blue
-typealias AbstractGray{T}                    Color{T,1}
-typealias TransparentRGB{C<:AbstractRGB,T}   TransparentColor{C,T,4}
-typealias TransparentGray{C<:AbstractGray,T} TransparentColor{C,T,2}
-using Graphics
+const AbstractGray{T}                    = Color{T,1}
+const TransparentRGB{C<:AbstractRGB,T}   = TransparentColor{C,T,4}
+const TransparentGray{C<:AbstractGray,T} = TransparentColor{C,T,2}
+const NumberLike = Union{Number,AbstractGray}
+const RealLike = Union{Real,AbstractGray}
+import Graphics
 import Graphics: width, height, Point
-import FixedPointNumbers: ufixed8, ufixed10, ufixed12, ufixed14, ufixed16
-
-using Base.Cartesian
-include("compatibility/forcartesian.jl")
-
-# if isdefined(module_parent(Images), :Grid)
-#     import ..Grid.restrict
-# end
+using StatsBase  # TODO: eliminate this dependency
+using IndirectArrays, MappedArrays
+using Compat.TypeUtils
 
 const is_little_endian = ENDIAN_BOM == 0x04030201
-immutable TypeConst{N} end  # for passing compile-time constants to functions
 
-include("core.jl")
-include("map.jl")
-include("overlays.jl")
+@reexport using ImageCore
+@reexport using ImageTransformations
+@reexport using ImageAxes
+@reexport using ImageMetadata
+@reexport using ImageFiltering
+@reexport using ImageMorphology
+
+using ImageMetadata: ImageMetaAxis
+import ImageMorphology: dilate, erode
+import ImageTransformations: restrict
+
+using Base.Cartesian  # TODO: delete this
+
+"""
+    Percentile(x)
+
+Indicate that `x` should be interpreted as a [percentile](https://en.wikipedia.org/wiki/Percentile) rather than an absolute value. For example,
+
+- `canny(img, 1.4, (80, 20))` uses absolute thresholds on the edge magnitude image
+- `canny(img, 1.4, (Percentile(80), Percentile(20)))` uses percentiles of the edge magnitude image as threshold
+"""
+struct Percentile{T} <: Real p::T end
+
 include("labeledarrays.jl")
 include("algorithms.jl")
+include("exposure.jl")
 include("connected.jl")
 include("edge.jl")
-include("writemime.jl")
+include("showmime.jl")
+include("juno.jl")
 include("corner.jl")
 include("distances.jl")
-
-
-function precompile()
-    for T in (UInt8, UInt16, Int, Float32, Float64)
-        Tdiv = typeof(one(T)/2)
-        for N = 2:3
-            precompile(restrict!, (Array{Tdiv, N}, Array{T,N}, Int))
-            precompile(imfilter, (Array{T,N}, Array{Float64,N}))
-            precompile(imfilter, (Array{T,N}, Array{Float64,2}))
-            precompile(imfilter, (Array{T,N}, Array{Float32,N}))
-            precompile(imfilter, (Array{T,N}, Array{Float32,2}))
-        end
-    end
-    for T in (Float32, Float64)
-        for N = 2:3
-            precompile(_imfilter_gaussian!, (Array{T,N}, Vector{Float64}))
-            precompile(_imfilter_gaussian!, (Array{T,N}, Vector{Int}))
-            precompile(imfilter_gaussian_no_nans!, (Array{T,N}, Vector{Float64}))
-            precompile(imfilter_gaussian_no_nans!, (Array{T,N}, Vector{Int}))
-            precompile(fft, (Array{T,N},))
-        end
-    end
-    for T in (Complex{Float32}, Complex{Float64})
-        for N = 2:3
-            precompile(ifft, (Array{T,N},))
-        end
-    end
-end
+include("bwdist.jl")
+using .FeatureTransform
+include("convexhull.jl")
 
 export # types
-    AbstractImage,
-    AbstractImageDirect,
-    AbstractImageIndexed,
-    Image,
-    ImageCmap,
-    BitShift,
-    ClampMin,
-    ClampMax,
-    ClampMinMax,
-    Clamp,
-    Clamp01NaN,
-    LabeledArray,
-    MapInfo,
-    MapNone,
-    Overlay,
-    OverlayImage,
-    ScaleAutoMinMax,
-    ScaleMinMax,
-    ScaleMinMaxNaN,
-    ScaleSigned,
-    SliceData,
+    BlobLoG,
+    ColorizedArray,
+    Percentile,
 
     # macros
     @test_approx_eq_sigma_eps,
-
-    # constants
-    palette_fire,
-    palette_gray32,
-    palette_gray64,
-    palette_rainbow,
 
     # core functions
     assert2d,
@@ -111,12 +92,9 @@ export # types
     assert_yfirst,
     colordim,
     colorspace,
-    coords,
     coords_spatial,
     copyproperties,
     data,
-    dimindex,
-    dimindexes,
     getindexim,
     grayim,
     colorim,
@@ -151,43 +129,21 @@ export # types
     widthheight,
     raw,
 
-    # iterator functions
-    first_index,
-    iterate_spatial,
-    parent,
-
     # color-related functions
-    imadjustintensity,
-    indexedcolor,
-    lut,
     separate,
-    uint32color,
-    uint32color!,
 
     # Scaling of intensity
     sc,
     scale,
     mapinfo,
-    uint8sc,
-    uint16sc,
-    uint32sc,
     ufixed8sc,
     ufixedsc,
 
-    # flip dimensions
-    flipx,
-    flipy,
-    flipz,
-
     # algorithms
-    ando3,
-    ando4,
-    ando5,
     backdiffx,
     backdiffy,
     dilate,
     erode,
-    extrema_filter,
     opening,
     closing,
     tophat,
@@ -196,28 +152,38 @@ export # types
     morpholaplace,
     forwarddiffx,
     forwarddiffy,
-    gaussian2d,
-    imaverage,
-    imcomplement,
     imcorner,
-    imdog,
-    imedge,
-    imfilter,
-    imfilter!,
-    imfilter_fft,
-    imfilter_gaussian,
-    imfilter_gaussian!,
+    harris,
+    shi_tomasi,
+    kitchen_rosenfeld,
+    fastcorners,
+    meancovs,
+    gammacovs,
+    imedge,  # TODO: deprecate?
     imfilter_LoG,
     blob_LoG,
     findlocalmaxima,
     findlocalminima,
     imgaussiannoise,
-    imgradients,
-    imlaplacian,
     imlineardiffusion,
-    imlog,
     imROF,
+    feature_transform,
+    distance_transform,
+    convexhull,
+    otsu_threshold,
+
+    #Exposure
+    complement,
+    imhist,
+    histeq,
+    adjust_gamma,
+    histmatch,
+    clahe,
+    imadjustintensity,
     imstretch,
+    cliphist,
+
+
 #     imthresh,
     label_components,
     label_components!,
@@ -234,16 +200,19 @@ export # types
     orientation,
     padarray,
     phase,
-    prewitt,
     sad,
     sadn,
-    sobel,
     ssd,
     ssdn,
     thin_edges,
     thin_edges_subpix,
     thin_edges_nonmaxsup,
     thin_edges_nonmaxsup_subpix,
+    canny,
+    integral_image,
+    boxdiff,
+    bilinear_interpolation,
+    gaussian_pyramid,
 
     # distances
     hausdorff_distance,
@@ -251,52 +220,39 @@ export # types
     # phantoms
     shepp_logan
 
+_length(A::AbstractArray) = length(linearindices(A))
+_length(A) = length(A)
 
 """
-`Images` is a package for representing and processing images.
-
 Constructors, conversions, and traits:
 
-    - Construction: `Image`, `ImageCmap`, `grayim`, `colorim`, `convert`, `copyproperties`, `shareproperties`
-    - Traits: `colordim`, `colorspace`, `coords_spatial`, `data`, `isdirect`, `isxfirst`, `isyfirst`, `pixelspacing`, `properties`, `sdims`, `spacedirections`, `spatialorder`, `storageorder`, `timedim`
-    - Size-related traits: `height`, `nchannels`, `ncolorelem`, `nimages`, `size_spatial`, `width`, `widthheight`
-    - Trait assertions: `assert_2d`, `assert_scalar_color`, `assert_timedim_last`, `assert_xfirst`, `assert_yfirst`
-    - Indexing operations: `getindexim`, `sliceim`, `subim`
-    - Conversions: `convert`, `raw`, `reinterpret`, `separate`
+    - Construction: use constructors of specialized packages, e.g., `AxisArray`, `ImageMeta`, etc.
+    - "Conversion": `colorview`, `channelview`, `rawview`, `normedview`, `permuteddimsview`
+    - Traits: `pixelspacing`, `sdims`, `timeaxis`, `timedim`, `spacedirections`
 
 Contrast/coloration:
 
-    - `MapInfo`: `MapNone`, `BitShift`, `ClampMinMax`, `ScaleMinMax`, `ScaleAutoMinMax`, etc.
-    - `imadjustintensity`, `sc`, `imstretch`, `imcomplement`
-
+    - `clamp01`, `clamp01nan`, `scaleminmax`, `colorsigned`, `scalesigned`
 
 Algorithms:
 
-    - Reductions: `maxfinite`, `maxabsfinite`, `minfinite`, `meanfinite`, `sad`, `ssd`
+    - Reductions: `maxfinite`, `maxabsfinite`, `minfinite`, `meanfinite`, `sad`, `ssd`, `integral_image`, `boxdiff`, `gaussian_pyramid`
     - Resizing: `restrict`, `imresize` (not yet exported)
-    - Filtering: `imfilter`, `imfilter_fft`, `imfilter_gaussian`, `imfilter_LoG`, `imROF`, `ncc`, `padarray`
-    - Filtering kernels: `ando[345]`, `guassian2d`, `imaverage`, `imdog`, `imlaplacian`, `prewitt`, `sobel`
+    - Filtering: `imfilter`, `imfilter!`, `imfilter_LoG`, `mapwindow`, `imROF`, `padarray`
+    - Filtering kernels: `Kernel.` or `KernelFactors.`, followed by `ando[345]`, `guassian2d`, `imaverage`, `imdog`, `imlaplacian`, `prewitt`, `sobel`
+    - Exposure : `imhist`, `histeq`, `adjust_gamma`, `histmatch`, `imadjustintensity`, `imstretch`, `imcomplement`, `clahe`, `cliphist`
     - Gradients: `backdiffx`, `backdiffy`, `forwarddiffx`, `forwarddiffy`, `imgradients`
-    - Edge detection: `imedge`, `imgradients`, `thin_edges`, `magnitude`, `phase`, `magnitudephase`, `orientation`
-    - Corner detection: `imcorner`
+    - Edge detection: `imedge`, `imgradients`, `thin_edges`, `magnitude`, `phase`, `magnitudephase`, `orientation`, `canny`
+    - Corner detection: `imcorner`, `harris`, `shi_tomasi`, `kitchen_rosenfeld`, `meancovs`, `gammacovs`, `fastcorners`
     - Blob detection: `blob_LoG`, `findlocalmaxima`, `findlocalminima`
-    - Morphological operations: `dilate`, `erode`, `closing`, `opening`, `tophat`, `bothat`, `morphogradient`, `morpholaplace`
-    - Connected components: `label_components`
+    - Morphological operations: `dilate`, `erode`, `closing`, `opening`, `tophat`, `bothat`, `morphogradient`, `morpholaplace`, `feature_transform`, `distance_transform`, `convexhull`
+    - Connected components: `label_components`, `component_boxes`, `component_lengths`, `component_indices`, `component_subscripts`, `component_centroids`
+    - Interpolation: `bilinear_interpolation`
 
 Test images and phantoms (see also TestImages.jl):
 
     - `shepp_logan`
 """
 Images
-
-import FileIO: load, save
-@deprecate imread(filename; kwargs...) load(filename; kwargs...)
-@deprecate imwrite(img, filename; kwargs...) save(filename, img; kwargs...)
-export load, save
-
-function limits(img)
-    Base.depwarn("limits is deprecated, all limits are (0,1)", :limits)
-    oldlimits(img)
-end
 
 end

@@ -2,9 +2,13 @@ language: julia
 os:
     - linux
     - osx
+dist: trusty  # for a more recent ImageMagick
 julia:
-    - 0.4
+    - 0.6
     - nightly
+matrix:
+  allow_failures:
+    - julia: nightly
 notifications:
     email: false
 before_script:
@@ -15,6 +19,5 @@ script:
     - julia -e 'Pkg.test("Images", coverage=true)'
     - julia -e 'Pkg.test("ImageMagick", coverage=true); @osx_only Pkg.test("QuartzImageIO", coverage=true)'
 after_success:
-    - if [ $TRAVIS_JULIA_VERSION = "0.4" ] && [ $TRAVIS_OS_NAME = "linux" ]; then
-         julia -e 'cd(Pkg.dir("Images")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())';
-      fi
+    # push coverage results to Codecov
+    - julia -e 'cd(Pkg.dir("Images")); Pkg.add("Coverage"); using Coverage; Codecov.submit(Codecov.process_folder())'

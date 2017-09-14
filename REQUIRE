@@ -1,9 +1,20 @@
-julia 0.4
-ColorTypes 0.2.2
-Colors 0.6
-ColorVectorSpace 0.1
-FixedPointNumbers 0.1
+julia 0.6.0
+Reexport
+Colors 0.7.0
+ColorVectorSpace 0.2
+FixedPointNumbers 0.3.0
+ImageCore
+ImageTransformations 0.2.2
+ImageFiltering
+ImageMorphology
+AxisArrays
+ImageAxes
+ImageMetadata
+IndirectArrays
+MappedArrays
 SIUnits
-Zlib
 Graphics 0.1
 FileIO
+Compat 0.19
+StatsBase 0.14   # for histrange
+Requires

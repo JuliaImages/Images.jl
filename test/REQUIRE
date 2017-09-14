@@ -3,3 +3,5 @@ FactCheck
 @windows ImageMagick
 @linux ImageMagick
 @osx QuartzImageIO
+OffsetArrays
+TestImages

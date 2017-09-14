@@ -51,7 +51,7 @@ function label_components!(Albl::AbstractArray{Int}, A::Array, region::Union{Dim
         # Need to generate the function
         N = length(uregion)
         ND = ndims(A)
-        iregion = [symbol(string("i_",d)) for d in uregion]
+        iregion = [Symbol("i_", d) for d in uregion]
         f! = eval(quote
             local lc!
             function lc!(Albl::AbstractArray{Int}, sets, A::Array, bkg)
@@ -89,7 +89,7 @@ function label_components!(Albl::AbstractArray{Int}, A::Array, region::Union{Dim
         f! = _label_components_cache[key]
     end
     sets = DisjointMinSets()
-    f!(Albl, sets, A, bkg)
+    eval(:($f!($Albl, $sets, $A, $bkg)))
     # Now parse sets to find the labels
     newlabel = minlabel(sets)
     for i = 1:length(A)
@@ -170,7 +170,7 @@ end
 
 # Copied directly from DataStructures.jl, but specialized
 # to always make the parent be the smallest label
-immutable DisjointMinSets
+struct DisjointMinSets
     parents::Vector{Int}
 
     DisjointMinSets(n::Integer) = new([1:n;])
@@ -214,7 +214,7 @@ function push!(sets::DisjointMinSets)
 end
 
 function minlabel(sets::DisjointMinSets)
-    out = Array(Int, length(sets.parents))
+    out = Vector{Int}(length(sets.parents))
     k = 0
     for i = 1:length(sets.parents)
         if sets.parents[i] == i
@@ -284,5 +284,5 @@ function component_centroids(img::AbstractArray{Int})
         end
         vsum[end] += 1
     end
-    map(x->tuple(x[1]/x[3],x[2]/x[3]),n)
+    map(x->tuple((x[1:nd]./x[nd+1])...),n)
 end

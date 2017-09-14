@@ -8,4 +8,5 @@ deps/usr/*
 /*.tar.gz
 /tmp
 src/gen/*.jl_julia*
-docs/build
+docs/build/
+docs/site/
