@@ -17,7 +17,7 @@ before_script:
     - julia -e 'Pkg.add("ImageMagick"); Pkg.add("QuartzImageIO")'
 script:
     - julia -e 'Pkg.test("Images", coverage=true)'
-    - julia -e 'Pkg.test("ImageMagick", coverage=true); @osx_only Pkg.test("QuartzImageIO", coverage=true)'
+    - julia -e 'Pkg.test("ImageMagick", coverage=true); if is_apple(); Pkg.test("QuartzImageIO", coverage=true); end'
 after_success:
     # push coverage results to Codecov
     - julia -e 'cd(Pkg.dir("Images")); Pkg.add("Coverage"); using Coverage; Codecov.submit(Codecov.process_folder())'
