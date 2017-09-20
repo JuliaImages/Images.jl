@@ -475,7 +475,7 @@ function findlocalextrema(img::AbstractArray{T,N}, region::Union{Tuple{Int,Varar
 end
 
 """
-`findlocalmaxima(img, [region, edges]) -> Vector{Tuple}`
+`findlocalmaxima(img, [region, edges]) -> Vector{CartesianIndex}`
 
 Returns the coordinates of elements whose value is larger than all of
 their immediate neighbors.  `region` is a list of dimensions to
