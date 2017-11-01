@@ -100,15 +100,15 @@ Edge-detection filtering. `kernelfun` is a valid kernel function for
 [`imgradients`](@ref), defaulting to [`KernelFactors.ando3`](@ref).
 `border` is any of the boundary conditions specified in `padarray`.
 
-Returns a tuple `(grad_x, grad_y, mag, orient)`, which are the horizontal
+Returns a tuple `(grad_y, grad_x, mag, orient)`, which are the horizontal
 gradient, vertical gradient, and the magnitude and orientation of the strongest
 edge, respectively.
 """
 function imedge(img::AbstractArray, kernelfun=KernelFactors.ando3, border::AbstractString="replicate")
-    grad_x, grad_y = imgradients(img, kernelfun, border)
-    mag = magnitude(grad_x, grad_y)
-    orient = orientation(grad_x, grad_y)
-    return (grad_x, grad_y, mag, orient)
+    grad_y, grad_x = imgradients(img, kernelfun, border)
+    mag = magnitude(grad_y, grad_x)
+    orient = orientation(grad_y, grad_x)
+    return (grad_y, grad_x, mag, orient)
 end
 
 # Thin edges
