@@ -1,6 +1,7 @@
 using Base.Test, Images, Colors, FixedPointNumbers
 
 @testset "Exposure" begin
+    oneunits(::Type{C}, dims...) where C = fill(oneunit(C), dims)
 
     @testset "Histogram" begin
 
@@ -40,41 +41,41 @@ using Base.Test, Images, Colors, FixedPointNumbers
     @testset "Histogram Equalisation" begin
 
         #DataTypes
-        img = ones(Gray{Float64}, 10, 10)
+        img = oneunits(Gray{Float64}, 10, 10)
         ret = histeq(img, 100)
         @test img == ret
         @test eltype(ret) == eltype(img)
 
-        img = ones(Gray{N0f8}, 10, 10)
+        img = oneunits(Gray{N0f8}, 10, 10)
         ret = histeq(img, 100)
         @test img == ret
         @test eltype(ret) == eltype(img)
 
-        img = ones(Gray{N0f16}, 10, 10)
+        img = oneunits(Gray{N0f16}, 10, 10)
         ret = histeq(img, 100)
         @test eltype(ret) == eltype(img)
 
-        img = ones(AGray{N0f8}, 10, 10)
-        ret = histeq(img, 100)
-        @test img == ret
-        @test eltype(ret) == eltype(img)
-
-        img = ones(RGB{N0f8}, 10, 10)
+        img = oneunits(AGray{N0f8}, 10, 10)
         ret = histeq(img, 100)
         @test img == ret
         @test eltype(ret) == eltype(img)
 
-        img = ones(RGB{N0f16}, 10, 10)
+        img = oneunits(RGB{N0f8}, 10, 10)
         ret = histeq(img, 100)
         @test img == ret
         @test eltype(ret) == eltype(img)
 
-        img = ones(RGB{Float64}, 10, 10)
+        img = oneunits(RGB{N0f16}, 10, 10)
+        ret = histeq(img, 100)
+        @test img == ret
+        @test eltype(ret) == eltype(img)
+
+        img = oneunits(RGB{Float64}, 10, 10)
         ret = histeq(img, 100)
         @test all(map((i, r) -> isapprox(i, r), img, ret))
         @test eltype(ret) == eltype(img)
 
-        img = ones(ARGB{N0f8}, 10, 10)
+        img = oneunits(ARGB{N0f8}, 10, 10)
         ret = histeq(img, 100)
         @test img == ret
         @test eltype(ret) == eltype(img)
@@ -119,41 +120,41 @@ using Base.Test, Images, Colors, FixedPointNumbers
 
     @testset "Gamma Correction" begin
 
-        img = ones(Gray{Float64}, 10, 10)
+        img = oneunits(Gray{Float64}, 10, 10)
         ret = adjust_gamma(img, 1)
         @test img == ret
         @test eltype(ret) == eltype(img)
 
-        img = ones(Gray{N0f8}, 10, 10)
+        img = oneunits(Gray{N0f8}, 10, 10)
         ret = adjust_gamma(img, 1)
         @test img == ret
         @test eltype(ret) == eltype(img)
 
-        img = ones(Gray{N0f16}, 10, 10)
+        img = oneunits(Gray{N0f16}, 10, 10)
         ret = adjust_gamma(img, 1)
         @test eltype(ret) == eltype(img)
 
-        img = ones(AGray{N0f8}, 10, 10)
-        ret = adjust_gamma(img, 1)
-        @test img == ret
-        @test eltype(ret) == eltype(img)
-
-        img = ones(RGB{N0f8}, 10, 10)
+        img = oneunits(AGray{N0f8}, 10, 10)
         ret = adjust_gamma(img, 1)
         @test img == ret
         @test eltype(ret) == eltype(img)
 
-        img = ones(RGB{N0f16}, 10, 10)
+        img = oneunits(RGB{N0f8}, 10, 10)
         ret = adjust_gamma(img, 1)
         @test img == ret
         @test eltype(ret) == eltype(img)
 
-        img = ones(RGB{Float64}, 10, 10)
+        img = oneunits(RGB{N0f16}, 10, 10)
+        ret = adjust_gamma(img, 1)
+        @test img == ret
+        @test eltype(ret) == eltype(img)
+
+        img = oneunits(RGB{Float64}, 10, 10)
         ret = adjust_gamma(img, 1)
         @test all(map((i, r) -> isapprox(i, r), img, ret))
         @test eltype(ret) == eltype(img)
 
-        img = ones(ARGB{N0f8}, 10, 10)
+        img = oneunits(ARGB{N0f8}, 10, 10)
         ret = adjust_gamma(img, 1)
         @test img == ret
 
@@ -189,38 +190,38 @@ using Base.Test, Images, Colors, FixedPointNumbers
     @testset "Histogram Matching" begin
 
         #DataTypes
-        img = ones(Gray{Float64}, 10, 10)
+        img = oneunits(Gray{Float64}, 10, 10)
         ret = histmatch(img, img)
         @test all(ret .== zero(eltype(img)))
         @test eltype(ret) == eltype(img)
 
-        img = ones(Gray{N0f8}, 10, 10)
+        img = oneunits(Gray{N0f8}, 10, 10)
         ret = histmatch(img, img)
         @test all(ret .== zero(eltype(img)))
         @test eltype(ret) == eltype(img)
 
-        img = ones(Gray{N0f16}, 10, 10)
+        img = oneunits(Gray{N0f16}, 10, 10)
         ret = histmatch(img, img)
         @test eltype(ret) == eltype(img)
 
-        img = ones(AGray{N0f8}, 10, 10)
+        img = oneunits(AGray{N0f8}, 10, 10)
         ret = histmatch(img, img)
         @test eltype(ret) == eltype(img)
 
-        img = ones(RGB{N0f8}, 10, 10)
+        img = oneunits(RGB{N0f8}, 10, 10)
         ret = histmatch(img, img)
         @test eltype(ret) == eltype(img)
 
-        img = ones(RGB{N0f16}, 10, 10)
+        img = oneunits(RGB{N0f16}, 10, 10)
         ret = histmatch(img, img)
         @test eltype(ret) == eltype(img)
 
-        img = ones(RGB{Float64}, 10, 10)
+        img = oneunits(RGB{Float64}, 10, 10)
         ret = histmatch(img, img)
         @test all(map((i, r) -> isapprox(zero(RGB), r, atol = 0.001), img, ret))
         @test eltype(ret) == eltype(img)
 
-        img = ones(ARGB{N0f8}, 10, 10)
+        img = oneunits(ARGB{N0f8}, 10, 10)
         ret = histmatch(img, img)
         @test eltype(ret) == eltype(img)
 
@@ -236,42 +237,42 @@ using Base.Test, Images, Colors, FixedPointNumbers
     @testset "CLAHE" begin
 
         #DataTypes
-        img = ones(Gray{Float64}, 10, 10)
+        img = oneunits(Gray{Float64}, 10, 10)
         ret = clahe(img, 100)
         @test size(ret) == size(img)
         @test eltype(ret) == eltype(img)
 
-        img = ones(Gray{N0f8}, 10, 10)
+        img = oneunits(Gray{N0f8}, 10, 10)
         ret = clahe(img, 100)
         @test size(ret) == size(img)
         @test eltype(ret) == eltype(img)
 
-        img = ones(Gray{N0f16}, 10, 10)
+        img = oneunits(Gray{N0f16}, 10, 10)
         ret = clahe(img, 100)
         @test size(ret) == size(img)
         @test eltype(ret) == eltype(img)
 
-        img = ones(AGray{N0f8}, 10, 10)
+        img = oneunits(AGray{N0f8}, 10, 10)
         ret = clahe(img, 100)
         @test size(ret) == size(img)
         @test eltype(ret) == eltype(img)
 
-        img = ones(RGB{N0f8}, 10, 10)
+        img = oneunits(RGB{N0f8}, 10, 10)
         ret = clahe(img, 100)
         @test size(ret) == size(img)
         @test eltype(ret) == eltype(img)
 
-        img = ones(RGB{N0f16}, 10, 10)
+        img = oneunits(RGB{N0f16}, 10, 10)
         ret = clahe(img, 100)
         @test size(ret) == size(img)
         @test eltype(ret) == eltype(img)
 
-        img = ones(RGB{Float64}, 10, 10)
+        img = oneunits(RGB{Float64}, 10, 10)
         ret = clahe(img, 100)
         @test size(ret) == size(img)
         @test eltype(ret) == eltype(img)
 
-        img = ones(ARGB{N0f8}, 10, 10)
+        img = oneunits(ARGB{N0f8}, 10, 10)
         ret = clahe(img, 100)
         @test size(ret) == size(img)
         @test eltype(ret) == eltype(img)

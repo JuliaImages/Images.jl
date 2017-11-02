@@ -19,7 +19,7 @@ This computation is performed lazily, as to be suitable even for large arrays.
 """
 function ColorizedArray(intensity, label::IndirectArray{C,N}) where {C<:Colorant,N}
     indices(intensity) == indices(label) || throw(DimensionMismatch("intensity and label must have the same indices, got $(indices(intensity)) and $(indices(label))"))
-    CI = typeof(one(C)*zero(eltype(intensity)))
+    CI = typeof(zero(C)*zero(eltype(intensity)))
     ColorizedArray{CI,N,typeof(intensity),typeof(label)}(intensity, label)
 end
 
