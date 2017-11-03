@@ -28,7 +28,7 @@ imstretch(img::ImageMeta, m::Number, slope::Number) = shareproperties(img, imstr
 Take the complement `1-x` of `x`.  If `x` is a color with an alpha channel,
 the alpha channel is left untouched.
 """
-complement(x) = one(x)-x
+complement(x) = oneunit(x)-x
 complement(x::TransparentColor) = typeof(x)(complement(color(x)), alpha(x))
 
 imhist(img::AbstractArray{T}, nbins::Integer = 400) where {T<:Colorant} = imhist(convert(Array{Gray}, img), nbins)
@@ -127,7 +127,7 @@ end
 
 function histeq(img::AbstractArray, nbins::Integer)
     T = graytype(eltype(img))
-    histeq(img, nbins, zero(T), one(T))
+    histeq(img, nbins, zero(T), oneunit(T))
 end
 
 function histeq(img::ImageMeta, nbins::Integer, minval::RealLike, maxval::RealLike)
@@ -227,7 +227,7 @@ _hist_match_pixel(pixel::T, bins, lookup_table) where {T<:TransparentColor} = ba
 
 function histmatch(img::AbstractArray{T}, oimg::AbstractArray, nbins::Integer = 400) where T<:Colorant
     el_gray = graytype(eltype(img))
-    oedges, ohist = imhist(oimg, nbins, zero(el_gray), one(el_gray))
+    oedges, ohist = imhist(oimg, nbins, zero(el_gray), oneunit(el_gray))
     _histmatch(img, oedges, ohist)
 end
 
@@ -298,7 +298,7 @@ function _clahe(img::AbstractArray{C, 2}, nbins::Integer = 100, xblocks::Integer
     blockh = Int(h / yblocks)
     temp_cdf = Array{Float64, 1}[]
     T = graytype(eltype(img))
-    edges = StatsBase.histrange([Float64(zero(T)), Float64(one(T))], nbins, :left)
+    edges = StatsBase.histrange([Float64(zero(T)), Float64(oneunit(T))], nbins, :left)
 
     for i in xb
         for j in yb

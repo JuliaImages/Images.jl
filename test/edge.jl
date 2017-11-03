@@ -22,7 +22,7 @@ global checkboard
                      KernelFactors.ando4, KernelFactors.ando5)
 
     ## Checkerboard array, used to test image gradients
-    white(::Type{T}) where {T} = one(T)
+    white(::Type{T}) where {T} = oneunit(T)
     black(::Type{T}) where {T} = zero(T)
     white(::Type{T}) where {T<:Unsigned} = typemax(T)
     black(::Type{T}) where {T<:Unsigned} = typemin(T)
@@ -92,7 +92,7 @@ global checkboard
         @test all(.!edges[nondiags])
 
         #Checks Hysteresis Thresholding
-        img = ones(Gray{N0f8}, (10, 10))
+        img = fill(oneunit(Gray{N0f8}), (10, 10))
         img[3:7, 3:7] = 0.0
         img[4:6, 4:6] = 0.7
         thresholded = Images.hysteresis_thresholding(img, 0.9, 0.8)
