@@ -272,17 +272,12 @@ function component_subscripts(img::AbstractArray{Int})
 end
 
 "`component_centroids(labeled_array)` -> an array of centroids for each label, including the background label 0"
-function component_centroids(img::AbstractArray{Int})
-    nd = ndims(img)
-    n = [zeros(nd+1) for i=0:maximum(img)]
-    s = size(img)
-    for i=1:length(img)
-        vcur = ind2sub(s,i)
-        vsum = n[img[i]+1]
-        for d=1:nd
-            vsum[d] += vcur[d]
-        end
-        vsum[end] += 1
+function component_centroids(img::AbstractArray{Int,N}) where N
+    len = length(0:maximum(img))
+    n = fill((zero(CartesianIndex{N}), 0), len)
+    @inbounds for I in CartesianRange(size(img))
+        v = img[I] + 1
+        n[v] = n[v] .+ (I, 1)
     end
-    map(x->tuple((x[1:nd]./x[nd+1])...),n)
+    map(v -> n[v][1].I ./ n[v][2], 1:len)
 end
