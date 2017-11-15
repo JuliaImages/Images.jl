@@ -542,6 +542,29 @@ using Base.Test
         @test otsu_threshold(img) == otsu_threshold(cat(1, img[:,:,1], img[:,:,2], img[:,:,3]))
     end
 
+    @testset "imROF" begin
+        # Test that -div is the adjoint of forwarddiff
+        p = rand(3,3,2)
+        u = rand(3,3)
+        gu = cat(3, Images.forwarddiffy(u), Images.forwarddiffx(u))
+        @test sum(-Images.div(p) .* u) ≈ sum(p .* gu)
+
+        img = [0.1 0.2 0.1 0.8 0.9 0.7;
+               0.2 0.1 0.1 0.8 0.1 0.8;
+               0.1 0.2 0.1 0.7 0.9 0.8]
+        # # Ground truth
+        # using Optim
+        # diff1(u) = [u[2:end,:]; u[end:end,:]] - u
+        # diff2(u) = [u[:,2:end] u[:,end:end]] - u
+        # obj(Avec, img, λ) = (A = reshape(Avec, size(img)); sum(abs2, A - img)/2 + λ*sum(sqrt.(diff1(A).^2 + diff2(A).^2)))
+        # res = optimize(v->obj(v, img, 0.2), vec(img); iterations=10^4)
+        # imgtv = reshape(res.minimizer, size(img))
+        target = [fill(0.2, (3,3)) fill(0.656, (3,3))]
+        @test all(map((x,y)->isapprox(x, y, atol=0.001), imROF(img, 0.2, 1000), target))
+        imgc = colorview(RGB, img, img, img)
+        targetc = colorview(RGB, target, target, target)
+        @test all(map((x,y)->isapprox(x, y, atol=0.001), channelview(imROF(imgc, 0.2, 1000)), channelview(targetc)))
+    end
 end
 
 nothing

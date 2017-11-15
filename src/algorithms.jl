@@ -549,55 +549,83 @@ imgaussiannoise(img::AbstractArray{T}) where {T} = imgaussiannoise(img, 0.01, 0)
 
 # forward and backward differences
 # can be very helpful for discretized continuous models
-forwarddiffy(u::Array{T,2}) where {T} = [u[2:end,:]; u[end,:]] - u
-forwarddiffx(u::Array{T,2}) where {T} = [u[:,2:end] u[:,end]] - u
-backdiffy(u::Array{T,2}) where {T} = u - [u[1,:]; u[1:end-1,:]]
-backdiffx(u::Array{T,2}) where {T} = u - [u[:,1] u[:,1:end-1]]
+forwarddiffy(u::AbstractMatrix) = [u[2:end,:]; u[end:end,:]] - u
+forwarddiffx(u::AbstractMatrix) = [u[:,2:end] u[:,end:end]] - u
+backdiffy(u::AbstractMatrix) = u - [u[1:1,:]; u[1:end-1,:]]
+backdiffx(u::AbstractMatrix) = u - [u[:,1:1] u[:,1:end-1]]
+function div(p::AbstractArray{T,3}) where T
+    # Definition from the Chambolle citation below, between Eqs. 5 and 6
+    # This is the adjoint of -forwarddiff
+    inds = indices(p)[1:2]
+    out = similar(p, inds)
+    Router = CartesianRange(inds)
+    Rinner = CartesianRange(first(Router)+1, last(Router)-1)
+    # Since most of the points are in the interior, compute them more quickly by avoiding branches
+    for I in Rinner
+        out[I] = p[I,1] - p[I[1]-1, I[2], 1] +
+                 p[I,2] - p[I[1], I[2]-1, 2]
+    end
+    # Handle the edge points
+    for I in EdgeIterator(Router, Rinner)
+        out[I] = 0
+        if I[1] == first(inds[1])
+            out[I] += p[I, 1]
+        elseif I[1] == last(inds[1])
+            out[I] -= p[I[1]-1, I[2], 1]
+        else
+            out[I] += p[I,1] - p[I[1]-1, I[2], 1]
+        end
+        if I[2] == first(inds[2])
+            out[I] += p[I, 2]
+        elseif I[2] == last(inds[2])
+            out[I] -= p[I[1], I[2]-1, 2]
+        else
+            out[I] += p[I,2] - p[I[1], I[2]-1, 2]
+        end
+    end
+    out
+end
 
 """
 ```
-imgr = imROF(img, lambda, iterations)
+imgr = imROF(img, λ, iterations)
 ```
 
 Perform Rudin-Osher-Fatemi (ROF) filtering, more commonly known as Total
-Variation (TV) denoising or TV regularization. `lambda` is the regularization
+Variation (TV) denoising or TV regularization. `λ` is the regularization
 coefficient for the derivative, and `iterations` is the number of relaxation
 iterations taken. 2d only.
+
+See https://en.wikipedia.org/wiki/Total_variation_denoising and
+Chambolle, A. (2004). "An algorithm for total variation minimization and applications".
+    Journal of Mathematical Imaging and Vision. 20: 89–97
 """
-function imROF(img::Array{T,2}, lambda::Number, iterations::Integer) where T
+function imROF(img::AbstractMatrix{T}, λ::Number, iterations::Integer) where T<:NumberLike
     # Total Variation regularized image denoising using the primal dual algorithm
     # Also called Rudin Osher Fatemi (ROF) model
-    # lambda: regularization parameter
+    # λ: regularization parameter
     s1, s2 = size(img)
     p = zeros(T, s1, s2, 2)
-    u = zeros(T, s1, s2)
-    grad_u = zeros(T, s1, s2, 2)
-    div_p = zeros(T, s1, s2)
-    dt = lambda/4
+    # This iterates Eq. (9) of the Chambolle citation
+    local u
+    τ = 1/4   # see 2nd remark after proof of Theorem 3.1.
     for i = 1:iterations
-        div_p = backdiffx(p[:,:,1]) + backdiffy(p[:,:,2])
-        u = img + div_p/lambda
-        grad_u = cat(3, forwarddiffx(u), forwarddiffy(u))
-        grad_u_mag = sqrt(grad_u[:,:,1].^2 + grad_u[:,:,2].^2)
-        tmp = 1 + grad_u_mag*dt
-        p = (dt*grad_u + p)./cat(3, tmp, tmp)
+        div_p = div(p)
+        u = img - λ*div_p # multiply term inside ∇ by -λ. Thm. 3.1 relates this to u via Eq. 7.
+        grad_u = cat(3, forwarddiffy(u), forwarddiffx(u))
+        grad_u_mag = sqrt.(sum(abs2, grad_u, 3))
+        p .= (p .- (τ/λ).*grad_u)./(1 .+ (τ/λ).*grad_u_mag)
     end
     return u
 end
 
 # ROF Model for color images
-function imROF(img::AbstractArray, lambda::Number, iterations::Integer)
-    cd = colordim(img)
-    local out
-    if cd != 0
-        out = similar(img)
-        for i = size(img, cd)
-            imsl = img["color", i]
-            outsl = slice(out, "color", i)
-            copy!(outsl, imROF(imsl, lambda, iterations))
-        end
-    else
-        out = shareproperties(img, imROF(img, lambda, iterations))
+function imROF(img::AbstractMatrix{<:Color}, λ::Number, iterations::Integer)
+    out = similar(img)
+    imgc = channelview(img)
+    outc = channelview(out)
+    for chan = 1:size(imgc, 1)
+        outc[chan, :, :] = imROF(imgc[chan, :, :], λ, iterations)
     end
     out
 end

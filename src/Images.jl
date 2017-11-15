@@ -50,6 +50,7 @@ const is_little_endian = ENDIAN_BOM == 0x04030201
 using ImageMetadata: ImageMetaAxis
 import ImageMorphology: dilate, erode
 import ImageTransformations: restrict
+using TiledIteration: EdgeIterator
 
 using Base.Cartesian  # TODO: delete this
 
