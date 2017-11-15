@@ -634,20 +634,6 @@ end
 dilate(img::ImageMeta, region=coords_spatial(img)) = shareproperties(img, dilate!(copy(data(img)), region))
 erode(img::ImageMeta, region=coords_spatial(img)) = shareproperties(img, erode!(copy(data(img)), region))
 
-# what are these `extr` functions? TODO: documentation
-
-extr(order::ForwardOrdering, x::Real, y::Real) = max(x,y)
-extr(order::ForwardOrdering, x::Real, y::Real, z::Real) = max(x,y,z)
-extr(order::ReverseOrdering, x::Real, y::Real) = min(x,y)
-extr(order::ReverseOrdering, x::Real, y::Real, z::Real) = min(x,y,z)
-
-extr(order::Ordering, x::RGB, y::RGB) = RGB(extr(order, x.r, y.r), extr(order, x.g, y.g), extr(order, x.b, y.b))
-extr(order::Ordering, x::RGB, y::RGB, z::RGB) = RGB(extr(order, x.r, y.r, z.r), extr(order, x.g, y.g, z.g), extr(order, x.b, y.b, z.b))
-
-extr(order::Ordering, x::Color, y::Color) = extr(order, convert(RGB, x), convert(RGB, y))
-extr(order::Ordering, x::Color, y::Color, z::Color) = extr(order, convert(RGB, x), convert(RGB, y), convert(RGB, z))
-
-
 # phantom images
 
 """
