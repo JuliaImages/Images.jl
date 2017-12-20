@@ -824,6 +824,68 @@ end
 
 """
 ```
+pyramid = laplacian_pyramid(img, n_scales, downsample, sigma)
+```
+
+Returns a  laplacian pyramid of scales `n_scales`, each downsampled
+by a factor `downsample` and `sigma` for the gaussian kernel.
+
+"""
+function laplacian_pyramid(img::AbstractArray{T,N}, n_scales::Int, downsample::Real, sigma::Real) where {T,N}
+    kerng = KernelFactors.IIRGaussian(sigma)
+    kern = ntuple(d->kerng, Val{N})
+    laplacian_pyramid(img, n_scales, downsample, kern)
+end
+
+function laplacian_pyramid(img::AbstractArray{T,N}, n_scales::Int, downsample::Real, kern::NTuple{N,Any}) where {T,N}
+    # To guarantee inferability, we make sure that we do at least one
+    # round of smoothing and resizing
+    img_smoothed_main = imfilter(img, kern, NA())
+    img_scaled = pyramid_scale(img_smoothed_main, downsample)
+    prev = convert(typeof(img_scaled), img)
+    pyramid = typeof(img_scaled)[prev-pyramid_scale(img_scaled, 1/downsample)]
+    prev = img_scaled
+    for i in 2:n_scales
+        img_smoothed = imfilter(prev, kern, NA())
+        img_scaled = pyramid_scale(img_smoothed, downsample)
+        img_next = pyramid_scale(img_scaled, 1/downsample)
+        m, n = size(prev)
+        img_diff = prev - img_next[1:m, 1:n]
+
+        push!(pyramid, img_diff)
+        prev = img_scaled
+    end
+    push!(pyramid, img_scaled) # attach the residual as the last layer
+    pyramid
+end
+
+
+"""
+```
+image = reconstruct_laplacian_pyramid(pyramid, downsample)
+```
+
+Recomposes an image from a laplacian pyramid. `downsample` is the same
+factor as used to construct the pyramid. 
+
+"""
+function reconstruct_laplacian_pyramid(pyramid, downsample)
+  n_scales = length(pyramid)
+  img_out = pyramid[end]
+  for i = n_scales-1:-1:1
+    im_out = pyramid_scale(im_out, 1/downsample)
+    img_next = pyramid[i]
+    m, n = size(im_next)
+    img_out = img_out[1:m, 1:n] + img_next
+  end
+  return img_out
+end
+
+
+
+
+"""
+```
 thres = otsu_threshold(img)
 thres = otsu_threshold(img, bins)
 ```
