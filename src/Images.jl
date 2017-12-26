@@ -120,7 +120,6 @@ include("edge.jl")
 include("showmime.jl")
 include("juno.jl")
 include("corner.jl")
-include("distances.jl")
 include("bwdist.jl")
 using .FeatureTransform
 include("convexhull.jl")
@@ -264,9 +263,6 @@ export # types
     boxdiff,
     bilinear_interpolation,
     gaussian_pyramid,
-
-    # distances
-    hausdorff_distance,
 
     # phantoms
     shepp_logan
