@@ -10,6 +10,7 @@ Dubuisson, M-P; Jain, A. K., 1994. A Modified Hausdorff Distance for
 Object-Matching.
 """
 function hausdorff_distance(imgA::AbstractArray, imgB::AbstractArray)
+  Base.depwarn("Images.hausdorff_distance(A, B) is deprecated and will be removed in the future. Image distances were moved and expanded upon in its own dedicated package ImageDistances. Please use ImageDistances.modified_hausdorf(A, B) instead." , :hausdorff_distance)
   @assert size(imgA) == size(imgB) "Images must have the same dimensions"
 
   # trivial case
