@@ -885,7 +885,7 @@ function yen_threshold(img::AbstractArray{T, N}, bins::Int = 256) where {T<:Unio
 
     min, max = extrema(img)
     if(min == max)
-        return min
+        return T(min)
     end
 
     edges, counts = imhist(img, linspace(gray(min), gray(max), bins))
@@ -898,6 +898,6 @@ function yen_threshold(img::AbstractArray{T, N}, bins::Int = 256) where {T<:Unio
     criterion = log.(((cum_pmf[1:end-1].*(1.0 - cum_pmf[1:end-1])).^2) ./ (cum_pmf_sq_1[1:end-1].*cum_pmf_sq_2[2:end]))
 
     thres = edges[findmax(criterion)[2]]
-    return thres
+    return T(thres)
 
 end
