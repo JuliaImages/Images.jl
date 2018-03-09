@@ -863,3 +863,45 @@ function otsu_threshold(img::AbstractArray{T, N}, bins::Int = 256) where {T<:Uni
 
     return T((edges[thres-1]+edges[thres])/2)
 end
+
+function clearborder(img::AbstractArray, width::Int=1, background::Int=0)
+    
+    for i in size(img)
+        if(width > i)
+            throw(ArgumentError("Border width must not be greater than size of the image."))
+        end
+    end
+
+    connectivity = ntuple(i -> 3, ndims(img))
+    labels = label_components(img,trues(connectivity))
+    number = maximum(labels) + 1
+
+    dimensions = size(img)
+    outerrange = map(i -> 1:i, dimensions)
+    innerrange = map(i -> 1+width:i-width, dimensions)
+
+    outerrange = CartesianRange(outerrange)
+    innerrange = CartesianRange(innerrange)
+
+    border_elements = []
+    for i in EdgeIterator(outerrange,innerrange)
+        push!(border_elements, labels[i])
+    end
+
+    border_indices = unique(border_elements)
+    indices = collect(0:number)
+
+    function vectorin(a, b)
+        bset = Set(b)
+        [i in bset for i in a]
+    end
+
+    label_mask = vectorin(indices, border_indices')
+    mask = map(i -> label_mask[i+1], labels[:])
+    reshape(mask, size(labels))
+
+    new_img = copy(img)
+    new_img[mask] = background
+    return new_img
+
+end
