@@ -222,6 +222,7 @@ export # types
     distance_transform,
     convexhull,
     otsu_threshold,
+    clearborder,
 
     #Exposure
     complement,
