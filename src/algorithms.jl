@@ -864,6 +864,23 @@ function otsu_threshold(img::AbstractArray{T, N}, bins::Int = 256) where {T<:Uni
     return T((edges[thres-1]+edges[thres])/2)
 end
 
+"""
+```
+cleared_img = clearborder(img)
+cleared_img = clearborder(img, width)
+cleared_img = clearborder(img, width, background)
+```
+
+Returns a copy of the original image after clearing objects connected to the border of the image.
+
+Parameters:
+
+ -  img          = Binary/Grayscale input image
+ -  width        = Width of the border examined
+ -  background   = Value to be given to pixels/elements that are cleared
+
+"""
+
 function clearborder(img::AbstractArray, width::Int=1, background::Int=0)
     
     for i in size(img)
