@@ -891,10 +891,12 @@ function yen_threshold(img::AbstractArray{T, N}, bins::Int = 256) where {T<:Unio
     edges, counts = imhist(img, linspace(gray(min), gray(max), bins))
 
     prob_mass_function = counts./sum(counts)
+    prob_mass_function_sq = prob_mass_function.^2
     cum_pmf = cumsum(prob_mass_function)
-    cum_pmf_sq_1 = cumsum(prob_mass_function.^2)
-    cum_pmf_sq_2 = reverse(cumsum(reverse(prob_mass_function.^2)))
+    cum_pmf_sq_1 = cumsum(prob_mass_function_sq)
+    cum_pmf_sq_2 = reverse!(cumsum(reverse!(prob_mass_function_sq)))
 
+    #Equation (4) cited in the paper.
     criterion = log.(((cum_pmf[1:end-1].*(1.0 - cum_pmf[1:end-1])).^2) ./ (cum_pmf_sq_1[1:end-1].*cum_pmf_sq_2[2:end]))
 
     thres = edges[findmax(criterion)[2]]
