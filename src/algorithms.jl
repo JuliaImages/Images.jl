@@ -870,7 +870,7 @@ thres = yen_threshold(img)
 thres = yen_threshold(img, bins)
 ```
 
-Computes threshold for grayscale image using Yen's method.
+Computes threshold for grayscale image using Yen's maximum correlation criterion for bilevel thresholding
 
 Parameters:
 -    img         = Grayscale input image
