@@ -78,6 +78,7 @@ function _show_even(io::IO, m::MIME"text/html", imgs::AbstractArray{T, N}, cente
 end
 
 function Base.show(io::IO, m::MIME"text/html", imgs::AbstractArray{T, N}) where {T<:ColorantMatrix, N}
+    imgs = permutedims(imgs, N:-1:1)
     if N % 2 == 1
         write(io, "<table>")
         write(io, "<tbody>")
@@ -86,6 +87,9 @@ function Base.show(io::IO, m::MIME"text/html", imgs::AbstractArray{T, N}) where 
         write(io, "</tr>")
         write(io, "</tbody>")
         write(io, "</table>")
+        if N == 1
+            write(io, "<div><small>(a vector displayed as a row to save space)</small></div>")
+        end
     else
         _show_even(io, m, imgs, false) # Stack vertically
     end
