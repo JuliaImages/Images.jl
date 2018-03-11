@@ -863,3 +863,43 @@ function otsu_threshold(img::AbstractArray{T, N}, bins::Int = 256) where {T<:Uni
 
     return T((edges[thres-1]+edges[thres])/2)
 end
+
+"""
+```
+thres = yen_threshold(img)
+thres = yen_threshold(img, bins)
+```
+
+Computes threshold for grayscale image using Yen's maximum correlation criterion for bilevel thresholding
+
+Parameters:
+-    img         = Grayscale input image
+-    bins        = Number of bins used to compute the histogram. Needed for floating-point images.
+
+
+#Citation
+Yen J.C., Chang F.J., and Chang S. (1995) “A New Criterion for Automatic Multilevel Thresholding” IEEE Trans. on Image Processing, 4(3): 370-378. DOI:10.1109/83.366472
+"""
+
+function yen_threshold(img::AbstractArray{T, N}, bins::Int = 256) where {T<:Union{Gray, Real}, N}
+
+    min, max = extrema(img)
+    if(min == max)
+        return T(min)
+    end
+
+    edges, counts = imhist(img, linspace(gray(min), gray(max), bins))
+
+    prob_mass_function = counts./sum(counts)
+    prob_mass_function_sq = prob_mass_function.^2
+    cum_pmf = cumsum(prob_mass_function)
+    cum_pmf_sq_1 = cumsum(prob_mass_function_sq)
+    cum_pmf_sq_2 = reverse!(cumsum(reverse!(prob_mass_function_sq)))
+
+    #Equation (4) cited in the paper.
+    criterion = log.(((cum_pmf[1:end-1].*(1.0 - cum_pmf[1:end-1])).^2) ./ (cum_pmf_sq_1[1:end-1].*cum_pmf_sq_2[2:end]))
+
+    thres = edges[findmax(criterion)[2]]
+    return T(thres)
+
+end

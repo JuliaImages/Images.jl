@@ -540,6 +540,37 @@ using Base.Test
         #test for multidimension arrays
         img = rand(Float64, 10, 10, 3)
         @test otsu_threshold(img) == otsu_threshold(cat(1, img[:,:,1], img[:,:,2], img[:,:,3]))
+
+        #yen_threshold
+        img = testimage("cameraman")
+        thres = yen_threshold(img)
+        @test typeof(thres) == eltype(img)
+        @test ≈(gray(thres), convert(N0f8, 199/256), atol=eps(N0f8))
+        thres = yen_threshold(img, 512)
+        @test typeof(thres) == eltype(img)
+        @test ≈(gray(thres), convert(N0f8, 199/256), atol=eps(N0f8))
+
+        img = map(x->convert(Gray{Float64}, x), img)
+        thres = yen_threshold(img)
+        @test typeof(thres) == eltype(img)
+        @test ≈(gray(thres), 199/256, atol=0.01)
+        thres = yen_threshold(img, 512)
+        @test typeof(thres) == eltype(img)
+        @test ≈(gray(thres), 199/256, atol=0.01)
+
+        img = map(x->convert(Float64, x), img)
+        thres = yen_threshold(img)
+        @test typeof(thres) == eltype(img)
+        @test ≈(gray(thres), 199/256, atol=0.01)
+        thres = yen_threshold(img, 512)
+        @test typeof(thres) == eltype(img)
+        @test ≈(gray(thres), 199/256, atol=0.01)
+
+        img = rand(Float64, 10, 10, 3)
+        @test yen_threshold(img) == yen_threshold(cat(1, img[:,:,1], img[:,:,2], img[:,:,3]))
+
+        img = zeros(Gray{Float64},10,10,3)
+        @test yen_threshold(img) == 0        
     end
 
     @testset "imROF" begin
