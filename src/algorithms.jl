@@ -894,31 +894,28 @@ function clearborder(img::AbstractArray, width::Int=1, background::Int=0)
     number = maximum(labels) + 1
 
     dimensions = size(img)
-    outerrange = map(i -> 1:i, dimensions)
-    innerrange = map(i -> 1+width:i-width, dimensions)
+    outerrange = CartesianRange(map(i -> 1:i, dimensions))
+    innerrange = CartesianRange(map(i -> 1+width:i-width, dimensions))
 
-    outerrange = CartesianRange(outerrange)
-    innerrange = CartesianRange(innerrange)
-
-    border_elements = []
+    border_indices = Set{Int64}()
     for i in EdgeIterator(outerrange,innerrange)
-        push!(border_elements, labels[i])
+        push!(border_indices, labels[i])
     end
-
-    border_indices = unique(border_elements)
-    indices = collect(0:number)
 
     function vectorin(a, b)
         bset = Set(b)
         [i in bset for i in a]
     end
 
-    label_mask = vectorin(indices, border_indices')
-    mask = map(i -> label_mask[i+1], labels[:])
-    reshape(mask, size(labels))
+    label_mask = vectorin(range(0,number), border_indices)
 
     new_img = copy(img)
-    new_img[mask] = background
+    for itr in eachindex(labels)
+        if label_mask[labels[itr] + 1] == true
+            new_img[itr] = background
+        end
+    end
+
     return new_img
 
 end
