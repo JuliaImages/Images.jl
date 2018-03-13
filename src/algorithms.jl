@@ -937,22 +937,17 @@ function clearborder(img::AbstractArray, width::Int=1, background::Int=0)
     outerrange = CartesianRange(map(i -> 1:i, dimensions))
     innerrange = CartesianRange(map(i -> 1+width:i-width, dimensions))
 
-    border_indices = Set{Int64}()
+    border_labels = Set{Int64}()
     for i in EdgeIterator(outerrange,innerrange)
-        push!(border_indices, labels[i])
+        push!(border_labels, labels[i])
     end
 
-    function vectorin(a, b)
-        bset = Set(b)
-        [i in bset for i in a]
-    end
-
-    label_mask = vectorin(range(0,number), border_indices)
-
-    new_img = copy(img)
+    new_img = similar(img)
     for itr in eachindex(labels)
-        if label_mask[labels[itr] + 1] == true
+        if labels[itr] in border_labels
             new_img[itr] = background
+        else
+        	new_img[itr] = img[itr]
         end
     end
 
