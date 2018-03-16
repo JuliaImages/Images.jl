@@ -223,6 +223,7 @@ export # types
     convexhull,
     otsu_threshold,
     yen_threshold,
+    clearborder,
 
     #Exposure
     complement,
