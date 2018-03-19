@@ -957,9 +957,9 @@ end
 
 """
 ```
-filled_img = clearborder(img, size)
-filled_img = clearborder(img, size, value)
-filled_img = clearborder(img, size, value, connectivity)
+filled_img = imfill(img, size)
+filled_img = imfill(img, size, value)
+filled_img = imfill(img, size, value, connectivity)
 ```
 
 Returns a copy of the original image after filling holes that are smaller than the specified size.
