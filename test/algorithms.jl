@@ -662,6 +662,38 @@ using Base.Test
                      0 0 0 0 0]
         @test cleared_img == check_img
     end    
+
+    @testset "thinning" begin
+
+        #for perfect square
+        img = falses(20,20)
+
+        for i in range(7,5)
+            for j in range(7,5)
+                img[i,j] = img[j,i] = true
+            end
+        end
+        output = thinning(img)
+
+        @test count(output.==1)==1
+        @test output[9,9]==1
+
+        #for + like figure
+        img = falses(20,20)
+        img1 = falses(size(img))
+        for i in range(8,5)
+            for j in range(4,13)
+                img[i,j] = true
+                img[j,i] = true
+            end
+        end
+        for j in range(6,8)
+            img1[10,j] = img1[j,10] = 1
+        end 
+
+        output = thinning(img)
+        @test output == img1
+    end
 end
 
 nothing

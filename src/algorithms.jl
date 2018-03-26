@@ -954,3 +954,54 @@ function clearborder(img::AbstractArray, width::Int=1, background::Int=0)
     return new_img
 
 end
+
+"""
+'''
+output = thinning(img)
+'''
+The function transforms a binary blob image into a skeletized form using the technique of Zhang-Suen.
+
+-  img          = Binary input image
+"""
+
+function thinning_iteration(img::AbstractArray{Bool,2}, iter::Int64)
+    marker = falses(size(img))
+    h, w = size(img)
+    for i in range(2,h-2)
+        for j in range(2,w-2)
+            p2 = img[i-1,j]
+            p3 = img[i-1,j+1]
+            p4 = img[i,j+1]
+            p5 = img[i+1,j+1]
+            p6 = img[i+1,j]
+            p7 = img[i+1,j-1]
+            p8 = img[i,j-1]
+            p9 = img[i-1,j-1]
+
+            A  = (p2 == 0 && p3 == 1) + (p3 == 0 && p4 == 1) +
+                 (p4 == 0 && p5 == 1) + (p5 == 0 && p6 == 1) +
+                 (p6 == 0 && p7 == 1) + (p7 == 0 && p8 == 1) +
+                 (p8 == 0 && p9 == 1) + (p9 == 0 && p2 == 1)
+
+            B = p2 + p3 + p4 + p5 + p6 + p7 + p8 + p9
+            m1 = iter == 0 ? (p2 * p4 * p6) : (p2 * p4 * p8)
+            m2 = iter == 0 ? (p4 * p6 * p8) : (p2 * p6 * p8)
+            if (A == 1 && (B >= 2 && B <= 6) && m1 == 0 && m2 == 0)
+                marker[i,j] = 1
+            end
+        end
+    end
+    return img.&(.~marker)            
+end    
+
+function thinning(img::AbstractArray)
+    processed = img.>0.5
+    prev = falses(size(img))
+
+    while(count(prev.!=processed)>0)
+        prev = processed
+        processed = thinning_iteration(processed, 0)
+        processed = thinning_iteration(processed, 1)
+    end
+    return processed    
+end

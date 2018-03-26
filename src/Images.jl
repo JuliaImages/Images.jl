@@ -224,6 +224,7 @@ export # types
     otsu_threshold,
     yen_threshold,
     clearborder,
+    thinning,
 
     #Exposure
     complement,
