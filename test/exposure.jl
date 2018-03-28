@@ -125,38 +125,78 @@ using Base.Test, Images, Colors, FixedPointNumbers
         @test img == ret
         @test eltype(ret) == eltype(img)
 
+        imgp = padarray(img, Fill(0, (2,2)))
+        retp = adjust_gamma(imgp, 1)
+        @test imgp == retp
+        @test eltype(retp) == eltype(imgp)
+
         img = oneunits(Gray{N0f8}, 10, 10)
         ret = adjust_gamma(img, 1)
         @test img == ret
         @test eltype(ret) == eltype(img)
 
+        imgp = padarray(img, Fill(0, (2,2)))
+        retp = adjust_gamma(imgp, 1)
+        @test imgp == retp
+        @test eltype(retp) == eltype(imgp)
+
         img = oneunits(Gray{N0f16}, 10, 10)
         ret = adjust_gamma(img, 1)
         @test eltype(ret) == eltype(img)
+
+        imgp = padarray(img, Fill(0, (2,2)))
+        retp = adjust_gamma(imgp, 1)
+        @test imgp == retp
+        @test eltype(retp) == eltype(imgp)
 
         img = oneunits(AGray{N0f8}, 10, 10)
         ret = adjust_gamma(img, 1)
         @test img == ret
         @test eltype(ret) == eltype(img)
 
+        imgp = padarray(img, Fill(0, (2,2)))
+        retp = adjust_gamma(imgp, 1)
+        @test imgp == retp
+        @test eltype(retp) == eltype(imgp)
+
         img = oneunits(RGB{N0f8}, 10, 10)
         ret = adjust_gamma(img, 1)
         @test img == ret
         @test eltype(ret) == eltype(img)
+
+        imgp = padarray(img, Fill(zero(eltype(img)), (2,2)))
+        retp = adjust_gamma(imgp, 1)
+        @test imgp == retp
+        @test eltype(retp) == eltype(imgp)
 
         img = oneunits(RGB{N0f16}, 10, 10)
         ret = adjust_gamma(img, 1)
         @test img == ret
         @test eltype(ret) == eltype(img)
 
+        imgp = padarray(img, Fill(zero(eltype(img)), (2,2)))
+        retp = adjust_gamma(imgp, 1)
+        @test imgp == retp
+        @test eltype(retp) == eltype(imgp)
+
         img = oneunits(RGB{Float64}, 10, 10)
         ret = adjust_gamma(img, 1)
         @test all(map((i, r) -> isapprox(i, r), img, ret))
         @test eltype(ret) == eltype(img)
 
+        imgp = padarray(img, Fill(zero(eltype(img)), (2,2)))
+        retp = adjust_gamma(imgp, 1)
+        @test all(map((i, r) -> isapprox(i, r), imgp, retp))
+        @test eltype(retp) == eltype(imgp)
+
         img = oneunits(ARGB{N0f8}, 10, 10)
         ret = adjust_gamma(img, 1)
         @test img == ret
+
+        imgp = padarray(img, Fill(zero(eltype(img)), (2,2)))
+        retp = adjust_gamma(imgp, 1)
+        @test imgp == retp
+
 
         #Working
 
@@ -361,7 +401,7 @@ using Base.Test, Images, Colors, FixedPointNumbers
         @test complement(Gray(0.2)) == Gray(0.8)
         @test all(complement.(img) .== 1 - img)
         # deprecated (#690)
-        @test all(complement(img) .== 1 - img)
+        @test all(complement.(img) .== 1 - img)
 
         hist = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
