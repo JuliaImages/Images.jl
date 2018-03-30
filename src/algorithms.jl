@@ -954,3 +954,51 @@ function clearborder(img::AbstractArray, width::Int=1, background::Int=0)
     return new_img
 
 end
+
+"""
+```
+filled_img = imfill(img, size)
+filled_img = imfill(img, size, value)
+filled_img = imfill(img, size, value, connectivity)
+```
+
+Returns a copy of the original image after filling holes that are smaller than the specified size.
+
+Parameters:
+
+ -  img            = Binary/Grayscale input image (Integer valued)
+ -  size           = Minimum size of holes that are not filled.
+ -  value          = Value to be given to the holes that are filled (Default value is 1)
+ -  connectivity   = connectivity takes the same values as in label_components (Default value is 1:ndims(img))
+
+"""
+
+function imfill(img::AbstractArray{Int}, size::Int, value::Int=1, connectivity::Union{Dims, AbstractVector{Int}, BitArray}=1:ndims(img))
+    if size == 0 || size == 1
+        return img
+    end
+
+    to_bool(x::Int) = x==0 ? false : x>0 ? true : throw(InexactError())
+    bool_img = to_bool.(img)
+    inverted = .!(bool_img)
+
+    labels = label_components(inverted,connectivity)
+
+    number_labels = unique(labels)
+    count_labels = Dict([(i,count(x->x==i,labels)) for i in number_labels])
+
+    new_img = similar(img)
+    for itr in eachindex(img)
+        if img[itr] == 0
+            if count_labels[labels[itr]] < size
+                new_img[itr] = value
+            else
+                new_img[itr] = 0
+            end
+        else
+            new_img[itr] = img[itr]
+        end
+    end
+
+    return new_img
+end

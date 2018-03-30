@@ -661,6 +661,78 @@ using Base.Test
                      0 4 5 4 0
                      0 0 0 0 0]
         @test cleared_img == check_img
+    end
+
+    @testset "imfill" begin
+       #Case when specified size is 0 or 1
+        img = [1 0 1 1 1 1
+               0 1 1 1 0 0
+               1 1 0 0 0 1
+               0 1 0 1 0 1
+               1 1 0 0 0 1
+               0 0 1 1 0 0]
+        filled_img = imfill(img,0)
+        @test filled_img == img
+        filled_img = imfill(img,1)
+        @test filled_img == img
+
+        #2 Dimensional binary case
+        img = [0 0 0 0 0 0 1 0 0 0
+               0 1 1 1 1 1 0 0 0 0
+               0 1 0 0 1 1 0 0 0 0
+               0 1 1 1 0 1 0 0 0 0
+               0 1 1 1 1 1 0 0 0 0
+               0 0 0 0 0 0 0 1 1 1
+               0 0 0 0 0 0 0 1 0 1
+               0 0 0 0 0 0 0 1 1 1]
+        filled_img = imfill(img,3)
+        check_img = [0 0 0 0 0 0 1 0 0 0
+                     0 1 1 1 1 1 0 0 0 0
+                     0 1 1 1 1 1 0 0 0 0
+                     0 1 1 1 1 1 0 0 0 0
+                     0 1 1 1 1 1 0 0 0 0
+                     0 0 0 0 0 0 0 1 1 1
+                     0 0 0 0 0 0 0 1 1 1
+                     0 0 0 0 0 0 0 1 1 1]
+        @test filled_img == check_img
+
+        #Multidimensional binary case
+        img = cat(3,[0 0 0 0;
+                     1 1 0 0;
+                     0 1 0 0;
+                     1 1 0 0],
+                    [0 0 0 0;
+                     1 1 0 0;
+                     1 1 0 0;
+                     1 1 0 0],
+                    [0 0 0 0;
+                     0 0 0 0;
+                     0 0 0 0;
+                     0 0 0 0])
+        filled_img = imfill(img,2)
+        check_img = img
+        check_img[3,1,1] = 1
+        @test filled_img == check_img
+
+        #Grayscale case
+        img = [0 0 0 0 0 0 1 2 0 2
+               0 1 1 1 1 1 0 2 0 2
+               0 1 0 0 1 1 0 2 0 2
+               0 1 1 1 0 1 0 2 2 2
+               0 1 1 1 1 1 0 0 0 0
+               0 0 0 0 0 0 0 1 1 1
+               3 3 0 0 0 0 0 1 0 1
+               0 3 0 0 0 0 0 1 1 1]
+        filled_img = imfill(img,4,10,trues(3,3))
+        check_img = [ 0 0  0  0  0 0 1 2 10 2
+                      0 1  1  1  1 1 0 2 10 2
+                      0 1 10 10  1 1 0 2 10 2
+                      0 1  1  1 10 1 0 2  2 2
+                      0 1  1  1  1 1 0 0  0 0
+                      0 0  0  0  0 0 0 1  1 1
+                      3 3  0  0  0 0 0 1 10 1
+                     10 3  0  0  0 0 0 1  1 1]
+        @test filled_img == check_img             
     end    
 end
 
