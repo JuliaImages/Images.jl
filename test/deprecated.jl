@@ -1,5 +1,7 @@
 using Base.Test, Images
 
+info("From this point on there will be deprectation warnings")
+
 srand(2015)
 
 @testset "Distances" begin

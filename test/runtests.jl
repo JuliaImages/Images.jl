@@ -8,7 +8,7 @@ include("exposure.jl")
 include("edge.jl")
 include("corner.jl")
 include("bwdist.jl")
-include("distances.jl")
 include("writemime.jl")
+include("deprecated.jl")
 
 end
