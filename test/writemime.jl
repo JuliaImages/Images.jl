@@ -19,6 +19,7 @@ using Test
         end
         b = load(fn)
         @test b == A
+        @test Images.metadata(fn) == (reverse(size(A)), Gray{N0f8})
 
         img = fill(RGB{N0f16}(1,0,0), 1, 1)
         open(fn, "w") do file
@@ -26,6 +27,7 @@ using Test
         end
         b = load(fn)
         @test b == img
+        @test Images.metadata(fn) == (reverse(size(img)), RGB{N0f16})
 
         A = N0f8[0.01 0.99; 0.25 0.75]
         fn = joinpath(workdir, "writemime.png")
@@ -33,6 +35,7 @@ using Test
             show(IOContext(file, :full_fidelity=>true), MIME("image/png"), Gray.(A), minpixels=5, maxpixels=typemax(Int))
         end
         @test load(fn) == A
+        @test Images.metadata(fn) == (reverse(size(A)), Gray{N0f8})
 
         A = N0f8[0.01 0.4 0.99; 0.25 0.8 0.75; 0.6 0.2 0.0]
         fn = joinpath(workdir, "writemime.png")
@@ -40,6 +43,7 @@ using Test
             show(IOContext(file, :full_fidelity=>true), MIME("image/png"), Gray.(A), minpixels=0, maxpixels=5)
         end
         @test load(fn) == A
+        @test Images.metadata(fn) == (reverse(size(A)), Gray{N0f8})
 
         # a genuinely big image (tests the defaults)
         abig = colorview(Gray, normedview(rand(UInt8, 1024, 1023)))
@@ -49,6 +53,7 @@ using Test
         end
         b = load(fn)
         @test b == abig
+        @test Images.metadata(fn) == (reverse(size(abig)), Gray{N0f8})
     end
     @testset "colorspace normalization" begin
         img = fill(HSV{Float64}(0.5, 0.5, 0.5), 1, 1)
@@ -57,25 +62,29 @@ using Test
             show(file, MIME("image/png"), img, minpixels=0, maxpixels=typemax(Int))
         end
         b = load(fn)
-        @test b == RGB{N0f8}.(img)
+        @test b == convert(Array{RGB{N0f8}}, img)
+        @test Images.metadata(fn) == (reverse(size(img)), RGB{N0f8})
         img = fill(RGB{N0f16}(1,0,0), 1, 1)
         open(fn, "w") do file
             show(file, MIME("image/png"), img, minpixels=0, maxpixels=typemax(Int))
         end
         b = load(fn)
         @test eltype(b) <: AbstractRGB && eltype(eltype(b)) == N0f8 && b[1] == RGB(1,0,0)
+        @test Images.metadata(fn) == (reverse(size(img)), RGB{N0f8})
         img = fill(RGBA{Float32}(1,0,0,0.5), 1, 1)
         open(fn, "w") do file
             show(file, MIME("image/png"), img, minpixels=0, maxpixels=typemax(Int))
         end
         b = load(fn)
         @test isa(b, Matrix{RGBA{N0f8}}) && b[1] == RGBA{N0f8}(1,0,0,0.5)
+        @test Images.metadata(fn) == (reverse(size(img)), RGBA{N0f8})
         img = Gray.([0.1 0.2; -0.5 0.8])
         open(fn, "w") do file
             show(file, MIME("image/png"), img, minpixels=0, maxpixels=typemax(Int))
         end
         b = load(fn)
         @test isa(b, Matrix{Gray{N0f8}}) && b == Gray{N0f8}[0.1 0.2; 0 0.8]
+        @test Images.metadata(fn) == (reverse(size(img)), Gray{N0f8})
     end
     @testset "small images (expansion)" begin
         A = N0f8[0.01 0.99; 0.25 0.75]
@@ -84,6 +93,7 @@ using Test
             show(file, MIME("image/png"), Gray.(A), minpixels=5, maxpixels=typemax(Int))
         end
         @test load(fn) == A[[1,1,2,2],[1,1,2,2]]
+        @test Images.metadata(fn) == ((4,4), Gray{N0f8})
     end
     @testset "big images (use of restrict)" begin
         A = N0f8[0.01 0.4 0.99; 0.25 0.8 0.75; 0.6 0.2 0.0]
@@ -93,6 +103,7 @@ using Test
             show(file, MIME("image/png"), Gray.(A), minpixels=0, maxpixels=5)
         end
         @test load(fn) == N0f8.(Ar)
+        @test Images.metadata(fn) == (reverse(size(Ar)), Gray{N0f8})
         # a genuinely big image (tests the defaults)
         abig = colorview(Gray, normedview(rand(UInt8, 1024, 1023)))
         fn = joinpath(workdir, "big.png")
@@ -101,6 +112,7 @@ using Test
         end
         b = load(fn)
         @test b == N0f8.(restrict(abig, (1,2)))
+        @test Images.metadata(fn) == (reverse(size(restrict(abig,(1,2)))), Gray{N0f8})
     end
     @testset "display matrix of images" begin
         img() = colorview(Gray, rand([0.250 0.5; 0.75 1.0], rand(2:10), rand(2:10)))
