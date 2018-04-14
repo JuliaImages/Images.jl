@@ -954,3 +954,47 @@ function clearborder(img::AbstractArray, width::Int=1, background::Int=0)
     return new_img
 
 end
+
+"""
+```
+boundary_img = boundaries(img)
+boundary_img = boundaries(img, method)
+boundary_img = boundaries(img, method, connectivity)
+boundary_img = boundaries(img, method, connectivity, background)
+```
+
+Returns a Boolean array where the boundaries between the labeled regions are true.
+
+Parameters:
+
+ -  img            = Input labeled image
+ -  method         = Method used for finding boundaries: 1 = thick boundaries, 2 = inner boundaries of labels, 3 = outer boundaries of labels (Default value is 1)
+ -  connectivity   = Connectivity takes the same values as in label_components (Default value is 1:ndims(img))
+ -  background     = Value of pixels that will be considered as background for mode 2 and 3 (Default value is 0)
+
+"""
+
+function boundaries(input_img::AbstractArray, method::Int=1, connectivity::Union{Dims, AbstractVector{Int}, BitArray}=1:ndims(input_img), background::Int=0)
+    if typeof(input_img) == Bool
+        img = convert.(Int, input_img)
+    else
+        img = input_img
+    end
+    boundary_img = dilate(img, connectivity) .!= erode(img, connectivity)
+    if method == 2
+        foreground_img = img .!= background
+        boundary = boundary_img .& foreground_img
+    elseif method == 3
+        max_label = typemax(typeof.(img)[1])
+        background_img = (img .== background)
+        inverted_background = copy(img)
+        inverted_background[background_img] = max_label
+        temp1 = dilate(img,connectivity) .!= erode(inverted_background,connectivity)
+        adjacent_objects = temp1 .& .~(background_img)
+        temp2 = background_img .| adjacent_objects
+        boundary = boundary_img .& temp2
+    else
+        boundary = boundary_img
+    end
+    return boundary
+end
