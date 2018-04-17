@@ -974,12 +974,8 @@ Parameters:
 
 """
 
-function boundaries(input_img::AbstractArray, method::Int=1, connectivity::Union{Dims, AbstractVector{Int}, BitArray}=1:ndims(input_img), background::Int=0)
-    if typeof(input_img) == Bool
-        img = convert.(Int, input_img)
-    else
-        img = input_img
-    end
+function boundaries(img::AbstractArray, method::Int=1, connectivity::Union{Dims, AbstractVector{Int}, BitArray}=1:ndims(img), background::Int=0)
+
     if method != 4
         boundary_img = dilate(img, connectivity) .!= erode(img, connectivity)
         if method == 2
