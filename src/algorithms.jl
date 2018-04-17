@@ -998,3 +998,80 @@ function boundaries(input_img::AbstractArray, method::Int=1, connectivity::Union
     end
     return boundary
 end
+
+"""
+```
+boundary_img = boundaries(img)
+boundary_img = boundaries(img, method)
+boundary_img = boundaries(img, method, connectivity)
+boundary_img = boundaries(img, method, connectivity, background)
+```
+
+Returns a Boolean array where the boundaries between the labeled regions are true.
+
+Parameters:
+
+ -  img            = Input labeled image
+ -  method         = Method used for finding boundaries: 1 = thick boundaries, 2 = inner boundaries of labels, 3 = outer boundaries of labels, 4 = subpixel boundaries (Double sized image is returned) (Default value is 1)
+ -  connectivity   = Connectivity takes the same values as in label_components (Default value is 1:ndims(img))
+ -  background     = Value of pixels that will be considered as background for mode 2 and 3 (Default value is 0)
+
+"""
+
+function boundaries(input_img::AbstractArray, method::Int=1, connectivity::Union{Dims, AbstractVector{Int}, BitArray}=1:ndims(input_img), background::Int=0)
+    if typeof(input_img) == Bool
+        img = convert.(Int, input_img)
+    else
+        img = input_img
+    end
+    if method != 4
+        boundary_img = dilate(img, connectivity) .!= erode(img, connectivity)
+        if method == 2
+            foreground_img = img .!= background
+            boundary = boundary_img .& foreground_img
+        elseif method == 3
+            max_label = typemax(typeof.(img)[1])
+            background_img = (img .== background)
+            inverted_background = copy(img)
+            inverted_background[background_img] = max_label
+            temp1 = dilate(img,connectivity) .!= erode(inverted_background,connectivity)
+            adjacent_objects = temp1 .& .~(background_img)
+            temp2 = background_img .| adjacent_objects
+            boundary = boundary_img .& temp2
+        else
+            boundary = boundary_img
+        end
+        return boundary
+    else
+        max_label = typemax(typeof.(img)[1])
+        expanded_img = zeros(typeof.(img)[1],map(i->2*i-1, size(img)))
+        dims = map(i -> 1:2:i, size(expanded_img))
+        expanded_img[dims...] = img
+        edges = trues(expanded_img)
+        edges[dims...] = false
+        expanded_img[edges] = max_label
+        padded_img = pad_image(max_label, expanded_img)
+
+        boundary = zeros(edges)
+        for i in CartesianRange(size(expanded_img))
+            if edges[i]
+                a = []
+                for j in 1:ndims(expanded_img)
+                    push!(a, i[j]:i[j]+2)
+                end
+                value = unique(padded_img[a...])
+                if size(value)[1] > 2
+                    boundary[i] = true
+                end
+            end
+        end
+        return boundary
+    end
+end
+
+function pad_image(value::Int, img::AbstractArray)
+    padded_img = value*ones(typeof.(img)[1],map(i->i+2, size(img)))
+    dims = map(i -> 2:i+1, size(img))
+    padded_img[dims...] = img
+    return padded_img
+end
