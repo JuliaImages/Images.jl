@@ -1021,7 +1021,7 @@ function boundaries(img::AbstractArray, method::Int=1, connectivity::Union{Dims,
     end
 end
 
-function pad_image(value::Int, img::AbstractArray)
+function pad_image(value::Real, img::AbstractArray)
     padded_img = value*ones(typeof.(img)[1],map(i->i+2, size(img)))
     dims = map(i -> 2:i+1, size(img))
     padded_img[dims...] = img
