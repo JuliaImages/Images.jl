@@ -968,20 +968,81 @@ Returns a Boolean array where the boundaries between the labeled regions are tru
 Parameters:
 
  -  img            = Input labeled image
- -  method         = Method used for finding boundaries: 1 = thick boundaries, 2 = inner boundaries of labels, 3 = outer boundaries of labels, 4 = subpixel boundaries (Double sized image is returned) (Default value is 1)
+ -  method         = Method used for finding boundaries (Default is :inner)
+```
+        (:inner) boundary contains pixels just inside of labels, leaving background pixels untouched
+        (:outer) boundary contains pixels in the background around label boundaries
+        (:thick) boundary contains pixels not completely surrounded by pixels of the same label (defined by connectivity). Boundaries are 2 pixels thick
+        (:subpixel) boundary image with pixels between the original pixels marked as boundaries (Double sized image is returned)
+
+```
  -  connectivity   = Connectivity takes the same values as in label_components (Default value is 1:ndims(img))
- -  background     = Value of pixels that will be considered as background for mode 2 and 3 (Default value is 0)
+ -  background     = Value of pixels that will be considered as background for mode inner and outer (Default value is 0)
+
+## `Examples`
+
+Let img be 
+
+0 0 0 0 0 0 \\
+0 1 1 1 0 0 \\
+0 1 1 1 0 0 \\
+0 0 0 0 2 2 \\
+0 0 0 0 2 2 \\
+
+
+The command `boundaries(img)` or `boundaries(img, :inner)` yields
+
+false false false false false false \\
+false true  true  true  false false \\
+false true  true  true  false false \\
+false false false false true  true  \\
+false false false false true  false \\
+
+
+The command `boundaries(img, :outer)` yields
+
+true  true  true  true  true  false \\
+true  false false false true  false \\
+true  false false true  true  true  \\
+true  true  true  true  true  false \\
+false false false true  false false \\
+
+
+The command `boundaries(img, :thick)` yields
+
+true  true  true  true  true  false \\
+true  true  true  true  true  false \\
+true  true  true  true  true  true  \\
+true  true  true  true  true  true  \\
+false false false true  true  false \\
+
+
+The command `boundaries(img, :subpixel)` yields
+
+false false false false false false false false false false false\\
+false true  true  true  true  true  true  true  false false false\\
+false true  false false false false false true  false false false\\
+false true  false false false false false true  false false false\\
+false true  false false false false false true  false false false\\
+false true  true  true  true  true  true  true  true  true  true \\
+false false false false false false false true  false false false\\
+false false false false false false false true  false false false\\
+false false false false false false false true  false false false\\
 
 """
 
-function boundaries(img::AbstractArray, method::Int=1, connectivity::Union{Dims, AbstractVector{Int}, BitArray}=1:ndims(img), background::Int=0)
-
-    if method != 4
+function boundaries(img::AbstractArray, method::Symbol=:inner, connectivity::Union{Dims, AbstractVector{Int}, BitArray}=1:ndims(img), background::Int=0)
+    # if typeof(input_img) == Bool
+    #     img = convert.(Int, input_img)
+    # else
+    #     img = input_img
+    # end
+    if method != :subpixel
         boundary_img = dilate(img, connectivity) .!= erode(img, connectivity)
-        if method == 2
+        if method == :inner
             foreground_img = img .!= background
             boundary = boundary_img .& foreground_img
-        elseif method == 3
+        elseif method == :outer
             max_label = typemax(typeof.(img)[1])
             background_img = (img .== background)
             inverted_background = copy(img)
@@ -1002,7 +1063,10 @@ function boundaries(img::AbstractArray, method::Int=1, connectivity::Union{Dims,
         edges = trues(expanded_img)
         edges[dims...] = false
         expanded_img[edges] = max_label
-        padded_img = pad_image(max_label, expanded_img)
+        padding_size = map(i -> 1, size(expanded_img))
+        new_dims = map(i -> i+2, size(expanded_img))
+        temp_img = padarray(expanded_img, Fill(max_label,padding_size))
+        padded_img = reshape(view(temp_img, (:)), new_dims)
 
         boundary = zeros(edges)
         for i in CartesianRange(size(expanded_img))
@@ -1019,11 +1083,4 @@ function boundaries(img::AbstractArray, method::Int=1, connectivity::Union{Dims,
         end
         return boundary
     end
-end
-
-function pad_image(value::Real, img::AbstractArray)
-    padded_img = value*ones(typeof.(img)[1],map(i->i+2, size(img)))
-    dims = map(i -> 2:i+1, size(img))
-    padded_img[dims...] = img
-    return padded_img
 end
