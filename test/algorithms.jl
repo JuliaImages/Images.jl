@@ -661,7 +661,142 @@ using Base.Test
                      0 4 5 4 0
                      0 0 0 0 0]
         @test cleared_img == check_img
-    end    
+    end
+
+    @testset "boundaries" begin
+        #Method = 'Inner' Case (Non edge)
+        img = zeros(Int, 10, 10)
+        img[3:7,3:7] = 1
+        img[8:9,8:10] = 2
+        check_img = [0 0 0 0 0 0 0 0 0 0
+                     0 0 0 0 0 0 0 0 0 0
+                     0 0 1 1 1 1 1 0 0 0
+                     0 0 1 0 0 0 1 0 0 0
+                     0 0 1 0 0 0 1 0 0 0
+                     0 0 1 0 0 0 1 0 0 0
+                     0 0 1 1 1 1 1 0 0 0
+                     0 0 0 0 0 0 0 1 1 1
+                     0 0 0 0 0 0 0 1 1 1
+                     0 0 0 0 0 0 0 0 0 0]
+        res_img = boundaries(img,:inner)
+        @test res_img == check_img
+
+        #Method = 'Inner' Case (Edge)
+        img = zeros(Int, 10, 10)
+        img[3:7,3:7] = 1
+        img[8:10,8:10] = 2
+        check_img = [0 0 0 0 0 0 0 0 0 0
+                     0 0 0 0 0 0 0 0 0 0
+                     0 0 1 1 1 1 1 0 0 0
+                     0 0 1 0 0 0 1 0 0 0
+                     0 0 1 0 0 0 1 0 0 0
+                     0 0 1 0 0 0 1 0 0 0
+                     0 0 1 1 1 1 1 0 0 0
+                     0 0 0 0 0 0 0 1 1 1
+                     0 0 0 0 0 0 0 1 0 0
+                     0 0 0 0 0 0 0 1 0 0]
+        res_img = boundaries(img,:inner)
+        @test res_img == check_img
+
+        #Method = 'Outer' Case (Non edge)
+        img = zeros(Int, 10, 10)
+        img[3:7,3:7] = 1
+        img[8:9,8:10] = 2
+        check_img = [0 0 0 0 0 0 0 0 0 0
+                     0 1 1 1 1 1 1 1 0 0
+                     0 1 0 0 0 0 0 1 0 0
+                     0 1 0 0 0 0 0 1 0 0
+                     0 1 0 0 0 0 0 1 0 0
+                     0 1 0 0 0 0 0 1 0 0
+                     0 1 0 0 0 0 1 1 1 1
+                     0 1 1 1 1 1 1 1 0 0
+                     0 0 0 0 0 0 1 0 0 0
+                     0 0 0 0 0 0 1 1 1 1]
+        res_img = boundaries(img,:outer)
+        @test res_img == check_img
+
+        #Method = 'Outer' Case (Edge)
+        img = zeros(Int, 10, 10)
+        img[3:7,3:7] = 1
+        img[8:10,8:10] = 2
+        check_img = [0 0 0 0 0 0 0 0 0 0
+                     0 1 1 1 1 1 1 1 0 0
+                     0 1 0 0 0 0 0 1 0 0
+                     0 1 0 0 0 0 0 1 0 0
+                     0 1 0 0 0 0 0 1 0 0
+                     0 1 0 0 0 0 0 1 0 0
+                     0 1 0 0 0 0 1 1 1 1
+                     0 1 1 1 1 1 1 1 0 0
+                     0 0 0 0 0 0 1 0 0 0
+                     0 0 0 0 0 0 1 0 0 0]
+        res_img = boundaries(img,:outer)
+        @test res_img == check_img
+
+        #Method = 'Thick' Case (Non edge)
+        img = zeros(Int, 10, 10)
+        img[3:7,3:7] = 1
+        img[8:9,8:10] = 2
+        check_img = [0 0 0 0 0 0 0 0 0 0
+                     0 1 1 1 1 1 1 1 0 0
+                     0 1 1 1 1 1 1 1 0 0
+                     0 1 1 0 0 0 1 1 0 0
+                     0 1 1 0 0 0 1 1 0 0
+                     0 1 1 0 0 0 1 1 0 0
+                     0 1 1 1 1 1 1 1 1 1
+                     0 1 1 1 1 1 1 1 1 1
+                     0 0 0 0 0 0 1 1 1 1
+                     0 0 0 0 0 0 1 1 1 1]
+        res_img = boundaries(img, :thick)
+        @test res_img == check_img
+
+        #Method = 'Thick' Case (Edge)
+        img = zeros(Int, 10, 10)
+        img[3:7,3:7] = 1
+        img[8:10,8:10] = 2
+        check_img = [0 0 0 0 0 0 0 0 0 0
+                     0 1 1 1 1 1 1 1 0 0
+                     0 1 1 1 1 1 1 1 0 0
+                     0 1 1 0 0 0 1 1 0 0
+                     0 1 1 0 0 0 1 1 0 0
+                     0 1 1 0 0 0 1 1 0 0
+                     0 1 1 1 1 1 1 1 1 1
+                     0 1 1 1 1 1 1 1 1 1
+                     0 0 0 0 0 0 1 1 0 0
+                     0 0 0 0 0 0 1 1 0 0]
+        res_img = boundaries(img, :thick)
+        @test res_img == check_img
+
+        #Method = 'Subpixel' Case
+        img = zeros(Int, 5, 4)
+        img[3,2] = 1
+        img[2:4,3] = 2
+        check_img = [0 0 0 0 0 0 0
+                     0 0 0 1 1 1 0
+                     0 0 0 1 0 1 0
+                     0 1 1 1 0 1 0
+                     0 1 0 1 0 1 0
+                     0 1 1 1 0 1 0
+                     0 0 0 1 0 1 0
+                     0 0 0 1 1 1 0
+                     0 0 0 0 0 0 0]
+        res_img = boundaries(img,:subpixel)
+        @test res_img == check_img
+
+        #Boolean input Case
+        img = falses(9,9)
+        img[3:5,3:5] = true
+        check_img = [false false false false false false false false false
+                     false true true true true true false false false
+                     false true true true true true false false false
+                     false true true false true true false false false
+                     false true true true true true false false false
+                     false true true true true true false false false
+                     false false false false false false false false false
+                     false false false false false false false false false
+                     false false false false false false false false false]
+        res_img = boundaries(img,:thick)
+        @test res_img == check_img
+    end
 end
 
 nothing
