@@ -54,6 +54,7 @@ using ImageMetadata: ImageMetaAxis
 import ImageMorphology: dilate, erode
 import ImageTransformations: restrict
 using TiledIteration: EdgeIterator
+using CoordinateTransformations: Translation
 
 using Base.Cartesian  # TODO: delete this
 

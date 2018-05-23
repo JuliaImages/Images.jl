@@ -790,19 +790,26 @@ Returns a  gaussian pyramid of scales `n_scales`, each downsampled
 by a factor `downsample` and `sigma` for the gaussian kernel.
 
 """
-function gaussian_pyramid(img::AbstractArray{T,N}, n_scales::Int, downsample::Real, sigma::Real) where {T,N}
+
+function gaussian_pyramid(img::AbstractArray{T,N}, n_scales::Int, downsample::Real, sigma::Real) where {T, N}
     kerng = KernelFactors.IIRGaussian(sigma)
     kern = ntuple(d->kerng, Val{N})
     gaussian_pyramid(img, n_scales, downsample, kern)
 end
 
-function gaussian_pyramid(img::AbstractArray{T,N}, n_scales::Int, downsample::Real, kern::NTuple{N,Any}) where {T,N}
+function gaussian_pyramid(img::AbstractArray{T,N}, n_scales::Int, downsample::Real, kern::NTuple{N,Any}) where {T, N}
     # To guarantee inferability, we make sure that we do at least one
     # round of smoothing and resizing
     img_smoothed_main = imfilter(img, kern, NA())
-    img_scaled = pyramid_scale(img_smoothed_main, downsample)
-    prev = convert(typeof(img_scaled), img)
-    pyramid = typeof(img_scaled)[prev]
+    if all(x->isa(x, Base.OneTo), indices(img))
+        img_scaled = pyramid_scale(img_smoothed_main, downsample)
+        prev = convert(typeof(img_scaled), img)
+        pyramid = typeof(img_scaled)[prev]
+    else
+        img_scaled = pyramid_scale(img_smoothed_main, downsample, map(i -> i.start, indices(img_smoothed_main)))
+        prev = convert.(typeof.(img_scaled)[1], img)
+        pyramid = [prev]
+    end
     if n_scales ≥ 1
         # Take advantage of the work we've already done
         push!(pyramid, img_scaled)
@@ -810,16 +817,28 @@ function gaussian_pyramid(img::AbstractArray{T,N}, n_scales::Int, downsample::Re
     end
     for i in 2:n_scales
         img_smoothed = imfilter(prev, kern, NA())
-        img_scaled = pyramid_scale(img_smoothed, downsample)
+        if all(x->isa(x, Base.OneTo), indices(img))
+            img_scaled = pyramid_scale(img_smoothed, downsample)
+        else
+            img_scaled = pyramid_scale(img_smoothed, downsample, map(i -> i.start, indices(img_smoothed)))
+        end
         push!(pyramid, img_scaled)
         prev = img_scaled
     end
     pyramid
 end
 
-function pyramid_scale(img, downsample)
+function pyramid_scale(img::AbstractArray{T,N}, downsample::Real) where {T, N}
     sz_next = map(s->ceil(Int, s/downsample), size(img))
     imresize(img, sz_next)
+end
+
+function pyramid_scale(img::AbstractArray{T,N}, downsample::Real, start::Tuple) where {T, N}
+    sz_next = map(s->ceil(Int, s/downsample), length.(indices(img)))
+    temp_img = imresize(img, sz_next)
+    trans = Translation(map(i -> ceil((1-i)/2), start)...)
+    resized_img = warp(temp_img, trans)
+    return resized_img
 end
 
 """
