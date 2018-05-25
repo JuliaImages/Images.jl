@@ -20,3 +20,4 @@ FileIO
 Compat 0.19
 StatsBase 0.14   # for histrange
 Requires
+OffsetArrays

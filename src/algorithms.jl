@@ -1,4 +1,5 @@
 using Base: indices1, tail
+using OffsetArrays
 
 Compat.@dep_vectorize_2arg Gray atan2
 Compat.@dep_vectorize_2arg Gray hypot
@@ -791,25 +792,19 @@ by a factor `downsample` and `sigma` for the gaussian kernel.
 
 """
 
-function gaussian_pyramid(img::AbstractArray{T,N}, n_scales::Int, downsample::Real, sigma::Real) where {T, N}
+function gaussian_pyramid(img::AbstractArray{T,N}, n_scales::Int, downsample::Real, sigma::Real) where {T,N}
     kerng = KernelFactors.IIRGaussian(sigma)
     kern = ntuple(d->kerng, Val{N})
     gaussian_pyramid(img, n_scales, downsample, kern)
 end
 
-function gaussian_pyramid(img::AbstractArray{T,N}, n_scales::Int, downsample::Real, kern::NTuple{N,Any}) where {T, N}
+function gaussian_pyramid(img::AbstractArray{T,N}, n_scales::Int, downsample::Real, kern::NTuple{N,Any}) where {T,N}
     # To guarantee inferability, we make sure that we do at least one
     # round of smoothing and resizing
     img_smoothed_main = imfilter(img, kern, NA())
-    if all(x->isa(x, Base.OneTo), indices(img))
-        img_scaled = pyramid_scale(img_smoothed_main, downsample)
-        prev = convert(typeof(img_scaled), img)
-        pyramid = typeof(img_scaled)[prev]
-    else
-        img_scaled = pyramid_scale(img_smoothed_main, downsample, map(i -> i.start, indices(img_smoothed_main)))
-        prev = convert.(typeof.(img_scaled)[1], img)
-        pyramid = [prev]
-    end
+    img_scaled = pyramid_scale(img_smoothed_main, downsample)
+    prev = convert(typeof(img_scaled), img)
+    pyramid = typeof(img_scaled)[prev]
     if n_scales ≥ 1
         # Take advantage of the work we've already done
         push!(pyramid, img_scaled)
@@ -817,28 +812,22 @@ function gaussian_pyramid(img::AbstractArray{T,N}, n_scales::Int, downsample::Re
     end
     for i in 2:n_scales
         img_smoothed = imfilter(prev, kern, NA())
-        if all(x->isa(x, Base.OneTo), indices(img))
-            img_scaled = pyramid_scale(img_smoothed, downsample)
-        else
-            img_scaled = pyramid_scale(img_smoothed, downsample, map(i -> i.start, indices(img_smoothed)))
-        end
+        img_scaled = pyramid_scale(img_smoothed, downsample)
         push!(pyramid, img_scaled)
         prev = img_scaled
     end
     pyramid
 end
 
-function pyramid_scale(img::AbstractArray{T,N}, downsample::Real) where {T, N}
+function pyramid_scale(img, downsample)
     sz_next = map(s->ceil(Int, s/downsample), size(img))
     imresize(img, sz_next)
 end
 
-function pyramid_scale(img::AbstractArray{T,N}, downsample::Real, start::Tuple) where {T, N}
-    sz_next = map(s->ceil(Int, s/downsample), length.(indices(img)))
-    temp_img = imresize(img, sz_next)
-    trans = Translation(map(i -> ceil((1-i)/2), start)...)
-    resized_img = warp(temp_img, trans)
-    return resized_img
+function pyramid_scale(img::OffsetArray, downsample)
+    sz_next = map(s->ceil(Int, s/downsample), length.(Compat.axes(img)))
+    off = (.-ceil.(Int,(.-start.(Compat.axes(img).-(1,1)))./downsample))
+    OffsetArray(imresize(img, sz_next), off)
 end
 
 """
@@ -941,7 +930,7 @@ Parameters:
 """
 
 function clearborder(img::AbstractArray, width::Int=1, background::Int=0)
-    
+
     for i in size(img)
         if(width > i)
             throw(ArgumentError("Border width must not be greater than size of the image."))
