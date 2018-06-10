@@ -1,4 +1,5 @@
 using Base: indices1, tail
+using OffsetArrays
 
 Compat.@dep_vectorize_2arg Gray atan2
 Compat.@dep_vectorize_2arg Gray hypot
@@ -790,6 +791,7 @@ Returns a  gaussian pyramid of scales `n_scales`, each downsampled
 by a factor `downsample` and `sigma` for the gaussian kernel.
 
 """
+
 function gaussian_pyramid(img::AbstractArray{T,N}, n_scales::Int, downsample::Real, sigma::Real) where {T,N}
     kerng = KernelFactors.IIRGaussian(sigma)
     kern = ntuple(d->kerng, Val{N})
@@ -820,6 +822,12 @@ end
 function pyramid_scale(img, downsample)
     sz_next = map(s->ceil(Int, s/downsample), size(img))
     imresize(img, sz_next)
+end
+
+function pyramid_scale(img::OffsetArray, downsample)
+    sz_next = map(s->ceil(Int, s/downsample), length.(Compat.axes(img)))
+    off = (.-ceil.(Int,(.-start.(Compat.axes(img).-(1,1)))./downsample))
+    OffsetArray(imresize(img, sz_next), off)
 end
 
 """
@@ -922,7 +930,7 @@ Parameters:
 """
 
 function clearborder(img::AbstractArray, width::Int=1, background::Int=0)
-    
+
     for i in size(img)
         if(width > i)
             throw(ArgumentError("Border width must not be greater than size of the image."))

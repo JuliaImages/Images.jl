@@ -232,6 +232,30 @@ using Base.Test
         @test size.(pyramidlevel1) == [(32,32), (16,16)]
     end
 
+    @testset "gaussian_pyramid" begin
+        #Tests for OffsetArrays
+        img = zeros(70, 70)
+        img[20:51, 20:51] = 1
+        imgo = OffsetArray(img, 0, 0)
+        pyramid = gaussian_pyramid(imgo, 3, 2, 1.0)
+        @test size.(indices(pyramid[1])) == ((70,), (70,))
+        @test size.(indices(pyramid[2])) == ((35,), (35,))
+        @test size.(indices(pyramid[3])) == ((18,), (18,))
+        @test size.(indices(pyramid[4])) == ((9,), (9,))
+        @test pyramid[1][35, 35] == 1.0
+        @test isapprox(pyramid[2][18, 18], 1.0, atol = 1e-5)
+        @test isapprox(pyramid[3][9, 9], 1.0, atol = 1e-3)
+        @test isapprox(pyramid[4][5, 5], 0.99, atol = 0.01)
+
+        for p in pyramid
+            h, w = indices(p)
+            @test all(Bool[isapprox(v, 0, atol = 0.01) for v in p[h.start, :]])
+            @test all(Bool[isapprox(v, 0, atol = 0.01) for v in p[:, w.start]])
+            @test all(Bool[isapprox(v, 0, atol = 0.01) for v in p[h.stop, :]])
+            @test all(Bool[isapprox(v, 0, atol = 0.01) for v in p[:, w.stop]])
+        end
+    end
+
     @testset "fft and ifft" begin
         A = rand(Float32, 3, 5, 6)
         img = colorview(RGB, A)
@@ -570,7 +594,7 @@ using Base.Test
         @test yen_threshold(img) == yen_threshold(cat(1, img[:,:,1], img[:,:,2], img[:,:,3]))
 
         img = zeros(Gray{Float64},10,10,3)
-        @test yen_threshold(img) == 0        
+        @test yen_threshold(img) == 0
     end
 
     @testset "imROF" begin
@@ -661,7 +685,7 @@ using Base.Test
                      0 4 5 4 0
                      0 0 0 0 0]
         @test cleared_img == check_img
-    end    
+    end
 end
 
 nothing
