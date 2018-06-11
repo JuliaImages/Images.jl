@@ -1,3 +1,9 @@
+# v0.14
+
+- add `OffsetArray` to `REQUIRE`
+
+- add `OffsetArray` support to `gaussian_pyramid`.
+
 # v0.10
 
 New features:
