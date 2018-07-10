@@ -788,7 +788,7 @@ pyramid = gaussian_pyramid(img, n_scales, downsample, sigma)
 ```
 
 Returns a  gaussian pyramid of scales `n_scales`, each downsampled
-by a factor `downsample` and `sigma` for the gaussian kernel.
+by a factor `downsample` > 1 and `sigma` for the gaussian kernel.
 
 """
 
@@ -799,6 +799,7 @@ function gaussian_pyramid(img::AbstractArray{T,N}, n_scales::Int, downsample::Re
 end
 
 function gaussian_pyramid(img::AbstractArray{T,N}, n_scales::Int, downsample::Real, kern::NTuple{N,Any}) where {T,N}
+    downsample > 1 || warn("downsample factor should be greater than one")
     # To guarantee inferability, we make sure that we do at least one
     # round of smoothing and resizing
     img_smoothed_main = imfilter(img, kern, NA())
