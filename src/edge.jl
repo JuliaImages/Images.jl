@@ -413,7 +413,7 @@ canny(img::AbstractMatrix, threshold::Tuple{N,N}, args...) where {N<:Union{Numbe
 function hysteresis_thresholding(img_nonMaxSup::AbstractArray{T, 2}, upperThreshold::Number, lowerThreshold::Number) where T
     img_thresholded = map(i -> i > lowerThreshold ? i > upperThreshold ? 1.0 : 0.5 : 0.0, img_nonMaxSup)
     queue = CartesianIndex{2}[]
-    R = CartesianRange(size(img_thresholded))
+    R = CartesianIndices(size(img_thresholded))
 
     I1, Iend = first(R), last(R)
     for I in R
@@ -421,8 +421,8 @@ function hysteresis_thresholding(img_nonMaxSup::AbstractArray{T, 2}, upperThresh
         img_thresholded[I] = 0.9
         push!(queue, I)
         while !isempty(queue)
-          q_top = shift!(queue)
-          for J in CartesianRange(max(I1, q_top - I1), min(Iend, q_top + I1))
+          q_top = popfirst!(queue)
+          for J in CartesianIndices(max(I1, q_top - I1), min(Iend, q_top + I1))
             if img_thresholded[J] == 1.0 || img_thresholded[J] == 0.5
               img_thresholded[J] = 0.9
               push!(queue, J)

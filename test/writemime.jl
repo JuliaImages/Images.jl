@@ -1,5 +1,5 @@
 using Images, Colors, FixedPointNumbers
-using Base.Test
+using Test
 
 @testset "show (MIME)" begin
     # Test that we remembered to turn off Colors.jl's colorswatch display

@@ -56,7 +56,7 @@ instead using the functions `data` and `properties` to extract these.)  These
 are the only two fields in the first concrete image type, called `Image`:
 
 ```julia
-type Image{T,N,A<:AbstractArray} <: AbstractImageDirect{T,N}
+mutable struct Image{T,N,A<:AbstractArray} <: AbstractImageDirect{T,N}
     data::A
     properties::Dict{String,Any}
 end
@@ -79,7 +79,7 @@ images. More detail about this point can be found below.
 The only other concrete image type is for indexed images:
 
 ```julia
-type ImageCmap{T,N,A<:AbstractArray,C<:AbstractArray} <: AbstractImageIndexed{T,N}
+mutable struct ImageCmap{T,N,A<:AbstractArray,C<:AbstractArray} <: AbstractImageIndexed{T,N}
     data::A
     cmap::C
     properties::Dict{String,Any}
@@ -199,7 +199,7 @@ function imfilter{T,N}(A::Array{T,N}, kernel::Array{T,N}, options...)
 The first step might be to simply provide a version for `AbstractImage` types:
 
 ```julia
-function imfilter{T,N}(img::AbstractImage{T,N}, kernel::Array{T,N}, options...)
+function imfilter(img::AbstractImage{T,N}, kernel::Array{T,N}, options...) where {T,N}
     out = imfilter(data(img), kernel, options...)
     shareproperties(img, out)
 end
@@ -212,7 +212,7 @@ implement this version simultaneously for both `Image` types and other array
 types as follows:
 
 ```julia
-function imfilter{T,N,N1}(img::AbstractArray{T,N}, kernel::Array{T,N1}, options...)
+function imfilter(img::AbstractArray{T,N}, kernel::Array{T,N1}, options...) where {T,N,N1}
     cd = colordim(img)
     if N1 != N - (cd != 0)
         error("kernel has the wrong dimensionality")

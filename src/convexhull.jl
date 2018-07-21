@@ -4,12 +4,11 @@ chull = convexhull(img)
 ```
 Computes the convex hull of a binary image and returns the vertices of convex hull as a CartesianIndex array.
 """
-
 function convexhull(img::AbstractArray{T, 2}) where T<:Union{Bool,Gray{Bool}}
 
     function getboundarypoints(img)
         points = CartesianIndex{2}[]
-        for j = indices(img, 2)
+        for j = axes(img, 2)
             v = Base.view(img, :, j)
             i1 = findfirst(v)
             if i1 != 0
@@ -66,7 +65,7 @@ function convexhull(img::AbstractArray{T, 2}) where T<:Union{Bool,Gray{Bool}}
     # Used Graham scan algorithm
 
     points=getboundarypoints(img)
-    last_point=CartesianIndex(map(r->first(r)-1, indices(img)))
+    last_point=CartesianIndex(map(r->first(r)-1, axes(img)))
     for point in points
         if point[2]>last_point[2] || (point[2]==last_point[2] && point[1]>last_point[1])
             last_point=point

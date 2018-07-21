@@ -1,4 +1,4 @@
-using Base.Test, Images, Colors, FixedPointNumbers, OffsetArrays
+using Test, Images, Colors, FixedPointNumbers, OffsetArrays
 
 @testset "Corner" begin
     A = zeros(41,41)

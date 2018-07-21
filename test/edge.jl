@@ -1,4 +1,4 @@
-using Images, Base.Test, Colors, Compat
+using Images, Test, Colors, Compat
 
 global checkboard
 

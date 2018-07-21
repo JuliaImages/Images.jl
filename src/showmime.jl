@@ -55,7 +55,7 @@ function _show_odd(io::IO, m::MIME"text/html", imgs::AbstractArray{T, 1}) where 
 end
 
 function _show_odd(io::IO, m::MIME"text/html", imgs::AbstractArray{T, N}) where {T<:ColorantMatrix, N}
-    colons = ([Colon() for i=1:(N-1)]...)
+    colons = ([Colon() for i=1:(N-1)]...,)
     for i in indices(imgs, N)
         write(io, "<td style='text-align:center;vertical-align:middle; margin: 0.5em;border:1px #90999f solid;border-collapse:collapse'>")
         _show_even(io, m, view(imgs, colons..., i)) # show even
@@ -64,7 +64,7 @@ function _show_odd(io::IO, m::MIME"text/html", imgs::AbstractArray{T, N}) where 
 end
 
 function _show_even(io::IO, m::MIME"text/html", imgs::AbstractArray{T, N}, center=true) where {T<:ColorantMatrix, N}
-    colons = ([Colon() for i=1:(N-1)]...)
+    colons = ([Colon() for i=1:(N-1)]...,)
     centering = center ? " style='margin: auto'" : ""
     write(io, "<table$centering>")
     write(io, "<tbody>")

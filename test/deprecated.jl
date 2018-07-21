@@ -1,6 +1,6 @@
-using Base.Test, Images
+using Test, Images
 
-info("From this point on there will be deprectation warnings")
+@info("From this point on there will be deprectation warnings")
 
 srand(2015)
 

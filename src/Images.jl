@@ -5,8 +5,8 @@ module Images
 import Base.Iterators.take
 import Base: +, -, *
 import Base: abs, atan2, clamp, convert, copy, copy!, ctranspose, delete!,
-             eltype, fft, get, getindex, haskey, hypot,
-             ifft, imag, length, linearindexing, map, map!, maximum, mimewritable,
+             eltype, get, getindex, haskey, hypot,
+             imag, length, linearindexing, map, map!, maximum, mimewritable,
              minimum, ndims, one, parent, permutedims, real, reinterpret,
              reshape, resize!,
              setindex!, show, showcompact, similar, size, sqrt, squeeze,

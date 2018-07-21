@@ -1,4 +1,4 @@
-using Base.Test, Images
+using Test, Images
 
 @testset "bwdist" begin
     ind2cart(F) = map(i->CartesianIndex(ind2sub(indices(F), i)), F)

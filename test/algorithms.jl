@@ -1,5 +1,6 @@
 using Images, Colors, FixedPointNumbers, OffsetArrays, TestImages
-using Base.Test
+using Statistics, Random, LinearAlgebra, FFTW
+using Test
 
 @testset "Algorithms" begin
     @testset "Statistics" begin
@@ -272,7 +273,7 @@ using Base.Test
         imgcol = colorview(RGB, rand(3,5,6))
         A = reshape([convert(UInt16, i) for i = 1:60], 4, 5, 3)
         B = restrict(A, (1,2))
-        Btarget = cat(3, [ 0.96875  4.625   5.96875;
+        Btarget = cat([ 0.96875  4.625   5.96875;
                            2.875   10.5    12.875;
                            1.90625  5.875   6.90625],
                       [ 8.46875  14.625 13.46875;
@@ -280,7 +281,7 @@ using Base.Test
                         9.40625  15.875 14.40625],
                       [15.96875  24.625 20.96875;
                        32.875    50.5   42.875;
-                       16.90625  25.875 21.90625])
+                       16.90625  25.875 21.90625], dims=3)
         @test B ≈ Btarget
         Argb = reinterpret(RGB, reinterpret(N0f16, permutedims(A, (3,1,2))))
         B = restrict(Argb)
@@ -291,12 +292,12 @@ using Base.Test
         @test isapprox(reinterpret(eltype(eltype(B)), B), restrict(A, (2,3))/reinterpret(one(N0f16)), atol=1e-12)
         A = reshape(1:60, 5, 4, 3)
         B = restrict(A, (1,2,3))
-        @test cat(3, [ 2.6015625  8.71875 6.1171875;
+        @test cat([ 2.6015625  8.71875 6.1171875;
                        4.09375   12.875   8.78125;
                        3.5390625 10.59375 7.0546875],
                      [10.1015625 23.71875 13.6171875;
                       14.09375   32.875   18.78125;
-                      11.0390625 25.59375 14.5546875]) ≈ B
+                      11.0390625 25.59375 14.5546875], dims=3) ≈ B
         imgcolax = AxisArray(imgcol, :y, :x)
         imgr = restrict(imgcolax, (1,2))
         @test pixelspacing(imgr) == (2,2)
@@ -331,7 +332,7 @@ using Base.Test
               0 0 0 0;
               0 0 0.6 0.6;
               0 0 0.6 0.6]
-        @test Ad == cat(3, Ar, Ag, zeros(4,4))
+        @test Ad == cat(Ar, Ag, zeros(4,4), dims=3)
         Ae = erode(Ad, 1:2)
         Ar = [0.8 0.8 0 0;
               0.8 0.8 0 0;
@@ -341,7 +342,7 @@ using Base.Test
               0 0 0 0;
               0 0 0 0;
               0 0 0 0.6]
-        @test Ae == cat(3, Ar, Ag, zeros(4,4))
+        @test Ae == cat(Ar, Ag, zeros(4,4), dims=3)
         # issue #311
         @test dilate(trues(3)) == trues(3)
     end
@@ -563,7 +564,7 @@ using Base.Test
 
         #test for multidimension arrays
         img = rand(Float64, 10, 10, 3)
-        @test otsu_threshold(img) == otsu_threshold(cat(1, img[:,:,1], img[:,:,2], img[:,:,3]))
+        @test otsu_threshold(img) == otsu_threshold(cat(img[:,:,1], img[:,:,2], img[:,:,3], dims=1))
 
         #yen_threshold
         img = testimage("cameraman")
@@ -591,7 +592,7 @@ using Base.Test
         @test ≈(gray(thres), 199/256, atol=0.01)
 
         img = rand(Float64, 10, 10, 3)
-        @test yen_threshold(img) == yen_threshold(cat(1, img[:,:,1], img[:,:,2], img[:,:,3]))
+        @test yen_threshold(img) == yen_threshold(cat(img[:,:,1], img[:,:,2], img[:,:,3], dims=1))
 
         img = zeros(Gray{Float64},10,10,3)
         @test yen_threshold(img) == 0
@@ -601,7 +602,7 @@ using Base.Test
         # Test that -div is the adjoint of forwarddiff
         p = rand(3,3,2)
         u = rand(3,3)
-        gu = cat(3, Images.forwarddiffy(u), Images.forwarddiffx(u))
+        gu = cat(Images.forwarddiffy(u), Images.forwarddiffx(u), dims=3)
         @test sum(-Images.div(p) .* u) ≈ sum(p .* gu)
 
         img = [0.1 0.2 0.1 0.8 0.9 0.7;
@@ -651,7 +652,7 @@ using Base.Test
         @test cleared_img == 10*ones(img)
 
         #Multidimentional Case
-        img = cat(3,[0 0 0 0;
+        img = cat([0 0 0 0;
                      0 0 0 0;
                      0 0 0 0;
                      1 0 0 0],
@@ -662,7 +663,7 @@ using Base.Test
                     [0 0 0 0;
                      0 0 0 0;
                      0 0 0 0;
-                     0 0 0 0])
+                     0 0 0 0], dims=3)
         cleared_img = clearborder(img)
         check_img = copy(img)
         check_img[4,1,1] = 0

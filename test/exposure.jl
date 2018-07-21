@@ -1,4 +1,4 @@
-using Base.Test, Images, Colors, FixedPointNumbers
+using Test, Images, Colors, FixedPointNumbers
 
 @testset "Exposure" begin
     oneunits(::Type{C}, dims...) where C = fill(oneunit(C), dims)

@@ -118,7 +118,7 @@ for N = 1:4
                 return Albl
             end
             for d = 1:ndims(connectivity)
-                (isodd(size(connectivity, d)) && connectivity == flipdim(connectivity, d)) || error("connectivity must be symmetric")
+                (isodd(size(connectivity, d)) && connectivity == reverse(connectivity, dims=d)) || error("connectivity must be symmetric")
             end
             size(Albl) == size(A) || throw(DimensionMismatch("size(Albl) must be equal to size(A)"))
             @nexprs $N d->(halfwidth_d = size(connectivity,d)>>1)
@@ -214,7 +214,7 @@ function push!(sets::DisjointMinSets)
 end
 
 function minlabel(sets::DisjointMinSets)
-    out = Vector{Int}(length(sets.parents))
+    out = Vector{Int}(undef, length(sets.parents))
     k = 0
     for i = 1:length(sets.parents)
         if sets.parents[i] == i
@@ -275,7 +275,7 @@ end
 function component_centroids(img::AbstractArray{Int,N}) where N
     len = length(0:maximum(img))
     n = fill((zero(CartesianIndex{N}), 0), len)
-    @inbounds for I in CartesianRange(size(img))
+    @inbounds for I in CartesianIndices(size(img))
         v = img[I] + 1
         n[v] = n[v] .+ (I, 1)
     end

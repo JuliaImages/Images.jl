@@ -163,7 +163,7 @@ function imhist(img::AbstractArray, nbins::Integer, minval::RealLike, maxval::Re
     imhist(img, edges)
 end
 
-function imhist(img::AbstractArray, edges::Range)
+function imhist(img::AbstractArray, edges::AbstractRange)
     histogram = zeros(Int, length(edges) + 1)
     o = Base.Order.Forward
     G = graytype(eltype(img))
@@ -416,7 +416,7 @@ function histmatch(img::AbstractArray{T}, oimg::AbstractArray, nbins::Integer = 
     _histmatch(img, oedges, ohist)
 end
 
-function _histmatch(img::AbstractArray, oedges::Range, ohist::AbstractArray{Int})
+function _histmatch(img::AbstractArray, oedges::AbstractRange, ohist::AbstractArray{Int})
     bins, histogram = imhist(img, oedges)
     ohist[1] = zero(eltype(ohist))
     ohist[end] = zero(eltype(ohist))
@@ -428,7 +428,7 @@ function _histmatch(img::AbstractArray, oedges::Range, ohist::AbstractArray{Int}
     norm_ocdf = ocdf / ocdf[end]
     lookup_table = zeros(Int, length(norm_cdf))
     for I in eachindex(cdf)
-        lookup_table[I] = indmin(abs.(norm_ocdf .- norm_cdf[I]))
+        lookup_table[I] = argmin(abs.(norm_ocdf .- norm_cdf[I]))
     end
     hist_matched_img = similar(img)
     for I in eachindex(img)
