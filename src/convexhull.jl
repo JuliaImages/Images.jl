@@ -11,7 +11,7 @@ function convexhull(img::AbstractArray{T, 2}) where T<:Union{Bool,Gray{Bool}}
         for j = axes(img, 2)
             v = Base.view(img, :, j)
             i1 = findfirst(v)
-            if i1 != 0
+            if i1 != nothing
                 i2 = findlast(v)
                 push!(points, CartesianIndex(i1, j))
                 if i1 != i2

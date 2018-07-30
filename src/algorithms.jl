@@ -508,13 +508,13 @@ function restrict(img::AxisArray{T,N}, region::Dims) where {T,N}
     inregion = falses(ndims(img))
     inregion[[region...]] = true
     inregiont = (inregion...,)::NTuple{N,Bool}
-    AxisArray(restrict(img.data, region), map(modax, axes(img), inregiont))
+    AxisArray(restrict(img.data, region), map(modax, AxisArrays.axes(img), inregiont))
 end
 
 # FIXME: this doesn't get inferred, but it should be (see issue #628)
 function restrict(img::Union{AxisArray,ImageMetaAxis}, ::Type{Ax}) where Ax
     A = restrict(img.data, axisdim(img, Ax))
-    AxisArray(A, replace_axis(modax(img[Ax]), axes(img)))
+    AxisArray(A, replace_axis(modax(img[Ax]), AxisArrays.axes(img)))
 end
 
 replace_axis(newax, axs) = _replace_axis(newax, axnametype(newax), axs...)
