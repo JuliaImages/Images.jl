@@ -6,7 +6,7 @@ import Base.Iterators.take
 import Base: +, -, *
 import Base: abs, atan2, clamp, convert, copy, copy!, ctranspose, delete!,
              eltype, get, getindex, haskey, hypot,
-             imag, length, linearindexing, map, map!, maximum, mimewritable,
+             imag, length, map, map!, maximum, mimewritable,
              minimum, ndims, one, parent, permutedims, real, reinterpret,
              reshape, resize!,
              setindex!, show, showcompact, similar, size, sqrt, squeeze,
@@ -18,8 +18,11 @@ export HomogeneousPoint
 using Base: depwarn
 using Base.Order: Ordering, ForwardOrdering, ReverseOrdering
 
-using Compat
 using StaticArrays
+using Base64: Base64EncodePipe
+
+# CHECKME: use this or follow deprecation and substitute?
+using SparseArrays: findnz
 
 # "deprecated imports" are below
 
@@ -38,7 +41,7 @@ import Graphics
 import Graphics: width, height, Point
 using StatsBase  # TODO: eliminate this dependency
 using IndirectArrays, MappedArrays
-using Compat.TypeUtils
+# using Compat.TypeUtils
 
 const is_little_endian = ENDIAN_BOM == 0x04030201
 
@@ -271,7 +274,7 @@ export # types
     # phantoms
     shepp_logan
 
-_length(A::AbstractArray) = length(linearindices(A))
+_length(A::AbstractArray) = length(LinearIndices(A))
 _length(A) = length(A)
 
 """

@@ -371,7 +371,7 @@ adjust_gamma(img::AbstractArray{T}, gamma::Number) where {T<:Number} = _adjust_g
 adjust_gamma(img::AbstractArray{T}, gamma::Number) where {T<:Colorant} = _adjust_gamma(img, gamma, T)
 
 function _adjust_gamma(img::AbstractArray, gamma::Number, C::Type)
-    gamma_corrected_img = _fill(oneunit(C), indices(img))
+    gamma_corrected_img = _fill(oneunit(C), axes(img))
     for I in eachindex(img)
         gamma_corrected_img[I] = _gamma_pixel_rescale(img[I], gamma)
     end
@@ -379,7 +379,7 @@ function _adjust_gamma(img::AbstractArray, gamma::Number, C::Type)
 end
 
 function adjust_gamma(img::AbstractArray{T}, gamma::Number, minval::Number, maxval::Number) where T<:Number
-    gamma_corrected_img = _fill(oneunit(T), indices(img))
+    gamma_corrected_img = _fill(oneunit(T), axes(img))
     for I in eachindex(img)
         gamma_corrected_img[I] = _gamma_pixel_rescale(img[I], gamma, minval, maxval)
     end

@@ -230,9 +230,9 @@ function component_boxes(img::AbstractArray{Int})
     nd = ndims(img)
     n = [Vector{Int64}[ fill(typemax(Int64),nd), fill(typemin(Int64),nd) ]
             for i=0:maximum(img)]
-    s = size(img)
+    s = CartesianIndices(size(img))
     for i=1:length(img)
-        vcur = ind2sub(s,i)
+        vcur = s[i]
         vmin = n[img[i]+1][1]
         vmax = n[img[i]+1][2]
         for d=1:nd
@@ -264,9 +264,9 @@ end
 "`component_subscripts(labeled_array)` -> an array of pixels for each label, including the background label 0"
 function component_subscripts(img::AbstractArray{Int})
     n = [Tuple[] for i=0:maximum(img)]
-    s = size(img)
+    s = CartesianIndices(size(img))
     for i=1:length(img)
-      push!(n[img[i]+1],ind2sub(s,i))
+      push!(n[img[i]+1],s[i])
     end
     n
 end

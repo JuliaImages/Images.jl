@@ -121,7 +121,7 @@ Hence, the refined sub-pixel coordinate is equal to:
 
 """
 function corner2subpixel(responses::AbstractMatrix, corner_indicator::AbstractMatrix{Bool})
-    row_range, col_range = indices(corner_indicator)
+    row_range, col_range = axes(corner_indicator)
     row, col, _ = findnz(corner_indicator)
     ncorners = length(row)
     corners = fill(HomogeneousPoint((0.0,0.0,0.0)),ncorners)

@@ -7,7 +7,7 @@ using Images, Colors, IndirectArrays, Test
     target = intensity .* labels
     @test eltype(A) == RGB{Float64}
     @test size(A) == (2,2)
-    @test indices(A) == (Base.OneTo(2), Base.OneTo(2))
+    @test axes(A) == (Base.OneTo(2), Base.OneTo(2))
     for i = 1:4
         @test A[i] === target[i]
     end

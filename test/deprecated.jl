@@ -6,7 +6,7 @@ srand(2015)
 
 @testset "Distances" begin
     @testset "Hausdorff" begin
-        A = eye(3); B = copy(A); C = copy(A)
+        A = Matrix(1.0I,3,3); B = copy(A); C = copy(A)
         B[1,2] = 1; C[1,3] = 1
         @test hausdorff_distance(A,A) == 0
         @test hausdorff_distance(A,B) == hausdorff_distance(B,A)

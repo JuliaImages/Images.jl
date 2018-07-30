@@ -1,9 +1,10 @@
 using Base: indices1, tail
 using OffsetArrays
 import Statistics
+using Statistics: mean
 
-Compat.@dep_vectorize_2arg Gray atan2
-Compat.@dep_vectorize_2arg Gray hypot
+# Compat.@dep_vectorize_2arg Gray atan2
+# Compat.@dep_vectorize_2arg Gray hypot
 
 """
 `M = meanfinite(img, region)` calculates the mean value along the dimensions listed in `region`, ignoring any non-finite values.
@@ -80,18 +81,18 @@ end
 
 function Statistics.var(A::AbstractArray{C,N}; kwargs...) where {C<:Colorant,N}
     imgc = channelview(A)
-    colons = ntuple(d->Colon(), Val{N})
+    colons = ntuple(d->Colon(), Val(N))
     inds1 = axes(imgc, 1)
-    val1 = var(view(imgc, first(inds1), colons...); kwargs...)
+    val1 = Statistics.var(view(imgc, first(inds1), colons...); kwargs...)
     vals = similar(imgc, typeof(val1), inds1)
     vals[1] = val1
     for i in first(inds1)+1:last(inds1)
-        vals[i] = var(view(imgc, i, colons...); kwargs...)
+        vals[i] = Statistics.var(view(imgc, i, colons...); kwargs...)
     end
     base_colorant_type(C)(vals...)
 end
 
-Statistics.std(A::AbstractArray{C}; kwargs...) where {C<:Colorant} = mapc(sqrt, var(A; kwargs...))
+Statistics.std(A::AbstractArray{C}; kwargs...) where {C<:Colorant} = mapc(sqrt, Statistics.var(A; kwargs...))
 
 # Entropy for grayscale (intensity) images
 function _log(kind::Symbol)
@@ -422,23 +423,23 @@ International Journal of Computer Vision, 30(2), 79–116.
 See also: [`BlobLoG`](@ref).
 """
 function blob_LoG(img::AbstractArray{T,N}, σscales::Union{AbstractVector,Tuple},
-                  edges::Tuple{Vararg{Bool}}=(true, ntuple(d->false, Val{N})...), σshape=ntuple(d->1, Val{N})) where {T,N}
+                  edges::Tuple{Vararg{Bool}}=(true, ntuple(d->false, Val(N))...), σshape=ntuple(d->1, Val(N))) where {T,N}
     sigmas = sort(σscales)
     img_LoG = Array{Float64}(undef, length(sigmas), size(img)...)
-    colons = ntuple(d->Colon(), Val{N})
+    colons = ntuple(d->Colon(), Val(N))
     @inbounds for isigma in eachindex(sigmas)
-        img_LoG[isigma,colons...] = (-sigmas[isigma]) * imfilter(img, Kernel.LoG(ntuple(i->sigmas[isigma]*σshape[i],Val{N})))
+        img_LoG[isigma,colons...] = (-sigmas[isigma]) * imfilter(img, Kernel.LoG(ntuple(i->sigmas[isigma]*σshape[i],Val(N))))
     end
     maxima = findlocalmaxima(img_LoG, 1:ndims(img_LoG), edges)
     [BlobLoG(CartesianIndex(tail(x.I)), sigmas[x[1]], img_LoG[x]) for x in maxima]
 end
-blob_LoG(img::AbstractArray{T,N}, σscales, edges::Bool, σshape=ntuple(d->1, Val{N})) where {T,N} =
-    blob_LoG(img, σscales, (edges, ntuple(d->edges,Val{N})...), σshape)
+blob_LoG(img::AbstractArray{T,N}, σscales, edges::Bool, σshape=ntuple(d->1, Val(N))) where {T,N} =
+    blob_LoG(img, σscales, (edges, ntuple(d->edges,Val(N))...), σshape)
 
-blob_LoG(img::AbstractArray{T,N}, σscales, σshape=ntuple(d->1, Val{N})) where {T,N} =
-    blob_LoG(img, σscales, (true, ntuple(d->false,Val{N})...), σshape)
+blob_LoG(img::AbstractArray{T,N}, σscales, σshape=ntuple(d->1, Val(N))) where {T,N} =
+    blob_LoG(img, σscales, (true, ntuple(d->false,Val(N))...), σshape)
 
-findlocalextrema(img::AbstractArray{T,N}, region, edges::Bool, order) where {T,N} = findlocalextrema(img, region, ntuple(d->edges,Val{N}), order)
+findlocalextrema(img::AbstractArray{T,N}, region, edges::Bool, order) where {T,N} = findlocalextrema(img, region, ntuple(d->edges,Val(N)), order)
 
 function findlocalextrema(img::AbstractArray{T,N}, region::Union{Tuple{Int,Vararg{Int}},Vector{Int},UnitRange{Int},Int}, edges::NTuple{N,Bool}, order::Base.Order.Ordering) where {T<:Union{Gray,Number},N}
     issubset(region,1:ndims(img)) || throw(ArgumentError("invalid region"))
@@ -446,8 +447,9 @@ function findlocalextrema(img::AbstractArray{T,N}, region::Union{Tuple{Int,Varar
     edgeoffset = CartesianIndex(map(!, edges))
     R0 = CartesianIndices(axes(img))
     R = CartesianIndices(first(R0)+edgeoffset, last(R0)-edgeoffset)
-    Rinterior = CartesianIndices(first(R0)+1, last(R0)-1)
-    iregion = CartesianIndex(ntuple(d->d∈region, Val{N}))
+    rstp = one(first(R0))
+    Rinterior = CartesianIndices(first(R0)+rstp, last(R0)-rstp)
+    iregion = CartesianIndex(ntuple(d->d∈region, Val(N)))
     Rregion = CartesianIndices(-iregion, iregion)
     z = zero(iregion)
     for i in R
@@ -561,7 +563,9 @@ function div(p::AbstractArray{T,3}) where T
     inds = axes(p)[1:2]
     out = similar(p, inds)
     Router = CartesianIndices(inds)
-    Rinner = CartesianIndices(first(Router)+1, last(Router)-1)
+    rstp = one(first(Router))
+    # FIXME: convert args to UnitRanges?
+    Rinner = CartesianIndices(first(Router)+rstp,last(Router)-rstp)
     # Since most of the points are in the interior, compute them more quickly by avoiding branches
     for I in Rinner
         out[I] = p[I,1] - p[I[1]-1, I[2], 1] +
@@ -794,7 +798,7 @@ by a factor `downsample` > 1 and `sigma` for the gaussian kernel.
 """
 function gaussian_pyramid(img::AbstractArray{T,N}, n_scales::Int, downsample::Real, sigma::Real) where {T,N}
     kerng = KernelFactors.IIRGaussian(sigma)
-    kern = ntuple(d->kerng, Val{N})
+    kern = ntuple(d->kerng, Val(N))
     gaussian_pyramid(img, n_scales, downsample, kern)
 end
 
@@ -826,8 +830,8 @@ function pyramid_scale(img, downsample)
 end
 
 function pyramid_scale(img::OffsetArray, downsample)
-    sz_next = map(s->ceil(Int, s/downsample), length.(Compat.axes(img)))
-    off = (.-ceil.(Int,(.-start.(Compat.axes(img).-(1,1)))./downsample))
+    sz_next = map(s->ceil(Int, s/downsample), length.(axes(img)))
+    off = (.-ceil.(Int,(.-iterate.(axes(img).-(1,1))[1])./downsample))
     OffsetArray(imresize(img, sz_next), off)
 end
 
