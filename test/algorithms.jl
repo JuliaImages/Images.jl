@@ -38,11 +38,11 @@ using Test
         @test isempty(blob_LoG(A, 2.0.^[0,1], (false, true, false)))
         blobs = blob_LoG(A, 2.0.^[0,0.5,1], (true, false, true))
         @test all(b.amplitude < 1e-16 for b in blobs)
-        A = zeros(Int, 9, 9); A[[1:2;5],5]=1
+        A = zeros(Int, 9, 9); A[[1:2;5],5].=1
         @test findlocalmaxima(A) == [CartesianIndex((5,5))]
         @test findlocalmaxima(A,2) == [CartesianIndex((1,5)),CartesianIndex((2,5)),CartesianIndex((5,5))]
         @test findlocalmaxima(A,2,false) == [CartesianIndex((2,5)),CartesianIndex((5,5))]
-        A = zeros(Int, 9, 9, 9); A[[1:2;5],5,5]=1
+        A = zeros(Int, 9, 9, 9); A[[1:2;5],5,5].=1
         @test findlocalmaxima(A) == [CartesianIndex((5,5,5))]
         @test findlocalmaxima(A,2) == [CartesianIndex((1,5,5)),CartesianIndex((2,5,5)),CartesianIndex((5,5,5))]
         @test findlocalmaxima(A,2,false) == [CartesianIndex((2,5,5)),CartesianIndex((5,5,5))]
@@ -65,7 +65,7 @@ using Test
 
     end
 
-    srand(1234)
+    Random.seed!(1234)
 
     @testset "Complement" begin
         @test complement.([Gray(0.2)]) == [Gray(0.8)]
@@ -109,11 +109,11 @@ using Test
         @test maxfinite(A) == maximum(A)
         A = rand(Float32,3,5,5)
         img = colorview(RGB, A)
-        dc = meanfinite(img, 1)-reinterpretc(RGB{Float32}, mean(A, 2), (1,5))
+        dc = meanfinite(img, 1)-reshape(reinterpretc(RGB{Float32}, mean(A, dims=2)), (1,5))
         @test maximum(map(abs, dc)) < 1e-6
-        dc = minfinite(img)-RGB{Float32}(minimum(A, (2,3))...)
+        dc = minfinite(img)-RGB{Float32}(minimum(A, dims=(2,3))...)
         @test abs(dc) < 1e-6
-        dc = maxfinite(img)-RGB{Float32}(maximum(A, (2,3))...)
+        dc = maxfinite(img)-RGB{Float32}(maximum(A, dims=(2,3))...)
         @test abs(dc) < 1e-6
 
         a = convert(Array{UInt8}, [1, 1, 1])
@@ -137,8 +137,8 @@ using Test
         @test_throws ErrorException (@test_approx_eq_sigma_eps a rand(13,15) [1,1] 0.01)
         @test_throws ErrorException (@test_approx_eq_sigma_eps a rand(15,15) [1,1] 0.01)
         @test (@test_approx_eq_sigma_eps a a [1,1] 0.01) == nothing
-        @test (@test_approx_eq_sigma_eps a a+0.01*rand(size(a)) [1,1] 0.01) == nothing
-        @test_throws ErrorException (@test_approx_eq_sigma_eps a a+0.5*rand(size(a)) [1,1] 0.01)
+        @test (@test_approx_eq_sigma_eps a a+0.01*rand(Float64,size(a)) [1,1] 0.01) == nothing
+        @test_throws ErrorException (@test_approx_eq_sigma_eps a a+0.5*rand(Float64,size(a)) [1,1] 0.01)
         a = colorview(RGB, rand(3,15,15))
         @test (@test_approx_eq_sigma_eps a a [1,1] 0.01) == nothing
         @test_throws ErrorException (@test_approx_eq_sigma_eps a colorview(RGB, rand(3,15,15)) [1,1] 0.01)
@@ -147,8 +147,8 @@ using Test
         @test_throws ErrorException Images.test_approx_eq_sigma_eps(a, rand(13,15), [1,1], 0.01)
         @test_throws ErrorException Images.test_approx_eq_sigma_eps(a, rand(15,15), [1,1], 0.01)
         @test Images.test_approx_eq_sigma_eps(a, a, [1,1], 0.01) == 0.0
-        @test Images.test_approx_eq_sigma_eps(a, a+0.01*rand(size(a)), [1,1], 0.01) > 0.0
-        @test_throws ErrorException Images.test_approx_eq_sigma_eps(a, a+0.5*rand(size(a)), [1,1], 0.01)
+        @test Images.test_approx_eq_sigma_eps(a, a+0.01*rand(Float64,size(a)), [1,1], 0.01) > 0.0
+        @test_throws ErrorException Images.test_approx_eq_sigma_eps(a, a+0.5*rand(Float64,size(a)), [1,1], 0.01)
         a = colorview(RGB, rand(3,15,15))
         @test Images.test_approx_eq_sigma_eps(a, a, [1,1], 0.01) == 0.0
         @test_throws ErrorException Images.test_approx_eq_sigma_eps(a, colorview(RGB, rand(3,15,15)), [1,1], 0.01)
@@ -300,11 +300,13 @@ using Test
                       11.0390625 25.59375 14.5546875], dims=3) ≈ B
         imgcolax = AxisArray(imgcol, :y, :x)
         imgr = restrict(imgcolax, (1,2))
-        @info "suppressing pixelspacing tests pending ImageAxes update"
-        # @test pixelspacing(imgr) == (2,2)
-        # @test pixelspacing(imgcolax) == (1,1)  # issue #347
-        # @inferred(restrict(imgcolax, Axis{:y}))
-        # @inferred(restrict(imgcolax, Axis{:x}))
+        @info "suppressing 4 tests pending ImageAxes update"
+        if false
+        @test pixelspacing(imgr) == (2,2)
+        @test pixelspacing(imgcolax) == (1,1)  # issue #347
+        @inferred(restrict(imgcolax, Axis{:y}))
+        @inferred(restrict(imgcolax, Axis{:x}))
+        end
         restrict(imgcolax, Axis{:y})  # FIXME #628
         restrict(imgcolax, Axis{:x})
         imgmeta = ImageMeta(imgcol, myprop=1)

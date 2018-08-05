@@ -1,8 +1,8 @@
-using Test, Images
+using Test, Images, Random
 
 @info("From this point on there will be deprectation warnings")
 
-srand(2015)
+Random.seed!(2015)
 
 @testset "Distances" begin
     @testset "Hausdorff" begin

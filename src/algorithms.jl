@@ -1,4 +1,4 @@
-using Base: indices1, tail
+using Base: axes1, tail
 using OffsetArrays
 import Statistics
 using Statistics: mean
@@ -20,7 +20,7 @@ function _meanfinite(A::AbstractArray, ::Type{T}, region) where T<:AbstractFloat
     sumfinite!(S, K, A)
     S./K
 end
-_meanfinite(A::AbstractArray, ::Type, region) = mean(A, region)  # non floating-point
+_meanfinite(A::AbstractArray, ::Type, region) = mean(A, dims=region)  # non floating-point
 
 using Base: check_reducedims, reducedim1, safe_tail
 using Base.Broadcast: newindex
@@ -42,10 +42,10 @@ function sumfinite!(S, K, A::AbstractArray{T,N}) where {T,N}
     axes(S) == axes(K) || throw(DimensionMismatch("S and K must have identical axes"))
 
     indsAt, indsSt = safe_tail(axes(A)), safe_tail(axes(S))
-    keep, Idefault = _newindexer(indsAt, indsSt)
+    keep, Idefault = _newindexer(indsSt)
     if reducedim1(S, A)
         # keep the accumulators as a local variable when reducing along the first dimension
-        i1 = first(indices1(S))
+        i1 = first(axes1(S))
         @inbounds for IA in CartesianIndices(indsAt)
             IS = newindex(IA, keep, Idefault)
             s, k = S[i1,IS], K[i1,IS]
@@ -72,7 +72,7 @@ function sumfinite!(S, K, A::AbstractArray{T,N}) where {T,N}
     end
     S, K
 end
-_newindexer(shape, inds) = Base.Broadcast.shapeindexer(shape, inds)
+_newindexer(ax) = Base.Broadcast.shapeindexer(ax)
 
 function Statistics.var(A::AbstractArray{C}; kwargs...) where C<:AbstractGray
     imgc = channelview(A)
@@ -358,10 +358,10 @@ function test_approx_eq_sigma_eps(A::AbstractArray, B::AbstractArray,
         if expand_arrays
             newsize = map(max, size(A), size(B))
             if size(A) != newsize
-                A = copy!(zeros(eltype(A), newsize...), A)
+                A = copyto!(zeros(eltype(A), newsize...), A)
             end
             if size(B) != newsize
-                B = copy!(zeros(eltype(B), newsize...), B)
+                B = copyto!(zeros(eltype(B), newsize...), B)
             end
         else
             error("Arrays differ: size(A): $(size(A)) size(B): $(size(B))")
@@ -439,6 +439,11 @@ blob_LoG(img::AbstractArray{T,N}, σscales, edges::Bool, σshape=ntuple(d->1, Va
 blob_LoG(img::AbstractArray{T,N}, σscales, σshape=ntuple(d->1, Val(N))) where {T,N} =
     blob_LoG(img, σscales, (true, ntuple(d->false,Val(N))...), σshape)
 
+@inline function _clippedinds(Router,rstp)
+    CartesianIndices(map((f,l)->f:l,
+                         (first(Router)+rstp).I,(last(Router)-rstp).I))
+end
+
 findlocalextrema(img::AbstractArray{T,N}, region, edges::Bool, order) where {T,N} = findlocalextrema(img, region, ntuple(d->edges,Val(N)), order)
 
 function findlocalextrema(img::AbstractArray{T,N}, region::Union{Tuple{Int,Vararg{Int}},Vector{Int},UnitRange{Int},Int}, edges::NTuple{N,Bool}, order::Base.Order.Ordering) where {T<:Union{Gray,Number},N}
@@ -446,11 +451,11 @@ function findlocalextrema(img::AbstractArray{T,N}, region::Union{Tuple{Int,Varar
     extrema = Array{CartesianIndex{N}}(undef, 0)
     edgeoffset = CartesianIndex(map(!, edges))
     R0 = CartesianIndices(axes(img))
-    R = CartesianIndices(first(R0)+edgeoffset, last(R0)-edgeoffset)
+    R = _clippedinds(R0,edgeoffset)
     rstp = one(first(R0))
-    Rinterior = CartesianIndices(first(R0)+rstp, last(R0)-rstp)
+    Rinterior = _clippedinds(R0,rstp)
     iregion = CartesianIndex(ntuple(d->d∈region, Val(N)))
-    Rregion = CartesianIndices(-iregion, iregion)
+    Rregion = CartesianIndices(map((f,l)->f:l,(-iregion).I, iregion.I))
     z = zero(iregion)
     for i in R
         isextrema = true
@@ -506,7 +511,7 @@ end
 
 function restrict(img::AxisArray{T,N}, region::Dims) where {T,N}
     inregion = falses(ndims(img))
-    inregion[[region...]] = true
+    inregion[[region...]] .= true
     inregiont = (inregion...,)::NTuple{N,Bool}
     AxisArray(restrict(img.data, region), map(modax, AxisArrays.axes(img), inregiont))
 end
@@ -564,8 +569,7 @@ function div(p::AbstractArray{T,3}) where T
     out = similar(p, inds)
     Router = CartesianIndices(inds)
     rstp = one(first(Router))
-    # FIXME: convert args to UnitRanges?
-    Rinner = CartesianIndices(first(Router)+rstp,last(Router)-rstp)
+    Rinner = _clippedinds(Router,rstp)
     # Since most of the points are in the interior, compute them more quickly by avoiding branches
     for I in Rinner
         out[I] = p[I,1] - p[I[1]-1, I[2], 1] +
@@ -702,11 +706,11 @@ calculation of sum of pixels in a rectangular subset of an image. See `boxdiff` 
 information.
 """
 function integral_image(img::AbstractArray)
-    integral_img = Array{accum(eltype(img))}(size(img))
+    integral_img = Array{accum(eltype(img))}(undef, size(img))
     sd = coords_spatial(img)
-    cumsum!(integral_img, img, sd[1])
+    cumsum!(integral_img, img, dims=sd[1])
     for i = 2:length(sd)
-        cumsum!(integral_img, integral_img, sd[i])
+        cumsum!(integral_img, integral_img, dims=sd[i])
     end
     integral_img
 end

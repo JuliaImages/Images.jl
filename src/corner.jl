@@ -122,7 +122,8 @@ Hence, the refined sub-pixel coordinate is equal to:
 """
 function corner2subpixel(responses::AbstractMatrix, corner_indicator::AbstractMatrix{Bool})
     row_range, col_range = axes(corner_indicator)
-    row, col, _ = findnz(corner_indicator)
+    idxs = findall(!iszero, corner_indicator) # findnz
+    row, col = (getindex.(idxs,1),getindex.(idxs,2))
     ncorners = length(row)
     corners = fill(HomogeneousPoint((0.0,0.0,0.0)),ncorners)
     invA = @SMatrix [0.5 -1.0 0.5; -0.5 0.0 0.5; 0.0 1.0 -0.0]

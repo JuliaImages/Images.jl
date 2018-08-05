@@ -1,4 +1,4 @@
-__precompile__(true)  # because of ImageAxes/ImageMeta
+VERSION < v"0.7.0-beta2.199" && __precompile__()
 
 module Images
 
