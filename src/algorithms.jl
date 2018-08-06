@@ -907,6 +907,7 @@ function yen_threshold(img::AbstractArray{T, N}, bins::Int = 256) where {T<:Unio
     edges, counts = imhist(img, range(gray(min), stop=gray(max), length=bins))
 
     prob_mass_function = counts./sum(counts)
+    clamp!(prob_mass_function,eps(),Inf)
     prob_mass_function_sq = prob_mass_function.^2
     cum_pmf = cumsum(prob_mass_function)
     cum_pmf_sq_1 = cumsum(prob_mass_function_sq)
