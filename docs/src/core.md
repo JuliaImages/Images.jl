@@ -56,7 +56,7 @@ instead using the functions `data` and `properties` to extract these.)  These
 are the only two fields in the first concrete image type, called `Image`:
 
 ```julia
-mutable struct Image{T,N,A<:AbstractArray} <: AbstractImageDirect{T,N}
+type Image{T,N,A<:AbstractArray} <: AbstractImageDirect{T,N}
     data::A
     properties::Dict{String,Any}
 end

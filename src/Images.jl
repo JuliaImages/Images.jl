@@ -274,7 +274,7 @@ export # types
     # phantoms
     shepp_logan
 
-_length(A::AbstractArray) = length(LinearIndices(A))
+_length(A::AbstractArray) = length(eachindex(A))
 _length(A) = length(A)
 
 """
