@@ -807,7 +807,7 @@ function gaussian_pyramid(img::AbstractArray{T,N}, n_scales::Int, downsample::Re
 end
 
 function gaussian_pyramid(img::AbstractArray{T,N}, n_scales::Int, downsample::Real, kern::NTuple{N,Any}) where {T,N}
-    downsample > 1 || warn("downsample factor should be greater than one")
+    downsample > 1 || @warn("downsample factor should be greater than one")
     # To guarantee inferability, we make sure that we do at least one
     # round of smoothing and resizing
     img_smoothed_main = imfilter(img, kern, NA())
