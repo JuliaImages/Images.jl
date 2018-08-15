@@ -1,4 +1,4 @@
-using Base.Test
+using Test
 
 @testset "Images" begin
 

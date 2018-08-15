@@ -1,4 +1,7 @@
-using Base.Test, Images, Colors, FixedPointNumbers
+using Test, Images, Colors, FixedPointNumbers
+
+# why use 3 chars when many will do?
+eye(m,n) = Matrix{Float64}(I,m,n)
 
 @testset "Exposure" begin
     oneunits(::Type{C}, dims...) where C = fill(oneunit(C), dims)
@@ -84,7 +87,7 @@ using Base.Test, Images, Colors, FixedPointNumbers
 
         img = zeros(10, 10)
         for i in 1:10
-            img[i, :] = 10 * (i - 1)
+            img[i, :] .= 10 * (i - 1)
         end
         @test img == histeq(img, 10, 0, 90)
 
@@ -390,7 +393,7 @@ using Base.Test, Images, Colors, FixedPointNumbers
         # Issue #282
         img = Gray{N0f8}.(eye(2,2))
         imgs = imstretch(img, 0.3, 0.4)
-        @test imgs ≈ 1./(1 + (0.3./(eye(2,2) + eps())).^0.4)
+        @test imgs ≈ 1 ./ (1 + (0.3 ./ (eye(2,2) + eps())).^0.4)
 
         img = Gray{N0f16}.([0.01164 0.01118; 0.01036 0.01187])
         @test imadjustintensity(img,[0.0103761, 0.0252166])[2,1] == 0.0

@@ -1,7 +1,10 @@
-using Base.Test, Images
+using Test, Images
 
 @testset "bwdist" begin
-    ind2cart(F) = map(i->CartesianIndex(ind2sub(indices(F), i)), F)
+    function ind2cart(F)
+        s = CartesianIndices(axes(F))
+        map(i->CartesianIndex(s[i]), F)
+    end
     @testset "Square Images" begin
         # (1)
         A = [true false; false true]

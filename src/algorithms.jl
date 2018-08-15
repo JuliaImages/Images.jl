@@ -1,8 +1,10 @@
-using Base: indices1, tail
+using Base: axes1, tail
 using OffsetArrays
+import Statistics
+using Statistics: mean
 
-Compat.@dep_vectorize_2arg Gray atan2
-Compat.@dep_vectorize_2arg Gray hypot
+# Compat.@dep_vectorize_2arg Gray atan2
+# Compat.@dep_vectorize_2arg Gray hypot
 
 """
 `M = meanfinite(img, region)` calculates the mean value along the dimensions listed in `region`, ignoring any non-finite values.
@@ -18,7 +20,7 @@ function _meanfinite(A::AbstractArray, ::Type{T}, region) where T<:AbstractFloat
     sumfinite!(S, K, A)
     S./K
 end
-_meanfinite(A::AbstractArray, ::Type, region) = mean(A, region)  # non floating-point
+_meanfinite(A::AbstractArray, ::Type, region) = mean(A, dims=region)  # non floating-point
 
 using Base: check_reducedims, reducedim1, safe_tail
 using Base.Broadcast: newindex
@@ -37,17 +39,17 @@ Note that the pixel mean is just S./K.
 function sumfinite!(S, K, A::AbstractArray{T,N}) where {T,N}
     check_reducedims(S, A)
     isempty(A) && return S, K
-    indices(S) == indices(K) || throw(DimensionMismatch("S and K must have identical indices"))
+    axes(S) == axes(K) || throw(DimensionMismatch("S and K must have identical axes"))
 
-    indsAt, indsSt = safe_tail(indices(A)), safe_tail(indices(S))
-    keep, Idefault = _newindexer(indsAt, indsSt)
+    indsAt, indsSt = safe_tail(axes(A)), safe_tail(axes(S))
+    keep, Idefault = _newindexer(indsSt)
     if reducedim1(S, A)
         # keep the accumulators as a local variable when reducing along the first dimension
-        i1 = first(indices1(S))
-        @inbounds for IA in CartesianRange(indsAt)
+        i1 = first(axes1(S))
+        @inbounds for IA in CartesianIndices(indsAt)
             IS = newindex(IA, keep, Idefault)
             s, k = S[i1,IS], K[i1,IS]
-            for i in indices(A, 1)
+            for i in axes(A, 1)
                 tmp = A[i, IA]
                 if isfinite(tmp)
                     s += tmp
@@ -57,9 +59,9 @@ function sumfinite!(S, K, A::AbstractArray{T,N}) where {T,N}
             S[i1,IS], K[i1,IS] = s, k
         end
     else
-        @inbounds for IA in CartesianRange(indsAt)
+        @inbounds for IA in CartesianIndices(indsAt)
             IS = newindex(IA, keep, Idefault)
-            for i in indices(A, 1)
+            for i in axes(A, 1)
                 tmp = A[i, IA]
                 if isfinite(tmp)
                     S[i, IS] += tmp
@@ -70,27 +72,27 @@ function sumfinite!(S, K, A::AbstractArray{T,N}) where {T,N}
     end
     S, K
 end
-_newindexer(shape, inds) = Base.Broadcast.shapeindexer(shape, inds)
+_newindexer(ax) = Base.Broadcast.shapeindexer(ax)
 
-function Base.var(A::AbstractArray{C}; kwargs...) where C<:AbstractGray
+function Statistics.var(A::AbstractArray{C}; kwargs...) where C<:AbstractGray
     imgc = channelview(A)
     base_colorant_type(C)(var(imgc; kwargs...))
 end
 
-function Base.var(A::AbstractArray{C,N}; kwargs...) where {C<:Colorant,N}
+function Statistics.var(A::AbstractArray{C,N}; kwargs...) where {C<:Colorant,N}
     imgc = channelview(A)
-    colons = ntuple(d->Colon(), Val{N})
-    inds1 = indices(imgc, 1)
-    val1 = var(view(imgc, first(inds1), colons...); kwargs...)
+    colons = ntuple(d->Colon(), Val(N))
+    inds1 = axes(imgc, 1)
+    val1 = Statistics.var(view(imgc, first(inds1), colons...); kwargs...)
     vals = similar(imgc, typeof(val1), inds1)
     vals[1] = val1
     for i in first(inds1)+1:last(inds1)
-        vals[i] = var(view(imgc, i, colons...); kwargs...)
+        vals[i] = Statistics.var(view(imgc, i, colons...); kwargs...)
     end
     base_colorant_type(C)(vals...)
 end
 
-Base.std(A::AbstractArray{C}; kwargs...) where {C<:Colorant} = mapc(sqrt, var(A; kwargs...))
+Statistics.std(A::AbstractArray{C}; kwargs...) where {C<:Colorant} = mapc(sqrt, Statistics.var(A; kwargs...))
 
 # Entropy for grayscale (intensity) images
 function _log(kind::Symbol)
@@ -124,7 +126,7 @@ function entropy(logᵦ::Log, img) where Log<:Function
     logp = logᵦ.(p)
 
     # take care of empty bins
-    logp[Bool[isinf(v) for v in logp]] = 0
+    logp[Bool[isinf(v) for v in logp]] .= 0
 
     -sum(p .* logp)
 end
@@ -269,7 +271,7 @@ function imlaplacian(alpha::Number)
 end
 
 function sumdiff(f, A::AbstractArray, B::AbstractArray)
-    indices(A) == indices(B) || throw(DimensionMismatch("A and B must have the same indices"))
+    axes(A) == axes(B) || throw(DimensionMismatch("A and B must have the same axes"))
     T = promote_type(difftype(eltype(A)), difftype(eltype(B)))
     s = zero(accum(eltype(T)))
     for (a, b) in zip(A, B)
@@ -356,10 +358,10 @@ function test_approx_eq_sigma_eps(A::AbstractArray, B::AbstractArray,
         if expand_arrays
             newsize = map(max, size(A), size(B))
             if size(A) != newsize
-                A = copy!(zeros(eltype(A), newsize...), A)
+                A = copyto!(zeros(eltype(A), newsize...), A)
             end
             if size(B) != newsize
-                B = copy!(zeros(eltype(B), newsize...), B)
+                B = copyto!(zeros(eltype(B), newsize...), B)
             end
         else
             error("Arrays differ: size(A): $(size(A)) size(B): $(size(B))")
@@ -421,33 +423,39 @@ International Journal of Computer Vision, 30(2), 79–116.
 See also: [`BlobLoG`](@ref).
 """
 function blob_LoG(img::AbstractArray{T,N}, σscales::Union{AbstractVector,Tuple},
-                  edges::Tuple{Vararg{Bool}}=(true, ntuple(d->false, Val{N})...), σshape=ntuple(d->1, Val{N})) where {T,N}
+                  edges::Tuple{Vararg{Bool}}=(true, ntuple(d->false, Val(N))...), σshape=ntuple(d->1, Val(N))) where {T,N}
     sigmas = sort(σscales)
-    img_LoG = Array{Float64}(length(sigmas), size(img)...)
-    colons = ntuple(d->Colon(), Val{N})
+    img_LoG = Array{Float64}(undef, length(sigmas), size(img)...)
+    colons = ntuple(d->Colon(), Val(N))
     @inbounds for isigma in eachindex(sigmas)
-        img_LoG[isigma,colons...] = (-sigmas[isigma]) * imfilter(img, Kernel.LoG(ntuple(i->sigmas[isigma]*σshape[i],Val{N})))
+        img_LoG[isigma,colons...] = (-sigmas[isigma]) * imfilter(img, Kernel.LoG(ntuple(i->sigmas[isigma]*σshape[i],Val(N))))
     end
     maxima = findlocalmaxima(img_LoG, 1:ndims(img_LoG), edges)
     [BlobLoG(CartesianIndex(tail(x.I)), sigmas[x[1]], img_LoG[x]) for x in maxima]
 end
-blob_LoG(img::AbstractArray{T,N}, σscales, edges::Bool, σshape=ntuple(d->1, Val{N})) where {T,N} =
-    blob_LoG(img, σscales, (edges, ntuple(d->edges,Val{N})...), σshape)
+blob_LoG(img::AbstractArray{T,N}, σscales, edges::Bool, σshape=ntuple(d->1, Val(N))) where {T,N} =
+    blob_LoG(img, σscales, (edges, ntuple(d->edges,Val(N))...), σshape)
 
-blob_LoG(img::AbstractArray{T,N}, σscales, σshape=ntuple(d->1, Val{N})) where {T,N} =
-    blob_LoG(img, σscales, (true, ntuple(d->false,Val{N})...), σshape)
+blob_LoG(img::AbstractArray{T,N}, σscales, σshape=ntuple(d->1, Val(N))) where {T,N} =
+    blob_LoG(img, σscales, (true, ntuple(d->false,Val(N))...), σshape)
 
-findlocalextrema(img::AbstractArray{T,N}, region, edges::Bool, order) where {T,N} = findlocalextrema(img, region, ntuple(d->edges,Val{N}), order)
+@inline function _clippedinds(Router,rstp)
+    CartesianIndices(map((f,l)->f:l,
+                         (first(Router)+rstp).I,(last(Router)-rstp).I))
+end
+
+findlocalextrema(img::AbstractArray{T,N}, region, edges::Bool, order) where {T,N} = findlocalextrema(img, region, ntuple(d->edges,Val(N)), order)
 
 function findlocalextrema(img::AbstractArray{T,N}, region::Union{Tuple{Int,Vararg{Int}},Vector{Int},UnitRange{Int},Int}, edges::NTuple{N,Bool}, order::Base.Order.Ordering) where {T<:Union{Gray,Number},N}
     issubset(region,1:ndims(img)) || throw(ArgumentError("invalid region"))
-    extrema = Array{CartesianIndex{N}}(0)
+    extrema = Array{CartesianIndex{N}}(undef, 0)
     edgeoffset = CartesianIndex(map(!, edges))
-    R0 = CartesianRange(indices(img))
-    R = CartesianRange(R0.start+edgeoffset, R0.stop-edgeoffset)
-    Rinterior = CartesianRange(R0.start+1, R0.stop-1)
-    iregion = CartesianIndex(ntuple(d->d∈region, Val{N}))
-    Rregion = CartesianRange(-iregion, iregion)
+    R0 = CartesianIndices(axes(img))
+    R = _clippedinds(R0,edgeoffset)
+    rstp = one(first(R0))
+    Rinterior = _clippedinds(R0,rstp)
+    iregion = CartesianIndex(ntuple(d->d∈region, Val(N)))
+    Rregion = CartesianIndices(map((f,l)->f:l,(-iregion).I, iregion.I))
     z = zero(iregion)
     for i in R
         isextrema = true
@@ -503,15 +511,15 @@ end
 
 function restrict(img::AxisArray{T,N}, region::Dims) where {T,N}
     inregion = falses(ndims(img))
-    inregion[[region...]] = true
+    inregion[[region...]] .= true
     inregiont = (inregion...,)::NTuple{N,Bool}
-    AxisArray(restrict(img.data, region), map(modax, axes(img), inregiont))
+    AxisArray(restrict(img.data, region), map(modax, AxisArrays.axes(img), inregiont))
 end
 
 # FIXME: this doesn't get inferred, but it should be (see issue #628)
 function restrict(img::Union{AxisArray,ImageMetaAxis}, ::Type{Ax}) where Ax
     A = restrict(img.data, axisdim(img, Ax))
-    AxisArray(A, replace_axis(modax(img[Ax]), axes(img)))
+    AxisArray(A, replace_axis(modax(img[Ax]), AxisArrays.axes(img)))
 end
 
 replace_axis(newax, axs) = _replace_axis(newax, axnametype(newax), axs...)
@@ -523,7 +531,7 @@ axnametype(ax::Axis{name}) where {name} = Axis{name}
 
 function modax(ax)
     v = ax.val
-    veven = linspace(v[1]-step(v)/2, v[end]+step(v)/2, length(v)÷2 + 1)
+    veven = range(v[1]-step(v)/2, stop=v[end]+step(v)/2, length=length(v)÷2 + 1)
     return ax(isodd(length(v)) ? oftype(veven, v[1:2:end]) : veven)
 end
 
@@ -557,10 +565,11 @@ backdiffx(u::AbstractMatrix) = u - [u[:,1:1] u[:,1:end-1]]
 function div(p::AbstractArray{T,3}) where T
     # Definition from the Chambolle citation below, between Eqs. 5 and 6
     # This is the adjoint of -forwarddiff
-    inds = indices(p)[1:2]
+    inds = axes(p)[1:2]
     out = similar(p, inds)
-    Router = CartesianRange(inds)
-    Rinner = CartesianRange(first(Router)+1, last(Router)-1)
+    Router = CartesianIndices(inds)
+    rstp = one(first(Router))
+    Rinner = _clippedinds(Router,rstp)
     # Since most of the points are in the interior, compute them more quickly by avoiding branches
     for I in Rinner
         out[I] = p[I,1] - p[I[1]-1, I[2], 1] +
@@ -613,8 +622,8 @@ function imROF(img::AbstractMatrix{T}, λ::Number, iterations::Integer) where T<
     for i = 1:iterations
         div_p = div(p)
         u = img - λ*div_p # multiply term inside ∇ by -λ. Thm. 3.1 relates this to u via Eq. 7.
-        grad_u = cat(3, forwarddiffy(u), forwarddiffx(u))
-        grad_u_mag = sqrt.(sum(abs2, grad_u, 3))
+        grad_u = cat(forwarddiffy(u), forwarddiffx(u), dims=3)
+        grad_u_mag = sqrt.(sum(abs2, grad_u, dims=3))
         p .= (p .- (τ/λ).*grad_u)./(1 .+ (τ/λ).*grad_u_mag)
     end
     return u
@@ -655,8 +664,8 @@ function shepp_logan(M,N; highContrast=true)
 
   P = zeros(M,N)
 
-  x = linspace(-1,1,M)'
-  y = linspace(1,-1,N)
+  x = range(-1, stop=1, length=M)'
+  y = range(1, stop=-1, length=N)
 
   centerX = [0, 0, 0.22, -0.22, 0, 0, 0, -0.08, 0, 0.06]
   centerY = [0, -0.0184, 0, 0, 0.35, 0.1, -0.1, -0.605, -0.605, -0.605]
@@ -697,11 +706,11 @@ calculation of sum of pixels in a rectangular subset of an image. See `boxdiff` 
 information.
 """
 function integral_image(img::AbstractArray)
-    integral_img = Array{accum(eltype(img))}(size(img))
+    integral_img = Array{accum(eltype(img))}(undef, size(img))
     sd = coords_spatial(img)
-    cumsum!(integral_img, img, sd[1])
+    cumsum!(integral_img, img, dims=sd[1])
     for i = 2:length(sd)
-        cumsum!(integral_img, integral_img, sd[i])
+        cumsum!(integral_img, integral_img, dims=sd[i])
     end
     integral_img
 end
@@ -791,10 +800,9 @@ Returns a  gaussian pyramid of scales `n_scales`, each downsampled
 by a factor `downsample` > 1 and `sigma` for the gaussian kernel.
 
 """
-
 function gaussian_pyramid(img::AbstractArray{T,N}, n_scales::Int, downsample::Real, sigma::Real) where {T,N}
     kerng = KernelFactors.IIRGaussian(sigma)
-    kern = ntuple(d->kerng, Val{N})
+    kern = ntuple(d->kerng, Val(N))
     gaussian_pyramid(img, n_scales, downsample, kern)
 end
 
@@ -826,8 +834,8 @@ function pyramid_scale(img, downsample)
 end
 
 function pyramid_scale(img::OffsetArray, downsample)
-    sz_next = map(s->ceil(Int, s/downsample), length.(Compat.axes(img)))
-    off = (.-ceil.(Int,(.-start.(Compat.axes(img).-(1,1)))./downsample))
+    sz_next = map(s->ceil(Int, s/downsample), length.(axes(img)))
+    off = (.-ceil.(Int,(.-iterate.(axes(img).-(1,1))[1])./downsample))
     OffsetArray(imresize(img, sz_next), off)
 end
 
@@ -847,7 +855,7 @@ Parameters:
 function otsu_threshold(img::AbstractArray{T, N}, bins::Int = 256) where {T<:Union{Gray,Real}, N}
 
     min, max = extrema(img)
-    edges, counts = imhist(img, linspace(gray(min), gray(max), bins))
+    edges, counts = imhist(img, range(gray(min), stop=gray(max), length=bins))
     histogram = counts./sum(counts)
 
     ω0 = 0
@@ -889,7 +897,6 @@ Parameters:
 #Citation
 Yen J.C., Chang F.J., and Chang S. (1995) “A New Criterion for Automatic Multilevel Thresholding” IEEE Trans. on Image Processing, 4(3): 370-378. DOI:10.1109/83.366472
 """
-
 function yen_threshold(img::AbstractArray{T, N}, bins::Int = 256) where {T<:Union{Gray, Real}, N}
 
     min, max = extrema(img)
@@ -897,16 +904,17 @@ function yen_threshold(img::AbstractArray{T, N}, bins::Int = 256) where {T<:Unio
         return T(min)
     end
 
-    edges, counts = imhist(img, linspace(gray(min), gray(max), bins))
+    edges, counts = imhist(img, range(gray(min), stop=gray(max), length=bins))
 
     prob_mass_function = counts./sum(counts)
+    clamp!(prob_mass_function,eps(),Inf)
     prob_mass_function_sq = prob_mass_function.^2
     cum_pmf = cumsum(prob_mass_function)
     cum_pmf_sq_1 = cumsum(prob_mass_function_sq)
     cum_pmf_sq_2 = reverse!(cumsum(reverse!(prob_mass_function_sq)))
 
     #Equation (4) cited in the paper.
-    criterion = log.(((cum_pmf[1:end-1].*(1.0 - cum_pmf[1:end-1])).^2) ./ (cum_pmf_sq_1[1:end-1].*cum_pmf_sq_2[2:end]))
+    criterion = log.(((cum_pmf[1:end-1].*(1.0 .- cum_pmf[1:end-1])).^2) ./ (cum_pmf_sq_1[1:end-1].*cum_pmf_sq_2[2:end]))
 
     thres = edges[findmax(criterion)[2]]
     return T(thres)
@@ -929,7 +937,6 @@ Parameters:
  -  background   = Value to be given to pixels/elements that are cleared (Default value is 0)
 
 """
-
 function clearborder(img::AbstractArray, width::Int=1, background::Int=0)
 
     for i in size(img)
@@ -943,8 +950,8 @@ function clearborder(img::AbstractArray, width::Int=1, background::Int=0)
     number = maximum(labels) + 1
 
     dimensions = size(img)
-    outerrange = CartesianRange(map(i -> 1:i, dimensions))
-    innerrange = CartesianRange(map(i -> 1+width:i-width, dimensions))
+    outerrange = CartesianIndices(map(i -> 1:i, dimensions))
+    innerrange = CartesianIndices(map(i -> 1+width:i-width, dimensions))
 
     border_labels = Set{Int64}()
     for i in EdgeIterator(outerrange,innerrange)

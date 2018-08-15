@@ -1,4 +1,4 @@
-using Images, Base.Test, Colors, Compat
+using Images, Test, Colors, Graphics
 
 global checkboard
 
@@ -6,13 +6,13 @@ global checkboard
 
     @testset "imedge" begin
         img = zeros(8, 10)
-        img[:, 5] = 1
+        img[:, 5] .= 1
         grad_y, grad_x, mag, orient = imedge(img)
         @test all(x->x==0, grad_y)
-        target_x = zeros(8, 10); target_x[:, 4] = 0.5; target_x[:, 6] = -0.5
+        target_x = zeros(8, 10); target_x[:, 4] .= 0.5; target_x[:, 6] .= -0.5
         @test grad_x == target_x
         @test mag == abs.(grad_x)
-        target_orient = zeros(8, 10); target_orient[:, 6] = pi
+        target_orient = zeros(8, 10); target_orient[:, 6] .= pi
         @test orient ≈ target_orient
     end
 
@@ -31,9 +31,9 @@ global checkboard
         wh = fill(white(T), (sq_width,sq_width))
         bk = fill(black(T), (sq_width,sq_width))
         bw = [wh bk; bk wh]
-        vert = repmat(bw, (count>>1), 1)
+        vert = repeat(bw, (count>>1), 1)
         isodd(count) && (vert = vcat(vert, [wh bk]))
-        cb = repmat(vert, 1, (count>>1))
+        cb = repeat(vert, 1, (count>>1))
         isodd(count) && (cb = hcat(cb, vert[:,1:sq_width]))
         cb
     end
@@ -50,7 +50,7 @@ global checkboard
 
         #Box Edges
 
-        img[2:end-1, 2:end-1] = 1
+        img[2:end-1, 2:end-1] .= 1
         edges = canny(img, (Percentile(80), Percentile(20)))
         @test all(edges[2:end-1, 2])
         @test all(edges[2:end-1, end-1])
@@ -81,9 +81,9 @@ global checkboard
 
         #Diagonal Edge
         img = zeros(10,10)
-        img[diagind(img)] = 1
-        img[diagind(img, 1)] = 1
-        img[diagind(img, -1)] = 1
+        img[diagind(img)] .= 1
+        img[diagind(img, 1)] .= 1
+        img[diagind(img, -1)] .= 1
         edges = canny(img, (Percentile(80),Percentile(20)))
         @test eltype(edges) == Bool
         @test all(edges[diagind(edges, 2)])
@@ -93,8 +93,8 @@ global checkboard
 
         #Checks Hysteresis Thresholding
         img = fill(oneunit(Gray{N0f8}), (10, 10))
-        img[3:7, 3:7] = 0.0
-        img[4:6, 4:6] = 0.7
+        img[3:7, 3:7] .= 0.0
+        img[4:6, 4:6] .= 0.7
         thresholded = Images.hysteresis_thresholding(img, 0.9, 0.8)
         @test all(thresholded[3:7, 3:7] .== 0.0)
         @test all(thresholded[1:2, :] .== 0.9)
@@ -110,7 +110,7 @@ global checkboard
         @test all(thresholded[8:10, :] .== 0.9)
         @test all(thresholded[:, 8:10] .== 0.9)
 
-        img[3, 5] = 0.7
+        img[3, 5] .= 0.7
         thresholded = Images.hysteresis_thresholding(img, 0.9, 0.6)
         @test all(thresholded[4:6, 4:6] .== 0.9)
         @test all(thresholded[3:7, 3] .== 0.0)
@@ -376,13 +376,13 @@ function nms_test_diagonal(img)
     peakval = a*r^2 + b*r + c
 
     @test all(diag(t)[2:4] .== peakval)
-    @test all(t - diagm(diag(t)) .== 0)
+    @test all(t - diagm(0 => diag(t)) .== 0)
 
-    diag_s = diagm(diag(s))
+    diag_s = diagm(0 => diag(s))
     @test s == diag_s
 
-    @test all([pt.x for pt in diag(s)[2:4]] - ((2:4) + x_peak_offset) .< EPS)
-    @test all([pt.y for pt in diag(s)[2:4]] - ((2:4) + y_peak_offset) .< EPS)
+    @test all([pt.x for pt in diag(s)[2:4]] - ((2:4) .+ x_peak_offset) .< EPS)
+    @test all([pt.y for pt in diag(s)[2:4]] - ((2:4) .+ y_peak_offset) .< EPS)
 
 end
 

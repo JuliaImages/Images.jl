@@ -163,7 +163,7 @@ function imhist(img::AbstractArray, nbins::Integer, minval::RealLike, maxval::Re
     imhist(img, edges)
 end
 
-function imhist(img::AbstractArray, edges::Range)
+function imhist(img::AbstractArray, edges::AbstractRange)
     histogram = zeros(Int, length(edges) + 1)
     o = Base.Order.Forward
     G = graytype(eltype(img))
@@ -371,7 +371,7 @@ adjust_gamma(img::AbstractArray{T}, gamma::Number) where {T<:Number} = _adjust_g
 adjust_gamma(img::AbstractArray{T}, gamma::Number) where {T<:Colorant} = _adjust_gamma(img, gamma, T)
 
 function _adjust_gamma(img::AbstractArray, gamma::Number, C::Type)
-    gamma_corrected_img = _fill(oneunit(C), indices(img))
+    gamma_corrected_img = _fill(oneunit(C), axes(img))
     for I in eachindex(img)
         gamma_corrected_img[I] = _gamma_pixel_rescale(img[I], gamma)
     end
@@ -379,7 +379,7 @@ function _adjust_gamma(img::AbstractArray, gamma::Number, C::Type)
 end
 
 function adjust_gamma(img::AbstractArray{T}, gamma::Number, minval::Number, maxval::Number) where T<:Number
-    gamma_corrected_img = _fill(oneunit(T), indices(img))
+    gamma_corrected_img = _fill(oneunit(T), axes(img))
     for I in eachindex(img)
         gamma_corrected_img[I] = _gamma_pixel_rescale(img[I], gamma, minval, maxval)
     end
@@ -416,7 +416,7 @@ function histmatch(img::AbstractArray{T}, oimg::AbstractArray, nbins::Integer = 
     _histmatch(img, oedges, ohist)
 end
 
-function _histmatch(img::AbstractArray, oedges::Range, ohist::AbstractArray{Int})
+function _histmatch(img::AbstractArray, oedges::AbstractRange, ohist::AbstractArray{Int})
     bins, histogram = imhist(img, oedges)
     ohist[1] = zero(eltype(ohist))
     ohist[end] = zero(eltype(ohist))
@@ -428,7 +428,7 @@ function _histmatch(img::AbstractArray, oedges::Range, ohist::AbstractArray{Int}
     norm_ocdf = ocdf / ocdf[end]
     lookup_table = zeros(Int, length(norm_cdf))
     for I in eachindex(cdf)
-        lookup_table[I] = indmin(abs.(norm_ocdf .- norm_cdf[I]))
+        lookup_table[I] = argmin(abs.(norm_ocdf .- norm_cdf[I]))
     end
     hist_matched_img = similar(img)
     for I in eachindex(img)

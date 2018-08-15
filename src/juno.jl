@@ -1,6 +1,6 @@
 using Requires
 
-@require Juno begin
+@require Juno="e5e0dc1b-0480-54bc-9374-aad01c23163d" begin
     import Media
     if Juno.isactive()
         Juno.media(Images.ColorantMatrix, Media.Graphical)

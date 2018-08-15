@@ -18,7 +18,7 @@ associated with that point's label.
 This computation is performed lazily, as to be suitable even for large arrays.
 """
 function ColorizedArray(intensity, label::IndirectArray{C,N}) where {C<:Colorant,N}
-    indices(intensity) == indices(label) || throw(DimensionMismatch("intensity and label must have the same indices, got $(indices(intensity)) and $(indices(label))"))
+    axes(intensity) == axes(label) || throw(DimensionMismatch("intensity and label must have the same axes, got $(axes(intensity)) and $(axes(label))"))
     CI = typeof(zero(C)*zero(eltype(intensity)))
     ColorizedArray{CI,N,typeof(intensity),typeof(label)}(intensity, label)
 end
@@ -31,7 +31,7 @@ intensitytype(::Type{ColorizedArray{C,N,A,L}}) where {C<:Colorant,N,A<:AbstractA
 labeltype(::Type{ColorizedArray{C,N,A,L}}) where {C<:Colorant,N,A<:AbstractArray,L<:AbstractArray} = L
 
 Base.size(A::ColorizedArray) = size(A.intensity)
-Base.indices(A::ColorizedArray) = indices(A.intensity)
+Base.axes(A::ColorizedArray) = axes(A.intensity)
 Base.IndexStyle(::Type{CA}) where {CA<:ColorizedArray} = IndexStyle(IndexStyle(intensitytype(CA)), IndexStyle(labeltype(CA)))
 
 @inline function Base.getindex(A::ColorizedArray, i::Integer)

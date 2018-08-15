@@ -118,7 +118,7 @@ for N = 1:4
                 return Albl
             end
             for d = 1:ndims(connectivity)
-                (isodd(size(connectivity, d)) && connectivity == flipdim(connectivity, d)) || error("connectivity must be symmetric")
+                (isodd(size(connectivity, d)) && connectivity == reverse(connectivity, dims=d)) || error("connectivity must be symmetric")
             end
             size(Albl) == size(A) || throw(DimensionMismatch("size(Albl) must be equal to size(A)"))
             @nexprs $N d->(halfwidth_d = size(connectivity,d)>>1)
@@ -214,7 +214,7 @@ function push!(sets::DisjointMinSets)
 end
 
 function minlabel(sets::DisjointMinSets)
-    out = Vector{Int}(length(sets.parents))
+    out = Vector{Int}(undef, length(sets.parents))
     k = 0
     for i = 1:length(sets.parents)
         if sets.parents[i] == i
@@ -230,9 +230,9 @@ function component_boxes(img::AbstractArray{Int})
     nd = ndims(img)
     n = [Vector{Int64}[ fill(typemax(Int64),nd), fill(typemin(Int64),nd) ]
             for i=0:maximum(img)]
-    s = size(img)
+    s = CartesianIndices(size(img))
     for i=1:length(img)
-        vcur = ind2sub(s,i)
+        vcur = s[i]
         vmin = n[img[i]+1][1]
         vmax = n[img[i]+1][2]
         for d=1:nd
@@ -264,9 +264,9 @@ end
 "`component_subscripts(labeled_array)` -> an array of pixels for each label, including the background label 0"
 function component_subscripts(img::AbstractArray{Int})
     n = [Tuple[] for i=0:maximum(img)]
-    s = size(img)
+    s = CartesianIndices(size(img))
     for i=1:length(img)
-      push!(n[img[i]+1],ind2sub(s,i))
+      push!(n[img[i]+1],s[i])
     end
     n
 end
@@ -275,7 +275,7 @@ end
 function component_centroids(img::AbstractArray{Int,N}) where N
     len = length(0:maximum(img))
     n = fill((zero(CartesianIndex{N}), 0), len)
-    @inbounds for I in CartesianRange(size(img))
+    @inbounds for I in CartesianIndices(size(img))
         v = img[I] + 1
         n[v] = n[v] .+ (I, 1)
     end

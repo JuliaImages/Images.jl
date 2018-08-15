@@ -121,8 +121,9 @@ Hence, the refined sub-pixel coordinate is equal to:
 
 """
 function corner2subpixel(responses::AbstractMatrix, corner_indicator::AbstractMatrix{Bool})
-    row_range, col_range = indices(corner_indicator)
-    row, col, _ = findnz(corner_indicator)
+    row_range, col_range = axes(corner_indicator)
+    idxs = findall(!iszero, corner_indicator) # findnz
+    row, col = (getindex.(idxs,1),getindex.(idxs,2))
     ncorners = length(row)
     corners = fill(HomogeneousPoint((0.0,0.0,0.0)),ncorners)
     invA = @SMatrix [0.5 -1.0 0.5; -0.5 0.0 0.5; 0.0 1.0 -0.0]
@@ -246,7 +247,7 @@ for a pixel to be marked as a corner. The default value for n is 12.
 function fastcorners(img::AbstractArray{T}, n::Int = 12, threshold::Float64 = 0.15) where T
     img_padded = padarray(img, Fill(0, (3,3)))
     corner = falses(size(img))
-    R = CartesianRange(size(img))
+    R = CartesianIndices(size(img))
     idx = map(CartesianIndex{2}, [(0, 3), (1, 3), (2, 2), (3, 1), (3, 0), (3, -1), (2, -2), (1, -3),
             (0, -3), (-1, -3), (-2, -2), (-3, -1), (-3, 0), (-3, 1), (-2, 2), (-1, 3)])
 

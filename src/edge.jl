@@ -5,11 +5,11 @@
     phase(grad_x, grad_y) -> p
 
 Calculate the rotation angle of the gradient given by `grad_x` and
-`grad_y`. Equivalent to `atan2(-grad_y, grad_x)`, except that when both `grad_x` and
+`grad_y`. Equivalent to `atan(-grad_y, grad_x)`, except that when both `grad_x` and
 `grad_y` are effectively zero, the corresponding angle is set to zero.
 """
 function phase(grad_x::T, grad_y::T, tol=sqrt(eps(T))) where T<:Number
-    atan2(-grad_y, grad_x) * ((abs(grad_x) > tol) | (abs(grad_y) > tol))
+    atan(-grad_y, grad_x) * ((abs(grad_x) > tol) | (abs(grad_y) > tol))
 end
 phase(grad_x::Number,   grad_y::Number)   = phase(promote(grad_x, grad_y)...)
 phase(grad_x::NumberLike, grad_y::NumberLike) = phase(gray(grad_x), gray(grad_y))
@@ -32,12 +32,12 @@ vecsum(c::AbstractRGB) = float(red(c)) + float(green(c)) + float(blue(c))
     orientation(grad_x, grad_y) -> orient
 
 Calculate the orientation angle of the strongest edge from gradient images
-given by `grad_x` and `grad_y`.  Equivalent to `atan2(grad_x, grad_y)`.  When
+given by `grad_x` and `grad_y`.  Equivalent to `atan(grad_x, grad_y)`.  When
 both `grad_x` and `grad_y` are effectively zero, the corresponding angle is set to
 zero.
 """
 function orientation(grad_x::T, grad_y::T, tol=sqrt(eps(T))) where T<:Number
-    atan2(grad_x, grad_y) * ((abs(grad_x) > tol) | (abs(grad_y) > tol))
+    atan(grad_x, grad_y) * ((abs(grad_x) > tol) | (abs(grad_y) > tol))
 end
 orientation(grad_x::Number,   grad_y::Number)   = orientation(promote(grad_x, grad_y)...)
 orientation(grad_x::NumberLike, grad_y::NumberLike) = orientation(gray(grad_x), gray(grad_y))
@@ -351,7 +351,7 @@ function thin_edges_nonmaxsup(img, gradientangles, border::AbstractString="repli
                                  radius::Float64=1.35, theta=pi/180)
     (height,width) = size(img)
     out = zeros(eltype(img), height, width)
-    thin_edges_nonmaxsup_core!(out, Matrix{Point}(0,0), img, gradientangles, radius, border, theta)
+    thin_edges_nonmaxsup_core!(out, Matrix{Point}(undef,0,0), img, gradientangles, radius, border, theta)
 end
 
 # Main function call when subpixel location of edges is desired
@@ -413,7 +413,7 @@ canny(img::AbstractMatrix, threshold::Tuple{N,N}, args...) where {N<:Union{Numbe
 function hysteresis_thresholding(img_nonMaxSup::AbstractArray{T, 2}, upperThreshold::Number, lowerThreshold::Number) where T
     img_thresholded = map(i -> i > lowerThreshold ? i > upperThreshold ? 1.0 : 0.5 : 0.0, img_nonMaxSup)
     queue = CartesianIndex{2}[]
-    R = CartesianRange(size(img_thresholded))
+    R = CartesianIndices(size(img_thresholded))
 
     I1, Iend = first(R), last(R)
     for I in R
@@ -421,8 +421,8 @@ function hysteresis_thresholding(img_nonMaxSup::AbstractArray{T, 2}, upperThresh
         img_thresholded[I] = 0.9
         push!(queue, I)
         while !isempty(queue)
-          q_top = shift!(queue)
-          for J in CartesianRange(max(I1, q_top - I1), min(Iend, q_top + I1))
+          q_top = popfirst!(queue)
+          for J in CartesianIndices(max(I1, q_top - I1), min(Iend, q_top + I1))
             if img_thresholded[J] == 1.0 || img_thresholded[J] == 0.5
               img_thresholded[J] = 0.9
               push!(queue, J)
@@ -436,7 +436,7 @@ end
 
 function padindexes(img::AbstractArray{T,n}, dim, prepad, postpad, border::AbstractString) where {T,n}
     M = size(img, dim)
-    I = Vector{Int}(M + prepad + postpad)
+    I = Vector{Int}(undef, M + prepad + postpad)
     I = [(1 - prepad):(M + postpad);]
     if border == "replicate"
         I = min.(max.(I, 1), M)

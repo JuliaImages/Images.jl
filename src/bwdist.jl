@@ -26,12 +26,12 @@ See also: [`distance_transform`](@ref).
 Transforms of Binary Images in Arbitrary Dimensions' [Maurer et al.,
 2003] (DOI: 10.1109/TPAMI.2003.1177156)
 """
-function feature_transform(I::AbstractArray{Bool,N}, w::Union{Void,NTuple{N}}=nothing) where N
+function feature_transform(I::AbstractArray{Bool,N}, w::Union{Nothing,NTuple{N}}=nothing) where N
     # To allocate temporary storage for voronoift!, compute one
     # element (so we have the proper type)
-    fi = first(CartesianRange(indices(I)))
+    fi = first(CartesianIndices(axes(I)))
     drft = DistRFT(fi, w, (), Base.tail(fi.I))
-    tmp = Vector{typeof(drft)}(0)
+    tmp = Vector{typeof(drft)}()
 
     # Allocate the output
     F = similar(I, CartesianIndex{N})
@@ -53,9 +53,9 @@ default value of `nothing` is equivalent to `w=(1,1,...)`.
 
 See also: [`feature_transform`](@ref).
 """
-function distance_transform(F::AbstractArray{CartesianIndex{N},N}, w::Union{Void,NTuple{N}}=nothing) where N
+function distance_transform(F::AbstractArray{CartesianIndex{N},N}, w::Union{Nothing,NTuple{N}}=nothing) where N
     # To allocate the proper output type, compute the distance for one element
-    R = CartesianRange(indices(F))
+    R = CartesianIndices(axes(F))
     dst = wnorm2(zero(eltype(R)), w)
     D = similar(F, typeof(sqrt(dst)))
 
@@ -72,18 +72,18 @@ function computeft!(F, I, w, jpost::CartesianIndex{K}, tmp) where K
     _null = nullindex(F)
     if K == ndims(I)-1
         # Fig. 2, lines 2-8
-        @inbounds @simd for i1 in indices(I, 1)
+        @inbounds @simd for i1 in axes(I, 1)
             F[i1, jpost] = ifelse(I[i1, jpost], CartesianIndex(i1, jpost), _null)
         end
     else
         # Fig. 2, lines 10-12
-        for i1 in indices(I, ndims(I) - K)
+        for i1 in axes(I, ndims(I) - K)
             computeft!(F, I, w, CartesianIndex(i1, jpost), tmp)
         end
     end
     # Fig. 2, lines 14-20
-    indspre = ftfront(indices(F), jpost)  # discards the trailing indices of F
-    for jpre in CartesianRange(indspre)
+    indspre = ftfront(axes(F), jpost)  # discards the trailing indices of F
+    for jpre in CartesianIndices(indspre)
         voronoift!(F, I, w, jpre, jpost, tmp)
     end
     F
@@ -93,7 +93,7 @@ function voronoift!(F, I, w, jpre, jpost, tmp)
     d = length(jpre)+1
     _null = nullindex(F)
     empty!(tmp)
-    for i in indices(I, d)
+    for i in axes(I, d)
         # Fig 3, lines 3-13
         xi = CartesianIndex(jpre, i, jpost)
         @inbounds fi = F[xi]
@@ -114,7 +114,7 @@ function voronoift!(F, I, w, jpre, jpost, tmp)
     # Fig 3, lines 18-24
     l = 1
     @inbounds fthis = tmp[l].fi
-    for i in indices(I, d)
+    for i in axes(I, d)
         xi = CartesianIndex(jpre, i, jpost)
         d2this = wnorm2(xi-fthis, w)
         while l < nS
@@ -181,9 +181,9 @@ nullindex(A::AbstractArray{T,N}) where {T,N} = typemin(Int)*one(CartesianIndex{N
 Compute `∑ (w[i]*x[i])^2`.  Specifying `nothing` for `w` is equivalent to `w = (1,1,...)`.
 """
 wnorm2(x::CartesianIndex, w) = _wnorm2(0, x.I, w)
-_wnorm2(s, ::Tuple{}, ::Void)    = s
+_wnorm2(s, ::Tuple{}, ::Nothing)    = s
 _wnorm2(s, ::Tuple{}, ::Tuple{}) = s
-@inline _wnorm2(s, x, w::Void) = _wnorm2(s + sqr(x[1]), Base.tail(x), w)
+@inline _wnorm2(s, x, w::Nothing) = _wnorm2(s + sqr(x[1]), Base.tail(x), w)
 @inline _wnorm2(s, x, w) = _wnorm2(s + sqr(w[1]*x[1]), Base.tail(x), Base.tail(w))
 
 """
@@ -194,9 +194,9 @@ _wnorm2(s, ::Tuple{}, ::Tuple{}) = s
 element `length(jpre)+1`).
 """
 dist2pre(x::Tuple, w, jpre) = _dist2pre(0, x, w, jpre)
-_dist2pre(s, x, w::Void, ::Tuple{}) = s, Base.tail(x), w
+_dist2pre(s, x, w::Nothing, ::Tuple{}) = s, Base.tail(x), w
 _dist2pre(s, x, w,       ::Tuple{}) = s, Base.tail(x), Base.tail(w)
-@inline _dist2pre(s, x, w::Void, jpre) = _dist2pre(s + sqr(x[1]-jpre[1]), Base.tail(x), w, Base.tail(jpre))
+@inline _dist2pre(s, x, w::Nothing, jpre) = _dist2pre(s + sqr(x[1]-jpre[1]), Base.tail(x), w, Base.tail(jpre))
 @inline _dist2pre(s, x, w, jpre) = _dist2pre(s + sqr(w[1]*(x[1]-jpre[1])), Base.tail(x), Base.tail(w), Base.tail(jpre))
 
 @inline sqr(x) = x*x
