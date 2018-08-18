@@ -5,13 +5,13 @@
 # This is used by IJulia (for example) to display images
 
 # write as MIME to PNG if 2D colorant array
-showable(::MIME"image/png", img::AbstractMatrix{C}) where {C<:Colorant} = true
+Base.showable(::MIME"image/png", img::AbstractMatrix{C}) where {C<:Colorant} = true
 
 # Colors.jl turns on SVG display of colors, which leads to poor
 # performance and weird spacing if you're displaying images. We need
 # to disable that here.
 # See https://github.com/JuliaLang/IJulia.jl/issues/229 and Images #548
-showable(::MIME"image/svg+xml", img::AbstractMatrix{C}) where {C<:Color} = false
+Base.showable(::MIME"image/svg+xml", img::AbstractMatrix{C}) where {C<:Color} = false
 
 # Really large images can make display very slow, so we shrink big
 # images.  Conversely, tiny images don't show up well, so in such
