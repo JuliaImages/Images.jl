@@ -2,6 +2,7 @@ using Base: axes1, tail
 using OffsetArrays
 import Statistics
 using Statistics: mean
+import AxisArrays
 
 # Compat.@dep_vectorize_2arg Gray atan2
 # Compat.@dep_vectorize_2arg Gray hypot
