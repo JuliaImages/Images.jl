@@ -422,7 +422,7 @@ function hysteresis_thresholding(img_nonMaxSup::AbstractArray{T, 2}, upperThresh
         push!(queue, I)
         while !isempty(queue)
           q_top = popfirst!(queue)
-          for J in CartesianIndices(max(I1, q_top - I1), min(Iend, q_top + I1))
+          for J in CartesianIndices(map((f,l)->f:l,(max(I1, q_top - I1)).I, (min(Iend, q_top + I1)).I))
             if img_thresholded[J] == 1.0 || img_thresholded[J] == 0.5
               img_thresholded[J] = 0.9
               push!(queue, J)

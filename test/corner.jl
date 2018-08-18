@@ -329,7 +329,7 @@ using Test, Images, Colors, FixedPointNumbers, OffsetArrays
     @test !all(corners[3:4, 1:end - 2])
     @test !corners[4, end - 1]
     corners[3:4, 1:end - 2] .= true
-    corners[4, end - 1] .= true
+    corners[4, end - 1] = true
     @test all(corners)
 
     corners = fastcorners(img, 11)
@@ -338,7 +338,7 @@ using Test, Images, Colors, FixedPointNumbers, OffsetArrays
     @test !corners[4, end - 1]
     corners[2:5, 1:end - 3] .= true
     corners[3:5, 1:end - 2] .= true
-    corners[4, end - 1] .= true
+    corners[4, end - 1] = true
     @test all(corners)
 
     corners = fastcorners(img, 12)
@@ -347,7 +347,7 @@ using Test, Images, Colors, FixedPointNumbers, OffsetArrays
     @test !corners[4, end - 1]
     corners[1:6, 1:end - 3] .= true
     corners[3:5, 1:end - 2] .= true
-    corners[4, end - 1] .= true
+    corners[4, end - 1] = true
     @test all(corners)
 
     img = parent(Kernel.gaussian(1.4))
@@ -366,7 +366,7 @@ using Test, Images, Colors, FixedPointNumbers, OffsetArrays
     @test all(corners[16:end, :] .== false)
     @test all(corners[6:12, 6:12] .== false)
 
-    img = 1 - img
+    img = 1 .- img
 
     corners = fastcorners(img, 12, 0.05)
 

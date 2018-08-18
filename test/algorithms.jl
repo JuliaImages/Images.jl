@@ -300,13 +300,10 @@ using Test
                       11.0390625 25.59375 14.5546875], dims=3) ≈ B
         imgcolax = AxisArray(imgcol, :y, :x)
         imgr = restrict(imgcolax, (1,2))
-        @info "suppressing 4 tests pending ImageAxes update"
-        if false
         @test pixelspacing(imgr) == (2,2)
         @test pixelspacing(imgcolax) == (1,1)  # issue #347
         @inferred(restrict(imgcolax, Axis{:y}))
         @inferred(restrict(imgcolax, Axis{:x}))
-        end
         restrict(imgcolax, Axis{:y})  # FIXME #628
         restrict(imgcolax, Axis{:x})
         imgmeta = ImageMeta(imgcol, myprop=1)
@@ -378,7 +375,7 @@ using Test
     @testset "Morphological Bottom-hat" begin
         A = ones(13, 13)
         A[2:3, 2:3] .= 0
-        Ae = 1 - copy(A)
+        Ae = 1 .- copy(A)
         A[5:9, 5:9] .= 0
         Ao = bothat(A)
         @test Ao == Ae
