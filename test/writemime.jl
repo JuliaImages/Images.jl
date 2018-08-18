@@ -3,10 +3,10 @@ using Test
 
 @testset "show (MIME)" begin
     # Test that we remembered to turn off Colors.jl's colorswatch display
-    @test !mimewritable(MIME("image/svg+xml"), rand(Gray{N0f8}, 5, 5))
-    @test !mimewritable(MIME("image/svg+xml"), rand(RGB{N0f8},  5, 5))
-    @test mimewritable(MIME("image/png"), rand(Gray{N0f8}, 5, 5))
-    @test mimewritable(MIME("image/png"), rand(RGB{N0f8},  5, 5))
+    @test !showable(MIME("image/svg+xml"), rand(Gray{N0f8}, 5, 5))
+    @test !showable(MIME("image/svg+xml"), rand(RGB{N0f8},  5, 5))
+    @test showable(MIME("image/png"), rand(Gray{N0f8}, 5, 5))
+    @test showable(MIME("image/png"), rand(RGB{N0f8},  5, 5))
     workdir = joinpath(tempdir(), "Images")
     if !isdir(workdir)
         mkdir(workdir)
