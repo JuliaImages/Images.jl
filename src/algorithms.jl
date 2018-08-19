@@ -836,7 +836,8 @@ end
 
 function pyramid_scale(img::OffsetArray, downsample)
     sz_next = map(s->ceil(Int, s/downsample), length.(axes(img)))
-    off = (.-ceil.(Int,(.-iterate.(axes(img).-(1,1))[1])./downsample))
+#    off = (.-ceil.(Int,(.-iterate.(axes(img).-(1,1))[1])./downsample))
+    off = (.-ceil.(Int,(.-iterate.(map(x->UnitRange(x).-1,axes(img)))[1])./downsample))
     OffsetArray(imresize(img, sz_next), off)
 end
 

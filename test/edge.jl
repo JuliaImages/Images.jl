@@ -110,7 +110,7 @@ global checkboard
         @test all(thresholded[8:10, :] .== 0.9)
         @test all(thresholded[:, 8:10] .== 0.9)
 
-        img[3, 5] .= 0.7
+        img[3, 5] = 0.7
         thresholded = Images.hysteresis_thresholding(img, 0.9, 0.6)
         @test all(thresholded[4:6, 4:6] .== 0.9)
         @test all(thresholded[3:7, 3] .== 0.0)
@@ -237,7 +237,7 @@ global checkboard
     @testset "Diagonals" begin
         # Create an image with white along diagonals -2:2 and black elsewhere
         m = zeros(UInt8, 20,20)
-        for i = -2:2; m[diagind(m,i)] = 0xff; end
+        for i = -2:2; m[diagind(m,i)] .= 0xff; end
 
         for method in kernelmethods
             ## Diagonal array
@@ -304,11 +304,11 @@ global checkboard
         if !horizontal
             @test all(t[:,[1,2,4,5]] .== 0)
             @test all(t[:,3]   .== peakval)
-            @test all(s[:,[1,2,4,5]] .== zero(Graphics.Point))
+            @test all(map(x->x==zero(Graphics.Point), s[:,[1,2,4,5]]))
         else
             @test all(t[[1,2,4,5],:] .== 0)
             @test all(t[3,:]   .== peakval)
-            @test all(s[[1,2,4,5],:] .== zero(Graphics.Point))
+            @test all(map(x->x==zero(Graphics.Point), s[[1,2,4,5],:]))
         end
 
         if which == :horizontal

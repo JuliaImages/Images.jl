@@ -4,12 +4,12 @@ module Images
 
 import Base.Iterators.take
 import Base: +, -, *
-import Base: abs, atan2, clamp, convert, copy, copy!, ctranspose, delete!,
+import Base: abs, atan, clamp, convert, copy, copy!, delete!,
              eltype, get, getindex, haskey, hypot,
-             imag, length, map, map!, maximum, mimewritable,
+             imag, length, map, map!, maximum,
              minimum, ndims, one, parent, permutedims, real, reinterpret,
              reshape, resize!,
-             setindex!, show, showcompact, similar, size, sqrt, squeeze,
+             setindex!, show, similar, size, sqrt,
              strides, sum, write, zero
 
 export float32, float64
