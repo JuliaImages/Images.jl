@@ -1,7 +1,7 @@
 using Base: axes1, tail
 using OffsetArrays
 import Statistics
-using Statistics: mean
+using Statistics: mean, var
 import AxisArrays
 
 # Compat.@dep_vectorize_2arg Gray atan2
