@@ -127,7 +127,6 @@ include("corner.jl")
 include("bwdist.jl")
 using .FeatureTransform
 include("convexhull.jl")
-include("deprecated.jl")
 
 export # types
     BlobLoG,
