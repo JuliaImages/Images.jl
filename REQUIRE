@@ -18,6 +18,5 @@ StaticArrays
 Graphics 0.1
 FileIO
 StatsBase 0.14   # for histrange
-Requires
 OffsetArrays
 TiledIteration
