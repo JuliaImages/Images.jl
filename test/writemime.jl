@@ -1,4 +1,4 @@
-using Images, Colors, FixedPointNumbers
+using Images, Colors, FixedPointNumbers, ImageShow
 using Test
 
 @testset "show (MIME)" begin
@@ -115,8 +115,8 @@ using Test
         io = IOBuffer()
         # These methods should not invoke the Images.jl display code, but they
         # used to throw errors: https://github.com/JuliaImages/Images.jl/issues/623
-        @test !applicable(Images._show_odd, io, MIME"text/html"(), flat_imgs)
-        @test !applicable(Images._show_even, io, MIME"text/html"(), flat_imgs)
+        @test !applicable(ImageShow._show_odd, io, MIME"text/html"(), flat_imgs)
+        @test !applicable(ImageShow._show_even, io, MIME"text/html"(), flat_imgs)
     end
     rm(workdir, recursive=true)
 end

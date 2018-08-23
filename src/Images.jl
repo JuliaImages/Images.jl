@@ -119,7 +119,6 @@ include("algorithms.jl")
 include("exposure.jl")
 include("connected.jl")
 include("edge.jl")
-include("showmime.jl")
 include("corner.jl")
 include("bwdist.jl")
 using .FeatureTransform
