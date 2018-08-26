@@ -32,16 +32,14 @@ using Reexport
 using ColorVectorSpace, FileIO
 export load, save
 import Colors: Fractional, red, green, blue
-const AbstractGray{T}                    = Color{T,1}
-const TransparentRGB{C<:AbstractRGB,T}   = TransparentColor{C,T,4}
-const TransparentGray{C<:AbstractGray,T} = TransparentColor{C,T,2}
-const NumberLike = Union{Number,AbstractGray}
-const RealLike = Union{Real,AbstractGray}
 import Graphics
 import Graphics: width, height, Point
 using StatsBase  # TODO: eliminate this dependency
 using IndirectArrays, MappedArrays
-# using Compat.TypeUtils
+
+# TODO: can we get rid of these definitions?
+const NumberLike = Union{Number,AbstractGray}
+const RealLike = Union{Real,AbstractGray}
 
 const is_little_endian = ENDIAN_BOM == 0x04030201
 
@@ -193,14 +191,6 @@ export # types
     # algorithms
     backdiffx,
     backdiffy,
-    dilate,
-    erode,
-    opening,
-    closing,
-    tophat,
-    bothat,
-    morphogradient,
-    morpholaplace,
     forwarddiffx,
     forwarddiffy,
     imcorner,
@@ -238,8 +228,6 @@ export # types
     imstretch,
     cliphist,
 
-
-#     imthresh,
     label_components,
     label_components!,
     component_boxes,
