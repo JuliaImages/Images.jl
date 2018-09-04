@@ -51,6 +51,7 @@ const is_little_endian = ENDIAN_BOM == 0x04030201
 @reexport using ImageMorphology
 @reexport using ImageDistances
 
+import ImageShow
 using ImageMetadata: ImageMetaAxis
 import ImageMorphology: dilate, erode
 import ImageTransformations: restrict
@@ -119,7 +120,6 @@ include("algorithms.jl")
 include("exposure.jl")
 include("connected.jl")
 include("edge.jl")
-include("showmime.jl")
 include("corner.jl")
 include("bwdist.jl")
 using .FeatureTransform

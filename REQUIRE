@@ -5,6 +5,7 @@ ColorTypes 0.7.4
 ColorVectorSpace 0.2
 FixedPointNumbers 0.3.0
 ImageCore 0.6.0
+ImageShow 0.1.1
 ImageTransformations 0.2.2
 ImageFiltering
 ImageMorphology 0.1.1

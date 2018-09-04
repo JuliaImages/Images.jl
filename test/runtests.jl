@@ -1,7 +1,6 @@
 using Test
 
 @testset "Images" begin
-
 include("arrays.jl")
 include("algorithms.jl")
 include("exposure.jl")
