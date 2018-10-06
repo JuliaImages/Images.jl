@@ -455,8 +455,8 @@ hist_matched_img = histmatch(img, oimg, nbins)
 ```
 
 Returns a histogram matched image with a granularity of `nbins` number
-of bins. The first parameter `img` is the image to be matched, and the second
-parameter `oimg` is the image having the desired histogram to be matched to.
+of bins. The first argument `img` is the image to be matched, and the second
+argument `oimg` is the image having the desired histogram to be matched to.
 
 # Details
 The purpose of histogram matching is to transform the intensities in a source
