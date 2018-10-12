@@ -1,4 +1,60 @@
 """
+    Percentile(x)
+
+Indicate that `x` should be interpreted as a [percentile](https://en.wikipedia.org/wiki/Percentile) rather than an absolute value. For example,
+
+- `canny(img, 1.4, (80, 20))` uses absolute thresholds on the edge magnitude image
+- `canny(img, 1.4, (Percentile(80), Percentile(20)))` uses percentiles of the edge magnitude image as threshold
+"""
+struct Percentile{T} <: Real p::T end
+
+
+"""
+HomogeneousPoint(x::NTuple{N, T})
+
+In projective geometry [homogeneous coordinates](https://en.wikipedia.org/wiki/Homogeneous_coordinates) are the
+natural coordinates for describing points and lines.
+
+For instance, the homogeneous coordinates for a planar point are a triplet of real numbers ``(u, v ,w)``, with ``w \\neq 0``.
+This triple can be associated with a point ``P = (x,y)`` in Cartesian coordinates, where ``x = \\frac{u}{w}`` and ``y = \\frac{v}{w}``
+[(more details)](http://www.geom.uiuc.edu/docs/reference/CRC-formulas/node6.html#SECTION01140000000000000000).
+
+In particular, the `HomogeneousPoint((10.0,5.0,1.0))` is the standardised projective representation of the Cartesian
+point `(10.0,5.0)`.
+"""
+struct HomogeneousPoint{T <: AbstractFloat,N}
+    coords::NTuple{N, T}
+end
+
+# By overwriting Base.to_indices we can define how to index into an N-dimensional array
+# given an (N+1)-dimensional [`HomogeneousPoint`](@ref) type.
+# We do this by converting the homogeneous coordinates to Cartesian coordinates
+# and rounding to nearest integer.
+#
+# For homogeneous coordinates of a planar point we return
+# a tuple of permuted Cartesian coordinates, (y,x), since matrices
+# are indexed  according to row and then column.
+# For homogeneous coordinates of other dimensions we do not permute
+# the corresponding Cartesian coordinates.
+Base.to_indices(A::AbstractArray, p::Tuple{<: HomogeneousPoint}) = homogeneous_point_to_indices(p[1])
+
+function homogeneous_point_to_indices(p::HomogeneousPoint{T,3}) where T
+    if  p.coords[end] == 1
+        return round(Int,  p.coords[2]), round(Int, p.coords[1])
+    else
+        return round(Int,  p.coords[2] / p.coords[end]), round(Int, p.coords[1] / p.coords[end])
+    end
+end
+
+function homogeneous_point_to_indices(p::HomogeneousPoint)
+    if  p.coords[end] == 1
+        return round.(Int, p.coords)
+    else
+        return round.(Int, p.coords ./ p.coords[end])
+    end
+end
+
+"""
 ```
 corners = imcorner(img; [method])
 corners = imcorner(img, threshold, percentile; [method])
@@ -46,8 +102,8 @@ corners = imcorner_subpixel(img, threshold, percentile; [method])
 Same as [`imcorner`](@ref), but estimates corners to sub-pixel precision.
 
 Sub-pixel precision is achieved by interpolating the corner response values using
-the 4-connected neighbourhood of a maximum response value. 
-See [`corner2subpixel`](@ref) for more details of the interpolation scheme. 
+the 4-connected neighbourhood of a maximum response value.
+See [`corner2subpixel`](@ref) for more details of the interpolation scheme.
 
 """
 function imcorner_subpixel(img::AbstractArray; method::Function = harris, args...)
@@ -98,8 +154,8 @@ let  ``x_1 = -1``,  ``x_2 = 0`` and  ``x_3 = 1`` denote the local ``x`` coordina
 of the west, center and east pixels and let the vector ``\\mathbf{b} = [r_1, r_2, r_3]``
 denote the corresponding corner response values. With
 
-```math 
-    \\mathbf{A} = 
+```math
+    \\mathbf{A} =
         \\begin{bmatrix}
             x_1^2 & x_1  & 1  \\\\
             x_2^2 & x_2  & 1 \\\\
@@ -107,14 +163,14 @@ denote the corresponding corner response values. With
         \\end{bmatrix},
 ```
 the coefficients of the quadratic polynomial can be found by solving the
-system of equations ``\\mathbf{b} = \\mathbf{A}\\mathbf{x}``. 
+system of equations ``\\mathbf{b} = \\mathbf{A}\\mathbf{x}``.
 The result is given by ``x = \\mathbf{A}^{-1}\\mathbf{b}``.
 
 The vertex of the quadratic polynomial yields a sub-pixel estimate of the
 true corner position. For example, for a univariate quadratic polynomial
-``px^2 + qx + r``, the ``x``-coordinate of the vertex is ``\\frac{-q}{2p}``. 
+``px^2 + qx + r``, the ``x``-coordinate of the vertex is ``\\frac{-q}{2p}``.
 Hence, the refined sub-pixel coordinate is equal to:
- ``c +  \\frac{-q}{2p}``, where ``c`` is the integer coordinate. 
+ ``c +  \\frac{-q}{2p}``, where ``c`` is the integer coordinate.
 
 !!! note
     Corners on the boundary of the image are not refined to sub-pixel precision.
@@ -129,7 +185,7 @@ function corner2subpixel(responses::AbstractMatrix, corner_indicator::AbstractMa
     invA = @SMatrix [0.5 -1.0 0.5; -0.5 0.0 0.5; 0.0 1.0 -0.0]
     for k = 1:ncorners
         # Corners on the perimeter of the image will not be interpolated.
-        if  (row[k] == first(row_range) || row[k] == last(row_range) || 
+        if  (row[k] == first(row_range) || row[k] == last(row_range) ||
              col[k] == first(col_range) || col[k] == last(col_range))
             y = convert(Float64,row[k])
             x = convert(Float64,col[k])
