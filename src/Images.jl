@@ -221,6 +221,7 @@ export # types
     complement,
     imhist,
     histeq,
+    build_histogram,
     adjust_gamma,
     histmatch,
     clahe,
