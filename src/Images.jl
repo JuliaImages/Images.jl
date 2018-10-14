@@ -59,6 +59,7 @@ using TiledIteration: EdgeIterator
 
 using Base.Cartesian  # TODO: delete this
 
+include("misc.jl")
 include("labeledarrays.jl")
 include("algorithms.jl")
 include("exposure.jl")
