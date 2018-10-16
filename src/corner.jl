@@ -46,8 +46,8 @@ corners = imcorner_subpixel(img, threshold, percentile; [method])
 Same as [`imcorner`](@ref), but estimates corners to sub-pixel precision.
 
 Sub-pixel precision is achieved by interpolating the corner response values using
-the 4-connected neighbourhood of a maximum response value. 
-See [`corner2subpixel`](@ref) for more details of the interpolation scheme. 
+the 4-connected neighbourhood of a maximum response value.
+See [`corner2subpixel`](@ref) for more details of the interpolation scheme.
 
 """
 function imcorner_subpixel(img::AbstractArray; method::Function = harris, args...)
@@ -98,8 +98,8 @@ let  ``x_1 = -1``,  ``x_2 = 0`` and  ``x_3 = 1`` denote the local ``x`` coordina
 of the west, center and east pixels and let the vector ``\\mathbf{b} = [r_1, r_2, r_3]``
 denote the corresponding corner response values. With
 
-```math 
-    \\mathbf{A} = 
+```math
+    \\mathbf{A} =
         \\begin{bmatrix}
             x_1^2 & x_1  & 1  \\\\
             x_2^2 & x_2  & 1 \\\\
@@ -107,14 +107,14 @@ denote the corresponding corner response values. With
         \\end{bmatrix},
 ```
 the coefficients of the quadratic polynomial can be found by solving the
-system of equations ``\\mathbf{b} = \\mathbf{A}\\mathbf{x}``. 
+system of equations ``\\mathbf{b} = \\mathbf{A}\\mathbf{x}``.
 The result is given by ``x = \\mathbf{A}^{-1}\\mathbf{b}``.
 
 The vertex of the quadratic polynomial yields a sub-pixel estimate of the
 true corner position. For example, for a univariate quadratic polynomial
-``px^2 + qx + r``, the ``x``-coordinate of the vertex is ``\\frac{-q}{2p}``. 
+``px^2 + qx + r``, the ``x``-coordinate of the vertex is ``\\frac{-q}{2p}``.
 Hence, the refined sub-pixel coordinate is equal to:
- ``c +  \\frac{-q}{2p}``, where ``c`` is the integer coordinate. 
+ ``c +  \\frac{-q}{2p}``, where ``c`` is the integer coordinate.
 
 !!! note
     Corners on the boundary of the image are not refined to sub-pixel precision.
@@ -129,7 +129,7 @@ function corner2subpixel(responses::AbstractMatrix, corner_indicator::AbstractMa
     invA = @SMatrix [0.5 -1.0 0.5; -0.5 0.0 0.5; 0.0 1.0 -0.0]
     for k = 1:ncorners
         # Corners on the perimeter of the image will not be interpolated.
-        if  (row[k] == first(row_range) || row[k] == last(row_range) || 
+        if  (row[k] == first(row_range) || row[k] == last(row_range) ||
              col[k] == first(col_range) || col[k] == last(col_range))
             y = convert(Float64,row[k])
             x = convert(Float64,col[k])
