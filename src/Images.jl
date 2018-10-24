@@ -164,10 +164,13 @@ export
     clearborder,
 
     #Exposure
+    Equalization,
     complement,
     imhist,
     histeq,
     build_histogram,
+    adjust_histogram,
+    adjust_histogram!,
     adjust_gamma,
     histmatch,
     clahe,
