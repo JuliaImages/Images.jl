@@ -318,29 +318,34 @@ function build_histogram(img::AbstractArray, nbins::Integer=200)
     build_histogram(img, nbins, minfinite(img), maxfinite(img))
 end
 
+function build_histogram(img::AbstractArray{T}, edges::AbstractRange) where {T<:AbstractRGB}
+    build_histogram(Gray.(img),edges)
+end
+
 function build_histogram(img::AbstractArray, edges::AbstractRange)
+    Base.has_offset_axes(edges) && throw(ArgumentError("edges must be indexed starting with 1"))
     lb = first(axes(edges,1))-1
     ub = last(axes(edges,1))
+    first_edge = first(edges)
+    step_size = step(edges)
     counts = fill(0, lb:ub)
-    o = Base.Order.Forward
-    G = graytype(eltype(img))
-    for v in img
-        if isnan(v)
-            continue
-        else
-            val = convert(G, v)
+    for val in img
+         if isnan(val)
+             continue
+         else
             if val >= edges[end]
                 counts[end] += 1
                 continue
+            elseif val < first(edges)
+                counts[lb] += 1
+            else
+                index = Int(Base.div(val-first_edge,step_size)) + 1
+                counts[index] += 1
             end
-            index = searchsortedlast(edges, val, o)
-            counts[index] += 1
         end
     end
     edges, counts
 end
-
-
 
 function _histeq_pixel_rescale(pixel::T, cdf, minval, maxval) where T<:NumberLike
     n = length(cdf)
@@ -481,6 +486,160 @@ function histeq(img::ImageMeta, nbins::Integer, minval::RealLike, maxval::RealLi
 end
 
 histeq(img::ImageMeta, nbins::Integer) = shareproperties(img, histeq(data(img), nbins))
+
+abstract type AbstractHistogramOperation end
+struct Equalization <: AbstractHistogramOperation end
+
+"""
+```
+hist_equalised_img = adjust_histogram(Equalization(),img, nbins)
+hist_equalised_img = adjust_histogram(Equalization(),img, nbins, minval, maxval)
+```
+
+Returns a histogram equalised image with a granularity of `nbins` number of bins.
+
+# Details
+
+Histogram equalisation was initially conceived to  improve the contrast in a
+single-channel grayscale image. The method transforms the
+distribution of the intensities in an image so that they are as uniform as
+possible [1]. The natural justification for uniformity
+is that the image has better contrast  if the intensity levels of an image span
+a wide range on the intensity scale. As it turns out, the necessary
+transformation is a mapping based on the cumulative histogram.
+
+One can consider an ``L``-bit single-channel ``I \\times J`` image with gray
+values in the set ``\\{0,1,\\ldots,L-1 \\}``, as a collection of independent and
+identically distributed random variables. Specifically, let the sample space
+``\\Omega`` be the set of all ``IJ``-tuples ``\\omega
+=(\\omega_{11},\\omega_{12},\\ldots,\\omega_{1J},\\omega_{21},\\omega_{22},\\ldots,\\omega_{2J},\\omega_{I1},\\omega_{I2},\\ldots,\\omega_{IJ})``,
+where each ``\\omega_{ij} \\in \\{0,1,\\ldots, L-1 \\}``. Furthermore, impose a
+probability measure on ``\\Omega`` such that the functions ``\\Omega \\ni
+\\omega \\to \\omega_{ij} \\in \\{0,1,\\ldots,L-1\\}`` are independent and
+identically distributed.
+
+One can then regard an image as a matrix of random variables ``\\mathbf{G} =
+[G_{i,j}(\\omega)]``, where each function ``G_{i,j}: \\Omega \\to \\mathbb{R}``
+is defined by
+```math
+G_{i,j}(\\omega) = \\frac{\\omega_{ij}}{L-1},
+```
+and each ``G_{i,j}`` is distributed according to some unknown density ``f_{G}``.
+While ``f_{G}`` is unknown, one can approximate it with a normalised histogram
+of gray levels,
+
+```math
+\\hat{f}_{G}(v)= \\frac{n_v}{IJ},
+```
+where
+```math
+n_v = \\left | \\left\\{(i,j)\\, |\\,  G_{i,j}(\\omega)  = v \\right \\} \\right |
+```
+represents the number of times a gray level with intensity ``v`` occurs in
+``\\mathbf{G}``. To transforming the distribution of the intensities so that
+they are as uniform as possible one needs to find a mapping ``T(\\cdot)`` such
+that ``T(G_{i,j}) \\thicksim U ``. The required mapping turns out to be the
+cumulative distribution function (CDF) of the empirical density
+``\\hat{f}_{G}``,
+```math
+ T(G_{i,j}) = \\int_0^{G_{i,j}}\\hat{f}_{G}(w)\\mathrm{d} w.
+```
+
+# Options
+
+Various options for the parameters of this function are described in more detail
+below.
+
+## Choices for `img`
+
+The `adjust_histogram` function can handle a variety of input types. The returned image
+depends on the input type. If the input is an `Image` then the resulting image
+is of the same type.
+
+For coloured images, the input is converted to
+[YIQ](https://en.wikipedia.org/wiki/YIQ) type and the Y channel is equalised.
+This is the combined with the I and Q channels and the resulting image converted
+to the same type as the input.
+
+## Choices for `nbins`
+
+You can specify the total number of bins in the histogram.
+
+## Choices for `minval` and `maxval`
+
+If minval and maxval are specified then intensities are equalized to the range
+[minval, maxval]. The default values are 0 and 1.
+
+# Example
+
+```julia
+
+using TestImages, FileIO, ImageView
+
+img =  testimage("mandril_gray");
+imgeq = adjust_histogram(Equalization(),img,256,0,1);
+
+imshow(img)
+imshow(imgeq)
+```
+
+# References
+1. R. C. Gonzalez and R. E. Woods. *Digital Image Processing (3rd Edition)*.  Upper Saddle River, NJ, USA: Prentice-Hall,  2006.
+
+See also: [histmatch](@ref),[clahe](@ref), [build_histogram](@ref) and  [adjust_gamma](@ref).
+
+"""
+function adjust_histogram(operation::Equalization, img::AbstractArray{T}, nbins::Integer, minval::RealLike = 0, maxval::RealLike = 1) where {T<:Color3}
+    yiq = convert.(YIQ, img)
+    yiq_view = channelview(yiq)
+    adjust_histogram!(Equalization(),view(yiq_view,1,:,:),nbins,minval,maxval)
+    convert.(T, yiq)
+end
+
+
+function adjust_histogram(operation::Equalization, img::AbstractArray, nbins::Integer, minval::RealLike = 0, maxval::RealLike = 1)
+    adjust_histogram!(Equalization(), copy(img), nbins, minval, maxval)
+end
+
+"""
+```
+adjust_histogram!(Equalization(),img, nbins)
+adjust_histogram!(Equalization(),img, nbins, minval, maxval)
+```
+
+Same as [adjust_histogram](@ref) except that it modifies the image that was passed as an argument.
+"""
+function adjust_histogram!(operation::Equalization, img::AbstractArray, nbins::Integer, minval::RealLike = 0, maxval::RealLike = 1)
+    edges, histogram = build_histogram(img, nbins, minval, maxval)
+    lb = first(axes(histogram,1))
+    ub = last(axes(histogram,1))
+    N = length(img)
+    cdf = cumsum(histogram[lb:ub]/N)
+    transform_density!(img, edges, histogram, cdf, minval, maxval)
+end
+
+function transform_density!(img::AbstractArray,edges::AbstractArray, histogram::AbstractArray, cdf::AbstractArray, minval::RealLike, maxval::RealLike)
+    first_edge = first(edges)
+    step_size = step(edges)
+    T = eltype(img)
+    map!(img,img) do val
+        if val >= edges[end]
+            newval = cdf[end]
+        elseif val < first_edge
+            newval = first(cdf)
+        else
+            index = Int(Base.div(val-first_edge,step_size)) + 1
+            newval = cdf[index]
+        end
+        # Scale the new intensity value to so that it lies in the range [minval, maxval].
+        if T <: Integer
+            newval = ceil(minval + ((newval - first(cdf)) * (maxval - minval) / (cdf[end] - first(cdf))))
+        else
+            newval = minval + ((newval - first(cdf)) * (maxval - minval) / (cdf[end] - first(cdf)))
+        end
+    end
+end
+
 
 adjust_gamma(img::ImageMeta, gamma::Number) = shareproperties(img, adjust_gamma(data(img), gamma))
 

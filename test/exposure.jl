@@ -77,7 +77,8 @@ eye(m,n) = Matrix{Float64}(I,m,n)
                 @test collect(counts) == [128; 16; 16; 16; 80]
                 @test axes(counts) == (0:length(edges),)
             else
-                edges, counts  = build_histogram(0:1/255:1,4,128/255,192/255)
+                img = collect(0:1/255:1)
+                edges, counts  = build_histogram(T.(img),4,128/255,192/255)
                 @test length(edges) == length(counts) - 1
                 @test collect(counts) == [128; 16; 16; 16; 80]
                 @test axes(counts) == (0:length(edges),)
@@ -89,17 +90,23 @@ eye(m,n) = Matrix{Float64}(I,m,n)
                 @test collect(counts) == [120, 5, 5, 5, 121]
                 @test axes(counts) == (0:length(edges),)
             else
-                edges, counts  = build_histogram(0:1/255:1,4,120/255,140/255)
+                img = collect(0:1/255:1)
+                edges, counts  = build_histogram(T.(img),4,120/255,140/255)
                 @test length(edges) == length(counts) - 1
+                @test axes(counts) == (0:length(edges),)
                 # Due to roundoff errors the bins are not the same as in the
                 # integer case above.
-                @test collect(counts) == [120, 6, 4, 5, 121]
-                @test axes(counts) == (0:length(edges),)
+                if T == Gray{Float32}
+                    @test collect(counts) == [120, 5, 5, 5, 121]
+                else
+                    @test collect(counts) == [120, 6, 5, 4, 121]
+                end
             end
         end
 
         # Consider the case where the minimum and maximum values are not the start and
-        # end points of the dynamic range.
+        # end points of the dynamic range. Because of numerical precision, the
+        # results will be slightly different depending on the Image type.
         for T in (Int, Gray{N0f8}, Gray{N0f16}, Gray{Float32}, Gray{Float64})
             if T == Int
                 edges, counts  = build_histogram(200:1:240,4,200,240)
@@ -113,15 +120,27 @@ eye(m,n) = Matrix{Float64}(I,m,n)
                 @test collect(counts) == [0, 10, 10, 10, 11]
                 @test axes(counts) == (0:length(edges),)
             else
-                edges, counts  = build_histogram(200/255:1/255:240/255,4,200/255,240/255)
+                img = 200/255:1/255:240/255
+                edges, counts  = build_histogram(T.(img),4,200/255,240/255)
                 @test length(edges) == length(counts) - 1
-                @test collect(counts) == [0, 10, 10, 10, 11]
+                if T == Gray{Float32}
+                    @test collect(counts) == [0, 10, 10, 10, 11]
+                else
+                    @test collect(counts) == [0, 11, 9, 10, 11]
+                end
                 @test axes(counts) == (0:length(edges),)
 
-                edges, counts  = build_histogram(200/255:1/255:240/255,4)
-                @test length(edges) == length(counts) - 1
-                @test collect(counts) == [0, 10, 10, 10, 11]
+                edges, counts  = build_histogram(T.(img),4)
                 @test axes(counts) == (0:length(edges),)
+                @test length(edges) == length(counts) - 1
+                if T == Gray{N0f16} || T == Gray{N0f8}
+                    @test collect(counts) == [0, 11, 10, 10, 10]
+                elseif T == Gray{Float32}
+                    @test collect(counts) == [0, 10, 10, 10, 11]
+                else
+                    @test collect(counts) == [0, 11, 9, 10, 11]
+                end
+
             end
         end
 
@@ -230,6 +249,67 @@ eye(m,n) = Matrix{Float64}(I,m,n)
         for i in 1:(size(cdf)[1]-1)
             @test all(ret[cdf[i] + 1 : cdf[i + 1]] .== (cdf[i + 1] - cdf[1]) * 99.0 / (cdf[end] - cdf[1]))
         end
+
+        for T in (Gray{N0f8}, Gray{N0f16}, Gray{Float32}, Gray{Float64})
+            #=
+            Create an image that spans a narrow graylevel range. Then quantize
+            the 256 bins down to 32 and determine how many bins have non-zero
+            counts.
+            =#
+
+            img = Gray{Float32}.([i/255.0 for i = 64:128, j = 1:10])
+            img = T.(img)
+            _, counts_before = build_histogram(img,32,0,1)
+            nonzero_before = sum(counts_before .!= 0)
+
+            #=
+            Equalize the image histogram. Then quantize the 256 bins down to 32
+            and verify that all 32 bins have non-zero counts. This will confirm
+            that the dynamic range of the original image has been increased.
+            =#
+            imgeq = adjust_histogram(Equalization(),img,256,0,1)
+            edges, counts_after = build_histogram(imgeq,32,0,1)
+            nonzero_after = sum(counts_after .!= 0)
+            @test nonzero_before < nonzero_after
+            @test nonzero_after == 32
+        end
+
+
+        for T in (RGB{N0f8}, RGB{N0f16}, RGB{Float32}, RGB{Float64})
+            #=
+            Create a color image that spans a narrow graylevel range.  Then
+            quantize the 256 bins down to 32 and determine how many bins have
+            non-zero counts.
+            =#
+
+            imgg = Gray{Float32}.([i/255.0 for i = 64:128, j = 1:10])
+            img = colorview(RGB,imgg,imgg,imgg)
+            img = T.(img)
+            _, counts_before = build_histogram(img,32,0,1)
+            nonzero_before = sum(counts_before .!= 0)
+
+            #=
+            Equalize the histogram. Then quantize the 256 bins down to 32 and
+            verify that all 32 bins have non-zero counts. This will confirm that
+            the dynamic range of the original image has been increased.
+            =#
+            imgeq = adjust_histogram(Equalization(),img,256,0,1)
+            edges, counts_after = build_histogram(imgeq,32,0,1)
+            nonzero_after = sum(counts_after .!= 0)
+            @test nonzero_before < nonzero_after
+            @test nonzero_after == 32
+        end
+
+        # Verify that the minimum and maximum values of the equalised image match the
+        # specified minimum and maximum values, i.e. that the intensities of the equalised
+        # image are in the interval [minvalue, maxvalue].
+        imgeq = adjust_histogram(Equalization(),collect(0:1:255),256,64,128)
+        @test all(imgeq[1:65] .== 64)
+        @test all(imgeq[128+1:end] .== 128)
+
+        imgeq = adjust_histogram(Equalization(),collect(0:1/255:1),256,64/255,128/255)
+        @test all(imgeq[1:65] .== 64/255)
+        @test all(imgeq[128+1:end] .== 128/255)
 
     end
 
