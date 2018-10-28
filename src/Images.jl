@@ -165,6 +165,7 @@ export
 
     #Exposure
     Equalization,
+    Matching,
     complement,
     imhist,
     histeq,
