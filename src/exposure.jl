@@ -195,7 +195,7 @@ edges, count = build_histogram(img, nbins, minval, maxval)
 edges, count = build_histogram(img, edges)
 ```
 
-Generates a histogram for the image over nbins spread between `[minval, maxval]`.
+Generates a histogram for the image over `nbins` spread between `[minval, maxval]`.
 Color images are automatically converted to grayscale.
 
 # Output
@@ -308,8 +308,16 @@ edges, counts  = build_histogram(r,256,0,1)
 
 # References
 [1] E. Herrholz, "Parsimonious Histograms," Ph.D. dissertation, Inst. of Math. and Comp. Sci., University of Greifswald, Greifswald, Germany, 2011.
+
+See also:
+
+| Histogram Equalization                                                                                                                             | Histogram Matching                                                                                     |
+|:--------------------------------------------------------------------------------------------------------------------------------------------------:|:------------------------------------------------------------------------------------------------------:|
+| [`adjust_histogram`](@ref adjust_histogram(::Equalization, ::AbstractArray, ::Integer, ::Union{Real,AbstractGray}, ::Union{Real,AbstractGray}))    | [`adjust_histogram`](@ref adjust_histogram(::Matching, ::AbstractArray, ::AbstractArray, ::Integer))   |
+| [`adjust_histogram!`](@ref adjust_histogram!(::Equalization, ::AbstractArray, ::Integer, ::Union{Real,AbstractGray}, ::Union{Real,AbstractGray}))  | [`adjust_histogram!`](@ref adjust_histogram!(::Matching, ::AbstractArray, ::AbstractArray, ::Integer)) |
+
 """
-function build_histogram(img::AbstractArray, nbins::Integer, minval::RealLike, maxval::RealLike)
+function build_histogram(img::AbstractArray, nbins::Integer, minval::Union{Real,AbstractGray}, maxval::Union{Real,AbstractGray})
     edges = partition_interval(nbins, minval, maxval)
     build_histogram(img, edges)
 end
@@ -318,7 +326,7 @@ function build_histogram(img::AbstractArray, nbins::Integer=200)
     build_histogram(img, nbins, minfinite(img), maxfinite(img))
 end
 
-function build_histogram(img::AbstractArray{T}, edges::AbstractRange) where {T<:AbstractRGB}
+function build_histogram(img::AbstractArray{T}, edges::AbstractRange) where {T<:Color3}
     build_histogram(Gray.(img),edges)
 end
 
@@ -489,11 +497,12 @@ histeq(img::ImageMeta, nbins::Integer) = shareproperties(img, histeq(data(img), 
 
 abstract type AbstractHistogramOperation end
 struct Equalization <: AbstractHistogramOperation end
+struct Matching <: AbstractHistogramOperation end
 
 """
 ```
-hist_equalised_img = adjust_histogram(Equalization(),img, nbins)
-hist_equalised_img = adjust_histogram(Equalization(),img, nbins, minval, maxval)
+adjust_histogram(Equalization(),img, nbins)
+adjust_histogram(Equalization(),img, nbins, minval, maxval)
 ```
 
 Returns a histogram equalised image with a granularity of `nbins` number of bins.
@@ -552,9 +561,8 @@ below.
 
 ## Choices for `img`
 
-The `adjust_histogram` function can handle a variety of input types. The returned image
-depends on the input type. If the input is an `Image` then the resulting image
-is of the same type.
+The `adjust_histogram(Equalization(),...)` function can handle a variety of
+input types.  The type of the returned image matches the input type.
 
 For coloured images, the input is converted to
 [YIQ](https://en.wikipedia.org/wiki/YIQ) type and the Y channel is equalised.
@@ -586,10 +594,20 @@ imshow(imgeq)
 # References
 1. R. C. Gonzalez and R. E. Woods. *Digital Image Processing (3rd Edition)*.  Upper Saddle River, NJ, USA: Prentice-Hall,  2006.
 
-See also: [histmatch](@ref),[clahe](@ref), [build_histogram](@ref) and  [adjust_gamma](@ref).
+See also:
+
+| Histogram Equalization                                                                                                                             | Histogram Matching                                                                                     | Histogram Construction                                                                                                        |
+|:--------------------------------------------------------------------------------------------------------------------------------------------------:|:------------------------------------------------------------------------------------------------------:|:-----------------------------------------------------------------------------------------------------------------------------:|
+| [`adjust_histogram!`](@ref adjust_histogram!(::Equalization, ::AbstractArray, ::Integer, ::Union{Real,AbstractGray}, ::Union{Real,AbstractGray}))  | [`adjust_histogram`](@ref adjust_histogram(::Matching, ::AbstractArray, ::AbstractArray, ::Integer))   | [`build_histogram`](@ref build_histogram(::AbstractArray, ::Integer, ::Union{Real,AbstractGray}, ::Union{Real,AbstractGray})) |
+|                                                                                                                                                    | [`adjust_histogram!`](@ref adjust_histogram!(::Matching, ::AbstractArray, ::AbstractArray, ::Integer)) |                                                                                                                               |
 
 """
-function adjust_histogram(operation::Equalization, img::AbstractArray{T}, nbins::Integer, minval::RealLike = 0, maxval::RealLike = 1) where {T<:Color3}
+function adjust_histogram(operation::Equalization, img::AbstractArray, nbins::Integer, minval::Union{Real,AbstractGray} = 0, maxval::Union{Real,AbstractGray} = 1)
+    adjust_histogram!(Equalization(), copy(img), nbins, minval, maxval)
+end
+
+
+function adjust_histogram(operation::Equalization, img::AbstractArray{T}, nbins::Integer, minval::Union{Real,AbstractGray} = 0, maxval::Union{Real,AbstractGray} = 1) where {T<:Color3}
     yiq = convert.(YIQ, img)
     yiq_view = channelview(yiq)
     adjust_histogram!(Equalization(),view(yiq_view,1,:,:),nbins,minval,maxval)
@@ -597,28 +615,24 @@ function adjust_histogram(operation::Equalization, img::AbstractArray{T}, nbins:
 end
 
 
-function adjust_histogram(operation::Equalization, img::AbstractArray, nbins::Integer, minval::RealLike = 0, maxval::RealLike = 1)
-    adjust_histogram!(Equalization(), copy(img), nbins, minval, maxval)
-end
-
 """
 ```
 adjust_histogram!(Equalization(),img, nbins)
 adjust_histogram!(Equalization(),img, nbins, minval, maxval)
 ```
 
-Same as [adjust_histogram](@ref) except that it modifies the image that was passed as an argument.
+Same as [`adjust_histogram`](@ref adjust_histogram(::Equalization, ::AbstractArray, ::Integer, ::Union{Real,AbstractGray}, ::Union{Real,AbstractGray})) except that it modifies the image that was passed as an argument.
 """
-function adjust_histogram!(operation::Equalization, img::AbstractArray, nbins::Integer, minval::RealLike = 0, maxval::RealLike = 1)
+function adjust_histogram!(operation::Equalization, img::AbstractArray, nbins::Integer, minval::Union{Real,AbstractGray} = 0, maxval::Union{Real,AbstractGray} = 1)
     edges, histogram = build_histogram(img, nbins, minval, maxval)
     lb = first(axes(histogram,1))
     ub = last(axes(histogram,1))
     N = length(img)
     cdf = cumsum(histogram[lb:ub]/N)
-    transform_density!(img, edges, histogram, cdf, minval, maxval)
+    transform_density!(img, edges, cdf, minval, maxval)
 end
 
-function transform_density!(img::AbstractArray,edges::AbstractArray, histogram::AbstractArray, cdf::AbstractArray, minval::RealLike, maxval::RealLike)
+function transform_density!(img::AbstractArray,edges::AbstractArray, cdf::AbstractArray, minval::Union{Real,AbstractGray}, maxval::Union{Real,AbstractGray})
     first_edge = first(edges)
     step_size = step(edges)
     T = eltype(img)
@@ -639,6 +653,214 @@ function transform_density!(img::AbstractArray,edges::AbstractArray, histogram::
         end
     end
 end
+
+
+"""
+```
+adjust_histogram(Matching(),img, targetimg, nbins)
+adjust_histogram(Matching(),img, targetimg, edges)
+```
+
+Returns a histogram matched image with a granularity of `nbins` number of bins.
+The first argument `img` is the image to be matched, and the second argument
+`targetimg` is the image having the desired histogram to be matched to.
+
+# Details
+The purpose of histogram matching is to transform the intensities in a source
+image so that the intensities distribute according to the histogram of a
+specified target image. If one interprets histograms as piecewise-constant
+models of probability density functions (see [`build_histogram`](@ref
+build_histogram(::AbstractArray, ::Integer, ::Union{Real,AbstractGray},
+::Union{Real,AbstractGray}))), then the histogram matching task can be modelled
+as the problem of transforming one probability distribution into another [1].
+It turns out that the solution to this transformation problem involves the
+cumulative and inverse cumulative distribution functions of the source and
+target probability density functions.
+
+In particular, let the random variables ``x \\thicksim p_{x} `` and ``z
+\\thicksim p_{z}``  represent an intensity in the source and target image
+respectively, and let
+
+```math
+ S(x) = \\int_0^{x}p_{x}(w)\\mathrm{d} w \\quad \\text{and} \\quad
+ T(z) = \\int_0^{z}p_{z}(w)\\mathrm{d} w
+```
+represent their concomitant cumulative disitribution functions. Then the
+sought-after mapping ``Q(\\cdot)`` such that ``Q(x) \\thicksim p_{z} `` is given
+by
+
+```math
+Q(x) =  T^{-1}\\left( S(x) \\right),
+```
+
+where ``T^{-1}(y) = \\operatorname{min} \\{ x \\in \\mathbb{R} : y \\leq T(x)
+\\}`` is the inverse cumulative distribution function of ``T(x)``.
+
+The mapping suggests that one can conceptualise histogram matching as performing
+histogram equalisation on the source and target image and relating the two
+equalised histograms. Refer to [`adjust_histogram`](@ref
+adjust_histogram(::Equalization, ::AbstractArray, ::Integer,
+::Union{Real,AbstractGray}, ::Union{Real,AbstractGray})) for more details on
+histogram equalisation.
+
+# Options
+
+Various options for the parameters of this function are described in more detail
+below.
+
+## Choices for `img` and `targetimg`
+
+The `adjust_histogram(Matching(),...)` function can handle a variety of input
+types. The type of the returned image matches the input type.
+
+For colored images, the inputs are converted to
+[YIQ](https://en.wikipedia.org/wiki/YIQ)  type and the distributions of the Y
+channels are matched. The modified Y channel is then combined with the I and Q
+channels and the resulting image converted to the same type as the input.
+
+## Choices for `nbins`
+
+You can specify the total number of bins in the histogram. If you do not
+specify the number of bins then a default value of 256 bins is utilised.
+
+## Choices for `edges`
+
+If you do not designate the number of bins, then you have the option to directly
+stipulate how the intervals will be divided by specifying a [`range`](@ref)
+type.
+
+# Example
+
+```julia
+using Images, TestImages, ImageView
+
+img_source = testimage("mandril_gray")
+img_target = adjust_gamma(img_source,1/2)
+img_transformed = adjust_histogram(Matching(),img_source, img_target)
+#=
+    A visual inspection confirms that img_transformed resembles img_target
+    much more closely than img_source.
+=#
+imshow(img_source)
+imshow(img_target)
+imshow(img_transformed)
+```
+
+# References
+1. W. Burger and M. J. Burge. *Digital Image Processing*. Texts in Computer Science, 2016. [doi:10.1007/978-1-4471-6684-9](https://doi.org/10.1007/978-1-4471-6684-9)
+
+
+See also:
+
+| Histogram Equalization                                                                                                                             | Histogram Matching                                                                                    | Histogram Construction                                                                                                        |
+|:--------------------------------------------------------------------------------------------------------------------------------------------------:|:------------------------------------------------------------------------------------------------------|:-----------------------------------------------------------------------------------------------------------------------------:|
+| [`adjust_histogram`](@ref adjust_histogram(::Equalization, ::AbstractArray, ::Integer, ::Union{Real,AbstractGray}, ::Union{Real,AbstractGray}))    | [`adjust_histogram!`](@ref adjust_histogram(::Matching, ::AbstractArray, ::AbstractArray, ::Integer)) | [`build_histogram`](@ref build_histogram(::AbstractArray, ::Integer, ::Union{Real,AbstractGray}, ::Union{Real,AbstractGray})) |
+| [`adjust_histogram!`](@ref adjust_histogram!(::Equalization, ::AbstractArray, ::Integer, ::Union{Real,AbstractGray}, ::Union{Real,AbstractGray}))  |                                                                                                       |                                                                                                                               |
+
+
+"""
+function adjust_histogram(operation::Matching, img::AbstractArray, targetimg::AbstractArray, nbins::Integer = 256)
+    adjust_histogram!(Matching(), copy(img), targetimg, nbins)
+end
+
+
+function adjust_histogram(operation::Matching, img::AbstractArray, targetimg::AbstractArray, edges::AbstractRange)
+    adjust_histogram!(Matching(), copy(img), targetimg, edges)
+end
+
+
+function adjust_histogram!(operation::Matching, img::AbstractArray{T}, targetimg::AbstractArray{T}, edges::AbstractRange ) where T <: Color3
+    yiq = convert.(YIQ, img)
+    yiq_view = channelview(yiq)
+    adjust_histogram!(Matching(),view(yiq_view,1,:,:), map(c->YIQ(c).y, targetimg), edges)
+    convert.(T, yiq)
+end
+
+
+function adjust_histogram!(operation::Matching, img::AbstractArray{T}, targetimg::AbstractArray{T}, nbins::Integer = 256 ) where T <: Color3
+    yiq = convert.(YIQ, img)
+    yiq_view = channelview(yiq)
+    adjust_histogram!(Matching(),view(yiq_view,1,:,:), map(c->YIQ(c).y, targetimg), nbins)
+    convert.(T, yiq)
+end
+
+
+function adjust_histogram!(operation::Matching, img::AbstractArray, targetimg::AbstractArray, edges::AbstractRange )
+    edges, pdf, target_pdf = construct_pdfs(img, targetimg, edges)
+    match_pdf!(Matching(), img, edges, pdf, target_pdf)
+end
+
+"""
+```
+adjust_histogram!(Matching(),img, targetimg, nbins)
+adjust_histogram!(Matching(),img, targetimg, edges)
+```
+
+Same as  [`adjust_histogram`](@ref adjust_histogram(::Matching, ::AbstractArray, ::AbstractArray, ::Integer))  except that it modifies the image that was passed as an argument.
+"""
+function adjust_histogram!(operation::Matching, img::AbstractArray, targetimg::AbstractArray, nbins::Integer = 256 )
+    edges, pdf, target_pdf = construct_pdfs(img, targetimg, nbins)
+    match_pdf!(Matching(), img, edges, pdf, target_pdf)
+end
+
+function construct_pdfs(img::AbstractArray, targetimg::AbstractArray, edges::AbstractRange)
+    _, histogram = build_histogram(img, edges)
+    _, target_histogram = build_histogram(targetimg, edges)
+    return edges, histogram / sum(histogram), target_histogram / sum(target_histogram)
+end
+
+function construct_pdfs(img::AbstractArray, targetimg::AbstractArray, nbins::Integer = 256)
+    if eltype(img) <: AbstractGray
+        imin, imax = 0, 1
+    else
+        imin, imax = min(minfinite(img), minfinite(targetimg)), max(maxfinite(img), maxfinite(targetimg))
+    end
+    edges, histogram = build_histogram(img, nbins, imin, imax)
+    _, target_histogram = build_histogram(targetimg, edges)
+    return edges, histogram / sum(histogram), target_histogram / sum(target_histogram)
+end
+
+function lookup_icdf(cdf::AbstractArray, targetcdf::AbstractArray)
+    lookup_table = zeros(Int, length(cdf))
+    i = 1
+    for j = 1:length(cdf)
+        p = cdf[j]
+        while i < length(targetcdf) && targetcdf[i+1] <= p
+            i += 1
+        end
+        lookup_table[j] = i
+    end
+    lookup_table
+end
+
+function match_pdf!(operation::Matching, img::AbstractArray, edges::AbstractArray, pdf::AbstractArray, target_pdf::AbstractArray)
+    cdf = parent(cumsum(pdf))
+    target_cdf = parent(cumsum(target_pdf))
+    # Precompute the inverse cummulative distribution function of target_cdf.
+    lookup_table = lookup_icdf(cdf, target_cdf)
+    # Transform the intensities in img so that they are distributed according
+    # to the distribution of the target_histogram.
+    T = eltype(img)
+    step_size = step(edges)
+    first_edge = first(edges)
+    last_edge = last(edges)
+    map!(img,img) do val
+        if isnan(val)
+            return val
+        else
+            if val >= last_edge
+                newval = edges[last(lookup_table)-1] + step_size
+            elseif val < first_edge
+                newval = edges[first(lookup_table)]
+            else
+                index = Int(Base.div(val-first_edge,step_size)) + 1
+                newval = edges[lookup_table[index]]
+            end
+            return T <: Integer ? ceil(newval) : newval
+        end
+    end
+end
+
 
 
 adjust_gamma(img::ImageMeta, gamma::Number) = shareproperties(img, adjust_gamma(data(img), gamma))
