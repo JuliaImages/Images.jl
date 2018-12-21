@@ -12,7 +12,7 @@ An image processing library for [Julia](http://julialang.org/).
 
 ## Documentation
 
-Full documentation is found at [JuliaImages](http://juliaimages.github.io/latest/).
+Full documentation is found at [JuliaImages](https://juliaimages.org/latest/).
 
 # Credits
 
