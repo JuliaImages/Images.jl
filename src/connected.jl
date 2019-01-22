@@ -292,26 +292,22 @@ end
   -  img            = Input image (Boolean array type)
   -  connectivity   = connectivity takes the same values as in label_components (Default value is 1:ndims(img))
  """
-function fill_boundaries(img::AbstractArray{Bool},connectivity::Union{Dims, AbstractVector{Int}, BitArray}=1:ndims(img))
-    
-    labels = label_components(img,connectivity)
+function fill_boundaries(img::AbstractArray{Bool}, connectivity::AbstractVector{Int} = ones(Int, ndims(img)))
+
+    win = CartesianIndex(Tuple(connectivity))
     boundaries = zeros(Bool,(size(img)))
-    
-    if ndims(img) == 2
-        M = size(img)[1]
-        N = size(img)[2]
-        for ind in eachindex(img)
-            if ind%M == 1 || ind%M == 0 || ind <= M || ind+M >= M*N     # mark end boundaries
-                 boundaries[ind] = true
-            
-            elseif labels[ind] == labels[ind+1] == labels[ind-1] == labels[ind+M] == labels[ind-M] 
-                continue                                                # ignoring non Boundary pixels
-            
-            else
-                boundaries[ind] = true                              
+    R = CartesianIndices(img)
+    Ifirst, Ilast = first(R), last(R)
+
+    for I in R
+        val = img[I]
+        for J in CartesianIndices(map((i,j)->i:j, Tuple(max(Ifirst, I-win)), Tuple(min(Ilast, I+win))))
+            if img[J] != val
+                boundaries[I] = true 
+                break
             end
         end
     end
-    
-    return boundaries
+
+    boundaries
 end
