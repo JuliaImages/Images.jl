@@ -80,60 +80,29 @@ export
     @test_approx_eq_sigma_eps,
 
     # core functions
-    assert2d,
-    assert_scalar_color,
     assert_timedim_last,
-    assert_xfirst,
-    assert_yfirst,
     colordim,
-    colorspace,
     coords_spatial,
     copyproperties,
     data,
-    getindexim,
-    grayim,
-    colorim,
     height,
-    isdirect,
-    isxfirst,
-    isyfirst,
-    limits,
     maxabsfinite,
     maxfinite,
     minfinite,
-    nchannels,
-    ncolorelem,
     nimages,
     pixelspacing,
     properties,
-    rerange!,
-    reslice!,
     restrict,
     sdims,
     size_spatial,
     shareproperties,
-    sliceim,
     spacedirections,
     spatialorder,
-    spatialpermutation,
     spatialproperties,
-    storageorder,
-    subim,
     timedim,
     width,
     widthheight,
-    raw,
-
-    # color-related functions
-    separate,
-
-    # Scaling of intensity
-    sc,
-    scale,
-    mapinfo,
-    ufixed8sc,
-    ufixedsc,
-
+    
     # algorithms
     backdiffx,
     backdiffy,
@@ -149,7 +118,6 @@ export
     meancovs,
     gammacovs,
     imedge,  # TODO: deprecate?
-    imfilter_LoG,
     blob_LoG,
     findlocalmaxima,
     findlocalminima,
@@ -229,7 +197,7 @@ Algorithms:
 
     - Reductions: `maxfinite`, `maxabsfinite`, `minfinite`, `meanfinite`, `sad`, `ssd`, `integral_image`, `boxdiff`, `gaussian_pyramid`
     - Resizing: `restrict`, `imresize` (not yet exported)
-    - Filtering: `imfilter`, `imfilter!`, `imfilter_LoG`, `mapwindow`, `imROF`, `padarray`
+    - Filtering: `imfilter`, `imfilter!`, `mapwindow`, `imROF`, `padarray`
     - Filtering kernels: `Kernel.` or `KernelFactors.`, followed by `ando[345]`, `guassian2d`, `imaverage`, `imdog`, `imlaplacian`, `prewitt`, `sobel`
     - Exposure : `imhist`, `histeq`, `adjust_gamma`, `histmatch`, `imadjustintensity`, `imstretch`, `imcomplement`, `clahe`, `cliphist`
     - Gradients: `backdiffx`, `backdiffy`, `forwarddiffx`, `forwarddiffy`, `imgradients`
