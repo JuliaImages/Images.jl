@@ -514,13 +514,15 @@ function restrict(img::AxisArray{T,N}, region::Dims) where {T,N}
     inregion = falses(ndims(img))
     inregion[[region...]] .= true
     inregiont = (inregion...,)::NTuple{N,Bool}
-    AxisArray(restrict(img.data, region), map(modax, AxisArrays.axes(img), inregiont))
+    rdata = restrict(img.data, region)
+    AxisArray(rdata, map(modax, AxisArrays.axes(img), axes(rdata), inregiont))
 end
 
 # FIXME: this doesn't get inferred, but it should be (see issue #628)
 function restrict(img::Union{AxisArray,ImageMetaAxis}, ::Type{Ax}) where Ax
-    A = restrict(img.data, axisdim(img, Ax))
-    AxisArray(A, replace_axis(modax(img[Ax]), AxisArrays.axes(img)))
+    dim = axisdim(img, Ax)
+    A = restrict(img.data, dim)
+    AxisArray(A, replace_axis(modax(img[Ax], axes(A)[dim]), AxisArrays.axes(img)))
 end
 
 replace_axis(newax, axs) = _replace_axis(newax, axnametype(newax), axs...)
@@ -530,13 +532,19 @@ _replace_axis(newax, ::Type{Ax}) where {Ax} = ()
 
 axnametype(ax::Axis{name}) where {name} = Axis{name}
 
-function modax(ax)
+ofaxes(::Base.OneTo, r) = r
+ofaxes(axs::Any, r) = OffsetArray(r, axs)
+
+function modax(ax, Aax)
     v = ax.val
-    veven = range(v[1]-step(v)/2, stop=v[end]+step(v)/2, length=length(v)÷2 + 1)
-    return ax(isodd(length(v)) ? oftype(veven, v[1:2:end]) : veven)
+    if iseven(length(v))
+        return ax(ofaxes(Aax, range(first(v)-step(v)/2, stop=last(v)+step(v)/2, length=length(v)÷2 + 1)))
+    else
+        return ax(ofaxes(Aax, range(first(v)/1, stop=last(v)/1, length=length(v)÷2 + 1)))
+    end
 end
 
-modax(ax, inregion::Bool) = inregion ? modax(ax) : ax
+modax(ax, Aax, inregion::Bool) = inregion ? modax(ax, Aax) : ax
 
 
 function imlineardiffusion(img::Array{T,2}, dt::AbstractFloat, iterations::Integer) where T
