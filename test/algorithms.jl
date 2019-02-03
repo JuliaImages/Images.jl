@@ -315,6 +315,21 @@ using Test
         # Issue #655
         tmp = AxisArray(rand(1080,1120,5,10), (:x, :y, :z, :t), (0.577, 0.5770, 5, 2));
         @test size(restrict(tmp, 2), 2) == 561
+
+        # restricting OffsetArrays
+        A = ones(4, 5)
+        Ao = OffsetArray(A, 0:3, -2:2)
+        Aor = restrict(Ao)
+        @test axes(Aor) == axes(OffsetArray(restrict(A), 0:2, -1:1))
+
+        # restricting AxisArrays with offset axes
+        AA = AxisArray(Ao, Axis{:y}(0:3), Axis{:x}(-2:2))
+        @test axes(AA) === axes(Ao)
+        AAr = restrict(AA)
+        axs = axisvalues(AAr)
+        @test axes(axs[1])[1] == axes(Aor)[1]
+        @test axes(axs[2])[1] == axes(Aor)[2]
+        AAA = AxisArray(Aor, axs)  # just test that it's constructable (another way of enforcing agreement)
     end
 
     @testset "Erode/ dilate" begin
