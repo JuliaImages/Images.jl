@@ -15,7 +15,6 @@ ImageAxes
 ImageMetadata
 IndirectArrays
 MappedArrays
-SIUnits
 StaticArrays
 Graphics 0.1
 FileIO
