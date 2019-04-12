@@ -3,6 +3,7 @@ using OffsetArrays
 import Statistics
 using Statistics: mean, var
 import AxisArrays
+using ImageMorphology: dilate!, erode!
 
 # Compat.@dep_vectorize_2arg Gray atan2
 # Compat.@dep_vectorize_2arg Gray hypot

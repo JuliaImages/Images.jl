@@ -360,6 +360,11 @@ using Test
         @test Ae == cat(Ar, Ag, zeros(4,4), dims=3)
         # issue #311
         @test dilate(trues(3)) == trues(3)
+        # ImageMeta
+        @test data(dilate(ImageMeta(A))) == dilate(A)
+        @test data(dilate(ImageMeta(A), 1:2)) == dilate(A, 1:2)
+        @test data(erode(ImageMeta(A))) == erode(A)
+        @test data(erode(ImageMeta(A), 1:2)) == erode(A, 1:2)
     end
 
     @testset "Opening / closing" begin
