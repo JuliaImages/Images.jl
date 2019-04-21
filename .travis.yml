@@ -2,20 +2,16 @@ language: julia
 os:
     - linux
     - osx
-dist: trusty  # for a more recent ImageMagick
 julia:
-    - 0.7
     - 1.0
+    - 1.1
     - nightly
 matrix:
   allow_failures:
     - julia: nightly
 notifications:
     email: false
-script:
- - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
- - julia --color=yes -e 'using InteractiveUtils; versioninfo(); import Pkg; Pkg.clone(pwd()); Pkg.build("Images")'
- - julia --color=yes -e 'import Pkg; Pkg.test("Images"; coverage=VERSION < v"1.0-alpha")'
+
 after_success:
     # push coverage results to Codecov
     - julia -e 'cd(Pkg.dir("Images")); Pkg.add("Coverage"); using Coverage; Codecov.submit(Codecov.process_folder())'
