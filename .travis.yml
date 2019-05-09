@@ -6,11 +6,25 @@ julia:
     - 0.7
     - 1.0
     - nightly
-matrix:
-  allow_failures:
-    - julia: nightly
+env:
+  - USE_MASTER=true
+  - USE_MASTER=""
+
 notifications:
-    email: false
+  email: false
+matrix:
+  exclude:
+    - julia: 1.0
+      env: USE_MASTER=true
+    - julia: 1.1
+      env: USE_MASTER=true
+    - julia: nightly
+      env: USE_MASTER=""
+  allow_failures:
+  - julia: nightly
+
+before_script:
+  - if [ ! -z "$USE_MASTER" ]; then curl $SCRIPT_URL -o install_master.jl; julia install_master.jl;  fi
 
 after_success:
     # push coverage results to Codecov
