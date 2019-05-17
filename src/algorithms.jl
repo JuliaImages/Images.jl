@@ -143,31 +143,6 @@ end
 
 entropy(img::AbstractArray{C}; kind=:shannon) where {C<:AbstractGray} = entropy(channelview(img), kind=kind)
 
-# functions red, green, and blue
-for (funcname, fieldname) in ((:red, :r), (:green, :g), (:blue, :b))
-    fieldchar = string(fieldname)[1]
-    @eval begin
-        function $funcname(img::AbstractArray{CV}) where CV<:Color
-            T = eltype(CV)
-            out = Array(T, size(img))
-            for i = 1:length(img)
-                out[i] = convert(RGB{T}, img[i]).$fieldname
-            end
-            out
-        end
-
-        function $funcname(img::AbstractArray)
-            pos = search(lowercase(colorspace(img)), $fieldchar)
-            pos == 0 && error("channel $fieldchar not found in colorspace $(colorspace(img))")
-            sliceim(img, "color", pos)
-        end
-    end
-end
-
-"`r = red(img)` extracts the red channel from an RGB image `img`" red
-"`g = green(img)` extracts the green channel from an RGB image `img`" green
-"`b = blue(img)` extracts the blue channel from an RGB image `img`" blue
-
 """
 `m = minfinite(A)` calculates the minimum value in `A`, ignoring any values that are not finite (Inf or NaN).
 """

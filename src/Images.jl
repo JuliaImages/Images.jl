@@ -31,7 +31,7 @@ using Reexport
 @reexport using Colors
 using ColorVectorSpace, FileIO
 export load, save
-import Colors: Fractional, red, green, blue
+import Colors: Fractional
 import Graphics
 import Graphics: width, height, Point
 using StatsBase  # TODO: eliminate this dependency
