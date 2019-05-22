@@ -274,10 +274,12 @@ end
 "`component_centroids(labeled_array)` -> an array of centroids for each label, including the background label 0"
 function component_centroids(img::AbstractArray{Int,N}) where N
     len = length(0:maximum(img))
-    n = fill((zero(CartesianIndex{N}), 0), len)
+    n = fill(zero(CartesianIndex{N}), len)
+    counts = fill(0, len)
     @inbounds for I in CartesianIndices(size(img))
         v = img[I] + 1
-        n[v] = n[v] .+ (I, 1)
+        n[v] += I
+        counts[v] += 1
     end
-    map(v -> n[v][1].I ./ n[v][2], 1:len)
+    map(v -> n[v].I ./ counts[v], 1:len)
 end
