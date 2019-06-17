@@ -973,17 +973,17 @@ Photonics.
 
 """
 function colorfulness(img::AbstractMatrix{<:Color})
-    
-    rg = red.(img) .- green.(img)
+
+    rg = 255 .* (red.(img) .- green.(img))
     μrg, σrg = mean(rg), std(rg)
 
-    yb = 0.5 * (red.(img) .+ green.(img)) - blue.(img)
+    yb = 255 .* (0.5 .* (red.(img) .+ green.(img)) .- blue.(img))
     μyb,  σyb = mean(yb), std(yb)
-
+  
     σrgyb = sqrt(σrg^2 + σyb^2)
     μrgyb = sqrt(μrg^2 + μyb^2)
 
-    return σrgyb+ 0.3 * μrgyb
+    return σrgyb + 0.3 * μrgyb
 
 end
 
