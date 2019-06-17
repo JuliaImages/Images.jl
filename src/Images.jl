@@ -146,6 +146,7 @@ export
     imadjustintensity,
     imstretch,
     cliphist,
+    colorfulness,
 
     label_components,
     label_components!,

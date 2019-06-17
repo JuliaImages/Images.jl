@@ -1,7 +1,7 @@
 using Base: axes1, tail
 using OffsetArrays
 import Statistics
-using Statistics: mean, var
+using Statistics: mean, var, std
 import AxisArrays
 using ImageMorphology: dilate!, erode!
 
@@ -956,3 +956,35 @@ function clearborder(img::AbstractArray, width::Int=1, background::Int=0)
     return new_img
 
 end
+
+
+"""
+
+```
+M =  colorfulness(img)
+```
+
+Calculates the colorfulness of an image according to [1]
+
+[1] Hasler, D. and Süsstrunk, S.E., 2003, June. Measuring colorfulness
+in natural images. In Human vision and electronic imaging VIII
+(Vol. 5007, pp. 87-96). International Society for Optics and
+Photonics.
+
+"""
+function colorfulness(img::AbstractMatrix{<:Color})
+    
+    rg = red.(img) .- green.(img)
+    μrg, σrg = mean(rg), std(rg)
+
+    yb = 0.5 * (red.(img) .+ green.(img)) - blue.(img)
+    μyb,  σyb = mean(yb), std(yb)
+
+    σrgyb = sqrt(σrg^2 + σyb^2)
+    μrgyb = sqrt(μrg^2 + μyb^2)
+
+    return σrgyb+ 0.3 * μrgyb
+
+end
+
+colorfulness(img::AbstractMatrix{<:Gray}) = 0

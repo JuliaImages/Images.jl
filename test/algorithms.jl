@@ -707,6 +707,18 @@ using Test
                      0 0 0 0 0]
         @test cleared_img == check_img
     end
+
+    @testset "colorfulness" begin
+        @test colorfulness(testimage("lena_color_512")) > colorfulness(testimage("lena_color_256"))
+        cameraman = testimage("cameraman")
+        @test colorfulness(cameraman) == 0
+        x = convert(Array{Float64}, cameraman)
+        img = RGB.(x, x, x)
+        @test colorfulness(img) == 0
+        img = [RGB{N0f8}(r/255,g/255,b/255) for r in 0:255 for g in 0:255 for b in 0:255]
+        img = reshape(img,4096,4096)
+        @test colorfulness(img) > 0.6
+    end
 end
 
 nothing
