@@ -676,7 +676,7 @@ eye(m,n) = Matrix{Float64}(I,m,n)
         # Issue #282
         img = Gray{N0f8}.(eye(2,2))
         imgs = imstretch(img, 0.3, 0.4)
-        @test imgs ≈ 1 ./ (1 .+ (0.3 ./ (eye(2,2) .+ eps())).^0.4)
+        @test imgs ≈ 1 ./ (1 .+ (0.3 ./ (eye(2,2) .+ eps(float(N0f8)))).^0.4)
 
         img = Gray{N0f16}.([0.01164 0.01118; 0.01036 0.01187])
         @test imadjustintensity(img,[0.0103761, 0.0252166])[2,1] == 0.0
