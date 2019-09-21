@@ -10,3 +10,4 @@ deps/usr/*
 src/gen/*.jl_julia*
 docs/build/
 docs/site/
+Manifest.toml
