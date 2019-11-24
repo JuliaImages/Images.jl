@@ -40,6 +40,7 @@ ImageDistances = ">= 0.0.2"
 ImageMorphology = ">= 0.1.1"
 ImageShow = ">= 0.1.1"
 ImageTransformations = ">= 0.2.2"
+Reexport = "0.2"
 StatsBase = ">= 0.14"
 julia = ">= 0.7"
 
