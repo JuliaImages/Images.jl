@@ -30,6 +30,7 @@ StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 TiledIteration = "06e1c1a7-607b-532d-9fad-de7d9aa2abac"
 
 [compat]
+AxisArrays = "0.3"
 ColorTypes = ">= 0.7.4"
 ColorVectorSpace = ">= 0.2"
 Colors = ">= 0.7.0"
