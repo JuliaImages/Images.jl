@@ -41,6 +41,7 @@ ImageMorphology = ">= 0.1.1"
 ImageShow = ">= 0.1.1"
 ImageTransformations = ">= 0.2.2"
 StatsBase = ">= 0.14"
+TiledIteration = "0.2"
 julia = ">= 0.7"
 
 [extras]
