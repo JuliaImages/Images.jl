@@ -158,14 +158,9 @@ export
     magnitude_phase,
     meanfinite,
     entropy,
-    ncc,
     orientation,
     padarray,
     phase,
-    sad,
-    sadn,
-    ssd,
-    ssdn,
     thin_edges,
     thin_edges_subpix,
     thin_edges_nonmaxsup,
@@ -195,7 +190,7 @@ Contrast/coloration:
 
 Algorithms:
 
-    - Reductions: `maxfinite`, `maxabsfinite`, `minfinite`, `meanfinite`, `sad`, `ssd`, `integral_image`, `boxdiff`, `gaussian_pyramid`
+    - Reductions: `maxfinite`, `maxabsfinite`, `minfinite`, `meanfinite`, `integral_image`, `boxdiff`, `gaussian_pyramid`
     - Resizing: `restrict`, `imresize` (not yet exported)
     - Filtering: `imfilter`, `imfilter!`, `mapwindow`, `imROF`, `padarray`
     - Filtering kernels: `Kernel.` or `KernelFactors.`, followed by `ando[345]`, `guassian2d`, `imaverage`, `imdog`, `imlaplacian`, `prewitt`, `sobel`

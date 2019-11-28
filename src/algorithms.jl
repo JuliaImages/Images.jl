@@ -247,36 +247,6 @@ function imlaplacian(alpha::Number)
     return [lc lb lc; lb lm lb; lc lb lc]
 end
 
-function sumdiff(f, A::AbstractArray, B::AbstractArray)
-    axes(A) == axes(B) || throw(DimensionMismatch("A and B must have the same axes"))
-    T = promote_type(difftype(eltype(A)), difftype(eltype(B)))
-    s = zero(accum(eltype(T)))
-    for (a, b) in zip(A, B)
-        x = convert(T, a) - convert(T, b)
-        s += f(x)
-    end
-    s
-end
-
-"`s = ssd(A, B)` computes the sum-of-squared differences over arrays/images A and B"
-ssd(A::AbstractArray, B::AbstractArray) = sumdiff(abs2, A, B)
-
-"`s = sad(A, B)` computes the sum-of-absolute differences over arrays/images A and B"
-sad(A::AbstractArray, B::AbstractArray) = sumdiff(abs, A, B)
-
-difftype(::Type{T}) where {T<:Integer} = Int
-difftype(::Type{T}) where {T<:Real} = Float32
-difftype(::Type{Float64}) = Float64
-difftype(::Type{CV}) where {CV<:Colorant} = difftype(CV, eltype(CV))
-difftype(::Type{CV}, ::Type{T}) where {CV<:RGBA,T<:Real} = RGBA{Float32}
-difftype(::Type{CV}, ::Type{Float64}) where {CV<:RGBA} = RGBA{Float64}
-difftype(::Type{CV}, ::Type{T}) where {CV<:BGRA,T<:Real} = BGRA{Float32}
-difftype(::Type{CV}, ::Type{Float64}) where {CV<:BGRA} = BGRA{Float64}
-difftype(::Type{CV}, ::Type{T}) where {CV<:AbstractGray,T<:Real} = Gray{Float32}
-difftype(::Type{CV}, ::Type{Float64}) where {CV<:AbstractGray} = Gray{Float64}
-difftype(::Type{CV}, ::Type{T}) where {CV<:AbstractRGB,T<:Real} = RGB{Float32}
-difftype(::Type{CV}, ::Type{Float64}) where {CV<:AbstractRGB} = RGB{Float64}
-
 accum(::Type{T}) where {T<:Integer} = Int
 accum(::Type{Float32})    = Float32
 accum(::Type{T}) where {T<:Real} = Float64
@@ -285,24 +255,6 @@ accum(::Type{C}) where {C<:Colorant} = base_colorant_type(C){accum(eltype(C))}
 graytype(::Type{T}) where {T<:Number} = T
 graytype(::Type{C}) where {C<:AbstractGray} = C
 graytype(::Type{C}) where {C<:Colorant} = Gray{eltype(C)}
-
-# normalized by Array size
-"`s = ssdn(A, B)` computes the sum-of-squared differences over arrays/images A and B, normalized by array size"
-ssdn(A::AbstractArray{T}, B::AbstractArray{T}) where {T} = ssd(A, B)/length(A)
-
-# normalized by Array size
-"`s = sadn(A, B)` computes the sum-of-absolute differences over arrays/images A and B, normalized by array size"
-sadn(A::AbstractArray{T}, B::AbstractArray{T}) where {T} = sad(A, B)/length(A)
-
-# normalized cross correlation
-"""
-`C = ncc(A, B)` computes the normalized cross-correlation of `A` and `B`.
-"""
-function ncc(A::AbstractArray{T}, B::AbstractArray{T}) where T
-    Am = (A.-mean(A))[:]
-    Bm = (B.-mean(B))[:]
-    return dot(Am,Bm)/(norm(Am)*norm(Bm))
-end
 
 # Simple image difference testing
 macro test_approx_eq_sigma_eps(A, B, sigma, eps)
