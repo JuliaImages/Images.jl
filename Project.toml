@@ -41,15 +41,16 @@ ImageMorphology = ">= 0.1.1"
 ImageShow = ">= 0.1.1"
 ImageTransformations = ">= 0.2.2"
 StatsBase = ">= 0.14"
-julia = ">= 0.7"
+julia = "1"
 
 [extras]
 FFTW = "7a1cc6ca-52ef-59f5-83cd-3a7055c09341"
 ImageMagick = "6218d12a-5da1-5696-b52f-db25d2ecc6d1"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 QuartzImageIO = "dca85d43-d64c-5e67-8c65-017450d5d020"
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 TestImages = "5e47fb64-e119-507b-a336-dd2b206d9990"
 
 [targets]
-test = ["FFTW", "ImageMagick", "LinearAlgebra", "QuartzImageIO", "Test", "TestImages"]
+test = ["FFTW", "ImageMagick", "LinearAlgebra", "QuartzImageIO", "Random", "Test", "TestImages"]
