@@ -116,23 +116,6 @@ using Test
         dc = maxfinite(img)-RGB{Float32}(maximum(A, dims=(2,3))...)
         @test abs(dc) < 1e-6
 
-        a = convert(Array{UInt8}, [1, 1, 1])
-        b = convert(Array{UInt8}, [134, 252, 4])
-        @test sad(a, b) == 387
-        @test ssd(a, b) == 80699
-        af = reinterpret(N0f8, a)
-        bf = reinterpret(N0f8, b)
-        @test sad(af, bf) ≈ 387f0/255
-        @test ssd(af, bf) ≈ 80699f0/255^2
-        ac = reinterpretc(RGB{N0f8}, a)
-        bc = reinterpretc(RGB{N0f8}, b)
-        @test sad(ac, bc) ≈ 387f0/255
-        @test ssd(ac, bc) ≈ 80699f0/255^2
-        ag = reinterpretc(RGB{N0f8}, a)
-        bg = reinterpretc(RGB{N0f8}, b)
-        @test sad(ag, bg) ≈ 387f0/255
-        @test ssd(ag, bg) ≈ 80699f0/255^2
-
         a = rand(15,15)
         @test_throws ErrorException (@test_approx_eq_sigma_eps a rand(13,15) [1,1] 0.01)
         @test_throws ErrorException (@test_approx_eq_sigma_eps a rand(15,15) [1,1] 0.01)
