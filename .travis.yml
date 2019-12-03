@@ -17,12 +17,12 @@ after_success:
     - julia -e 'cd(Pkg.dir("Images")); Pkg.add("Coverage"); using Coverage; Codecov.submit(Codecov.process_folder())'
 
 jobs:
-    include:
-        - stage: "Documentation"
-        julia: 1.0
-        os: linux
-        script:
-            - julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd()));
-                                                    Pkg.instantiate()'
-            - julia --project=docs/ docs/docs/make.jl
-        after_success: skip
+  include:
+    - stage: "Documentation"
+      julia: 1.0
+      os: linux
+      script:
+      - julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd()));
+                                             Pkg.instantiate()'
+      - julia --project=docs/ docs/docs/make.jl
+      after_success: skip
