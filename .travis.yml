@@ -21,6 +21,8 @@ jobs:
     - stage: "Documentation"
       julia: 1.0
       os: linux
+      env:
+        - TRAVIS_REPO_SLUG=github.com/JuliaImages/juliaimages.github.io.git
       script:
       - julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd()));
                                              Pkg.instantiate()'
