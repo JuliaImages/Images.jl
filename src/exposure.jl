@@ -168,7 +168,7 @@ function imhist(img::AbstractArray, edges::AbstractRange)
     o = Base.Order.Forward
     G = graytype(eltype(img))
     for v in img
-        val = convert(G, v)
+        val = real(convert(G, v))
         if val >= edges[end]
             histogram[end] += 1
             continue
