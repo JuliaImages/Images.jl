@@ -57,18 +57,14 @@ import ImageMorphology: dilate, erode
 import ImageTransformations: restrict
 using TiledIteration: EdgeIterator
 
-using Base.Cartesian  # TODO: delete this
-
 include("misc.jl")
 include("labeledarrays.jl")
 include("algorithms.jl")
 include("exposure.jl")
-include("connected.jl")
 include("corner.jl")
 include("edge.jl")
 include("bwdist.jl")
 using .FeatureTransform
-include("convexhull.jl")
 
 export
     # types
@@ -102,7 +98,7 @@ export
     timedim,
     width,
     widthheight,
-    
+
     # algorithms
     backdiffx,
     backdiffy,
@@ -126,7 +122,6 @@ export
     imROF,
     feature_transform,
     distance_transform,
-    convexhull,
     otsu_threshold,
     yen_threshold,
     clearborder,
@@ -147,13 +142,6 @@ export
     imstretch,
     cliphist,
 
-    label_components,
-    label_components!,
-    component_boxes,
-    component_lengths,
-    component_indices,
-    component_subscripts,
-    component_centroids,
     magnitude,
     magnitude_phase,
     meanfinite,
