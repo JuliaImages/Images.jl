@@ -281,3 +281,33 @@ function component_centroids(img::AbstractArray{Int,N}) where N
     end
     map(v -> n[v][1].I ./ n[v][2], 1:len)
 end
+
+"""
+ ```
+ filled_img = fill_boundaries(img)
+ filled_img = fill_boundaries(img, connectivity)
+ ```
+ Return bool array where boundaries between labeled regions are True.
+ Parameters:
+  -  img            = Input image (Boolean array type)
+  -  connectivity   = connectivity takes the same values as in label_components (Default value is 1:ndims(img))
+ """
+function fill_boundaries(img::AbstractArray{Bool}, connectivity::AbstractVector{Int} = ones(Int, ndims(img)))
+
+    win = CartesianIndex(Tuple(connectivity))
+    boundaries = zeros(Bool,(size(img)))
+    R = CartesianIndices(img)
+    Ifirst, Ilast = first(R), last(R)
+
+    for I in R
+        val = img[I]
+        for J in CartesianIndices(map((i,j)->i:j, Tuple(max(Ifirst, I-win)), Tuple(min(Ilast, I+win))))
+            if img[J] != val
+                boundaries[I] = true 
+                break
+            end
+        end
+    end
+
+    boundaries
+end

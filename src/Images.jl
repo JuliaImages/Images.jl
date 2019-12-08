@@ -154,6 +154,7 @@ export
     component_indices,
     component_subscripts,
     component_centroids,
+    fill_boundaries,
     magnitude,
     magnitude_phase,
     meanfinite,
