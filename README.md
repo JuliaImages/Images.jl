@@ -26,3 +26,7 @@ important contributions have been made by Ron Rock, Anchit Navelkar,
 Kevin Squire, Lucas Beyer, Tony Kelman, Isaiah Norton, Elliot Saba,
 Cody Greer, Daniel Perry, Waldir Pimenta, Tobias Knopp,
 Jason Merrill, Sean Garborg, romainFr, Dahua Lin, and several others.
+
+# Stargazers over time
+
+[![Stargazers over time](https://starchart.cc/juliaimages/Images.jl.svg)](https://starchart.cc/juliaimages/Images.jl)
