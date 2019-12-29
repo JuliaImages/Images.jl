@@ -1,4 +1,4 @@
-using Images, Test, Colors, Graphics
+using Images, Test, Graphics
 
 global checkboard
 

@@ -1,4 +1,4 @@
-using Test, Images, Colors, FixedPointNumbers,  ColorTypes, TestImages
+using Test, Images, TestImages
 
 # why use 3 chars when many will do?
 eye(m,n) = Matrix{Float64}(I,m,n)

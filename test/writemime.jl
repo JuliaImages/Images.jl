@@ -1,4 +1,4 @@
-using Images, Colors, FixedPointNumbers, ImageShow
+using Images, ImageShow
 using Test
 
 @testset "show (MIME)" begin

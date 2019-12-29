@@ -27,11 +27,15 @@ using SparseArrays: findnz
 # "deprecated imports" are below
 
 using Reexport
-@reexport using FixedPointNumbers
-@reexport using Colors
+@reexport using ImageCore
+if isdefined(ColorTypes, :XRGB) && isdefined(ColorTypes, :RGB1)
+    Base.@deprecate_binding RGB1 XRGB
+    Base.@deprecate_binding RGB4 RGBX
+end
+
 using ColorVectorSpace, FileIO
 export load, save
-import Colors: Fractional
+import .Colors: Fractional
 import Graphics
 import Graphics: width, height, Point
 using StatsBase  # TODO: eliminate this dependency
@@ -43,7 +47,6 @@ const RealLike = Union{Real,AbstractGray}
 
 const is_little_endian = ENDIAN_BOM == 0x04030201
 
-@reexport using ImageCore
 @reexport using ImageTransformations
 @reexport using ImageAxes
 @reexport using ImageMetadata

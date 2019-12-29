@@ -1,4 +1,4 @@
-using Test, Images, Colors, FixedPointNumbers, OffsetArrays
+using Test, Images, OffsetArrays
 
 @testset "Corner" begin
     A = zeros(41,41)
@@ -29,9 +29,9 @@ using Test, Images, Colors, FixedPointNumbers, OffsetArrays
         for id in ids expected_corners[id] = 0 end
         @test sum(corners .!= expected_corners) < 3
     end
-    
+
     @testset "Corners Sub-pixel API" begin
-        # Validate Base.to_indices implementation 
+        # Validate Base.to_indices implementation
         # for a  HomogeneousPoint which facilitates
         # indexing into a multi-dimensional array.
 
@@ -41,7 +41,7 @@ using Test, Images, Colors, FixedPointNumbers, OffsetArrays
         V[16,26,20]= true
         V[26,16,20]= true
         V[26,26,20]= true
-        
+
         # Homogeneous coordinates that are in standard form
         pt = HomogeneousPoint((16.3,16.4,20.3,1.0))
         @test V[pt] == true
@@ -80,7 +80,7 @@ using Test, Images, Colors, FixedPointNumbers, OffsetArrays
         I[26,16]= true
         I[26,26]= true
 
-        # Validate Base.to_indices implementation 
+        # Validate Base.to_indices implementation
         # for a planar HomogeneousPoint which facilitates
         # indexing into a matrix.
 
@@ -385,4 +385,3 @@ using Test, Images, Colors, FixedPointNumbers, OffsetArrays
 end
 
 nothing
-
