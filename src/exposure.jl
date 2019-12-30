@@ -181,15 +181,16 @@ end
 
 
 function partition_interval(nbins::Integer, minval::Real, maxval::Real)
-    edges = (range(0,step=(maxval - minval) / nbins,length=nbins)) .+ minval
+    edges = (range(minval, step=(maxval - minval) / nbins, length=nbins))
 end
 
 function partition_interval(nbins::Integer, minval::AbstractGray, maxval::AbstractGray)
-    partition_interval(nbins, minval.val, maxval.val)
+    partition_interval(nbins, gray(minval), gray(maxval))
 end
 
 """
 ```
+edges, count = build_histogram(img)            # For 8-bit images only (fast)
 edges, count = build_histogram(img, nbins)
 edges, count = build_histogram(img, nbins, minval, maxval)
 edges, count = build_histogram(img, edges)
@@ -322,12 +323,55 @@ function build_histogram(img::AbstractArray, nbins::Integer, minval::Union{Real,
     build_histogram(img, edges)
 end
 
-function build_histogram(img::AbstractArray, nbins::Integer=200)
+function build_histogram(img::AbstractArray{T}, nbins::Integer, minval::Union{Real,AbstractGray}, maxval::Union{Real,AbstractGray}) where T<:Union{N0f8, AbstractGray{N0f8}}
+    edgesraw, countsraw = build_histogram(img)
+    return repartition(edgesraw, countsraw, nbins, minval, maxval)
+end
+
+function build_histogram(img::AbstractArray{T}, nbins::Integer, minval::Union{Real,AbstractGray}, maxval::Union{Real,AbstractGray}) where T<:Color3{N0f8}
+    return build_histogram(mappedarray(Gray{N0f8}, img), nbins, minval, maxval)
+end
+
+function build_histogram(img::AbstractArray{T}) where T<:Union{N0f8, AbstractGray{N0f8}}
+    edges = range(N0f8(0), step=eps(N0f8), length=256)
+    counts = fill(0, 0:256)
+    @simd for v in img
+        @inbounds counts[reinterpret(gray(v))+1] += 1
+    end
+    return edges, counts
+end
+
+function build_histogram(img::AbstractArray{T}) where T<:Color3{N0f8}
+    build_histogram(mappedarray(Gray{N0f8}, img))
+end
+
+function build_histogram(img::AbstractArray{T}, nbins::Integer) where T <: Union{N0f8, AbstractGray{N0f8}}
+    edgesraw, countsraw = build_histogram(img)
+    return repartition(edgesraw, countsraw, nbins, minfinite(img), maxfinite(img))
+end
+
+function repartition(edgesraw, countsraw, nbins, minval, maxval)
+    edges = partition_interval(nbins, minval, maxval)
+    counts = fill(0, 0:nbins)
+    o = Base.Order.Forward
+    for (i, e) in enumerate(edgesraw)
+        index = searchsortedlast(edges, e, o)
+        counts[index] += countsraw[i]
+    end
+    counts[0] += countsraw[0]
+    return edges, counts
+end
+
+function build_histogram(img::AbstractArray{T}, nbins::Integer=200) where T<:NumberLike
     build_histogram(img, nbins, minfinite(img), maxfinite(img))
 end
 
+function build_histogram(img::AbstractArray{T}, nbins::Integer=200) where {T<:Color3}
+    build_histogram(mappedarray(Gray{eltype(T)}, img), nbins)
+end
+
 function build_histogram(img::AbstractArray{T}, edges::AbstractRange) where {T<:Color3}
-    build_histogram(Gray.(img),edges)
+    build_histogram(mappedarray(Gray{eltype(T)}, img), edges)
 end
 
 function build_histogram(img::AbstractArray, edges::AbstractRange)
@@ -335,7 +379,7 @@ function build_histogram(img::AbstractArray, edges::AbstractRange)
     lb = first(axes(edges,1))-1
     ub = last(axes(edges,1))
     first_edge = first(edges)
-    step_size = step(edges)
+    inv_step_size = 1/step(edges)
     counts = fill(0, lb:ub)
     for val in img
          if isnan(val)
@@ -347,7 +391,7 @@ function build_histogram(img::AbstractArray, edges::AbstractRange)
             elseif val < first(edges)
                 counts[lb] += 1
             else
-                index = Int(Base.div(val-first_edge,step_size)) + 1
+                index = floor(Int, (val-first_edge)*inv_step_size) + 1
                 counts[index] += 1
             end
         end
@@ -606,7 +650,6 @@ function adjust_histogram(operation::Equalization, img::AbstractArray, nbins::In
     adjust_histogram!(Equalization(), copy(img), nbins, minval, maxval)
 end
 
-
 function adjust_histogram(operation::Equalization, img::AbstractArray{T}, nbins::Integer, minval::Union{Real,AbstractGray} = 0, maxval::Union{Real,AbstractGray} = 1) where {T<:Color3}
     yiq = convert.(YIQ, img)
     yiq_view = channelview(yiq)
@@ -634,23 +677,24 @@ end
 
 function transform_density!(img::AbstractArray,edges::AbstractArray, cdf::AbstractArray, minval::Union{Real,AbstractGray}, maxval::Union{Real,AbstractGray})
     first_edge = first(edges)
-    step_size = step(edges)
-    T = eltype(img)
-    map!(img,img) do val
+    inv_step_size = 1/step(edges)
+    scale = (maxval - minval) / (cdf[end] - first(cdf))
+    function transform(val)
         if val >= edges[end]
             newval = cdf[end]
         elseif val < first_edge
             newval = first(cdf)
         else
-            index = Int(Base.div(val-first_edge,step_size)) + 1
+            index = floor(Int, (val-first_edge)*inv_step_size) + 1
             newval = cdf[index]
         end
         # Scale the new intensity value to so that it lies in the range [minval, maxval].
-        if T <: Integer
-            newval = ceil(minval + ((newval - first(cdf)) * (maxval - minval) / (cdf[end] - first(cdf))))
-        else
-            newval = minval + ((newval - first(cdf)) * (maxval - minval) / (cdf[end] - first(cdf)))
-        end
+        newval = minval + (newval - first(cdf)) * scale
+    end
+    if eltype(img) <: Integer
+        map!(val->ceil(transform(val)), img, img)
+    else
+        map!(transform, img, img)
     end
 end
 
