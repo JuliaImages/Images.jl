@@ -1,4 +1,4 @@
-using Images, Colors, IndirectArrays, Test
+using Images, IndirectArrays, Test
 
 @testset "ColorizedArray" begin
     intensity = [0.1 0.3; 0.2 0.4]

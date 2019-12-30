@@ -1,4 +1,4 @@
-using Images, Colors, FixedPointNumbers, OffsetArrays, TestImages
+using Images, OffsetArrays, TestImages
 using Statistics, Random, LinearAlgebra, FFTW
 using Test
 

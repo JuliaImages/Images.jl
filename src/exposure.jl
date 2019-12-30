@@ -957,7 +957,7 @@ See also: [histmatch](@ref),[clahe](@ref), and [imhist](@ref).
 
 
 """
-function adjust_gamma(img::AbstractArray{Gray{T}}, gamma::Number) where T<:FixedPointNumbers.Normed
+function adjust_gamma(img::AbstractArray{Gray{T}}, gamma::Number) where T<:Normed
     raw_type = FixedPointNumbers.rawtype(T)
     gamma_inv = 1.0 / gamma
     table = zeros(T, typemax(raw_type) + 1)
