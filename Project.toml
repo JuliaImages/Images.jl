@@ -1,6 +1,6 @@
 name = "Images"
 uuid = "916415d5-f1e6-5110-898d-aaa5f9f070e0"
-version = "0.19.3"
+version = "0.20.0"
 
 [deps]
 AxisArrays = "39de3d68-74b9-583c-8d2d-e117c070f3a9"
@@ -36,7 +36,7 @@ ImageAxes = "0.5, 0.6"
 ImageCore = "0.8.1"
 ImageDistances = "0.2.5"
 ImageFiltering = "0.6"
-ImageMetadata = "0.6, 0.7, 0.8"
+ImageMetadata = "0.6, 0.7, 0.8, 0.9"
 ImageMorphology = "0.2.2"
 ImageShow = "0.1, 0.2"
 ImageTransformations = "0.4, 0.5, 0.6, 0.7, 0.8"
