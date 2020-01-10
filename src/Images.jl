@@ -54,6 +54,16 @@ const is_little_endian = ENDIAN_BOM == 0x04030201
 @reexport using ImageMorphology
 @reexport using ImageDistances
 
+# Both ImageMetadata v0.9.0 and ImageAxes v0.6.0 deprecate the symbol data and
+# this causes a name conflict
+if isdefined(ImageMetadata, :arraydata)
+    Base.@deprecate_binding data arraydata
+end
+# ImageMetadata < v0.9.0 compatibility
+if !hasmethod(arraydata, (ImageMeta, ) )
+    ImageAxes.arraydata(img::ImageMeta) = ImageMetadata.data(img)
+end
+
 import ImageShow
 using ImageMetadata: ImageMetaAxis
 import ImageMorphology: dilate, erode
