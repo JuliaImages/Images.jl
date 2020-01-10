@@ -20,7 +20,7 @@ intensity is `1/(1+(m/(p+eps))^slope)`.
 This assumes the input `img` has intensities between 0 and 1.
 """
 imstretch(img::AbstractArray, m::Number, slope::Number) = _imstretch(float(img), m, slope)
-imstretch(img::ImageMeta, m::Number, slope::Number) = shareproperties(img, imstretch(data(img), m, slope))
+imstretch(img::ImageMeta, m::Number, slope::Number) = shareproperties(img, imstretch(arraydata(img), m, slope))
 
 """
     y = complement(x)
@@ -489,11 +489,11 @@ function histeq(img::AbstractArray, nbins::Integer)
 end
 
 function histeq(img::ImageMeta, nbins::Integer, minval::RealLike, maxval::RealLike)
-    newimg = histeq(data(img), nbins, minval, maxval)
+    newimg = histeq(arraydata(img), nbins, minval, maxval)
     shareproperties(img, newimg)
 end
 
-histeq(img::ImageMeta, nbins::Integer) = shareproperties(img, histeq(data(img), nbins))
+histeq(img::ImageMeta, nbins::Integer) = shareproperties(img, histeq(arraydata(img), nbins))
 
 abstract type AbstractHistogramOperation end
 struct Equalization <: AbstractHistogramOperation end
@@ -863,7 +863,7 @@ end
 
 
 
-adjust_gamma(img::ImageMeta, gamma::Number) = shareproperties(img, adjust_gamma(data(img), gamma))
+adjust_gamma(img::ImageMeta, gamma::Number) = shareproperties(img, adjust_gamma(arraydata(img), gamma))
 
 _gamma_pixel_rescale(pixel::T, gamma::Number) where {T<:NumberLike} = pixel ^ gamma
 
@@ -1080,7 +1080,7 @@ imshow(img_transformed)
 See also: [histeq](@ref),[clahe](@ref), and [imhist](@ref).
 
 """
-histmatch(img::ImageMeta, oimg::AbstractArray, nbins::Integer = 400) = shareproperties(img, histmatch(data(img), oimg, nbins))
+histmatch(img::ImageMeta, oimg::AbstractArray, nbins::Integer = 400) = shareproperties(img, histmatch(arraydata(img), oimg, nbins))
 
 _hist_match_pixel(pixel::T, bins, lookup_table) where {T<:NumberLike} = T(bins[lookup_table[searchsortedlast(bins, pixel)]])
 
@@ -1289,7 +1289,7 @@ function clahe(img::AbstractArray{C, 2}, nbins::Integer = 100; xblocks::Integer 
 end
 
 function clahe(img::ImageMeta, nbins::Integer = 100; xblocks::Integer = 8, yblocks::Integer = 8, clip::Number = 3)
-    shareproperties(clahe(data(img), nbins, xblocks = xblocks, yblocks = yblocks, clip = clip), img)
+    shareproperties(clahe(arraydata(img), nbins, xblocks = xblocks, yblocks = yblocks, clip = clip), img)
 end
 
 function _clahe(img::AbstractArray{C, 2}, nbins::Integer = 100, xblocks::Integer = 8, yblocks::Integer = 8, clip::Number = 3) where C

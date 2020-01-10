@@ -435,7 +435,7 @@ restrict(img::AxisArray, ::Tuple{}) = img
 restrict(img::ImageMeta, ::Tuple{}) = img
 
 function restrict(img::ImageMeta, region::Dims)
-    shareproperties(img, restrict(data(img), region))
+    shareproperties(img, restrict(arraydata(img), region))
 end
 
 function restrict(img::AxisArray{T,N}, region::Dims) where {T,N}
@@ -578,8 +578,8 @@ function imROF(img::AbstractMatrix{<:Color}, λ::Number, iterations::Integer)
 end
 
 # morphological operations for ImageMeta
-dilate(img::ImageMeta, region=coords_spatial(img)) = shareproperties(img, dilate!(copy(data(img)), region))
-erode(img::ImageMeta, region=coords_spatial(img)) = shareproperties(img, erode!(copy(data(img)), region))
+dilate(img::ImageMeta, region=coords_spatial(img)) = shareproperties(img, dilate!(copy(arraydata(img)), region))
+erode(img::ImageMeta, region=coords_spatial(img)) = shareproperties(img, erode!(copy(arraydata(img)), region))
 
 # phantom images
 
