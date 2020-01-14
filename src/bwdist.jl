@@ -37,7 +37,7 @@ function feature_transform(I::AbstractArray{Bool,N}, w::Union{Nothing,NTuple{N}}
     F = similar(I, CartesianIndex{N})
 
     # Compute the feature transform (recursive algorithm)
-    computeft!(F, I, w, CartesianIndex(()), tmp)
+    computeft!(F, I, CartesianIndex(()), w, tmp)
 
     F
 end
@@ -59,46 +59,47 @@ function distance_transform(F::AbstractArray{CartesianIndex{N},N}, w::Union{Noth
     dst = wnorm2(zero(eltype(R)), w)
     D = similar(F, typeof(sqrt(dst)))
 
-    _null = nullindex(F)
+    ∅ = nullindex(F)
     @inbounds for i in R
         fi = F[i]
-        D[i] = fi == _null ? Inf : sqrt(wnorm2(fi - i, w))
+        D[i] = fi == ∅ ? Inf : sqrt(wnorm2(fi - i, w))
     end
 
     D
 end
 
-function computeft!(F, I, w, jpost::CartesianIndex{K}, tmp) where K
-    _null = nullindex(F)
-    if K == ndims(I)-1
+function computeft!(F, I, jpost::CartesianIndex{K}, pixelspacing, tmp) where K
+    # tmp is workspace for voronoift!
+    ∅ = nullindex(F)                             # sentinel position
+    if K == ndims(I)-1                           # innermost loop (d=1 case, line 1)
         # Fig. 2, lines 2-8
         @inbounds @simd for i1 in axes(I, 1)
-            F[i1, jpost] = ifelse(I[i1, jpost], CartesianIndex(i1, jpost), _null)
+            F[i1, jpost] = I[i1, jpost] ? CartesianIndex(i1, jpost) : ∅
         end
-    else
+    else                                         # recursively handle trailing dimensions
         # Fig. 2, lines 10-12
         for i1 in axes(I, ndims(I) - K)
-            computeft!(F, I, w, CartesianIndex(i1, jpost), tmp)
+            computeft!(F, I, CartesianIndex(i1, jpost), pixelspacing, tmp)
         end
     end
     # Fig. 2, lines 14-20
-    indspre = ftfront(axes(F), jpost)  # discards the trailing indices of F
-    for jpre in CartesianIndices(indspre)
-        voronoift!(F, I, w, jpre, jpost, tmp)
+    axespre = truncatet(axes(F), jpost)          # discard the trailing axes of F
+    for jpre in CartesianIndices(axespre)
+        voronoift!(F, I, jpre, jpost, pixelspacing, tmp)
     end
     F
 end
 
-function voronoift!(F, I, w, jpre, jpost, tmp)
+function voronoift!(F, I, jpre, jpost, pixelspacing, tmp)
     d = length(jpre)+1
-    _null = nullindex(F)
+    ∅ = nullindex(F)
     empty!(tmp)
     for i in axes(I, d)
         # Fig 3, lines 3-13
         xi = CartesianIndex(jpre, i, jpost)
         @inbounds fi = F[xi]
-        if fi != _null
-            fidist = DistRFT(fi, w, jpre, jpost)
+        if fi != ∅
+            fidist = DistRFT(fi, pixelspacing, jpre, jpost)
             if length(tmp) < 2
                 push!(tmp, fidist)
             else
@@ -116,10 +117,10 @@ function voronoift!(F, I, w, jpre, jpost, tmp)
     @inbounds fthis = tmp[l].fi
     for i in axes(I, d)
         xi = CartesianIndex(jpre, i, jpost)
-        d2this = wnorm2(xi-fthis, w)
+        d2this = wnorm2(xi-fthis, pixelspacing)
         while l < nS
             @inbounds fnext = tmp[l+1].fi
-            d2next = wnorm2(xi-fnext, w)
+            d2next = wnorm2(xi-fnext, pixelspacing)
             if d2this > d2next
                 d2this, fthis = d2next, fnext
                 l += 1
@@ -165,15 +166,20 @@ DistRFT(fi::CartesianIndex, w, jpre::Tuple, jpost::Tuple) =
 end
 
 """
-    ftfront(inds, j::CartesianIndex{K})
+    truncatet(inds, j::CartesianIndex{K})
 
 Discard the last `K+1` elements of the tuple `inds`.
 """
-ftfront(inds, j::CartesianIndex) = _ftfront((), inds, j)
-_ftfront(out, inds::NTuple{N}, j::CartesianIndex{N}) where {N} = Base.front(out)
-@inline _ftfront(out, inds, j) = _ftfront((out..., inds[1]), Base.tail(inds), j)
+truncatet(inds, j::CartesianIndex) = _truncatet((), inds, j)
+_truncatet(out, inds::NTuple{N}, j::CartesianIndex{N}) where {N} = Base.front(out)
+@inline _truncatet(out, inds, j) = _truncatet((out..., inds[1]), Base.tail(inds), j)
 
-nullindex(A::AbstractArray{T,N}) where {T,N} = typemin(Int)*one(CartesianIndex{N})
+if VERSION < v"1.1"
+    nullindex(A::AbstractArray{T,N}) where {T,N} = typemin(Int)*one(CartesianIndex{N})
+else
+    # This is the proper implementation
+    nullindex(A::AbstractArray{T,N}) where {T,N} = typemin(Int)*oneunit(CartesianIndex{N})
+end
 
 """
     wnorm2(x::CartesianIndex, w)
