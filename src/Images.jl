@@ -53,6 +53,7 @@ const is_little_endian = ENDIAN_BOM == 0x04030201
 @reexport using ImageFiltering
 @reexport using ImageMorphology
 @reexport using ImageDistances
+@reexport using ImageContrastAdjustment
 
 # Both ImageMetadata v0.9.0 and ImageAxes v0.6.0 deprecate the symbol data and
 # this causes a name conflict
@@ -74,6 +75,7 @@ include("misc.jl")
 include("labeledarrays.jl")
 include("algorithms.jl")
 include("exposure.jl")
+include("deprecations.jl")
 include("corner.jl")
 include("edge.jl")
 include("bwdist.jl")
@@ -140,14 +142,9 @@ export
     clearborder,
 
     #Exposure
-    Equalization,
-    Matching,
     complement,
     imhist,
     histeq,
-    build_histogram,
-    adjust_histogram,
-    adjust_histogram!,
     adjust_gamma,
     histmatch,
     clahe,
