@@ -1,6 +1,6 @@
 # Images.jl
 
-An image processing library for [Julia](http://julialang.org/).
+An open-source image processing library for [Julia](http://julialang.org/).
 
 ## Project Status
 
@@ -13,6 +13,13 @@ An image processing library for [Julia](http://julialang.org/).
 ## Documentation
 
 Full documentation is found at [JuliaImages](https://juliaimages.org/latest/).
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for details on how to get started contributing to JuliaImages.
+
+We are a welcoming and supportive community made up of volunteer developers.
+All participants are expected to abide by the [Julia Community Standards](https://julialang.org/community/standards/).
 
 ## Credits
 
