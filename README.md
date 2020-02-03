@@ -14,19 +14,15 @@ An image processing library for [Julia](http://julialang.org/).
 
 Full documentation is found at [JuliaImages](https://juliaimages.org/latest/).
 
-# Credits
+## Credits
 
 Elements of this package descend from "image.jl"
 that once lived in Julia's `extras/` directory.
 That file had several authors, of which the primary were
 Jeff Bezanson, Stefan Kroboth, Tim Holy, Mike Nolta, and Stefan Karpinski.
 This repository has been quite heavily reworked;
-the current package maintainer is Tim Holy, and
-important contributions have been made by Ron Rock, Anchit Navelkar,
-Kevin Squire, Lucas Beyer, Tony Kelman, Isaiah Norton, Elliot Saba,
-Cody Greer, Daniel Perry, Waldir Pimenta, Tobias Knopp,
-Jason Merrill, Sean Garborg, romainFr, Dahua Lin, and several others.
+please see the "contributors" tab above and on many of the other repositories at [JuliaImages](https://github.com/JuliaImages) and elsewhere.
 
-# Stargazers over time
+## Stargazers over time
 
 [![Stargazers over time](https://starchart.cc/juliaimages/Images.jl.svg)](https://starchart.cc/juliaimages/Images.jl)
