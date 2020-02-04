@@ -12,7 +12,7 @@ An open-source image processing library for [Julia](http://julialang.org/).
 
 ## Documentation
 
-Full documentation is found at [JuliaImages](https://juliaimages.org/latest/).
+Full documentation is found at [JuliaImages](https://juliaimages.org/stable/)
 
 ## Contributing
 
