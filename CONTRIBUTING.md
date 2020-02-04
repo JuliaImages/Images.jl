@@ -18,6 +18,12 @@ Many of the core packages are hosted at [JuliaImages](https://github.com/JuliaIm
 
 Julia's own "[How to file a bug report](https://github.com/JuliaLang/julia/blob/master/CONTRIBUTING.md#how-to-file-a-bug-report)" has many useful tips to help make sure that all necessary information is included.
 
+Try to report the issue in the package responsible for the error.
+Remember that `Images.jl` is primarily an umbrella package, and that most of the functionality is developed elsewhere.
+You can often make good guesses by examining the backtrace (in cases where an
+error is thrown), using `@which`, stepping in with the debugger, or just
+using the search bar at the top left of [JuliaImages](https://github.com/JuliaImages).
+
 ## Contributing documentation
 
 *By contributing you agree to be bound by JuliaImages' MIT license*

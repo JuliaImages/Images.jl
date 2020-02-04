@@ -14,6 +14,15 @@ An open-source image processing library for [Julia](http://julialang.org/).
 
 Full documentation is found at [JuliaImages](https://juliaimages.org/stable/)
 
+## Project organization
+
+Images.jl is increasingly becoming an "umbrella package" that bundles and re-exports other packages.
+Most of these packages are hosted at
+[JuliaImages](https://github.com/JuliaImages),
+[JuliaArrays](https://github.com/JuliaArrays),
+[JuliaGraphics](https://github.com/JuliaGraphics), and
+[JuliaMath](https://github.com/JuliaMath).
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for details on how to get started contributing to JuliaImages.
