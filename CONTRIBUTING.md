@@ -55,7 +55,7 @@ You'll get a copy of the full repository in your `~/.julia/dev` folder. See the 
 
 * Submit your changes up to your fork and then submit a pull request---whoopee!
 
-* See what happens to the automated tests that run on Travis and/or AppVeyor. If there are errors, check the logs and see whether they look like they are related to your changes; if so, try to fix the problem by adding new commits to your pull request. Once the tests pass, hooray!
+* See what happens to the automated tests that run on Travis and/or AppVeyor. If there are errors, check the logs and see whether they look like they are related to your changes; if so, try to fix the problem by adding new commits to your pull request. Once the tests pass, hooray! :tada:
 
 * Relax and wait for feedback. We try to review contributions quickly and courteously. But we are human, and sometimes we get busy with other things or fail to notice an email; if it's been a while since you submitted your pull request, try posting a polite reminder about the existence of your pull request.
 
