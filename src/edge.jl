@@ -86,7 +86,7 @@ end
 
 # Return the magnitude and phase of the gradients in an image
 function magnitude_phase(img::AbstractArray, method::Function=KernelFactors.ando3, border::AbstractString="replicate")
-    grad_x, grad_y = imgradients(img, method, border)
+    grad_y, grad_x = imgradients(img, method, border)
     return magnitude_phase(grad_x, grad_y)
 end
 
@@ -106,8 +106,8 @@ edge, respectively.
 """
 function imedge(img::AbstractArray, kernelfun=KernelFactors.ando3, border::AbstractString="replicate")
     grad_y, grad_x = imgradients(img, kernelfun, border)
-    mag = magnitude(grad_y, grad_x)
-    orient = orientation(grad_y, grad_x)
+    mag = magnitude(grad_x, grad_y)
+    orient = orientation(grad_x, grad_y)
     return (grad_y, grad_x, mag, orient)
 end
 
