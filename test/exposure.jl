@@ -69,6 +69,10 @@ eye(m,n) = Matrix{Float64}(I,m,n)
             @test axes(counts) == (0:length(edges),)
         end
 
+        # Verify exported ImageContrastAdjustment symbol
+        img = Gray{N0f8}.(rand(10, 10));
+        @inferred build_histogram(img, 10; minval = 0.0, maxval = 1.0)
+
     end
 
     @testset "Histogram Equalisation" begin
@@ -210,6 +214,11 @@ eye(m,n) = Matrix{Float64}(I,m,n)
         @test all(imgeq[1:65] .== 64/255)
         @test all(imgeq[128+1:end] .== 128/255)
 
+        # Verify exported ImageContrastAdjustment symbol
+        img = Gray{N0f8}.(rand(10, 10));
+        @inferred adjust_histogram(img, Equalization())
+        @inferred adjust_histogram!(img, Equalization())
+
     end
 
     @testset "Gamma Correction" begin
@@ -319,6 +328,11 @@ eye(m,n) = Matrix{Float64}(I,m,n)
         @test alpha(r) == alpha(b)
         @test isapprox(r.val, b.val ^ 2)
 
+        # Verify exported ImageContrastAdjustment symbol
+        img = Gray{N0f8}.(rand(10, 10));
+        @inferred adjust_histogram(img, GammaCorrection(0.1))
+        @inferred adjust_histogram!(img, GammaCorrection(0.1))
+
     end
 
     @testset "Histogram Matching" begin
@@ -368,6 +382,11 @@ eye(m,n) = Matrix{Float64}(I,m,n)
         @test himg == [0, 0, 2, 2, 4, 4, 6, 6, 8, 8]
 
         @test_throws ErrorException Matching()
+
+        # Verify exported ImageContrastAdjustment symbol
+        img = Gray{N0f8}.(rand(10, 10));
+        @inferred adjust_histogram(img, Matching(targetimg = img))
+        @inferred adjust_histogram!(img, Matching(targetimg = img))
     end
 
     @testset "CLAHE" begin
@@ -478,7 +497,10 @@ eye(m,n) = Matrix{Float64}(I,m,n)
         #                  0.833503  0.481259  0.135795  0.116606  0.737954  0.57691   0.103692  0.132731  0.539984  0.999525
         #                  ]
         # @test all(map((i, j) -> isapprox(i, j, rtol = 0.00001), hist_eq_img, ret_expected))
-
+        # Verify exported ImageContrastAdjustment symbol
+        img = Gray{N0f8}.(rand(10, 10));
+        @inferred adjust_histogram(img, AdaptiveEqualization())
+        @inferred adjust_histogram!(img, AdaptiveEqualization())
     end
 
     @testset "Other" begin
@@ -519,6 +541,10 @@ eye(m,n) = Matrix{Float64}(I,m,n)
         @test clipped_hist == vec([2.1, 2.1, 3.1, 4.1, 5.1, 6.1, 7.1, 8.1, 9, 9])
         clipped_hist = cliphist(hist, 10)
         @test clipped_hist == hist
+
+        # Verify exported ImageContrastAdjustment symbol
+        img = Gray{N0f8}.(rand(10, 10));
+        @inferred adjust_histogram(img, ContrastStretching())
     end
 
 end

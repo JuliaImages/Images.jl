@@ -65,6 +65,11 @@ if !hasmethod(arraydata, (ImageMeta, ) )
     ImageAxes.arraydata(img::ImageMeta) = ImageMetadata.data(img)
 end
 
+# While we are bridging the old API and the new API in ImageContrastAdjustment
+# we need to import these functions because we make new definitions for them
+# in deprecations.jl
+import ImageContrastAdjustment: build_histogram, adjust_histogram, adjust_histogram!
+
 import ImageShow
 using ImageMetadata: ImageMetaAxis
 import ImageMorphology: dilate, erode
