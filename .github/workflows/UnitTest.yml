@@ -1,0 +1,33 @@
+name: Unit test
+
+on:
+  create:
+    tags:
+  push:
+    branches:
+      - master
+  pull_request:
+  schedule:
+    - cron: '20 00 1 * *'
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        julia-version: ['1.0', '1', 'nightly']
+        os: [ubuntu-latest, windows-latest, macOS-latest]
+
+    steps:
+      - uses: actions/checkout@v1.0.0
+      - name: "Set up Julia"
+        uses: julia-actions/setup-julia@v1
+        with:
+          version: ${{ matrix.julia-version }}
+
+      - name: "Unit Test"
+        uses: julia-actions/julia-runtest@master
+
+      # Unless tokenless upload is enabled, we can only submit coverage via
+      # environment variable. But PRs from other fork can't do that.
+      # See issue: https://github.com/julia-actions/julia-uploadcodecov/issues/1
