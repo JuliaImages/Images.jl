@@ -54,6 +54,11 @@ const is_little_endian = ENDIAN_BOM == 0x04030201
 @reexport using ImageMorphology
 @reexport using ImageDistances
 @reexport using ImageContrastAdjustment
+@reexport using ImageQualityIndexes
+
+# StatsBase also exports psnr
+const psnr = ImageQualityIndexes.psnr
+export psnr
 
 # Both ImageMetadata v0.9.0 and ImageAxes v0.6.0 deprecate the symbol data and
 # this causes a name conflict
