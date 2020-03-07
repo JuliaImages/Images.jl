@@ -152,7 +152,6 @@ export
     clearborder,
 
     #Exposure
-    complement,
     imhist,
     histeq,
     adjust_gamma,
