@@ -515,11 +515,6 @@ eye(m,n) = Matrix{Float64}(I,m,n)
         @test eltype(imadjustintensity(img)) == Gray{N0f16}
 
         img = Gray{N0f16}.([0.01164 0.01118; 0.01036 0.01187])
-        @test complement(Gray(0.5)) == Gray(0.5)
-        @test complement(Gray(0.2)) == Gray(0.8)
-        @test all(complement.(img) .== 1 .- img)
-        # deprecated (#690)
-        @test all(complement.(img) .== 1 .- img)
 
         hist = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
