@@ -84,7 +84,6 @@ using TiledIteration: EdgeIterator
 include("misc.jl")
 include("labeledarrays.jl")
 include("algorithms.jl")
-include("exposure.jl")
 include("deprecations.jl")
 include("corner.jl")
 include("edge.jl")
