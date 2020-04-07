@@ -1,6 +1,6 @@
 name = "Images"
 uuid = "916415d5-f1e6-5110-898d-aaa5f9f070e0"
-version = "0.22.0"
+version = "0.22.1"
 
 [deps]
 AxisArrays = "39de3d68-74b9-583c-8d2d-e117c070f3a9"
