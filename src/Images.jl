@@ -56,9 +56,14 @@ const is_little_endian = ENDIAN_BOM == 0x04030201
 @reexport using ImageContrastAdjustment
 @reexport using ImageQualityIndexes
 
-# StatsBase also exports psnr
-const psnr = ImageQualityIndexes.psnr
-export psnr
+if isdefined(ImageQualityIndexes, :assess_psnr)
+    # deprecated since ImageQualityIndexes v0.1.4
+    Base.@deprecate_binding psnr assess_psnr
+    Base.@deprecate_binding ssim assess_ssim
+else
+    const psnr = ImageQualityIndexes.psnr
+    export psnr
+end
 
 # Both ImageMetadata v0.9.0 and ImageAxes v0.6.0 deprecate the symbol data and
 # this causes a name conflict
