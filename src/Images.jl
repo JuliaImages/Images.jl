@@ -93,8 +93,6 @@ include("exposure.jl")
 include("deprecations.jl")
 include("corner.jl")
 include("edge.jl")
-include("bwdist.jl")
-using .FeatureTransform
 
 export
     # types
@@ -150,8 +148,6 @@ export
     imgaussiannoise,
     imlineardiffusion,
     imROF,
-    feature_transform,
-    distance_transform,
     otsu_threshold,
     yen_threshold,
     clearborder,
