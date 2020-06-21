@@ -1016,3 +1016,13 @@ function cliphist(hist::AbstractArray{T, 1}, clip::Number) where T
     end
     clipped_hist
 end
+
+# delete in Images v1.0.0
+@deprecate otsu_threshold(img, bins=256) begin
+    edges, counts = ImageContrastAdjustment.build_histogram(img, bins)
+    eltype(img)(HistogramThresholding.find_threshold(Otsu(), counts[1:end], edges))
+end
+@deprecate yen_threshold(img, bins=256) begin
+    edges, counts = ImageContrastAdjustment.build_histogram(img, bins)
+    eltype(img)(HistogramThresholding.find_threshold(Yen(), counts[1:end], edges))
+end
