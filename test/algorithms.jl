@@ -598,7 +598,7 @@ using Test
         @test yen_threshold(img) == yen_threshold(cat(img[:,:,1], img[:,:,2], img[:,:,3], dims=1))
 
         img = zeros(Gray{Float64},10,10,3)
-        @test_broken yen_threshold(img) == 0
+        @test yen_threshold(img) == 0
     end
 
     @testset "imROF" begin
