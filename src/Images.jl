@@ -80,6 +80,9 @@ end
 # in deprecations.jl
 import ImageContrastAdjustment: build_histogram, adjust_histogram, adjust_histogram!
 
+# not reexport HistogramThresholding as users would commonly want to use the application package ImageBinarization.jl
+using HistogramThresholding
+
 import ImageShow
 using ImageMetadata: ImageMetaAxis
 import ImageMorphology: dilate, erode
