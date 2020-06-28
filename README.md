@@ -7,14 +7,15 @@
 [![][docs-dev-img]][docs-dev-url]
 [![Join the julia slack][slack-img]][slack-url]
 
-An open-source image processing library for [Julia](http://julialang.org/).
+Images.jl is an open-source image processing library for [Julia](http://julialang.org/).
 
 ## Project organization
 
-Images.jl is increasingly becoming an "umbrella package" that bundles and re-exports other packages.
+Images.jl is increasingly becoming an "umbrella package" that exports a [https://juliaimages.org/latest/pkgs/](set of packages) which are useful for common image processing tasks.
 Most of these packages are hosted at
 [JuliaImages](https://github.com/JuliaImages),
 [JuliaArrays](https://github.com/JuliaArrays),
+[JuliaIO](https://github.com/JuliaIO),
 [JuliaGraphics](https://github.com/JuliaGraphics), and
 [JuliaMath](https://github.com/JuliaMath).
 
