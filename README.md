@@ -11,7 +11,7 @@ Images.jl is an open-source image processing library for [Julia](http://julialan
 
 ## Project organization
 
-Images.jl is increasingly becoming an "umbrella package" that exports a [https://juliaimages.org/latest/pkgs/](set of packages) which are useful for common image processing tasks.
+Images.jl is increasingly becoming an "umbrella package" that exports a [set of packages](https://juliaimages.org/latest/pkgs/) which are useful for common image processing tasks.
 Most of these packages are hosted at
 [JuliaImages](https://github.com/JuliaImages),
 [JuliaArrays](https://github.com/JuliaArrays),
