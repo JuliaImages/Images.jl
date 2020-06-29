@@ -150,7 +150,6 @@ export
     imROF,
     otsu_threshold,
     yen_threshold,
-    clearborder,
 
     #Exposure
     complement,
