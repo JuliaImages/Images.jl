@@ -19,7 +19,7 @@ jobs:
         os: [ubuntu-latest, windows-latest, macOS-latest]
 
     steps:
-      - uses: actions/checkout@v1.0.0
+      - uses: actions/checkout@v2
       - name: "Set up Julia"
         uses: julia-actions/setup-julia@v1
         with:
@@ -40,6 +40,7 @@ jobs:
       - name: "Unit Test"
         uses: julia-actions/julia-runtest@master
 
-      # Unless tokenless upload is enabled, we can only submit coverage via
-      # environment variable. But PRs from other fork can't do that.
-      # See issue: https://github.com/julia-actions/julia-uploadcodecov/issues/1
+      - uses: julia-actions/julia-processcoverage@v1
+      - uses: codecov/codecov-action@v1
+        with:
+          file: lcov.info
