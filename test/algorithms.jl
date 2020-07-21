@@ -433,7 +433,8 @@ using Test
         @test @inferred(component_centroids(lbltarget)) == Tuple[(1.5,2.5),(4/3,4/3),(5/3,11/3)]
     end
 
-    @testset "Phantoms" begin
+    # deprecated
+    @suppress_err @testset "Phantoms" begin
         P = [ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0;
               0.0  0.0  1.0  0.2  0.2  1.0  0.0  0.0;
               0.0  0.0  0.2  0.3  0.3  0.2  0.0  0.0;
@@ -442,7 +443,7 @@ using Test
               0.0  0.0  0.2  0.2  0.2  0.2  0.0  0.0;
               0.0  0.0  1.0  0.2  0.2  1.0  0.0  0.0;
               0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0 ]
-        Q = shepp_logan(8)
+        Q = Images.shepp_logan(8)
         @test norm((P-Q)[:]) < 1e-10
         P = [ 0.0  0.0  0.0   0.0   0.0   0.0   0.0  0.0;
               0.0  0.0  2.0   1.02  1.02  2.0   0.0  0.0;
@@ -452,7 +453,7 @@ using Test
               0.0  0.0  1.02  1.02  1.02  1.02  0.0  0.0;
               0.0  0.0  2.0   1.02  1.02  2.0   0.0  0.0;
               0.0  0.0  0.0   0.0   0.0   0.0   0.0  0.0 ]
-        Q = shepp_logan(8, highContrast=false)
+        Q = Images.shepp_logan(8, highContrast=false)
         @test norm((P-Q)[:]) < 1e-10
     end
 
@@ -538,7 +539,8 @@ using Test
         @test sort(B)==sort(C)
     end
 
-    @testset "Thresholding" begin
+    # deprecated
+    @suppress_err @testset "Thresholding" begin
 
         #otsu_threshold
         img = testimage("cameraman")
