@@ -86,6 +86,7 @@ import ImageMorphology: dilate, erode
 import ImageTransformations: restrict
 using TiledIteration: EdgeIterator
 
+include("compat.jl")
 include("misc.jl")
 include("labeledarrays.jl")
 include("algorithms.jl")

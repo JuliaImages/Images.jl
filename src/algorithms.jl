@@ -381,7 +381,7 @@ function findlocalextrema(img::AbstractArray{T,N}, region::Union{Tuple{Int,Varar
     edgeoffset = CartesianIndex(map(!, edges))
     R0 = CartesianIndices(axes(img))
     R = _clippedinds(R0,edgeoffset)
-    rstp = oneunit(first(R0))
+    rstp = _oneunit(first(R0))
     Rinterior = _clippedinds(R0,rstp)
     iregion = CartesianIndex(ntuple(d->d∈region, Val(N)))
     Rregion = CartesianIndices(map((f,l)->f:l,(-iregion).I, iregion.I))
@@ -505,7 +505,7 @@ function div(p::AbstractArray{T,3}) where T
     inds = axes(p)[1:2]
     out = similar(p, inds)
     Router = CartesianIndices(inds)
-    rstp = oneunit(first(Router))
+    rstp = _oneunit(first(Router))
     Rinner = _clippedinds(Router,rstp)
     # Since most of the points are in the interior, compute them more quickly by avoiding branches
     for I in Rinner
