@@ -1,7 +1,7 @@
 """
 ```
 corners = imcorner(img; [method])
-corners = imcorner(img, threshold, percentile; [method])
+corners = imcorner(img, threshold; [method])
 ```
 
 Performs corner detection using one of the following methods -
@@ -13,7 +13,7 @@ Performs corner detection using one of the following methods -
 The parameters of the individual methods are described in their documentation. The
 maxima values of the resultant responses are taken as corners. If a threshold is
 specified, the values of the responses are thresholded to give the corner pixels.
-The threshold is assumed to be a percentile value unless `percentile` is set to false.
+If `threshold` is a `Percentile` then its type will be preserved.
 """
 function imcorner(img::AbstractArray; method::Function = harris, args...)
     responses = method(img; args...)
