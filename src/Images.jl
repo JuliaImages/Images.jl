@@ -55,6 +55,8 @@ const is_little_endian = ENDIAN_BOM == 0x04030201
 @reexport using ImageDistances
 @reexport using ImageContrastAdjustment
 @reexport using ImageQualityIndexes
+@reexport using ImageBinarization
+@reexport using HistogramThresholding
 
 if isdefined(ImageQualityIndexes, :assess_psnr)
     # deprecated since ImageQualityIndexes v0.1.4
