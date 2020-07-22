@@ -381,7 +381,7 @@ function findlocalextrema(img::AbstractArray{T,N}, region::Union{Tuple{Int,Varar
     edgeoffset = CartesianIndex(map(!, edges))
     R0 = CartesianIndices(axes(img))
     R = _clippedinds(R0,edgeoffset)
-    rstp = one(first(R0))
+    rstp = _oneunit(first(R0))
     Rinterior = _clippedinds(R0,rstp)
     iregion = CartesianIndex(ntuple(d->d∈region, Val(N)))
     Rregion = CartesianIndices(map((f,l)->f:l,(-iregion).I, iregion.I))
@@ -505,7 +505,7 @@ function div(p::AbstractArray{T,3}) where T
     inds = axes(p)[1:2]
     out = similar(p, inds)
     Router = CartesianIndices(inds)
-    rstp = one(first(Router))
+    rstp = _oneunit(first(Router))
     Rinner = _clippedinds(Router,rstp)
     # Since most of the points are in the interior, compute them more quickly by avoiding branches
     for I in Rinner
@@ -580,56 +580,6 @@ end
 # morphological operations for ImageMeta
 dilate(img::ImageMeta, region=coords_spatial(img)) = shareproperties(img, dilate!(copy(arraydata(img)), region))
 erode(img::ImageMeta, region=coords_spatial(img)) = shareproperties(img, erode!(copy(arraydata(img)), region))
-
-# phantom images
-
-"""
-```
-phantom = shepp_logan(N,[M]; highContrast=true)
-```
-
-output the NxM Shepp-Logan phantom, which is a standard test image usually used
-for comparing image reconstruction algorithms in the field of computed
-tomography (CT) and magnetic resonance imaging (MRI). If the argument M is
-omitted, the phantom is of size NxN. When setting the keyword argument
-`highConstrast` to false, the CT version of the phantom is created. Otherwise,
-the high contrast MRI version is calculated.
-"""
-function shepp_logan(M,N; highContrast=true)
-  # Initially proposed in Shepp, Larry; B. F. Logan (1974).
-  # "The Fourier Reconstruction of a Head Section". IEEE Transactions on Nuclear Science. NS-21.
-
-  P = zeros(M,N)
-
-  x = range(-1, stop=1, length=M)'
-  y = range(1, stop=-1, length=N)
-
-  centerX = [0, 0, 0.22, -0.22, 0, 0, 0, -0.08, 0, 0.06]
-  centerY = [0, -0.0184, 0, 0, 0.35, 0.1, -0.1, -0.605, -0.605, -0.605]
-  majorAxis = [0.69, 0.6624, 0.11, 0.16, 0.21, 0.046, 0.046, 0.046, 0.023, 0.023]
-  minorAxis = [0.92, 0.874, 0.31, 0.41, 0.25, 0.046, 0.046, 0.023, 0.023, 0.046]
-  theta = [0, 0, -18.0, 18.0, 0, 0, 0, 0, 0, 0]
-
-  # original (CT) version of the phantom
-  grayLevel = [2, -0.98, -0.02, -0.02, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01]
-
-  if(highContrast)
-    # high contrast (MRI) version of the phantom
-    grayLevel = [1, -0.8, -0.2, -0.2, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
-  end
-
-  for l=1:length(theta)
-    P += grayLevel[l] * (
-           ( (cos(theta[l] / 360*2*pi) * (x .- centerX[l]) .+
-              sin(theta[l] / 360*2*pi) * (y .- centerY[l])) / majorAxis[l] ).^2 .+
-           ( (sin(theta[l] / 360*2*pi) * (x .- centerX[l]) .-
-              cos(theta[l] / 360*2*pi) * (y .- centerY[l])) / minorAxis[l] ).^2 .< 1 )
-  end
-
-  return P
-end
-
-shepp_logan(N;highContrast=true) = shepp_logan(N,N;highContrast=highContrast)
 
 """
 ```
