@@ -131,8 +131,8 @@ global checkboard
     cb_array    = checkerboard(SZ,3)
 
     cb_gray = Gray.(normedview(cb_array))
-    cb_rgb = convert(Array{RGB}, cb_gray)
-    cb_rgbf64 = convert(Array{RGB{Float64}}, cb_gray)
+    cb_rgb = RGB.(cb_gray)
+    cb_rgbf64 = RGB{Float64}.(cb_gray)
 
     # TODO: now that all of these behave nearly the same, put in a
     # loop over the array type (only have to adjust tests for `red`)
