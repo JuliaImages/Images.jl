@@ -57,7 +57,7 @@ using Test
             show(file, MIME("image/png"), img, minpixels=0, maxpixels=typemax(Int))
         end
         b = load(fn)
-        @test b == convert(Array{RGB{N0f8}}, img)
+        @test b == RGB{N0f8}.(img)
         img = fill(RGB{N0f16}(1,0,0), 1, 1)
         open(fn, "w") do file
             show(file, MIME("image/png"), img, minpixels=0, maxpixels=typemax(Int))
