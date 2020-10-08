@@ -1,6 +1,6 @@
 using Images, OffsetArrays, TestImages
 using Statistics, Random, LinearAlgebra, FFTW
-using Test
+using Test, Suppressor
 
 @testset "Algorithms" begin
     @testset "Statistics" begin
