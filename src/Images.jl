@@ -28,6 +28,9 @@ using SparseArrays: findnz
 
 using Reexport
 @reexport using ImageCore
+if isdefined(ImageCore, :permuteddimsview)
+    export permuteddimsview
+end
 if isdefined(ColorTypes, :XRGB) && isdefined(ColorTypes, :RGB1)
     Base.@deprecate_binding RGB1 XRGB
     Base.@deprecate_binding RGB4 RGBX
