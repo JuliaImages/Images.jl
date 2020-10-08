@@ -42,7 +42,7 @@ import .Colors: Fractional
 import Graphics
 import Graphics: width, height, Point
 using StatsBase  # TODO: eliminate this dependency
-using IndirectArrays, MappedArrays
+using IndirectArrays, ImageCore.MappedArrays
 
 # TODO: can we get rid of these definitions?
 const NumberLike = Union{Number,AbstractGray}
