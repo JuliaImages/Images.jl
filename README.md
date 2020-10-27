@@ -52,4 +52,4 @@ please see the "contributors" tab above and on many of the other repositories at
 [docs-dev-img]: https://img.shields.io/badge/docs-dev-blue.svg
 [docs-dev-url]: https://juliaimages.org/latest
 [slack-img]: https://img.shields.io/badge/chat-slack%23image--processing-yellow.svg
-[slack-url]: https://slackinvite.julialang.org
+[slack-url]: https://julialang.org/slack/
