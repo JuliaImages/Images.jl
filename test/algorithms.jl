@@ -86,7 +86,7 @@ using Test, Suppressor
 
     @testset "Reductions" begin
         A = rand(5,5,3)
-        img = colorview(RGB, permuteddimsview(A, (3,1,2)))
+        img = colorview(RGB, PermutedDimsArray(A, (3,1,2)))
         s12 = sum(img, dims=(1,2))
         @test eltype(s12) <: RGB
         A = [NaN, 1, 2, 3]
