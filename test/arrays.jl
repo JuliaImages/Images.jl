@@ -24,7 +24,7 @@ using Images, IndirectArrays, Test
    target1 = intensity1 .* labels1
    @test eltype(A1) == RGB{Float64}
    @test size(A1) == (2,3)
-   @test axes(A1) == (Base.OneTo(2), Base.OneTo(3))
+   @test axes(A1) == (1:2, 1:3)
    for i = 1:6
        @test A1[i] === target1[i]
    end
