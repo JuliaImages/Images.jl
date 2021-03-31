@@ -5,7 +5,6 @@
 [![][codecov-img]][codecov-url]
 [![][docs-stable-img]][docs-stable-url]
 [![][docs-dev-img]][docs-dev-url]
-[![Join the julia slack][slack-img]][slack-url]
 
 Images.jl is an open-source image processing library for [Julia](http://julialang.org/).
 
@@ -18,6 +17,12 @@ Most of these packages are hosted at
 [JuliaIO](https://github.com/JuliaIO),
 [JuliaGraphics](https://github.com/JuliaGraphics), and
 [JuliaMath](https://github.com/JuliaMath).
+
+## Getting Help
+
+You can join the Julia community by joining [slack](https://julialang.slack.com) (get an invite from https://julialang.org/slack/), [zulip](https://julialang.zulipchat.com/), and/or [discourse](https://discourse.julialang.org/).
+For questions and discussions related to the JuliaImages ecosystem, you can [open an discussion](https://github.com/JuliaImages/Images.jl/discussions); issues are reserved to bug reports and feature tracking.
+Any question about [the documentation](https://juliaimages.org/) is considered an issue, hence if you have any questions please feel free to ask it in [the documentation repo](https://github.com/JuliaImages/juliaimages.github.io/issues).
 
 ## Contributing
 
@@ -35,10 +40,6 @@ Jeff Bezanson, Stefan Kroboth, Tim Holy, Mike Nolta, and Stefan Karpinski.
 This repository has been quite heavily reworked;
 please see the "contributors" tab above and on many of the other repositories at [JuliaImages](https://github.com/JuliaImages) and elsewhere.
 
-## Stargazers over time
-
-[![Stargazers over time](https://starchart.cc/juliaimages/Images.jl.svg)](https://starchart.cc/juliaimages/Images.jl)
-
 <!-- URLS -->
 
 [pkgeval-img]: https://juliaci.github.io/NanosoldierReports/pkgeval_badges/I/Images.svg
@@ -51,5 +52,3 @@ please see the "contributors" tab above and on many of the other repositories at
 [docs-stable-url]: https://juliaimages.org/stable
 [docs-dev-img]: https://img.shields.io/badge/docs-dev-blue.svg
 [docs-dev-url]: https://juliaimages.org/latest
-[slack-img]: https://img.shields.io/badge/chat-slack%23image--processing-yellow.svg
-[slack-url]: https://julialang.org/slack/
