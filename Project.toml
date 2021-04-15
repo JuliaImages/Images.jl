@@ -32,7 +32,7 @@ TiledIteration = "06e1c1a7-607b-532d-9fad-de7d9aa2abac"
 
 [compat]
 AxisArrays = "0.3, 0.4"
-ColorVectorSpace = "0.6, 0.7, 0.8"
+ColorVectorSpace = "0.6, 0.7, 0.8, 0.9"
 FileIO = "1"
 Graphics = "0.4, 1.0"
 ImageAxes = "0.6"
