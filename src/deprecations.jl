@@ -242,7 +242,7 @@ end
 
 function _histeq_pixel_rescale(pixel::T, cdf, minval, maxval) where T<:NumberLike
     n = length(cdf)
-    bin_pixel = clamp(ceil(Int, (pixel - minval) * length(cdf) / (maxval - minval)), 1, n)
+    bin_pixel = clamp(ceil(Int, gray((pixel - minval) * length(cdf) / (maxval - minval))), 1, n)
     rescaled_pixel = minval + ((cdf[bin_pixel] - cdf[1]) * (maxval - minval) / (cdf[end] - cdf[1]))
     convert(T, rescaled_pixel)
 end
