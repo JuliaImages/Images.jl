@@ -82,19 +82,19 @@ end
 import ImageShow
 if isdefined(ImageShow, :play)
     @doc (@doc ImageShow.play)
-    play = ImageShow.play
+    const play = ImageShow.play
 else
     play(args...; kwargs...) = error("The `Images.play` function requires ImageShow at least 0.3.0.")
 end
 if isdefined(ImageShow, :explore)
     @doc (@doc ImageShow.explore)
-    explore = ImageShow.explore
+    const explore = ImageShow.explore
 else
     explore(args...; kwargs...) = error("The `Images.explore` function requires ImageShow at least 0.3.0.")
 end
 if isdefined(ImageShow, :gif)
     @doc (@doc ImageShow.gif)
-    gif = ImageShow.gif
+    const gif = ImageShow.gif
 else
     gif(args...; kwargs...) = error("The `Images.gif` function requires ImageShow at least 0.3.0.")
 end
