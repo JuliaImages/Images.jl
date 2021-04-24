@@ -183,9 +183,12 @@ end
 `m = maxabsfinite(A)` calculates the maximum absolute value in `A`, ignoring any values that are not finite (Inf or NaN).
 """
 function maxabsfinite(A::AbstractArray{T}) where T
-    ret = sentinel_min(typeof(abs(A[1])))
+    # ColorVectorSpace v0.9 un-defines abs/abs2
+    # https://github.com/JuliaGraphics/ColorVectorSpace.jl/pull/131
+    _abs(a) = mapreducec(abs, +, 0, a)
+    ret = sentinel_min(typeof(_abs(A[1])))
     for a in A
-        ret = maxfinite_scalar(abs(a), ret)
+        ret = maxfinite_scalar(_abs(a), ret)
     end
     ret
 end

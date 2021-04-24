@@ -110,11 +110,12 @@ using Test, Suppressor
         A = rand(Float32,3,5,5)
         img = colorview(RGB, A)
         dc = meanfinite(img, 1)-reshape(reinterpretc(RGB{Float32}, mean(A, dims=2)), (1,5))
-        @test maximum(map(abs, dc)) < 1e-6
+        _abs(x::Colorant) = mapreducec(abs, +, 0, x)
+        @test maximum(map(_abs, dc)) < 1e-6
         dc = minfinite(img)-RGB{Float32}(minimum(A, dims=(2,3))...)
-        @test abs(dc) < 1e-6
+        @test _abs(dc) < 1e-6
         dc = maxfinite(img)-RGB{Float32}(maximum(A, dims=(2,3))...)
-        @test abs(dc) < 1e-6
+        @test _abs(dc) < 1e-6
 
         a = rand(15,15)
         @test_throws ErrorException (@test_approx_eq_sigma_eps a rand(13,15) [1,1] 0.01)
