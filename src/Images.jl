@@ -31,12 +31,8 @@ using Reexport
 if isdefined(ImageCore, :permuteddimsview)
     export permuteddimsview
 end
-if isdefined(ColorTypes, :XRGB) && isdefined(ColorTypes, :RGB1)
-    Base.@deprecate_binding RGB1 XRGB
-    Base.@deprecate_binding RGB4 RGBX
-end
 
-using ColorVectorSpace, FileIO
+using FileIO
 export load, save
 import .Colors: Fractional
 import Graphics
