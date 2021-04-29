@@ -31,6 +31,10 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for details on how to get started contrib
 We are a welcoming and supportive community made up of volunteer developers.
 All participants are expected to abide by the [Julia Community Standards](https://julialang.org/community/standards/).
 
+## Compatibility
+
+Images v0.23.z is the last minor version that is compatible to Julia < v1.3. It will still be under maintenance, but only with minimal efforts. No forward compatibility guarantee will be made, which means that you might see APIs and behaviors of Images v0.23 are quite different from that of the latest Images version. For new Julia users, we recommend you to use the latest stable Julia version even if it is not long-term-support(LTS) version.
+
 ## Credits
 
 Elements of this package descend from "image.jl"
