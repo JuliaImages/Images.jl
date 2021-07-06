@@ -111,6 +111,7 @@ include("exposure.jl")
 include("deprecations.jl")
 include("corner.jl")
 include("edge.jl")
+include("dftRegistration.jl")
 
 export
     # types
@@ -198,7 +199,13 @@ export
     gaussian_pyramid,
 
     # phantoms
-    shepp_logan
+    shepp_logan,
+
+    # DFT registration
+    dftReg,
+    alignFromDft,
+    subpixelshift
+
 
 _length(A::AbstractArray) = length(eachindex(A))
 _length(A) = length(A)
