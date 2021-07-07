@@ -67,14 +67,6 @@ using Test, Suppressor
 
     Random.seed!(1234)
 
-    @testset "Complement" begin
-        @test complement.([Gray(0.2)]) == [Gray(0.8)]
-        @test complement.([Gray{N0f8}(0.2)]) == [Gray{N0f8}(0.8)]
-        @test complement.([RGB(0,0.3,1)]) == [RGB(1,0.7,0)]
-        @test complement.([RGBA(0,0.3,1,0.7)]) == [RGBA(1.0,0.7,0.0,0.7)]
-        @test complement.([RGBA{N0f8}(0,0.6,1,0.7)]) == [RGBA{N0f8}(1.0,0.4,0.0,0.7)]
-    end
-
     @testset "Entropy" begin
         img = rand(1:10,10,10)
         img2 = rand(1:2,10,10)
