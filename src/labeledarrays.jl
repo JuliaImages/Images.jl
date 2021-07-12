@@ -18,6 +18,8 @@ associated with that point's label.
 This computation is performed lazily, as to be suitable even for large arrays.
 """
 function ColorizedArray(intensity, label::IndirectArray{C,N}) where {C<:Colorant,N}
+    depwarn("`ColorizedArray(intensity, label)` is deprecated, use `mappedarray(*, intensity, label)` from `MappedArrays` instead", :ColorizedArray)
+
     axes(intensity) == axes(label) || throw(DimensionMismatch("intensity and label must have the same axes, got $(axes(intensity)) and $(axes(label))"))
     CI = typeof(zero(C)*zero(eltype(intensity)))
     ColorizedArray{CI,N,typeof(intensity),typeof(label)}(intensity, label)
