@@ -27,7 +27,11 @@ using Test
         end
         b = load(fn)
         @test b == img
-        @test Images.metadata(fn) == (reverse(size(img)), RGB{N0f16})
+        if VERSION >= v"1.3"
+            # ImageMagick backend is broken here.
+            # For Julia >=v1.3 FileIO will use ImageIO backend
+            @test Images.metadata(fn) == (reverse(size(img)), RGB{N0f16})
+        end
 
         A = N0f8[0.01 0.99; 0.25 0.75]
         fn = joinpath(workdir, "writemime.png")
