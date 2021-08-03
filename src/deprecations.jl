@@ -1068,3 +1068,11 @@ function shepp_logan(M,N; highContrast=true)
 end
 
 shepp_logan(N;highContrast=true) = shepp_logan(N,N;highContrast=highContrast)
+
+# `complement` is now moved to ColorVectorSpace but we still want to keep backward compatibility
+# until Images 1.0
+function ColorVectorSpace.complement(x::AbstractArray)
+    Base.depwarn("`complement(img)` is deprecated, please use the broadcasting version `complement.(img)`", :complement)
+    complement.(x)
+end
+

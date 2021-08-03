@@ -8,6 +8,8 @@ include("algorithms.jl")
 include("edge.jl")
 include("corner.jl")
 include("writemime.jl")
-# include("deprecated.jl")
+
+@suppress_err include("legacy.jl")
+@suppress_err include("deprecated.jl")
 
 end

@@ -107,7 +107,6 @@ include("compat.jl")
 include("misc.jl")
 include("labeledarrays.jl")
 include("algorithms.jl")
-include("exposure.jl")
 include("deprecations.jl")
 include("corner.jl")
 include("edge.jl")
@@ -170,7 +169,6 @@ export
     yen_threshold,
 
     #Exposure
-    complement,
     imhist,
     histeq,
     adjust_gamma,
