@@ -54,45 +54,8 @@ const is_little_endian = ENDIAN_BOM == 0x04030201
 @reexport using ImageContrastAdjustment
 @reexport using ImageQualityIndexes
 
-if isdefined(ImageQualityIndexes, :assess_psnr)
-    # deprecated since ImageQualityIndexes v0.1.4
-    Base.@deprecate_binding psnr assess_psnr
-    Base.@deprecate_binding ssim assess_ssim
-else
-    const psnr = ImageQualityIndexes.psnr
-    export psnr
-end
-
-# Both ImageMetadata v0.9.0 and ImageAxes v0.6.0 deprecate the symbol data and
-# this causes a name conflict
-if isdefined(ImageMetadata, :arraydata)
-    Base.@deprecate_binding data arraydata
-end
-# ImageMetadata < v0.9.0 compatibility
-if !hasmethod(arraydata, (ImageMeta, ) )
-    ImageAxes.arraydata(img::ImageMeta) = ImageMetadata.data(img)
-end
-
-# Non-exported symbol bindings to ImageShow
-import ImageShow
-if isdefined(ImageShow, :play)
-    @doc (@doc ImageShow.play)
-    const play = ImageShow.play
-else
-    play(args...; kwargs...) = error("The `Images.play` function requires ImageShow at least 0.3.0.")
-end
-if isdefined(ImageShow, :explore)
-    @doc (@doc ImageShow.explore)
-    const explore = ImageShow.explore
-else
-    explore(args...; kwargs...) = error("The `Images.explore` function requires ImageShow at least 0.3.0.")
-end
-if isdefined(ImageShow, :gif)
-    @doc (@doc ImageShow.gif)
-    const gif = ImageShow.gif
-else
-    gif(args...; kwargs...) = error("The `Images.gif` function requires ImageShow at least 0.3.0.")
-end
+# Non-exported symbol bindings to ImageShow so that we can use, e.g., `Images.gif`
+import ImageShow: play, explore, gif
 
 # While we are bridging the old API and the new API in ImageContrastAdjustment
 # we need to import these functions because we make new definitions for them
