@@ -1096,3 +1096,22 @@ function bilinear_interpolation(img::AbstractArray{T,N}, xs::Vararg{<:Number, N}
     return itp(xs...)
 end
 export bilinear_interpolation
+
+import ImageFiltering: findlocalmaxima, findlocalminima, blob_LoG
+dims2window(img, dims) = ntuple(d -> d ∈ dims ? 3 : 1, ndims(img))
+function find_depwarn(sym, dims, window, edges)
+    Base.depwarn("`$sym(img, $dims, $edges)` is deprecated, please use `$sym(img; window=$window, edges=$edges)`.\nSee the documentation for details about `window`.", sym)
+end
+function findlocalmaxima(img::AbstractArray, region::Union{Tuple{Int,Vararg{Int}},Vector{Int},UnitRange{Int},Int}, edges=true)
+    window = dims2window(img, region)
+    find_depwarn(:findlocalmaxima, region, window, edges)
+    findlocalmaxima(img; window=window, edges=edges)
+end
+function findlocalminima(img::AbstractArray, region::Union{Tuple{Int,Vararg{Int}},Vector{Int},UnitRange{Int},Int}, edges=true)
+    window = dims2window(img, region)
+    find_depwarn(:findlocalminima, region, window, edges)
+    findlocalminima(img; window=window, edges=edges)
+end
+@deprecate blob_LoG(img::AbstractArray{T,N}, σscales::Union{AbstractVector,Tuple},
+                    edges::Union{Bool,Tuple{Vararg{Bool}}}, σshape=ntuple(d->1, Val(N))) where {T,N} blob_LoG(img, σscales; edges=edges, σshape=(σshape...,), rthresh=0)
+@deprecate blob_LoG(img::AbstractArray{T,N}, σscales::Union{AbstractVector,Tuple}, σshape::Union{AbstractVector,NTuple{N,Real}}) where {T,N}  blob_LoG(img, σscales; edges=(true, ntuple(d->false,Val(N))...), σshape=(σshape...,), rthresh=0)

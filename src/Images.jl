@@ -117,7 +117,6 @@ export
     findlocalmaxima,
     findlocalminima,
     imgaussiannoise,
-    imlineardiffusion,
     otsu_threshold,
     yen_threshold,
 
