@@ -36,7 +36,8 @@ import .Colors: Fractional
 import Graphics
 import Graphics: width, height, Point
 using StatsBase  # TODO: eliminate this dependency
-using IndirectArrays, ImageCore.MappedArrays
+using IndirectArrays # TODO: remove this dependency when we remove ColorizedArray
+using ImageCore.MappedArrays
 
 # TODO: can we get rid of these definitions?
 const NumberLike = Union{Number,AbstractGray}
