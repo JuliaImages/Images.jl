@@ -50,31 +50,6 @@ end
 
 entropy(img::AbstractArray{C}; kind=:shannon) where {C<:AbstractGray} = entropy(channelview(img), kind=kind)
 
-# FIXME: replace with IntegralImage
-# average filter
-"""
-`kern = imaverage(filtersize)` constructs a boxcar-filter of the specified size.
-"""
-function imaverage(filter_size=[3,3])
-    if length(filter_size) != 2
-        error("wrong filter size")
-    end
-    m, n = filter_size
-    if mod(m, 2) != 1 || mod(n, 2) != 1
-        error("filter dimensions must be odd")
-    end
-    f = ones(Float64, m, n)/(m*n)
-end
-
-# FIXME: do something about this
-# more general version
-function imlaplacian(alpha::Number)
-    lc = alpha/(1 + alpha)
-    lb = (1 - alpha)/(1 + alpha)
-    lm = -4/(1 + alpha)
-    return [lc lb lc; lb lm lb; lc lb lc]
-end
-
 accum(::Type{T}) where {T<:Integer} = Int
 accum(::Type{Float32})    = Float32
 accum(::Type{T}) where {T<:Real} = Float64
