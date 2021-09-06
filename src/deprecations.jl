@@ -1135,3 +1135,9 @@ function std(A::AbstractArray{C}; dims=nothing, kwargs...) where C<:Colorant
     forced_depwarn("`std(A::AbstractArray{<:Colorant})` is deprecated (and not recommended, use a MathTypes colorspace instead), please use `colorview($Cbase, std(channelview(A); dims=$newdims))[]` instead.", :var)
     return colorview(Cbase, std(channelview(A); dims=newdims, kwargs...))[]
 end
+
+# Integral arrays
+@deprecate integral_image(A) IntegralArray(A)
+@deprecate boxdiff(Ai::IntegralArray{T,2}, y::UnitRange, x::UnitRange) where T               Ai[first(y)..last(y), first(x)..last(x)]
+@deprecate boxdiff(Ai::IntegralArray{T,2}, tl::CartesianIndex, br::CartesianIndex) where T   Ai[tl[1]..br[1], tl[2]..br[2]]
+@deprecate boxdiff(Ai::IntegralArray{T,2}, tl_y::Integer, tl_x::Integer, br_y::Integer, br_x::Integer) where T  Ai[tl_y..br_y, tl_x..br_x]

@@ -59,4 +59,57 @@
         @test bilinear_interpolation(img, 1.5, 4.5) == 19.0
         @test bilinear_interpolation(img, 1.5, 5.5) == 10.75
     end
+
+    @testset "boxdiff" begin
+        a = zeros(10, 10)
+        int_img = integral_image(a)
+        @test all(int_img == a)
+
+        a = ones(10,10)
+        int_img = integral_image(a)
+        chk = Array(1:10)
+        @test all([vec(int_img[i, :]) == chk * i for i in 1:10])
+
+        int_sum = boxdiff(int_img, 1, 1, 5, 2)
+        @test int_sum == 10.0
+        int_sum = boxdiff(int_img, 1:5, 1:2)
+        @test int_sum == 10.0
+        int_sum = boxdiff(int_img, CartesianIndex((1, 1)), CartesianIndex((5, 2)))
+        @test int_sum == 10.0
+        int_sum = boxdiff(int_img, 1, 1, 2, 5)
+        @test int_sum == 10.0
+        int_sum = boxdiff(int_img, 1:2, 1:5)
+        @test int_sum == 10.0
+        int_sum = boxdiff(int_img, CartesianIndex((1, 1)), CartesianIndex((2, 5)))
+        @test int_sum == 10.0
+        int_sum = boxdiff(int_img, 4, 4, 8, 8)
+        @test int_sum == 25.0
+        int_sum = boxdiff(int_img, 4:8, 4:8)
+        @test int_sum == 25.0
+        int_sum = boxdiff(int_img, CartesianIndex((4, 4)), CartesianIndex((8, 8)))
+        @test int_sum == 25.0
+
+        a = reshape(1:100, 10, 10)
+        int_img = integral_image(a)
+        @test int_img[diagind(int_img)] == Array([1, 26,  108,  280,  575, 1026, 1666, 2528, 3645, 5050])
+
+        int_sum = boxdiff(int_img, 1, 1, 3, 3)
+        @test int_sum == 108
+        int_sum = boxdiff(int_img, 1:3, 1:3)
+        @test int_sum == 108
+        int_sum = boxdiff(int_img, CartesianIndex((1, 1)), CartesianIndex((3, 3)))
+        @test int_sum == 108
+        int_sum = boxdiff(int_img, 1, 1, 5, 2)
+        @test int_sum == 80
+        int_sum = boxdiff(int_img, 1:5, 1:2)
+        @test int_sum == 80
+        int_sum = boxdiff(int_img, CartesianIndex((1, 1)), CartesianIndex((5, 2)))
+        @test int_sum == 80
+        int_sum = boxdiff(int_img, 4, 4, 8, 8)
+        @test int_sum == 1400
+        int_sum = boxdiff(int_img, 4:8, 4:8)
+        @test int_sum == 1400
+        int_sum = boxdiff(int_img, CartesianIndex((4, 4)), CartesianIndex((8, 8)))
+        @test int_sum == 1400
+    end
 end

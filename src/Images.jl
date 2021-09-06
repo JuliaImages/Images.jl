@@ -53,6 +53,8 @@ const is_little_endian = ENDIAN_BOM == 0x04030201
 @reexport using ImageDistances
 @reexport using ImageContrastAdjustment
 @reexport using ImageQualityIndexes
+@reexport using IntegralArrays
+@reexport using IntegralArrays.IntervalSets.EllipsisNotation
 
 # Non-exported symbol bindings to ImageShow so that we can use, e.g., `Images.gif`
 import ImageShow: play, explore, gif
@@ -141,8 +143,6 @@ export
     thin_edges_nonmaxsup,
     thin_edges_nonmaxsup_subpix,
     canny,
-    integral_image,
-    boxdiff,
     gaussian_pyramid,
 
     # phantoms
@@ -164,7 +164,7 @@ Contrast/coloration:
 
 Algorithms:
 
-    - Reductions: `maxfinite`, `maxabsfinite`, `minfinite`, `meanfinite`, `integral_image`, `boxdiff`, `gaussian_pyramid`
+    - Reductions: `maxfinite`, `maxabsfinite`, `minfinite`, `meanfinite`, `IntegralArray`, `gaussian_pyramid`
     - Resizing: `restrict`, `imresize` (not yet exported)
     - Filtering: `imfilter`, `imfilter!`, `mapwindow`, `imROF`, `padarray`
     - Filtering kernels: `Kernel.` or `KernelFactors.`, followed by `ando[345]`, `guassian2d`, `imaverage`, `imdog`, `imlaplacian`, `prewitt`, `sobel`
