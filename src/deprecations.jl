@@ -1115,3 +1115,23 @@ end
 @deprecate blob_LoG(img::AbstractArray{T,N}, σscales::Union{AbstractVector,Tuple},
                     edges::Union{Bool,Tuple{Vararg{Bool}}}, σshape=ntuple(d->1, Val(N))) where {T,N} blob_LoG(img, σscales; edges=edges, σshape=(σshape...,), rthresh=0)
 @deprecate blob_LoG(img::AbstractArray{T,N}, σscales::Union{AbstractVector,Tuple}, σshape::Union{AbstractVector,NTuple{N,Real}}) where {T,N}  blob_LoG(img, σscales; edges=(true, ntuple(d->false,Val(N))...), σshape=(σshape...,), rthresh=0)
+
+
+import Statistics: std, var
+@deprecate var(A::AbstractArray{C}; kwargs...) where C<:ColorVectorSpace.MathTypes varmult(⊙, A; kwargs...)
+@deprecate std(A::AbstractArray{C}; kwargs...) where C<:ColorVectorSpace.MathTypes stdmult(⊙, A; kwargs...)
+# Doing stats on non-MathTypes is a bad idea
+function var(A::AbstractArray{C}; dims=nothing, kwargs...) where C<:Colorant
+    dims === nothing || error("dims was never supported, but is now for MathTypes")
+    newdims = 2:ndims(A)+1
+    Cbase = base_colorant_type(C)
+    forced_depwarn("`var(A::AbstractArray{<:Colorant})` is deprecated (and not recommended, use a MathTypes colorspace instead), please use `colorview($Cbase, var(channelview(A); dims=$newdims))[]` instead.", :var)
+    return colorview(Cbase, var(channelview(A); dims=newdims, kwargs...))[]
+end
+function std(A::AbstractArray{C}; dims=nothing, kwargs...) where C<:Colorant
+    dims === nothing || error("dims was never supported, but is now for MathTypes")
+    newdims = 2:ndims(A)+1
+    Cbase = base_colorant_type(C)
+    forced_depwarn("`std(A::AbstractArray{<:Colorant})` is deprecated (and not recommended, use a MathTypes colorspace instead), please use `colorview($Cbase, std(channelview(A); dims=$newdims))[]` instead.", :var)
+    return colorview(Cbase, std(channelview(A); dims=newdims, kwargs...))[]
+end

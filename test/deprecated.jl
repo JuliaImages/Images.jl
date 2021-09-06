@@ -8,6 +8,22 @@
         @test all(complement(img) .== 1 .- img)
     end
 
+    @testset "Stats" begin
+        a = [0.1, 0.2, 0.1]
+        @test var(Gray.(a)) == Gray(var(a))
+        @test std(Gray.(a)) == Gray(std(a))
+        an0f8 = N0f8.(a)
+        @test var(Gray.(an0f8)) == Gray(var(an0f8))
+        @test std(Gray.(an0f8)) == Gray(std(an0f8))
+        c = [RGB(1, 0, 0), RGB(0, 0, 1)]
+        @test var(c) == varmult(⊙, c)
+        @test std(c) ≈ mapc(sqrt, varmult(⊙, c))
+        # We don't want to support this next one at all:
+        chsv = HSV.(c)
+        @test var(chsv) == HSV{Float32}(28800.0f0, 0.0f0, 0.0f0)
+        @test std(chsv) == mapc(sqrt, HSV{Float32}(28800.0f0, 0.0f0, 0.0f0))
+    end
+
     @testset "Restrict with vector dimensions" begin
         imgcol = colorview(RGB, rand(3,5,6))
         imgmeta = ImageMeta(imgcol, myprop=1)

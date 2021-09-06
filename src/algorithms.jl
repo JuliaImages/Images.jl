@@ -1,28 +1,7 @@
 using Base: axes1, tail
 using OffsetArrays
 import Statistics
-using Statistics: mean, var
 using ImageMorphology: dilate!, erode!
-
-function Statistics.var(A::AbstractArray{C}; kwargs...) where C<:AbstractGray
-    imgc = channelview(A)
-    base_colorant_type(C)(var(imgc; kwargs...))
-end
-
-function Statistics.var(A::AbstractArray{C,N}; kwargs...) where {C<:Colorant,N}
-    imgc = channelview(A)
-    colons = ntuple(d->Colon(), Val(N))
-    inds1 = axes(imgc, 1)
-    val1 = Statistics.var(view(imgc, first(inds1), colons...); kwargs...)
-    vals = similar(imgc, typeof(val1), inds1)
-    vals[1] = val1
-    for i in first(inds1)+1:last(inds1)
-        vals[i] = Statistics.var(view(imgc, i, colons...); kwargs...)
-    end
-    base_colorant_type(C)(vals...)
-end
-
-Statistics.std(A::AbstractArray{C}; kwargs...) where {C<:Colorant} = mapc(sqrt, Statistics.var(A; kwargs...))
 
 # Entropy for grayscale (intensity) images
 function _log(kind::Symbol)

@@ -9,7 +9,7 @@ using ImageBase.FiniteDiff: fdiff
         for T in (N0f8, Float32)
             A = rand(RGB{T}, 5, 4)
             Ac = channelview(A)
-            s = std(A)
+            s = @suppress_err std(A)
             @test red(s) ≈ std(Ac[1,:,:])
             @test green(s) ≈ std(Ac[2,:,:])
             @test blue(s) ≈ std(Ac[3,:,:])
