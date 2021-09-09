@@ -178,4 +178,122 @@
         @test findlocalmaxima(A,2,false) == [CartesianIndex((2,5,5)),CartesianIndex((5,5,5))]
     end
 
+    @testset "Erode/ dilate" begin
+        A = zeros(4,4,3)
+        A[2,2,1] = 0.8
+        A[4,4,2] = 0.6
+        Ae = erode(A)
+        @test Ae == zeros(size(A))
+        Ad = dilate(A, 1:2)
+        Ar = [0.8 0.8 0.8 0;
+              0.8 0.8 0.8 0;
+              0.8 0.8 0.8 0;
+              0 0 0 0]
+        Ag = [0 0 0 0;
+              0 0 0 0;
+              0 0 0.6 0.6;
+              0 0 0.6 0.6]
+        @test Ad == cat(Ar, Ag, zeros(4,4), dims=3)
+        Ae = erode(Ad, 1:2)
+        Ar = [0.8 0.8 0 0;
+              0.8 0.8 0 0;
+              0 0 0 0;
+              0 0 0 0]
+        Ag = [0 0 0 0;
+              0 0 0 0;
+              0 0 0 0;
+              0 0 0 0.6]
+        @test Ae == cat(Ar, Ag, zeros(4,4), dims=3)
+        # issue #311
+        @test dilate(trues(3)) == trues(3)
+        # ImageMeta
+        @test arraydata(dilate(ImageMeta(A))) == dilate(A)
+        @test arraydata(dilate(ImageMeta(A), 1:2)) == dilate(A, 1:2)
+        @test arraydata(erode(ImageMeta(A))) == erode(A)
+        @test arraydata(erode(ImageMeta(A), 1:2)) == erode(A, 1:2)
+    end
+
+    @testset "Opening / closing" begin
+        A = zeros(4,4,3)
+        A[2,2,1] = 0.8
+        A[4,4,2] = 0.6
+        Ao = opening(A)
+        @test Ao == zeros(size(A))
+        A = zeros(10,10)
+        A[4:7,4:7] .= 1
+        B = copy(A)
+        A[5,5] = 0
+        Ac = closing(A)
+        @test Ac == B
+    end
+
+    @testset "Morphological Top-hat" begin
+        A = zeros(13, 13)
+        A[2:3, 2:3] .= 1
+        Ae = copy(A)
+        A[5:9, 5:9] .= 1
+        Ao = tophat(A)
+        @test Ao == Ae
+        Aoo = tophat(Ae)
+        @test Aoo == Ae
+    end
+
+    @testset "Morphological Bottom-hat" begin
+        A = ones(13, 13)
+        A[2:3, 2:3] .= 0
+        Ae = 1 .- copy(A)
+        A[5:9, 5:9] .= 0
+        Ao = bothat(A)
+        @test Ao == Ae
+    end
+
+    @testset "Morphological Gradient" begin
+        A = zeros(13, 13)
+        A[5:9, 5:9] .= 1
+        Ao = morphogradient(A)
+        Ae = zeros(13, 13)
+        Ae[4:10, 4:10] .= 1
+        Ae[6:8, 6:8] .= 0
+        @test Ao == Ae
+        Aee = dilate(A) - erode(A)
+        @test Aee == Ae
+    end
+
+    @testset "Morphological Laplacian" begin
+        A = zeros(13, 13)
+        A[5:9, 5:9] .= 1
+        Ao = morpholaplace(A)
+        Ae = zeros(13, 13)
+        Ae[4:10, 4:10] .= 1
+        Ae[5:9, 5:9] .= -1
+        Ae[6:8, 6:8] .= 0
+        @test Ao == Ae
+        Aee = dilate(A) + erode(A) - 2A
+        @test Aee == Ae
+    end
+
+    @testset "Label components" begin
+        A = [true  true  false true;
+             true  false true  true]
+        lbltarget = [1 1 0 2;
+                     1 0 2 2]
+        lbltarget1 = [1 2 0 4;
+                      1 0 3 4]
+        @test label_components(A) == lbltarget
+        @test label_components(A, [1]) == lbltarget1
+        connectivity = [false true  false;
+                        true  false true;
+                        false true  false]
+        @test label_components(A, connectivity) == lbltarget
+        connectivity = trues(3,3)
+        lbltarget2 = [1 1 0 1;
+                      1 0 1 1]
+        @test label_components(A, connectivity) == lbltarget2
+        @test component_boxes(lbltarget) == Vector{Tuple}[[(1,2),(2,3)],[(1,1),(2,2)],[(1,3),(2,4)]]
+        @test component_lengths(lbltarget) == [2,3,3]
+        @test component_indices(lbltarget) == Array{Int64}[[4,5],[1,2,3],[6,7,8]]
+        @test component_subscripts(lbltarget) == Array{Tuple}[[(2,2),(1,3)],[(1,1),(2,1),(1,2)],[(2,3),(1,4),(2,4)]]
+        @test @inferred(component_centroids(lbltarget)) == Tuple[(1.5,2.5),(4/3,4/3),(5/3,11/3)]
+    end
+
 end

@@ -1,7 +1,6 @@
 using Base: axes1, tail
 using OffsetArrays
 import Statistics
-using ImageMorphology: dilate!, erode!
 
 # Entropy for grayscale (intensity) images
 function _log(kind::Symbol)
@@ -132,10 +131,6 @@ end
 imgaussiannoise(img::AbstractArray{T}, variance::Number) where {T} = imgaussiannoise(img, variance, 0)
 imgaussiannoise(img::AbstractArray{T}) where {T} = imgaussiannoise(img, 0.01, 0)
 
-
-# morphological operations for ImageMeta
-dilate(img::ImageMeta, region=coords_spatial(img)) = shareproperties(img, dilate!(copy(arraydata(img)), region))
-erode(img::ImageMeta, region=coords_spatial(img)) = shareproperties(img, erode!(copy(arraydata(img)), region))
 
 """
 ```
