@@ -24,6 +24,18 @@ function _meanfinite(A::AbstractArray, ::Type{T}, region) where T<:AbstractFloat
 end
 _meanfinite(A::AbstractArray, ::Type, region) = mean(A, dims=region)  # non floating-point
 
+"""
+`S = stdfinite(img, region` calculates the standard deviation of values along the dimensions listed in `region`, ignoring any non-finite values.
+"""
+function stdfinite(img::AbstractArray, region)
+    mean = meanfinite(img, region)
+    l = sum(1 .- isnan.(img), dims=region)
+    img = (img .- mean).^2
+    img[isnan.(img)] .= 0
+    s = sum(img, dims=region)
+    (s ./ (l .- 1)).^0.5
+end
+
 using Base: check_reducedims, reducedim1, safe_tail
 using Base.Broadcast: newindex
 

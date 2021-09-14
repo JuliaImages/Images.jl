@@ -13,6 +13,14 @@ using Test, Suppressor
             @test green(s) ≈ std(Ac[2,:,:])
             @test blue(s) ≈ std(Ac[3,:,:])
         end
+
+        A=rand(3,4,5,6)
+        s=stdfinite(A,(2,3,4))
+        @test s≈std(A,dims=(2,3,4))
+        A=rand(5)
+        A[1]=NaN
+        s=stdfinite(A,1)
+        @test s[1]≈std(A[2:end])
     end
 
     @testset "Features" begin

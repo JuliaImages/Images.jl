@@ -183,6 +183,7 @@ export
     magnitude,
     magnitude_phase,
     meanfinite,
+    stdfinite,
     entropy,
     orientation,
     padarray,
