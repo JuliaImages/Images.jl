@@ -116,4 +116,16 @@
         @test axes(axs[2])[1] == axes(Aor)[2]
         AAA = AxisArray(Aor, axs)  # just test that it's constructable (another way of enforcing agreement)
     end
+
+    # moved to ImageBase.FiniteDiff.fdiv
+    @testset "div" begin
+        # Test that -div is the adjoint of forwarddiff
+        p = rand(3,3,2)
+        u = rand(3,3)
+        gu = cat(
+            ImageBase.FiniteDiff.fdiff(u, dims=1, boundary=:periodic),
+            ImageBase.FiniteDiff.fdiff(u, dims=2, boundary=:periodic),
+            dims=3)
+        @test sum(-Images.div(p) .* u) ≈ sum(p .* gu)
+    end
 end

@@ -1080,6 +1080,8 @@ end
 @deprecate forwarddiffy(X) ImageBase.FiniteDiff.fdiff(X, dims=1, boundary=:zero)
 @deprecate backdiffx(X) ImageBase.FiniteDiff.fdiff(X, dims=2, rev=true, boundary=:zero)
 @deprecate backdiffy(X) ImageBase.FiniteDiff.fdiff(X, dims=1, rev=true, boundary=:zero)
+@deprecate div(A::AbstractArray{<:Any,3}) ImageBase.FiniteDiff.fdiv(view(A, :, :, 1), view(A, :, :, 2)) false
+
 
 # This is now replaced by ImageTransformations and Interpolations
 using ImageTransformations.Interpolations: BSpline, Linear, interpolate

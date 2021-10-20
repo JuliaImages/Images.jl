@@ -301,42 +301,6 @@ end
 imgaussiannoise(img::AbstractArray{T}, variance::Number) where {T} = imgaussiannoise(img, variance, 0)
 imgaussiannoise(img::AbstractArray{T}) where {T} = imgaussiannoise(img, 0.01, 0)
 
-# image gradients
-
-function div(p::AbstractArray{T,3}) where T
-    # Definition from the Chambolle citation below, between Eqs. 5 and 6
-    # This is the adjoint of -forwarddiff
-    inds = axes(p)[1:2]
-    out = similar(p, inds)
-    Router = CartesianIndices(inds)
-    rstp = _oneunit(first(Router))
-    Rinner = _clippedinds(Router,rstp)
-    # Since most of the points are in the interior, compute them more quickly by avoiding branches
-    for I in Rinner
-        out[I] = p[I,1] - p[I[1]-1, I[2], 1] +
-                 p[I,2] - p[I[1], I[2]-1, 2]
-    end
-    # Handle the edge points
-    for I in EdgeIterator(Router, Rinner)
-        out[I] = 0
-        if I[1] == first(inds[1])
-            out[I] += p[I, 1]
-        elseif I[1] == last(inds[1])
-            out[I] -= p[I[1]-1, I[2], 1]
-        else
-            out[I] += p[I,1] - p[I[1]-1, I[2], 1]
-        end
-        if I[2] == first(inds[2])
-            out[I] += p[I, 2]
-        elseif I[2] == last(inds[2])
-            out[I] -= p[I[1], I[2]-1, 2]
-        else
-            out[I] += p[I,2] - p[I[1], I[2]-1, 2]
-        end
-    end
-    out
-end
-
 """
 ```
 imgr = imROF(img, λ, iterations)
@@ -358,12 +322,12 @@ function imROF(img::AbstractMatrix{T}, λ::Number, iterations::Integer) where T<
     s1, s2 = size(img)
     p = zeros(T, s1, s2, 2)
     # This iterates Eq. (9) of the Chambolle citation
-    local u
+    u = similar(img)
     τ = 1/4   # see 2nd remark after proof of Theorem 3.1.
     for i = 1:iterations
-        div_p = div(p)
-        u = img - λ*div_p # multiply term inside ∇ by -λ. Thm. 3.1 relates this to u via Eq. 7.
-        grad_u = cat(fdiff(u, dims=1, boundary=:zero), fdiff(u, dims=2, boundary=:zero), dims=3)
+        div_p = ImageBase.FiniteDiff.fdiv(view(p, :, :, 1), view(p, :, :, 2))
+        u .= img - λ*div_p # multiply term inside ∇ by -λ. Thm. 3.1 relates this to u via Eq. 7.
+        grad_u = cat(ImageBase.fdiff(u, dims=1, boundary=:zero), ImageBase.fdiff(u, dims=2, boundary=:zero), dims=3)
         grad_u_mag = sqrt.(sum(abs2, grad_u, dims=3))
         p .= (p .- (τ/λ).*grad_u)./(1 .+ (τ/λ).*grad_u_mag)
     end
