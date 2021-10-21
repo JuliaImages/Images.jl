@@ -6,7 +6,7 @@ We gratefully acknowledge the general [Julia CONTRIBUTING.md document](https://g
 
 ## Learning Julia
 
-A pre-requisite for using JuliaImages is to know at least a little about Julia itself. [The learning page](https://julialang.org/learning) has a great list of resources for new and experienced users alike. [This tutorial video](https://www.youtube.com/watch?v=vWkgEddb4-A) is one recommended starting point, as is the "[Invitation to Julia](https://www.youtube.com/watch?v=gQ1y5NUD_RI)" workshop video from JuliaCon 2015  ([slide materials here](https://github.com/dpsanders/invitation_to_julia)). The [Julia documentation](https://docs.julialang.org) covers the language and core library features, and is searchable.
+A pre-requisite for using JuliaImages is to know at least a little about Julia itself. [The learning page](https://julialang.org/learning) has a great list of resources for new and experienced users alike. The [Julia documentation](https://docs.julialang.org) covers the language and core library features, and is searchable.
 
 ## Learning JuliaImages
 
@@ -33,6 +33,12 @@ Many documentation issues are easy! Our narrative documentation at JuliaImages h
 Changes to the "docstrings" (the string preceding a method in source code) should be made in the package in which they appear.
 
 For bigger documentation changes, it is probably best to clone the package and submit the changes as an ordinary pull request, as described below under "Contributing code." You can build the package locally if you install [Documenter.jl](https://github.com/JuliaDocs/Documenter.jl), and run `include("make.jl")` in the `docs/` folder. To see the completed documentation, open the `build/index.md` file in your browser.
+
+Possible documentation contributions could be:
+- Typo fixes
+- Wording fixes to make something more clear
+- Additional examples that highlight some functionality
+- Find more [documentation issues](https://github.com/JuliaImages/Images.jl/labels/documentation)
 
 ## Contributing code
 
@@ -80,7 +86,7 @@ extensive changes without needing to rebuild the package in order to test
 your changes.
 
 * Debuggers can help you get to the root of a problem. There are many choices and interfaces:
-  + [Juno](https://github.com/JunoLab/Juno.jl) has a polished GUI for debugging
+  + [VSCode](https://code.visualstudio.com/docs/languages/julia#_debugging) has a polished GUI for debugging
   + [Debugger](https://github.com/JuliaDebug/Debugger.jl) has a polished command-line interface
   + [Rebugger](https://github.com/timholy/Rebugger.jl) has an innovative but somewhat less-polished command-line interface
   + [Infiltrator](https://github.com/JuliaDebug/Infiltrator.jl) offers more limited debugging, but often it's precisely what you need while avoiding the performance penalties that some of the other options suffer from.
