@@ -301,49 +301,6 @@ end
 imgaussiannoise(img::AbstractArray{T}, variance::Number) where {T} = imgaussiannoise(img, variance, 0)
 imgaussiannoise(img::AbstractArray{T}) where {T} = imgaussiannoise(img, 0.01, 0)
 
-"""
-```
-imgr = imROF(img, λ, iterations)
-```
-
-Perform Rudin-Osher-Fatemi (ROF) filtering, more commonly known as Total
-Variation (TV) denoising or TV regularization. `λ` is the regularization
-coefficient for the derivative, and `iterations` is the number of relaxation
-iterations taken. 2d only.
-
-See https://en.wikipedia.org/wiki/Total_variation_denoising and
-Chambolle, A. (2004). "An algorithm for total variation minimization and applications".
-    Journal of Mathematical Imaging and Vision. 20: 89–97
-"""
-function imROF(img::AbstractMatrix{T}, λ::Number, iterations::Integer) where T<:NumberLike
-    # Total Variation regularized image denoising using the primal dual algorithm
-    # Also called Rudin Osher Fatemi (ROF) model
-    # λ: regularization parameter
-    s1, s2 = size(img)
-    p = zeros(T, s1, s2, 2)
-    # This iterates Eq. (9) of the Chambolle citation
-    u = similar(img)
-    τ = 1/4   # see 2nd remark after proof of Theorem 3.1.
-    for i = 1:iterations
-        div_p = ImageBase.FiniteDiff.fdiv(view(p, :, :, 1), view(p, :, :, 2))
-        u .= img - λ*div_p # multiply term inside ∇ by -λ. Thm. 3.1 relates this to u via Eq. 7.
-        grad_u = cat(ImageBase.fdiff(u, dims=1, boundary=:zero), ImageBase.fdiff(u, dims=2, boundary=:zero), dims=3)
-        grad_u_mag = sqrt.(sum(abs2, grad_u, dims=3))
-        p .= (p .- (τ/λ).*grad_u)./(1 .+ (τ/λ).*grad_u_mag)
-    end
-    return u
-end
-
-# ROF Model for color images
-function imROF(img::AbstractMatrix{<:Color}, λ::Number, iterations::Integer)
-    out = similar(img)
-    imgc = channelview(img)
-    outc = channelview(out)
-    for chan = 1:size(imgc, 1)
-        outc[chan, :, :] = imROF(imgc[chan, :, :], λ, iterations)
-    end
-    out
-end
 
 # morphological operations for ImageMeta
 dilate(img::ImageMeta, region=coords_spatial(img)) = shareproperties(img, dilate!(copy(arraydata(img)), region))

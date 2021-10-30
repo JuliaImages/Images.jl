@@ -1081,6 +1081,7 @@ end
 @deprecate backdiffx(X) ImageBase.FiniteDiff.fdiff(X, dims=2, rev=true, boundary=:zero)
 @deprecate backdiffy(X) ImageBase.FiniteDiff.fdiff(X, dims=1, rev=true, boundary=:zero)
 @deprecate div(A::AbstractArray{<:Any,3}) ImageBase.FiniteDiff.fdiv(view(A, :, :, 1), view(A, :, :, 2)) false
+@deprecate imROF(img::AbstractMatrix, λ::Number, iterations::Integer) ImageFiltering.Models.solve_ROF_PD(img, λ, iterations)
 
 
 # This is now replaced by ImageTransformations and Interpolations
