@@ -1,6 +1,7 @@
 using Images, OffsetArrays, TestImages
 using Statistics, Random, LinearAlgebra, FFTW
 using Test, Suppressor
+using ImageBase.FiniteDiff: fdiff
 
 @testset "Algorithms" begin
     @testset "Statistics" begin
@@ -471,7 +472,7 @@ using Test, Suppressor
         # Test that -div is the adjoint of forwarddiff
         p = rand(3,3,2)
         u = rand(3,3)
-        gu = cat(Images.forwarddiffy(u), Images.forwarddiffx(u), dims=3)
+        gu = cat(fdiff(u, dims=1, boundary=:zero), fdiff(u, dims=2, boundary=:zero), dims=3)
         @test sum(-Images.div(p) .* u) ≈ sum(p .* gu)
 
         img = [0.1 0.2 0.1 0.8 0.9 0.7;

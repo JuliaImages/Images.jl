@@ -140,10 +140,6 @@ export
     widthheight,
 
     # algorithms
-    backdiffx,
-    backdiffy,
-    forwarddiffx,
-    forwarddiffy,
     imcorner,
     imcorner_subpixel,
     corner2subpixel,

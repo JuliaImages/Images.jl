@@ -303,12 +303,6 @@ imgaussiannoise(img::AbstractArray{T}) where {T} = imgaussiannoise(img, 0.01, 0)
 
 # image gradients
 
-# forward and backward differences
-# can be very helpful for discretized continuous models
-forwarddiffy(u::AbstractMatrix) = [u[2:end,:]; u[end:end,:]] - u
-forwarddiffx(u::AbstractMatrix) = [u[:,2:end] u[:,end:end]] - u
-backdiffy(u::AbstractMatrix) = u - [u[1:1,:]; u[1:end-1,:]]
-backdiffx(u::AbstractMatrix) = u - [u[:,1:1] u[:,1:end-1]]
 function div(p::AbstractArray{T,3}) where T
     # Definition from the Chambolle citation below, between Eqs. 5 and 6
     # This is the adjoint of -forwarddiff
@@ -369,7 +363,7 @@ function imROF(img::AbstractMatrix{T}, λ::Number, iterations::Integer) where T<
     for i = 1:iterations
         div_p = div(p)
         u = img - λ*div_p # multiply term inside ∇ by -λ. Thm. 3.1 relates this to u via Eq. 7.
-        grad_u = cat(forwarddiffy(u), forwarddiffx(u), dims=3)
+        grad_u = cat(fdiff(u, dims=1, boundary=:zero), fdiff(u, dims=2, boundary=:zero), dims=3)
         grad_u_mag = sqrt.(sum(abs2, grad_u, dims=3))
         p .= (p .- (τ/λ).*grad_u)./(1 .+ (τ/λ).*grad_u_mag)
     end
