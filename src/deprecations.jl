@@ -1076,3 +1076,15 @@ function ColorVectorSpace.complement(x::AbstractArray)
     complement.(x)
 end
 
+# This is now replaced by ImageTransformations and Interpolations
+using ImageTransformations.Interpolations: BSpline, Linear, interpolate
+function bilinear_interpolation(img::AbstractArray{T,N}, xs::Vararg{<:Number, N}) where {T,N}
+    Base.depwarn("`bilinear_interpolation` is deprecated, please use `warp`, `imresize` from ImageTransformations or `extrapolate`, `interpolate` from Interpolations", :bilinear_interpolation)
+    pad_ax = map(axes(img), xs) do ax, x
+        min(floor(Int, x), first(ax)):max(ceil(Int, x), last(ax))
+    end
+    padded_img = PaddedView(zero(T), img, pad_ax)
+    itp = interpolate(padded_img, BSpline(Linear()))
+    return itp(xs...)
+end
+export bilinear_interpolation

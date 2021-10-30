@@ -186,7 +186,6 @@ export
     canny,
     integral_image,
     boxdiff,
-    bilinear_interpolation,
     gaussian_pyramid,
 
     # phantoms
@@ -219,7 +218,6 @@ Algorithms:
     - Blob detection: `blob_LoG`, `findlocalmaxima`, `findlocalminima`
     - Morphological operations: `dilate`, `erode`, `closing`, `opening`, `tophat`, `bothat`, `morphogradient`, `morpholaplace`, `feature_transform`, `distance_transform`, `convexhull`
     - Connected components: `label_components`, `component_boxes`, `component_lengths`, `component_indices`, `component_subscripts`, `component_centroids`
-    - Interpolation: `bilinear_interpolation`
 
 Test images and phantoms (see also TestImages.jl):
 
