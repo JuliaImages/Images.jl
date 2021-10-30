@@ -2,7 +2,6 @@ using Base: axes1, tail
 using OffsetArrays
 import Statistics
 using Statistics: mean, var
-import AxisArrays
 using ImageMorphology: dilate!, erode!
 
 function Statistics.var(A::AbstractArray{C}; kwargs...) where C<:AbstractGray
@@ -284,50 +283,6 @@ Like `findlocalmaxima`, but returns the coordinates of the smallest elements.
 """
 findlocalminima(img::AbstractArray, region=coords_spatial(img), edges=true) =
         findlocalextrema(img, region, edges, Base.Order.Reverse)
-
-# restrict for AxisArray and ImageMeta
-restrict(img::AxisArray, ::Tuple{}) = img
-restrict(img::ImageMeta, ::Tuple{}) = img
-
-function restrict(img::ImageMeta, region::Dims)
-    shareproperties(img, restrict(arraydata(img), region))
-end
-
-function restrict(img::AxisArray{T,N}, region::Dims) where {T,N}
-    inregion = falses(ndims(img))
-    inregion[[region...]] .= true
-    inregiont = (inregion...,)::NTuple{N,Bool}
-    rdata = restrict(img.data, region)
-    AxisArray(rdata, map(modax, AxisArrays.axes(img), axes(rdata), inregiont))
-end
-
-# FIXME: this doesn't get inferred, but it should be (see issue #628)
-function restrict(img::Union{AxisArray,ImageMetaAxis}, ::Type{Ax}) where Ax
-    dim = axisdim(img, Ax)
-    A = restrict(img.data, dim)
-    AxisArray(A, replace_axis(modax(img[Ax], axes(A)[dim]), AxisArrays.axes(img)))
-end
-
-replace_axis(newax, axs) = _replace_axis(newax, axnametype(newax), axs...)
-@inline _replace_axis(newax, ::Type{Ax}, ax::Ax, axs...) where {Ax} = (newax, _replace_axis(newax, Ax, axs...)...)
-@inline _replace_axis(newax, ::Type{Ax}, ax, axs...) where {Ax} = (ax, _replace_axis(newax, Ax, axs...)...)
-_replace_axis(newax, ::Type{Ax}) where {Ax} = ()
-
-axnametype(ax::Axis{name}) where {name} = Axis{name}
-
-ofaxes(::Base.OneTo, r) = r
-ofaxes(axs::Any, r) = OffsetArray(r, axs)
-
-function modax(ax, Aax)
-    v = ax.val
-    if iseven(length(v))
-        return ax(ofaxes(Aax, range(first(v)-step(v)/2, stop=last(v)+step(v)/2, length=length(v)÷2 + 1)))
-    else
-        return ax(ofaxes(Aax, range(first(v)/1, stop=last(v)/1, length=length(v)÷2 + 1)))
-    end
-end
-
-modax(ax, Aax, inregion::Bool) = inregion ? modax(ax, Aax) : ax
 
 
 function imlineardiffusion(img::Array{T,2}, dt::AbstractFloat, iterations::Integer) where T

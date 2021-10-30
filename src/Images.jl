@@ -99,9 +99,7 @@ end
 # in deprecations.jl
 import ImageContrastAdjustment: build_histogram, adjust_histogram, adjust_histogram!
 
-using ImageMetadata: ImageMetaAxis
 import ImageMorphology: dilate, erode
-import ImageTransformations: restrict
 using TiledIteration: EdgeIterator
 
 include("compat.jl")
@@ -131,7 +129,6 @@ export
     nimages,
     pixelspacing,
     properties,
-    restrict,
     sdims,
     size_spatial,
     shareproperties,

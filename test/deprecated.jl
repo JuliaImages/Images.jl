@@ -8,4 +8,9 @@
         @test all(complement(img) .== 1 .- img)
     end
 
+    @testset "Restrict with vector dimensions" begin
+        imgcol = colorview(RGB, rand(3,5,6))
+        imgmeta = ImageMeta(imgcol, myprop=1)
+        @test isa(restrict(imgmeta, [1, 2]), ImageMeta)
+    end
 end
