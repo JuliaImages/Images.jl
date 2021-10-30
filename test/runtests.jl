@@ -1,3 +1,6 @@
+using Images
+using OffsetArrays
+using Statistics
 using Test
 using Suppressor
 

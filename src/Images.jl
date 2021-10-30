@@ -26,6 +26,7 @@ using SparseArrays: findnz
 
 using Reexport
 @reexport using ImageCore
+@reexport using ImageBase
 if isdefined(ImageCore, :permuteddimsview)
     export permuteddimsview
 end
@@ -127,9 +128,6 @@ export
     copyproperties,
     data,
     height,
-    maxabsfinite,
-    maxfinite,
-    minfinite,
     nimages,
     pixelspacing,
     properties,
@@ -180,7 +178,6 @@ export
 
     magnitude,
     magnitude_phase,
-    meanfinite,
     entropy,
     orientation,
     padarray,

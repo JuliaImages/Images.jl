@@ -5,77 +5,6 @@ using Statistics: mean, var
 import AxisArrays
 using ImageMorphology: dilate!, erode!
 
-# Compat.@dep_vectorize_2arg Gray atan2
-# Compat.@dep_vectorize_2arg Gray hypot
-
-"""
-`M = meanfinite(img, region)` calculates the mean value along the dimensions listed in `region`, ignoring any non-finite values.
-"""
-meanfinite(A::AbstractArray{T}, region) where {T<:Real} = _meanfinite(A, T, region)
-meanfinite(A::AbstractArray{CT}, region) where {CT<:Colorant} = _meanfinite(A, eltype(CT), region)
-function _meanfinite(A::AbstractArray, ::Type{T}, region) where T<:AbstractFloat
-    inds = Base.reduced_indices(A, region)
-    K = similar(Array{Int}, inds)
-    S = similar(Array{eltype(A)}, inds)
-    fill!(K, 0)
-    fill!(S, zero(eltype(A)))
-    sumfinite!(S, K, A)
-    S./K
-end
-_meanfinite(A::AbstractArray, ::Type, region) = mean(A, dims=region)  # non floating-point
-
-using Base: check_reducedims, reducedim1, safe_tail
-using Base.Broadcast: newindex
-
-"""
-    sumfinite!(S, K, A)
-
-Compute the sum `S` and number of contributing pixels `K` for
-reductions of the array `A` over dimensions. `S` and `K` must have
-identical indices, and either match `A` or have singleton-dimensions for
-the dimensions that are being summed over. Only pixels with finite
-value are included in the tallies of `S` and `K`.
-
-Note that the pixel mean is just S./K.
-"""
-function sumfinite!(S, K, A::AbstractArray{T,N}) where {T,N}
-    check_reducedims(S, A)
-    isempty(A) && return S, K
-    axes(S) == axes(K) || throw(DimensionMismatch("S and K must have identical axes"))
-
-    indsAt, indsSt = safe_tail(axes(A)), safe_tail(axes(S))
-    keep, Idefault = _newindexer(indsSt)
-    if reducedim1(S, A)
-        # keep the accumulators as a local variable when reducing along the first dimension
-        i1 = first(axes1(S))
-        @inbounds for IA in CartesianIndices(indsAt)
-            IS = newindex(IA, keep, Idefault)
-            s, k = S[i1,IS], K[i1,IS]
-            for i in axes(A, 1)
-                tmp = A[i, IA]
-                if isfinite(tmp)
-                    s += tmp
-                    k += 1
-                end
-            end
-            S[i1,IS], K[i1,IS] = s, k
-        end
-    else
-        @inbounds for IA in CartesianIndices(indsAt)
-            IS = newindex(IA, keep, Idefault)
-            for i in axes(A, 1)
-                tmp = A[i, IA]
-                if isfinite(tmp)
-                    S[i, IS] += tmp
-                    K[i, IS] += 1
-                end
-            end
-        end
-    end
-    S, K
-end
-_newindexer(ax) = Base.Broadcast.shapeindexer(ax)
-
 function Statistics.var(A::AbstractArray{C}; kwargs...) where C<:AbstractGray
     imgc = channelview(A)
     base_colorant_type(C)(var(imgc; kwargs...))
@@ -143,88 +72,6 @@ end
 
 entropy(img::AbstractArray{C}; kind=:shannon) where {C<:AbstractGray} = entropy(channelview(img), kind=kind)
 
-"""
-`m = minfinite(A)` calculates the minimum value in `A`, ignoring any values that are not finite (Inf or NaN).
-"""
-function minfinite(A::AbstractArray{T}) where T
-    ret = sentinel_min(T)
-    for a in A
-        ret = minfinite_scalar(a, ret)
-    end
-    ret
-end
-function minfinite(f, A::AbstractArray)
-    ret = sentinel_min(typeof(f(first(A))))
-    for a in A
-        ret = minfinite_scalar(f(a), ret)
-    end
-    ret
-end
-
-"""
-`m = maxfinite(A)` calculates the maximum value in `A`, ignoring any values that are not finite (Inf or NaN).
-"""
-function maxfinite(A::AbstractArray{T}) where T
-    ret = sentinel_max(T)
-    for a in A
-        ret = maxfinite_scalar(a, ret)
-    end
-    ret
-end
-function maxfinite(f, A::AbstractArray)
-    ret = sentinel_max(typeof(f(first(A))))
-    for a in A
-        ret = maxfinite_scalar(f(a), ret)
-    end
-    ret
-end
-
-"""
-`m = maxabsfinite(A)` calculates the maximum absolute value in `A`, ignoring any values that are not finite (Inf or NaN).
-"""
-function maxabsfinite(A::AbstractArray{T}) where T
-    # ColorVectorSpace v0.9 un-defines abs/abs2
-    # https://github.com/JuliaGraphics/ColorVectorSpace.jl/pull/131
-    _abs(a) = mapreducec(abs, +, 0, a)
-    ret = sentinel_min(typeof(_abs(A[1])))
-    for a in A
-        ret = maxfinite_scalar(_abs(a), ret)
-    end
-    ret
-end
-
-minfinite_scalar(a::T, b::T) where {T} = isfinite(a) ? (b < a ? b : a) : b
-maxfinite_scalar(a::T, b::T) where {T} = isfinite(a) ? (b > a ? b : a) : b
-minfinite_scalar(a::T, b::T) where {T<:Union{Integer,FixedPoint}} = b < a ? b : a
-maxfinite_scalar(a::T, b::T) where {T<:Union{Integer,FixedPoint}} = b > a ? b : a
-minfinite_scalar(a, b) = minfinite_scalar(promote(a, b)...)
-maxfinite_scalar(a, b) = maxfinite_scalar(promote(a, b)...)
-
-function minfinite_scalar(c1::C, c2::C) where C<:AbstractRGB
-    C(minfinite_scalar(c1.r, c2.r),
-      minfinite_scalar(c1.g, c2.g),
-      minfinite_scalar(c1.b, c2.b))
-end
-function maxfinite_scalar(c1::C, c2::C) where C<:AbstractRGB
-    C(maxfinite_scalar(c1.r, c2.r),
-      maxfinite_scalar(c1.g, c2.g),
-      maxfinite_scalar(c1.b, c2.b))
-end
-
-sentinel_min(::Type{T}) where {T<:Union{Integer,FixedPoint}} = typemax(T)
-sentinel_max(::Type{T}) where {T<:Union{Integer,FixedPoint}} = typemin(T)
-sentinel_min(::Type{T}) where {T<:AbstractFloat} = convert(T, NaN)
-sentinel_max(::Type{T}) where {T<:AbstractFloat} = convert(T, NaN)
-sentinel_min(::Type{C}) where {C<:AbstractRGB} = _sentinel_min(C, eltype(C))
-_sentinel_min(::Type{C},::Type{T}) where {C<:AbstractRGB,T} = (s = sentinel_min(T); C(s,s,s))
-sentinel_max(::Type{C}) where {C<:AbstractRGB} = _sentinel_max(C, eltype(C))
-_sentinel_max(::Type{C},::Type{T}) where {C<:AbstractRGB,T} = (s = sentinel_max(T); C(s,s,s))
-sentinel_min(::Type{C}) where {C<:AbstractGray} = _sentinel_min(C, eltype(C))
-_sentinel_min(::Type{C},::Type{T}) where {C<:AbstractGray,T} = C(sentinel_min(T))
-sentinel_max(::Type{C}) where {C<:AbstractGray} = _sentinel_max(C, eltype(C))
-_sentinel_max(::Type{C},::Type{T}) where {C<:AbstractGray,T} = C(sentinel_max(T))
-
-
 # FIXME: replace with IntegralImage
 # average filter
 """
@@ -269,7 +116,7 @@ macro test_approx_eq_sigma_eps(A, B, sigma, eps)
         kern = KernelFactors.IIRGaussian($(esc(sigma)))
         Af = imfilter($(esc(A)), kern, NA())
         Bf = imfilter($(esc(B)), kern, NA())
-        diffscale = max(maxabsfinite($(esc(A))), maxabsfinite($(esc(B))))
+        diffscale = max(_abs(maximum_finite(abs, $(esc(A)))), _abs(maximum_finite(abs, $(esc(B)))))
         d = sad(Af, Bf)
         if d > length(Af)*diffscale*($(esc(eps)))
             error("Arrays A and B differ")
@@ -305,7 +152,7 @@ function test_approx_eq_sigma_eps(A::AbstractArray, B::AbstractArray,
     kern = KernelFactors.IIRGaussian(sigma)
     Af = imfilter(A, kern, NA())
     Bf = imfilter(B, kern, NA())
-    diffscale = max(maxabsfinite(A), maxabsfinite(B))
+    diffscale = max(_abs(maximum_finite(abs, A)), _abs(maximum_finite(abs, B)))
     d = sad(Af, Bf)
     diffpct = d / (length(Af) * diffscale)
     if diffpct > eps
@@ -313,6 +160,11 @@ function test_approx_eq_sigma_eps(A::AbstractArray, B::AbstractArray,
     end
     diffpct
 end
+
+# This should be removed when upstream ImageBase is updated
+# In ImageBase v0.1.3: `maxabsfinite` returns a RGB instead of a Number
+_abs(c::CT) where CT<:Color = mapreducec(abs, +, zero(eltype(CT)), c)
+_abs(c::Number) = abs(c)
 
 """
 BlobLoG stores information about the location of peaks as discovered by `blob_LoG`.

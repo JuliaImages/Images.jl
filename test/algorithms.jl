@@ -76,45 +76,14 @@ using Test, Suppressor
         @test all([entropy(img3, kind=kind) for kind in [:shannon,:nat,:hartley]] .≥ 0)
     end
 
-    @testset "Reductions" begin
-        A = rand(5,5,3)
-        img = colorview(RGB, PermutedDimsArray(A, (3,1,2)))
-        s12 = sum(img, dims=(1,2))
-        @test eltype(s12) <: RGB
-        A = [NaN, 1, 2, 3]
-        @test meanfinite(A, 1) ≈ [2]
-        A = [NaN 1 2 3;
-             NaN 6 5 4]
-        mf = meanfinite(A, 1)
-        @test isnan(mf[1])
-        @test mf[1,2:end] ≈ [3.5,3.5,3.5]
-        @test meanfinite(A, 2) ≈ reshape([2, 5], 2, 1)
-        @test meanfinite(A, (1,2)) ≈ [3.5]
-        @test minfinite(A) == 1
-        @test maxfinite(A) == 6
-        @test maxabsfinite(A) == 6
-        A = rand(10:20, 5, 5)
-        @test minfinite(A) == minimum(A)
-        @test maxfinite(A) == maximum(A)
-        A = reinterpret(N0f8, rand(0x00:0xff, 5, 5))
-        @test minfinite(A) == minimum(A)
-        @test maxfinite(A) == maximum(A)
-        A = rand(Float32,3,5,5)
-        img = colorview(RGB, A)
-        dc = meanfinite(img, 1)-reshape(reinterpretc(RGB{Float32}, mean(A, dims=2)), (1,5))
-        _abs(x::Colorant) = mapreducec(abs, +, 0, x)
-        @test maximum(map(_abs, dc)) < 1e-6
-        dc = minfinite(img)-RGB{Float32}(minimum(A, dims=(2,3))...)
-        @test _abs(dc) < 1e-6
-        dc = maxfinite(img)-RGB{Float32}(maximum(A, dims=(2,3))...)
-        @test _abs(dc) < 1e-6
 
+    @testset "Reductions" begin
         a = rand(15,15)
         @test_throws ErrorException (@test_approx_eq_sigma_eps a rand(13,15) [1,1] 0.01)
         @test_throws ErrorException (@test_approx_eq_sigma_eps a rand(15,15) [1,1] 0.01)
         @test (@test_approx_eq_sigma_eps a a [1,1] 0.01) == nothing
-        @test (@test_approx_eq_sigma_eps a a+0.01*rand(Float64,size(a)) [1,1] 0.01) == nothing
-        @test_throws ErrorException (@test_approx_eq_sigma_eps a a+0.5*rand(Float64,size(a)) [1,1] 0.01)
+        @test (@test_approx_eq_sigma_eps a a+0.01*rand(eltype(a),size(a)) [1,1] 0.01) == nothing
+        @test_throws ErrorException (@test_approx_eq_sigma_eps a a+0.5*rand(eltype(a),size(a)) [1,1] 0.01)
         a = colorview(RGB, rand(3,15,15))
         @test (@test_approx_eq_sigma_eps a a [1,1] 0.01) == nothing
         @test_throws ErrorException (@test_approx_eq_sigma_eps a colorview(RGB, rand(3,15,15)) [1,1] 0.01)
@@ -123,8 +92,8 @@ using Test, Suppressor
         @test_throws ErrorException Images.test_approx_eq_sigma_eps(a, rand(13,15), [1,1], 0.01)
         @test_throws ErrorException Images.test_approx_eq_sigma_eps(a, rand(15,15), [1,1], 0.01)
         @test Images.test_approx_eq_sigma_eps(a, a, [1,1], 0.01) == 0.0
-        @test Images.test_approx_eq_sigma_eps(a, a+0.01*rand(Float64,size(a)), [1,1], 0.01) > 0.0
-        @test_throws ErrorException Images.test_approx_eq_sigma_eps(a, a+0.5*rand(Float64,size(a)), [1,1], 0.01)
+        @test Images.test_approx_eq_sigma_eps(a, a+0.01*rand(eltype(a),size(a)), [1,1], 0.01) > 0.0
+        @test_throws ErrorException Images.test_approx_eq_sigma_eps(a, a+0.5*rand(eltype(a),size(a)), [1,1], 0.01)
         a = colorview(RGB, rand(3,15,15))
         @test Images.test_approx_eq_sigma_eps(a, a, [1,1], 0.01) == 0.0
         @test_throws ErrorException Images.test_approx_eq_sigma_eps(a, colorview(RGB, rand(3,15,15)), [1,1], 0.01)
