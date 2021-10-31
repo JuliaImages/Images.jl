@@ -1,4 +1,3 @@
-using Base: axes1, tail
 using OffsetArrays
 import Statistics
 

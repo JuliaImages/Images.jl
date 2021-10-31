@@ -224,11 +224,11 @@ struct CoordOffset
 end
 
 CoordOffset(x::Float64) = ((frac,i) = modf(x); CoordOffset(sign(frac), round(Int, i), abs(frac)))
-(-)(off::CoordOffset) = CoordOffset(-off.s,-off.i, off.f)
-(*)(x::Number, off::CoordOffset) = x*(off.i + off.s*off.f)
-(*)(off::CoordOffset, x::Number) = x*(off.i + off.s*off.f)
-(+)(x::Number, off::CoordOffset) = x + off.i + off.s*off.f
-(+)(off::CoordOffset, x::Number) = x + off.i + off.s*off.f
+Base.:(-)(off::CoordOffset) = CoordOffset(-off.s,-off.i, off.f)
+Base.:(*)(x::Number, off::CoordOffset) = x*(off.i + off.s*off.f)
+Base.:(*)(off::CoordOffset, x::Number) = x*(off.i + off.s*off.f)
+Base.:(+)(x::Number, off::CoordOffset) = x + off.i + off.s*off.f
+Base.:(+)(off::CoordOffset, x::Number) = x + off.i + off.s*off.f
 
 # Precalculate x and y offsets relative to centre pixel for each orientation angle
 function _calc_discrete_offsets(θ, radius)

@@ -1,41 +1,15 @@
 module Images
 
-import Base.Iterators.take
-import Base: +, -, *
-import Base: abs, atan, clamp, convert, copy, copy!, delete!,
-             eltype, get, getindex, haskey, hypot,
-             imag, length, map, map!, maximum,
-             minimum, ndims, one, parent, permutedims, real, reinterpret,
-             reshape, resize!,
-             setindex!, show, similar, size, sqrt,
-             strides, sum, write, zero
-
-export float32, float64
 export HomogeneousPoint
 
-using Base: depwarn
-using Base.Order: Ordering, ForwardOrdering, ReverseOrdering
-
 using StaticArrays
-using Base64: Base64EncodePipe
-
-# CHECKME: use this or follow deprecation and substitute?
-using SparseArrays: findnz
-
-# "deprecated imports" are below
 
 using Reexport
 @reexport using ImageCore
 @reexport using ImageBase
-if isdefined(ImageCore, :permuteddimsview)
-    export permuteddimsview
-end
 
-using FileIO
-export load, save
-import .Colors: Fractional
-import Graphics
-import Graphics: width, height, Point
+@reexport using FileIO: load, save
+import Graphics # TODO: eliminate this direct dependency
 using StatsBase  # TODO: eliminate this dependency
 using IndirectArrays, ImageCore.MappedArrays
 
@@ -43,7 +17,7 @@ using IndirectArrays, ImageCore.MappedArrays
 const NumberLike = Union{Number,AbstractGray}
 const RealLike = Union{Real,AbstractGray}
 
-const is_little_endian = ENDIAN_BOM == 0x04030201
+const is_little_endian = ENDIAN_BOM == 0x04030201 # CHECKME(johnnychen94): is this still used?
 
 @reexport using ImageTransformations
 @reexport using ImageAxes
@@ -66,6 +40,13 @@ import ImageContrastAdjustment: build_histogram, adjust_histogram, adjust_histog
 
 using TiledIteration: EdgeIterator
 
+# TODO(johnnychen94): (v1.0.0) remove these entry points
+# Entry points that isn't used by JuliaImages at all (except for deprecations)
+# They used to be accessible by, e.g., `Images.metadata`
+import .Colors: Fractional
+import FileIO: metadata
+import Graphics: Point
+
 include("compat.jl")
 include("misc.jl")
 include("labeledarrays.jl")
@@ -76,32 +57,11 @@ include("edge.jl")
 
 export
     # types
-    BlobLoG,
     ColorizedArray,
     Percentile,
 
     # macros
     @test_approx_eq_sigma_eps,
-
-    # core functions
-    assert_timedim_last,
-    colordim,
-    coords_spatial,
-    copyproperties,
-    data,
-    height,
-    nimages,
-    pixelspacing,
-    properties,
-    sdims,
-    size_spatial,
-    shareproperties,
-    spacedirections,
-    spatialorder,
-    spatialproperties,
-    timedim,
-    width,
-    widthheight,
 
     # algorithms
     imcorner,
@@ -114,9 +74,6 @@ export
     meancovs,
     gammacovs,
     imedge,  # TODO: deprecate?
-    blob_LoG,
-    findlocalmaxima,
-    findlocalminima,
     imgaussiannoise,
     otsu_threshold,
     yen_threshold,
@@ -135,7 +92,6 @@ export
     magnitude_phase,
     entropy,
     orientation,
-    padarray,
     phase,
     thin_edges,
     thin_edges_subpix,
@@ -146,9 +102,6 @@ export
 
     # phantoms
     shepp_logan
-
-_length(A::AbstractArray) = length(eachindex(A))
-_length(A) = length(A)
 
 """
 Constructors, conversions, and traits:
