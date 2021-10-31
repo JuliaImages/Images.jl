@@ -216,7 +216,7 @@ edges, counts  = imhist(r,256);
 # References
 [1] E. Herrholz, "Parsimonious Histograms," Ph.D. dissertation, Inst. of Math. and Comp. Sci., University of Greifswald, Greifswald, Germany, 2011.
 """
-function imhist(img::AbstractArray, nbins::Integer, minval::RealLike, maxval::RealLike)
+function imhist(img::AbstractArray, nbins::Integer, minval::NumberLike, maxval::NumberLike)
     Base.depwarn("`imhist` will be removed in a future release, please use `build_histogram` instead.", :imhist)
     edges = StatsBase.histrange([Float64(minval), Float64(maxval)], nbins, :left)
     imhist(img, edges)
@@ -355,7 +355,7 @@ imshow(imgeq)
 See also: [histmatch](@ref),[clahe](@ref), [imhist](@ref) and  [adjust_gamma](@ref).
 
 """
-function histeq(img::AbstractArray, nbins::Integer, minval::RealLike, maxval::RealLike)
+function histeq(img::AbstractArray, nbins::Integer, minval::NumberLike, maxval::NumberLike)
     Base.depwarn("`histeq` will be removed in a future release, please use `adjust_histogram(img, Equalization())` instead.", :histeq)
     bins, histogram = imhist(img, nbins, minval, maxval)
     cdf = cumsum(histogram[2:end-1])
@@ -375,7 +375,7 @@ function histeq(img::AbstractArray, nbins::Integer)
     histeq(img, nbins, zero(T), oneunit(T))
 end
 
-function histeq(img::ImageMeta, nbins::Integer, minval::RealLike, maxval::RealLike)
+function histeq(img::ImageMeta, nbins::Integer, minval::NumberLike, maxval::NumberLike)
     Base.depwarn("`histeq` will be removed in a future release, please use `adjust_histogram(img, Equalization())` instead.", :histeq)
     newimg = histeq(arraydata(img), nbins, minval, maxval)
     shareproperties(img, newimg)

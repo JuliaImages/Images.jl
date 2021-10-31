@@ -227,7 +227,7 @@ function kr(x::Real, y::Real, xx::Real, xy::Real, yy::Real)
     kr(xp, yp, xxp, xyp, yyp)
 end
 
-kr(x::RealLike, y::RealLike, xx::RealLike, xy::RealLike, yy::RealLike) =
+kr(x::NumberLike, y::NumberLike, xx::NumberLike, xy::NumberLike, yy::NumberLike) =
     kr(gray(x), gray(y), gray(xx), gray(xy), gray(yy))
 
 function kr(x::AbstractRGB, y::AbstractRGB, xx::AbstractRGB, xy::AbstractRGB, yy::AbstractRGB)

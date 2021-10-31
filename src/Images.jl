@@ -6,6 +6,7 @@ using StaticArrays
 
 using Reexport
 @reexport using ImageCore
+using ImageCore: NumberLike
 using ImageCore.OffsetArrays
 @reexport using ImageBase
 
@@ -13,10 +14,6 @@ using ImageCore.OffsetArrays
 import Graphics # TODO: eliminate this direct dependency
 using StatsBase  # TODO: eliminate this dependency
 using IndirectArrays, ImageCore.MappedArrays
-
-# TODO: can we get rid of these definitions?
-const NumberLike = Union{Number,AbstractGray}
-const RealLike = Union{Real,AbstractGray}
 
 const is_little_endian = ENDIAN_BOM == 0x04030201 # CHECKME(johnnychen94): is this still used?
 
