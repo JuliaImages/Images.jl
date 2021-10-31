@@ -1,4 +1,3 @@
-using OffsetArrays
 import Statistics
 
 # Entropy for grayscale (intensity) images

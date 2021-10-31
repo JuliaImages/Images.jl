@@ -1,8 +1,8 @@
 using Images
-using OffsetArrays
 using Statistics
 using Test
 using ImageBase
+using ImageBase.OffsetArrays
 using Suppressor
 
 @testset "Images" begin

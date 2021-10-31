@@ -1,4 +1,4 @@
-using Images, OffsetArrays, TestImages
+using Images, TestImages
 using Statistics, Random, LinearAlgebra, FFTW
 using Test, Suppressor
 using ImageBase.FiniteDiff: fdiff
