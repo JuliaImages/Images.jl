@@ -16,18 +16,6 @@ using ImageBase.FiniteDiff: fdiff
         end
     end
 
-    Random.seed!(1234)
-
-    @testset "Entropy" begin
-        img = rand(1:10,10,10)
-        img2 = rand(1:2,10,10)
-        img3 = colorview(Gray, normedview(rand(UInt8,10,10)))
-        @test all([entropy(img, kind=kind) for kind in [:shannon,:nat,:hartley]] .≥ 0)
-        @test all([entropy(img2, kind=kind) for kind in [:shannon,:nat,:hartley]] .≥ 0)
-        @test all([entropy(img3, kind=kind) for kind in [:shannon,:nat,:hartley]] .≥ 0)
-    end
-
-
     @testset "Reductions" begin
         a = rand(15,15)
         @test_throws ErrorException (@test_approx_eq_sigma_eps a rand(13,15) [1,1] 0.01)

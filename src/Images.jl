@@ -12,7 +12,7 @@ using ImageCore.OffsetArrays
 
 @reexport using FileIO: load, save
 import Graphics # TODO: eliminate this direct dependency
-using StatsBase  # TODO: eliminate this dependency
+import StatsBase  # TODO: eliminate this dependency
 using IndirectArrays, ImageCore.MappedArrays
 
 const is_little_endian = ENDIAN_BOM == 0x04030201 # CHECKME(johnnychen94): is this still used?
@@ -88,7 +88,6 @@ export
 
     magnitude,
     magnitude_phase,
-    entropy,
     orientation,
     phase,
     thin_edges,
