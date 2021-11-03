@@ -226,7 +226,7 @@ function imhist(img::AbstractArray, edges::AbstractRange)
     Base.depwarn("`imhist` will be removed in a future release, please use `build_histogram` instead.", :imhist)
     histogram = zeros(Int, length(edges) + 1)
     o = Base.Order.Forward
-    G = graytype(eltype(img))
+    G = _graytype(eltype(img))
     for v in img
         val = real(convert(G, v))
         if val >= edges[end]
@@ -371,7 +371,7 @@ end
 
 function histeq(img::AbstractArray, nbins::Integer)
     Base.depwarn("`histeq` will be removed in a future release, please use `adjust_histogram(img, Equalization())` instead.", :histeq)
-    T = graytype(eltype(img))
+    T = _graytype(eltype(img))
     histeq(img, nbins, zero(T), oneunit(T))
 end
 
@@ -631,7 +631,7 @@ _hist_match_pixel(pixel::T, bins, lookup_table) where {T<:TransparentColor} = ba
 
 function histmatch(img::AbstractArray{T}, oimg::AbstractArray, nbins::Integer = 400) where T<:Colorant
     Base.depwarn("`histmatch` will be removed in a future release, please use `adjust_histogram(img, Matching())` instead.", :histmatch)
-    el_gray = graytype(eltype(img))
+    el_gray = _graytype(eltype(img))
     oedges, ohist = imhist(oimg, nbins, zero(el_gray), oneunit(el_gray))
     _histmatch(img, oedges, ohist)
 end
@@ -657,6 +657,9 @@ function _histmatch(img::AbstractArray, oedges::AbstractRange, ohist::AbstractAr
     hist_matched_img
 end
 
+_graytype(::Type{T}) where {T<:Number} = T
+_graytype(::Type{C}) where {C<:AbstractGray} = C
+_graytype(::Type{C}) where {C<:Colorant} = Gray{eltype(C)}
 
 """
 ```
@@ -839,7 +842,7 @@ function _clahe(img::AbstractArray{C, 2}, nbins::Integer = 100, xblocks::Integer
     blockw = Int(w / xblocks)
     blockh = Int(h / yblocks)
     temp_cdf = Array{Float64, 1}[]
-    T = graytype(eltype(img))
+    T = _graytype(eltype(img))
     edges = StatsBase.histrange([Float64(zero(T)), Float64(oneunit(T))], nbins, :left)
 
     for i in xb

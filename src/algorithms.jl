@@ -1,12 +1,3 @@
-accum(::Type{T}) where {T<:Integer} = Int
-accum(::Type{Float32})    = Float32
-accum(::Type{T}) where {T<:Real} = Float64
-accum(::Type{C}) where {C<:Colorant} = base_colorant_type(C){accum(eltype(C))}
-
-graytype(::Type{T}) where {T<:Number} = T
-graytype(::Type{C}) where {C<:AbstractGray} = C
-graytype(::Type{C}) where {C<:Colorant} = Gray{eltype(C)}
-
 # Simple image difference testing
 macro test_approx_eq_sigma_eps(A, B, sigma, eps)
     quote
