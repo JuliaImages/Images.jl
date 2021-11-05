@@ -26,9 +26,8 @@ The following list summarizes some note-worthy changes for things that used to l
 
 - ![BREAKING][badge-breaking] for `RGB` input, `maximum_finite` and the deprecated `maxabsfinite`
   now returns RGB instead of numerical scalar value. ([Images#971])
-- ![Deprecation][badge-deprecation] deprecate `backdiffx`, `backdiffy`, `forwarddiffx`, ([Images#971])
-  `forwarddiffy` in favor of the generic and GPU-ready `fdiff` from `ImageBase.FiniteDiff`.
-  ([ImageBase#11])
+- ![Deprecation][badge-deprecation] deprecate `backdiffx`, `backdiffy`, `forwarddiffx`, `forwarddiffy` in favor of the
+  generic and GPU-ready `fdiff` from `ImageBase.FiniteDiff`. ([ImageBase#11], [Images#971])
 - ![Deprecation][badge-deprecation] deprecate non-exported `div` in favor of `fdiv` from `ImageBase` ([Images#971])
 - ![Deprecation][badge-deprecation] deprecate `minfinite`/`maxfinite`/`maxabsfinite` in favor of
   `minimum_finite` and `maximum_finite`. ([Images#971])
