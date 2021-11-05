@@ -27,6 +27,7 @@ const is_little_endian = ENDIAN_BOM == 0x04030201 # CHECKME(johnnychen94): is th
 @reexport using ImageQualityIndexes
 @reexport using IntegralArrays
 @reexport using IntegralArrays.IntervalSets.EllipsisNotation
+@reexport using ImageSegmentation
 
 # Non-exported symbol bindings to ImageShow so that we can use, e.g., `Images.gif`
 import ImageShow: play, explore, gif
