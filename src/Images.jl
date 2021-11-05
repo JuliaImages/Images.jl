@@ -105,14 +105,14 @@ Images.jl is an "umbrella package" that exports a set of packages which are usef
 common image processing tasks. Most of these packages are hosted at JuliaImages,
 JuliaArrays, JuliaIO, JuliaGraphics, and JuliaMath.
 
-The purpose of this package is to have an out-of-box experiences for most of the stable
-functionalities. This means when you do `using Images`, you load a lot of packages that
-would otherwise be imported by lengthy using command, e.g., `using ImageCore, ImageShow,
-ImageTransformations, FileIO`. If you care about package loading time, you should probably
-use those small packages and try to composite your own toolbox.
+Images provides an out-of-box toolkit for image processing. This means when you do `using
+Images`, you load a lot of packages that might require multiple smaller packages, e.g.,
+`using ImageCore, ImageShow, ImageTransformations, FileIO`. However, if you want to reduce
+package, you should probably use those small packages for a narrower toolbox customized to
+your specific needs.
 
-The documentation for the JuliaImages ecosystem can be found in https://juliaimages.org, yet
-there still exist some package-specific documentation. For instance, the documentation for
+The documentation for the JuliaImages ecosystem can be found at https://juliaimages.org.
+Some dependencies have their own documentation. For instance, the documentation for
 Colors.jl is hosted in https://juliagraphics.github.io/Colors.jl even though it is included
 and exported by Images.jl.
 """
