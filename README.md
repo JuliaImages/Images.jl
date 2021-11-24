@@ -35,12 +35,14 @@ All participants are expected to abide by the [Julia Community Standards](https:
 
 The codebase and dependency of Images toolbox is delibrately maintained to support all Julia minor
 versions since the latest long-term-support(LTS) Julia version, thus you can expect it to work on
-Julia >= v1.0. Note that this is only true for the latest Images version, and there's no plan to
-provide compatibility support for old Images versions; we don't have Images LTS version. Also, for
-the best experience, we recommend you to use the latest stable Julia version even if it is not LTS
-version.
+Julia >= v1.6. Note that this is only true for the latest Images version, and currently we do not
+have Images LTS version. For the best experience, we recommend you to use the latest stable Julia
+version even if it is not LTS version.
 
-<!-- Images v0.23.z is the last minor version that is compatible to Julia < v1.3. It will still be under maintenance, but only with minimal efforts. No forward compatibility guarantee will be made, which means that you might see APIs and behaviors of Images v0.23 are quite different from that of the latest Images version. For new Julia users, we recommend you to use the latest stable Julia version even if it is not long-term-support(LTS) version. -->
+Images v0.24 is the last minor version that is compatible to the Julia 1.0. It will still be under
+maintenance, but only with minimal efforts from the community. No forward compatibility guarantee
+will be made, which means that you might see APIs and behaviors of Images v0.24 are quite different
+from that of the latest Images version.
 
 ## Credits
 

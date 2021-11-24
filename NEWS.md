@@ -1,3 +1,55 @@
+# Images Release Notes
+
+For the full changes, please check the git history and the [release page](https://github.com/JuliaImages/Images.jl/releases)
+
+# v0.25
+
+This release introduces a few major changes that everyone should be aware of:
+
+- drops compatibility to Julia 1.0. Julia at least 1.3 is required.
+- drops compatibility to ImageCore 0.8. ImageCore at least 0.9.3 is required.
+- revisited RGB-related operations to provide non-ambiguious implementation. See also the "abs and
+  abs2" section in the [ColorVectorSpace README][ColorVectorSpace-v09-readme-abs].
+- revisits and moves a lot of legacy codes in `src/algorthms.jl` of Images to sub-packages, e.g.,
+  ImageBase, ImageFiltering, and ImageMorphology.
+- for a large number of legacy functions, positional arguments are deprecated in favor of their
+  keyword alternatives.
+
+Because there are a lot of deprecations introduced in this release, we recommend people to run under
+`julia --depwarn=yes` mode and fixes the deprecations.
+
+There are also a lot of compatibility changes and probably would make this version incompatible with
+other ecosystem. Check the result of `git diff v0.24.1 v0.25.0 -- Project.toml` for more
+information.
+
+The following list summarizes some note-worthy changes for things that used to live in Images:
+
+- ![BREAKING][badge-breaking] for `RGB` input, `maximum_finite` and the deprecated `maxabsfinite`
+  now returns RGB instead of numerical scalar value. ([Images#971])
+- ![Deprecation][badge-deprecation] deprecate `backdiffx`, `backdiffy`, `forwarddiffx`, `forwarddiffy` in favor of the
+  generic and GPU-ready `fdiff` from `ImageBase.FiniteDiff`. ([ImageBase#11], [Images#971])
+- ![Deprecation][badge-deprecation] deprecate non-exported `div` in favor of `fdiv` from `ImageBase` ([Images#971])
+- ![Deprecation][badge-deprecation] deprecate `minfinite`/`maxfinite`/`maxabsfinite` in favor of
+  `minimum_finite` and `maximum_finite`. ([Images#971])
+- ![Deprecation][badge-deprecation] For RGB types `std` and `var` are deprecated in favor of
+  `stdmult` and `varmult`. For other colorful types (e.g., `HSV`), `std` and `var` support for
+  them will be removed in future releases with no substitutes. ([Images#971])
+- ![Deprecation][badge-deprecation] `bilinear_interpolation` is deprecated in favor of `imresize`
+  from `ImageTransformations`. ([Images#971])
+- ![Deprecation][badge-deprecation] `imROF` is deprecated in favor of the generic and GPU-ready
+  `solve_ROF_PD` from `ImageFiltering.Models` ([ImageFiltering#233], [Images#971])
+- ![Deprecation][badge-deprecation] deprecate `ColorizedArray` in favor of `mappedarray` from MappedArrays. ([Images#927])
+- ![Deprecation][badge-deprecation] deprecate `imaverage` in favor of `Kernel.box` from ImageFiltering. ([Images#971])
+- ![Deprecation][badge-deprecation] deprecate `imlaplacian` in favor of `imlaplacian2D` from ImageFiltering. ([Images#971])
+- ![Deprecation][badge-deprecation] deprecate `integral_image` and `boxdiff` in favor of IntegralArrays. ([Images#971])
+
+[Images#927]: https://github.com/JuliaImages/Images.jl/pull/927
+[Images#971]: https://github.com/JuliaImages/Images.jl/pull/971
+[ImageBase#11]: https://github.com/JuliaImages/ImageBase.jl/pull/11
+[ImageBase#22]: https://github.com/JuliaImages/ImageBase.jl/pull/22
+[ImageFiltering#233]: https://github.com/JuliaImages/ImageFiltering.jl/pull/233
+[ColorVectorSpace-v09-readme-abs]: https://github.com/JuliaGraphics/ColorVectorSpace.jl/blob/fc53c5504c6917ea02bb05308c372451068dcada/README.md#abs-and-abs2
+
 # v0.14
 
 - add `OffsetArray` to `REQUIRE`
@@ -178,3 +230,28 @@ Changes in related packages:
 # Older versions
 
 For earlier history, please see the git revision history.
+
+<!-- common URLs -->
+
+[ImageBase]: https://github.com/JuliaImages/ImageBase.jl
+
+[badge-breaking]: https://img.shields.io/badge/BREAKING-red.svg
+[badge-deprecation]: https://img.shields.io/badge/deprecation-orange.svg
+[badge-feature]: https://img.shields.io/badge/feature-green.svg
+[badge-enhancement]: https://img.shields.io/badge/enhancement-blue.svg
+[badge-bugfix]: https://img.shields.io/badge/bugfix-purple.svg
+[badge-security]: https://img.shields.io/badge/security-black.svg
+[badge-experimental]: https://img.shields.io/badge/experimental-lightgrey.svg
+[badge-maintenance]: https://img.shields.io/badge/maintenance-gray.svg
+
+<!--
+# Badges
+![BREAKING][badge-breaking]
+![Deprecation][badge-deprecation]
+![Feature][badge-feature]
+![Enhancement][badge-enhancement]
+![Bugfix][badge-bugfix]
+![Security][badge-security]
+![Experimental][badge-experimental]
+![Maintenance][badge-maintenance]
+-->
