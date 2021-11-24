@@ -102,33 +102,20 @@ export
     shepp_logan
 
 """
-Constructors, conversions, and traits:
+Images.jl is an "umbrella package" that exports a set of packages which are useful for
+common image processing tasks. Most of these packages are hosted at JuliaImages,
+JuliaArrays, JuliaIO, JuliaGraphics, and JuliaMath.
 
-    - Construction: use constructors of specialized packages, e.g., `AxisArray`, `ImageMeta`, etc.
-    - "Conversion": `colorview`, `channelview`, `rawview`, `normedview`, `permuteddimsview`
-    - Traits: `pixelspacing`, `sdims`, `timeaxis`, `timedim`, `spacedirections`
+Images provides an out-of-box toolkit for image processing. This means when you do `using
+Images`, you load a lot of packages that might require multiple smaller packages, e.g.,
+`using ImageCore, ImageShow, ImageTransformations, FileIO`. However, if you want to reduce
+package, you should probably use those small packages for a narrower toolbox customized to
+your specific needs.
 
-Contrast/coloration:
-
-    - `clamp01`, `clamp01nan`, `scaleminmax`, `colorsigned`, `scalesigned`
-
-Algorithms:
-
-    - Reductions: `maxfinite`, `maxabsfinite`, `minfinite`, `meanfinite`, `IntegralArray`, `gaussian_pyramid`
-    - Resizing: `restrict`, `imresize` (not yet exported)
-    - Filtering: `imfilter`, `imfilter!`, `mapwindow`, `imROF`, `padarray`
-    - Filtering kernels: `Kernel.` or `KernelFactors.`, followed by `ando[345]`, `guassian`, `Laplacian', `DoG`, `prewitt`, `sobel`, etc.
-    - Exposure : `imhist`, `histeq`, `adjust_gamma`, `histmatch`, `imadjustintensity`, `imstretch`, `imcomplement`, `clahe`, `cliphist`
-    - Gradients: `backdiffx`, `backdiffy`, `forwarddiffx`, `forwarddiffy`, `imgradients`
-    - Edge detection: `imedge`, `imgradients`, `thin_edges`, `magnitude`, `phase`, `magnitudephase`, `orientation`, `canny`
-    - Corner detection: `imcorner`,`imcorner_subpixel`, `harris`, `shi_tomasi`, `kitchen_rosenfeld`, `meancovs`, `gammacovs`, `fastcorners`
-    - Blob detection: `blob_LoG`, `findlocalmaxima`, `findlocalminima`
-    - Morphological operations: `dilate`, `erode`, `closing`, `opening`, `tophat`, `bothat`, `morphogradient`, `morpholaplace`, `feature_transform`, `distance_transform`, `convexhull`
-    - Connected components: `label_components`, `component_boxes`, `component_lengths`, `component_indices`, `component_subscripts`, `component_centroids`
-
-Test images and phantoms (see also TestImages.jl):
-
-    - `shepp_logan`
+The documentation for the JuliaImages ecosystem can be found at https://juliaimages.org.
+Some dependencies have their own documentation. For instance, the documentation for
+Colors.jl is hosted in https://juliagraphics.github.io/Colors.jl even though it is included
+and exported by Images.jl.
 """
 Images
 
