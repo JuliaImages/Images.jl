@@ -5,3 +5,9 @@ if VERSION <= v"1.0.5"
 else
     _oneunit = Base.oneunit
 end
+
+if VERSION >= v"1.5.2"
+    forced_depwarn(msg, funcsym) = Base.depwarn(msg, funcsym; force=true)
+else
+    forced_depwarn(msg, funcsym) = Base.depwarn(msg, funcsym)
+end

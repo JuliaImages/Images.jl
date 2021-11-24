@@ -216,7 +216,7 @@ edges, counts  = imhist(r,256);
 # References
 [1] E. Herrholz, "Parsimonious Histograms," Ph.D. dissertation, Inst. of Math. and Comp. Sci., University of Greifswald, Greifswald, Germany, 2011.
 """
-function imhist(img::AbstractArray, nbins::Integer, minval::RealLike, maxval::RealLike)
+function imhist(img::AbstractArray, nbins::Integer, minval::NumberLike, maxval::NumberLike)
     Base.depwarn("`imhist` will be removed in a future release, please use `build_histogram` instead.", :imhist)
     edges = StatsBase.histrange([Float64(minval), Float64(maxval)], nbins, :left)
     imhist(img, edges)
@@ -226,7 +226,7 @@ function imhist(img::AbstractArray, edges::AbstractRange)
     Base.depwarn("`imhist` will be removed in a future release, please use `build_histogram` instead.", :imhist)
     histogram = zeros(Int, length(edges) + 1)
     o = Base.Order.Forward
-    G = graytype(eltype(img))
+    G = _graytype(eltype(img))
     for v in img
         val = real(convert(G, v))
         if val >= edges[end]
@@ -355,7 +355,7 @@ imshow(imgeq)
 See also: [histmatch](@ref),[clahe](@ref), [imhist](@ref) and  [adjust_gamma](@ref).
 
 """
-function histeq(img::AbstractArray, nbins::Integer, minval::RealLike, maxval::RealLike)
+function histeq(img::AbstractArray, nbins::Integer, minval::NumberLike, maxval::NumberLike)
     Base.depwarn("`histeq` will be removed in a future release, please use `adjust_histogram(img, Equalization())` instead.", :histeq)
     bins, histogram = imhist(img, nbins, minval, maxval)
     cdf = cumsum(histogram[2:end-1])
@@ -371,11 +371,11 @@ end
 
 function histeq(img::AbstractArray, nbins::Integer)
     Base.depwarn("`histeq` will be removed in a future release, please use `adjust_histogram(img, Equalization())` instead.", :histeq)
-    T = graytype(eltype(img))
+    T = _graytype(eltype(img))
     histeq(img, nbins, zero(T), oneunit(T))
 end
 
-function histeq(img::ImageMeta, nbins::Integer, minval::RealLike, maxval::RealLike)
+function histeq(img::ImageMeta, nbins::Integer, minval::NumberLike, maxval::NumberLike)
     Base.depwarn("`histeq` will be removed in a future release, please use `adjust_histogram(img, Equalization())` instead.", :histeq)
     newimg = histeq(arraydata(img), nbins, minval, maxval)
     shareproperties(img, newimg)
@@ -631,7 +631,7 @@ _hist_match_pixel(pixel::T, bins, lookup_table) where {T<:TransparentColor} = ba
 
 function histmatch(img::AbstractArray{T}, oimg::AbstractArray, nbins::Integer = 400) where T<:Colorant
     Base.depwarn("`histmatch` will be removed in a future release, please use `adjust_histogram(img, Matching())` instead.", :histmatch)
-    el_gray = graytype(eltype(img))
+    el_gray = _graytype(eltype(img))
     oedges, ohist = imhist(oimg, nbins, zero(el_gray), oneunit(el_gray))
     _histmatch(img, oedges, ohist)
 end
@@ -657,6 +657,9 @@ function _histmatch(img::AbstractArray, oedges::AbstractRange, ohist::AbstractAr
     hist_matched_img
 end
 
+_graytype(::Type{T}) where {T<:Number} = T
+_graytype(::Type{C}) where {C<:AbstractGray} = C
+_graytype(::Type{C}) where {C<:Colorant} = Gray{eltype(C)}
 
 """
 ```
@@ -839,7 +842,7 @@ function _clahe(img::AbstractArray{C, 2}, nbins::Integer = 100, xblocks::Integer
     blockw = Int(w / xblocks)
     blockh = Int(h / yblocks)
     temp_cdf = Array{Float64, 1}[]
-    T = graytype(eltype(img))
+    T = _graytype(eltype(img))
     edges = StatsBase.histrange([Float64(zero(T)), Float64(oneunit(T))], nbins, :left)
 
     for i in xb
@@ -1068,3 +1071,84 @@ function shepp_logan(M,N; highContrast=true)
 end
 
 shepp_logan(N;highContrast=true) = shepp_logan(N,N;highContrast=highContrast)
+
+# `complement` is now moved to ColorVectorSpace but we still want to keep backward compatibility
+# until Images 1.0
+function ColorVectorSpace.complement(x::AbstractArray)
+    Base.depwarn("`complement(img)` is deprecated, please use the broadcasting version `complement.(img)`", :complement)
+    complement.(x)
+end
+
+@deprecate forwarddiffx(X) ImageBase.FiniteDiff.fdiff(X, dims=2, boundary=:zero)
+@deprecate forwarddiffy(X) ImageBase.FiniteDiff.fdiff(X, dims=1, boundary=:zero)
+@deprecate backdiffx(X) ImageBase.FiniteDiff.fdiff(X, dims=2, rev=true, boundary=:zero)
+@deprecate backdiffy(X) ImageBase.FiniteDiff.fdiff(X, dims=1, rev=true, boundary=:zero)
+@deprecate div(A::AbstractArray{<:Any,3}) ImageBase.FiniteDiff.fdiv(view(A, :, :, 1), view(A, :, :, 2)) false
+@deprecate imROF(img::AbstractMatrix, λ::Number, iterations::Integer) ImageFiltering.Models.solve_ROF_PD(img, λ, iterations)
+
+
+# This is now replaced by ImageTransformations and Interpolations
+using ImageTransformations.Interpolations: BSpline, Linear, interpolate
+function bilinear_interpolation(img::AbstractArray{T,N}, xs::Vararg{<:Number, N}) where {T,N}
+    Base.depwarn("`bilinear_interpolation` is deprecated, please use `warp`, `imresize` from ImageTransformations or `extrapolate`, `interpolate` from Interpolations", :bilinear_interpolation)
+    pad_ax = map(axes(img), xs) do ax, x
+        min(floor(Int, x), first(ax)):max(ceil(Int, x), last(ax))
+    end
+    padded_img = PaddedView(zero(T), img, pad_ax)
+    itp = interpolate(padded_img, BSpline(Linear()))
+    return itp(xs...)
+end
+export bilinear_interpolation
+
+import ImageFiltering: findlocalmaxima, findlocalminima, blob_LoG
+dims2window(img, dims) = ntuple(d -> d ∈ dims ? 3 : 1, ndims(img))
+function find_depwarn(sym, dims, window, edges)
+    Base.depwarn("`$sym(img, $dims, $edges)` is deprecated, please use `$sym(img; window=$window, edges=$edges)`.\nSee the documentation for details about `window`.", sym)
+end
+function findlocalmaxima(img::AbstractArray, region::Union{Tuple{Int,Vararg{Int}},Vector{Int},UnitRange{Int},Int}, edges=true)
+    window = dims2window(img, region)
+    find_depwarn(:findlocalmaxima, region, window, edges)
+    findlocalmaxima(img; window=window, edges=edges)
+end
+function findlocalminima(img::AbstractArray, region::Union{Tuple{Int,Vararg{Int}},Vector{Int},UnitRange{Int},Int}, edges=true)
+    window = dims2window(img, region)
+    find_depwarn(:findlocalminima, region, window, edges)
+    findlocalminima(img; window=window, edges=edges)
+end
+@deprecate blob_LoG(img::AbstractArray{T,N}, σscales::Union{AbstractVector,Tuple},
+                    edges::Union{Bool,Tuple{Vararg{Bool}}}, σshape=ntuple(d->1, Val(N))) where {T,N} blob_LoG(img, σscales; edges=edges, σshape=(σshape...,), rthresh=0)
+@deprecate blob_LoG(img::AbstractArray{T,N}, σscales::Union{AbstractVector,Tuple}, σshape::Union{AbstractVector,NTuple{N,Real}}) where {T,N}  blob_LoG(img, σscales; edges=(true, ntuple(d->false,Val(N))...), σshape=(σshape...,), rthresh=0)
+
+
+import Statistics: std, var
+@deprecate var(A::AbstractArray{C}; kwargs...) where C<:ColorVectorSpace.MathTypes varmult(⊙, A; kwargs...)
+@deprecate std(A::AbstractArray{C}; kwargs...) where C<:ColorVectorSpace.MathTypes stdmult(⊙, A; kwargs...)
+# Doing stats on non-MathTypes is a bad idea
+function var(A::AbstractArray{C}; dims=nothing, kwargs...) where C<:Colorant
+    dims === nothing || error("dims was never supported, but is now for MathTypes")
+    newdims = 2:ndims(A)+1
+    Cbase = base_colorant_type(C)
+    forced_depwarn("`var(A::AbstractArray{<:Colorant})` is deprecated (and not recommended, use a MathTypes colorspace instead), please use `colorview($Cbase, var(channelview(A); dims=$newdims))[]` instead.", :var)
+    return colorview(Cbase, var(channelview(A); dims=newdims, kwargs...))[]
+end
+function std(A::AbstractArray{C}; dims=nothing, kwargs...) where C<:Colorant
+    dims === nothing || error("dims was never supported, but is now for MathTypes")
+    newdims = 2:ndims(A)+1
+    Cbase = base_colorant_type(C)
+    forced_depwarn("`std(A::AbstractArray{<:Colorant})` is deprecated (and not recommended, use a MathTypes colorspace instead), please use `colorview($Cbase, std(channelview(A); dims=$newdims))[]` instead.", :var)
+    return colorview(Cbase, std(channelview(A); dims=newdims, kwargs...))[]
+end
+
+# Integral arrays
+@deprecate integral_image(A) IntegralArray(A)
+@deprecate boxdiff(Ai::IntegralArray{T,2}, y::UnitRange, x::UnitRange) where T               Ai[first(y)..last(y), first(x)..last(x)]
+@deprecate boxdiff(Ai::IntegralArray{T,2}, tl::CartesianIndex, br::CartesianIndex) where T   Ai[tl[1]..br[1], tl[2]..br[2]]
+@deprecate boxdiff(Ai::IntegralArray{T,2}, tl_y::Integer, tl_x::Integer, br_y::Integer, br_x::Integer) where T  Ai[tl_y..br_y, tl_x..br_x]
+
+
+function imaverage(filter_size=(3,3))
+    Base.depwarn("imaverage(m, n) is deprecated, use `Kernel.box` or an `IntegralImage`.", :imaverage)
+    Kernel.box(filter_size)
+end
+
+@deprecate imlaplacian(alpha::Number) Kernel.laplacian2d(alpha) false

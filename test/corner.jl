@@ -1,4 +1,4 @@
-using Test, Images, OffsetArrays
+using Test, Images
 
 @testset "Corner" begin
     A = zeros(41,41)

@@ -1,4 +1,8 @@
+using Images
+using Statistics
 using Test
+using ImageBase
+using ImageBase.OffsetArrays
 using Suppressor
 
 @testset "Images" begin
@@ -8,6 +12,8 @@ include("algorithms.jl")
 include("edge.jl")
 include("corner.jl")
 include("writemime.jl")
-# include("deprecated.jl")
+
+@suppress_err include("legacy.jl")
+@suppress_err include("deprecated.jl")
 
 end
