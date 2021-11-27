@@ -39,9 +39,9 @@ Julia >= v1.6. Note that this is only true for the latest Images version, and cu
 have Images LTS version. For the best experience, we recommend you to use the latest stable Julia
 version even if it is not LTS version.
 
-Images v0.24 is the last minor version that is compatible to the Julia 1.0. It will still be under
+Images v0.23 is the last minor version that is compatible to the Julia 1.0. It will still be under
 maintenance, but only with minimal efforts from the community. No forward compatibility guarantee
-will be made, which means that you might see APIs and behaviors of Images v0.24 are quite different
+will be made, which means that you might see APIs and behaviors of Images v0.23 are quite different
 from that of the latest Images version.
 
 ## Credits
