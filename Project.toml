@@ -1,6 +1,6 @@
 name = "Images"
 uuid = "916415d5-f1e6-5110-898d-aaa5f9f070e0"
-version = "0.25.0"
+version = "0.25.1"
 
 [deps]
 Base64 = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
