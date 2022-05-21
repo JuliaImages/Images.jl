@@ -1,51 +1,87 @@
 function build_histogram(img::AbstractArray, nbins::Integer, minval::Union{Real,AbstractGray}, maxval::Union{Real,AbstractGray})
-    Base.depwarn("`build_histogram(img, nbins, minval, maxval)` is deprecated, use build_histogram(img, nbins; minval = minval, maxval = maxval)) instead.", :build_histogram)
-    ImageContrastAdjustment.build_histogram(img, nbins; minval = minval, maxval = maxval)
+    Base.depwarn(
+        "`build_histogram(img, nbins, minval, maxval)` is deprecated, use build_histogram(img, nbins; minval = minval, maxval = maxval)) instead.",
+        :build_histogram,
+    )
+    return ImageContrastAdjustment.build_histogram(img, nbins; minval=minval, maxval=maxval)
 end
 
-function adjust_histogram(operation::Equalization, img::AbstractArray, nbins::Integer, minval::Union{Real,AbstractGray} = 0, maxval::Union{Real,AbstractGray} = 1)
-    Base.depwarn("`adjust_histogram(Equalization(),img)` is deprecated, use adjust_histogram(img, Equalization(; nbins, minval, maxval)) instead.", :adjust_histogram)
-    ImageContrastAdjustment.adjust_histogram(img, Equalization(nbins = nbins, minval = minval, maxval = maxval))
+function adjust_histogram(
+    operation::Equalization, img::AbstractArray, nbins::Integer, minval::Union{Real,AbstractGray}=0, maxval::Union{Real,AbstractGray}=1
+)
+    Base.depwarn(
+        "`adjust_histogram(Equalization(),img)` is deprecated, use adjust_histogram(img, Equalization(; nbins, minval, maxval)) instead.",
+        :adjust_histogram,
+    )
+    return ImageContrastAdjustment.adjust_histogram(img, Equalization(; nbins=nbins, minval=minval, maxval=maxval))
 end
 
-function adjust_histogram(operation::Equalization, img::AbstractArray{T}, nbins::Integer, minval::Union{Real,AbstractGray} = 0, maxval::Union{Real,AbstractGray} = 1) where {T<:Color3}
-    Base.depwarn("`adjust_histogram(Equalization(),img)` is deprecated, use adjust_histogram(img, Equalization(; nbins, minval, maxval)) instead.", :adjust_histogram)
-    ImageContrastAdjustment.adjust_histogram(img, Equalization(nbins = nbins, minval = minval, maxval = maxval))
+function adjust_histogram(
+    operation::Equalization, img::AbstractArray{T}, nbins::Integer, minval::Union{Real,AbstractGray}=0, maxval::Union{Real,AbstractGray}=1
+) where {T<:Color3}
+    Base.depwarn(
+        "`adjust_histogram(Equalization(),img)` is deprecated, use adjust_histogram(img, Equalization(; nbins, minval, maxval)) instead.",
+        :adjust_histogram,
+    )
+    return ImageContrastAdjustment.adjust_histogram(img, Equalization(; nbins=nbins, minval=minval, maxval=maxval))
 end
 
-function adjust_histogram!(operation::Equalization, img::AbstractArray, nbins::Integer, minval::Union{Real,AbstractGray} = 0, maxval::Union{Real,AbstractGray} = 1)
-    Base.depwarn("`adjust_histogram!(Equalization(),img)` is deprecated, use adjust_histogram!(img,img, Equalization(; nbins, minval, maxval)) instead.", :adjust_histogram!)
-    ImageContrastAdjustment.adjust_histogram!(img, img, Equalization(nbins = nbins, minval = minval, maxval = maxval))
+function adjust_histogram!(
+    operation::Equalization, img::AbstractArray, nbins::Integer, minval::Union{Real,AbstractGray}=0, maxval::Union{Real,AbstractGray}=1
+)
+    Base.depwarn(
+        "`adjust_histogram!(Equalization(),img)` is deprecated, use adjust_histogram!(img,img, Equalization(; nbins, minval, maxval)) instead.",
+        :adjust_histogram!,
+    )
+    return ImageContrastAdjustment.adjust_histogram!(img, img, Equalization(; nbins=nbins, minval=minval, maxval=maxval))
 end
 
-function adjust_histogram(operation::Matching, img::AbstractArray, targetimg::AbstractArray, nbins::Integer = 256)
-    Base.depwarn("`adjust_histogram(Matching(),img, targetimg, nbins)` is deprecated, use adjust_histogram(img, Matching(; targetimg = targetimg, nbins = nbins)) instead.", :adjust_histogram)
-    ImageContrastAdjustment.adjust_histogram(img, Matching(targetimg = targetimg, nbins = nbins))
+function adjust_histogram(operation::Matching, img::AbstractArray, targetimg::AbstractArray, nbins::Integer=256)
+    Base.depwarn(
+        "`adjust_histogram(Matching(),img, targetimg, nbins)` is deprecated, use adjust_histogram(img, Matching(; targetimg = targetimg, nbins = nbins)) instead.",
+        :adjust_histogram,
+    )
+    return ImageContrastAdjustment.adjust_histogram(img, Matching(; targetimg=targetimg, nbins=nbins))
 end
 
 function adjust_histogram(operation::Matching, img::AbstractArray, targetimg::AbstractArray, edges::AbstractRange)
-    Base.depwarn("`adjust_histogram(Matching(),img, targetimg, edges)` is deprecated, use adjust_histogram(img, Matching(; targetimg = targetimg, edges = edges)) instead.", :adjust_histogram)
-    ImageContrastAdjustment.adjust_histogram(img, Matching(targetimg = targetimg, edges = edges))
+    Base.depwarn(
+        "`adjust_histogram(Matching(),img, targetimg, edges)` is deprecated, use adjust_histogram(img, Matching(; targetimg = targetimg, edges = edges)) instead.",
+        :adjust_histogram,
+    )
+    return ImageContrastAdjustment.adjust_histogram(img, Matching(; targetimg=targetimg, edges=edges))
 end
 
-function adjust_histogram!(operation::Matching, img::AbstractArray{T}, targetimg::AbstractArray{T}, edges::AbstractRange ) where T <: Color3
-    Base.depwarn("`adjust_histogram!(Matching(),img, targetimg, edges)` is deprecated, use adjust_histogram!(img, Matching(; targetimg = targetimg, edges = edges)) instead.", :adjust_histogram!)
-    ImageContrastAdjustment.adjust_histogram!(img, img, Matching(targetimg = targetimg, edges = edges))
+function adjust_histogram!(operation::Matching, img::AbstractArray{T}, targetimg::AbstractArray{T}, edges::AbstractRange) where {T<:Color3}
+    Base.depwarn(
+        "`adjust_histogram!(Matching(),img, targetimg, edges)` is deprecated, use adjust_histogram!(img, Matching(; targetimg = targetimg, edges = edges)) instead.",
+        :adjust_histogram!,
+    )
+    return ImageContrastAdjustment.adjust_histogram!(img, img, Matching(; targetimg=targetimg, edges=edges))
 end
 
-function adjust_histogram!(operation::Matching, img::AbstractArray{T}, targetimg::AbstractArray{T}, nbins::Integer = 256 ) where T <: Color3
-    Base.depwarn("`adjust_histogram!(Matching(),img, targetimg, nbins)` is deprecated, use adjust_histogram!(img, img, Matching(; targetimg = targetimg, nbins = nbins)) instead.", :adjust_histogram!)
-    ImageContrastAdjustment.adjust_histogram!(img, img, Matching(targetimg = targetimg, nbins = nbins))
+function adjust_histogram!(operation::Matching, img::AbstractArray{T}, targetimg::AbstractArray{T}, nbins::Integer=256) where {T<:Color3}
+    Base.depwarn(
+        "`adjust_histogram!(Matching(),img, targetimg, nbins)` is deprecated, use adjust_histogram!(img, img, Matching(; targetimg = targetimg, nbins = nbins)) instead.",
+        :adjust_histogram!,
+    )
+    return ImageContrastAdjustment.adjust_histogram!(img, img, Matching(; targetimg=targetimg, nbins=nbins))
 end
 
 function adjust_histogram!(operation::Matching, img::AbstractArray, targetimg::AbstractArray, edges::AbstractRange)
-    Base.depwarn("`adjust_histogram!(Matching(),img, targetimg, edges)` is deprecated, use adjust_histogram!(img, Matching(; targetimg = targetimg, edges = edges)) instead.", :adjust_histogram!)
-    ImageContrastAdjustment.adjust_histogram!(img, img, Matching(targetimg = targetimg, edges = edges))
+    Base.depwarn(
+        "`adjust_histogram!(Matching(),img, targetimg, edges)` is deprecated, use adjust_histogram!(img, Matching(; targetimg = targetimg, edges = edges)) instead.",
+        :adjust_histogram!,
+    )
+    return ImageContrastAdjustment.adjust_histogram!(img, img, Matching(; targetimg=targetimg, edges=edges))
 end
 
-function adjust_histogram!(operation::Matching, img::AbstractArray, targetimg::AbstractArray, nbins::Integer = 256 )
-    Base.depwarn("`adjust_histogram!(Matching(),img, targetimg, nbins)` is deprecated, use adjust_histogram!(img, Matching(; targetimg = targetimg, nbins = nbins)) instead.", :adjust_histogram!)
-    ImageContrastAdjustment.adjust_histogram!(img, img, Matching(targetimg = targetimg, nbins = nbins))
+function adjust_histogram!(operation::Matching, img::AbstractArray, targetimg::AbstractArray, nbins::Integer=256)
+    Base.depwarn(
+        "`adjust_histogram!(Matching(),img, targetimg, nbins)` is deprecated, use adjust_histogram!(img, Matching(; targetimg = targetimg, nbins = nbins)) instead.",
+        :adjust_histogram!,
+    )
+    return ImageContrastAdjustment.adjust_histogram!(img, img, Matching(; targetimg=targetimg, nbins=nbins))
 end
 
 """
@@ -56,19 +92,28 @@ end
    maxval), img)`.  (minval,maxval) defaults to `extrema(img)`.
 """
 function imadjustintensity(img::AbstractArray{T}, range::Tuple{Any,Any}) where {T}
-    Base.depwarn("`imadjustintensity` will be removed in a future release, please use `adjust_histogram(img, LinearStretching())` instead.", :imadjustintensity)
+    Base.depwarn(
+        "`imadjustintensity` will be removed in a future release, please use `adjust_histogram(img, LinearStretching())` instead.",
+        :imadjustintensity,
+    )
     return map(scaleminmax(T, range...), img)
 end
 function imadjustintensity(img::AbstractArray, range::AbstractArray)
-    Base.depwarn("`imadjustintensity` will be removed in a future release, please use `adjust_histogram(img, LinearStretching())` instead.", :imadjustintensity)
+    Base.depwarn(
+        "`imadjustintensity` will be removed in a future release, please use `adjust_histogram(img, LinearStretching())` instead.",
+        :imadjustintensity,
+    )
     return imadjustintensity(img, (range...,))
 end
 function imadjustintensity(img::AbstractArray)
-    Base.depwarn("`imadjustintensity` will be removed in a future release, please use `adjust_histogram(img, LinearStretching())` instead.", :imadjustintensity)
+    Base.depwarn(
+        "`imadjustintensity` will be removed in a future release, please use `adjust_histogram(img, LinearStretching())` instead.",
+        :imadjustintensity,
+    )
     return map(takemap(scaleminmax, img), img)
 end
 
-_imstretch(img::AbstractArray{T}, m::Number, slope::Number) where {T} = map(i -> 1 / (1 + (m / (i + eps(T))) ^ slope), img)
+_imstretch(img::AbstractArray{T}, m::Number, slope::Number) where {T} = map(i -> 1 / (1 + (m / (i + eps(T)))^slope), img)
 
 """
 `imgs = imstretch(img, m, slope)` enhances or reduces (for
@@ -79,24 +124,28 @@ intensity is `1/(1+(m/(p+eps))^slope)`.
 This assumes the input `img` has intensities between 0 and 1.
 """
 function imstretch(img::AbstractArray, m::Number, slope::Number)
-    Base.depwarn("`imstretch` will be removed in a future release, please use `adjust_histogram(img, ContrastStretching())` instead.", :imstretch)
+    Base.depwarn(
+        "`imstretch` will be removed in a future release, please use `adjust_histogram(img, ContrastStretching())` instead.", :imstretch
+    )
     return _imstretch(float(img), m, slope)
 end
 function imstretch(img::ImageMeta, m::Number, slope::Number)
-    Base.depwarn("`imstretch` will be removed in a future release, please use `adjust_histogram(img, ContrastStretching())` instead.", :imstretch)
+    Base.depwarn(
+        "`imstretch` will be removed in a future release, please use `adjust_histogram(img, ContrastStretching())` instead.", :imstretch
+    )
     return shareproperties(img, imstretch(arraydata(img), m, slope))
 end
 
-function imhist(img::AbstractArray{T}, nbins::Integer = 400) where {T<:Colorant}
+function imhist(img::AbstractArray{T}, nbins::Integer=400) where {T<:Colorant}
     Base.depwarn("`imhist` will be removed in a future release, please use `build_histogram` instead.", :imhist)
     return imhist(convert(Array{Gray}, img), nbins)
 end
 
-function imhist(img::AbstractArray{T}, nbins::Integer = 400) where T<:NumberLike
+function imhist(img::AbstractArray{T}, nbins::Integer=400) where {T<:NumberLike}
     Base.depwarn("`imhist` will be removed in a future release, please use `build_histogram` instead.", :imhist)
     minval = minfinite(img)
     maxval = maxfinite(img)
-    imhist(img, nbins, minval, maxval)
+    return imhist(img, nbins, minval, maxval)
 end
 
 
@@ -219,7 +268,7 @@ edges, counts  = imhist(r,256);
 function imhist(img::AbstractArray, nbins::Integer, minval::NumberLike, maxval::NumberLike)
     Base.depwarn("`imhist` will be removed in a future release, please use `build_histogram` instead.", :imhist)
     edges = StatsBase.histrange([Float64(minval), Float64(maxval)], nbins, :left)
-    imhist(img, edges)
+    return imhist(img, edges)
 end
 
 function imhist(img::AbstractArray, edges::AbstractRange)
@@ -236,23 +285,23 @@ function imhist(img::AbstractArray, edges::AbstractRange)
         index = searchsortedlast(edges, val, o)
         histogram[index + 1] += 1
     end
-    edges, histogram
+    return edges, histogram
 end
 
 
-function _histeq_pixel_rescale(pixel::T, cdf, minval, maxval) where T<:NumberLike
+function _histeq_pixel_rescale(pixel::T, cdf, minval, maxval) where {T<:NumberLike}
     n = length(cdf)
     bin_pixel = clamp(ceil(Int, gray((pixel - minval) * length(cdf) / (maxval - minval))), 1, n)
     rescaled_pixel = minval + ((cdf[bin_pixel] - cdf[1]) * (maxval - minval) / (cdf[end] - cdf[1]))
-    convert(T, rescaled_pixel)
+    return convert(T, rescaled_pixel)
 end
-function _histeq_pixel_rescale(pixel::C, cdf, minval, maxval) where C<:Color
+function _histeq_pixel_rescale(pixel::C, cdf, minval, maxval) where {C<:Color}
     yiq = convert(YIQ, pixel)
     y = _histeq_pixel_rescale(yiq.y, cdf, minval, maxval)
-    convert(C, YIQ(y, yiq.i, yiq.q))
+    return convert(C, YIQ(y, yiq.i, yiq.q))
 end
-function _histeq_pixel_rescale(pixel::C, cdf, minval, maxval) where C<:TransparentColor
-    base_colorant_type(C)(_histeq_pixel_rescale(color(pixel), cdf, minval, maxval), alpha(pixel))
+function _histeq_pixel_rescale(pixel::C, cdf, minval, maxval) where {C<:TransparentColor}
+    return base_colorant_type(C)(_histeq_pixel_rescale(color(pixel), cdf, minval, maxval), alpha(pixel))
 end
 
 """
@@ -358,7 +407,7 @@ See also: [histmatch](@ref),[clahe](@ref), [imhist](@ref) and  [adjust_gamma](@r
 function histeq(img::AbstractArray, nbins::Integer, minval::NumberLike, maxval::NumberLike)
     Base.depwarn("`histeq` will be removed in a future release, please use `adjust_histogram(img, Equalization())` instead.", :histeq)
     bins, histogram = imhist(img, nbins, minval, maxval)
-    cdf = cumsum(histogram[2:end-1])
+    cdf = cumsum(histogram[2:(end - 1)])
     img_shape = size(img)
     minval == maxval && return map(identity, img)
     # Would like to use `map` here, but see https://github.com/timholy/Images.jl/pull/523#issuecomment-235236460
@@ -366,19 +415,19 @@ function histeq(img::AbstractArray, nbins::Integer, minval::NumberLike, maxval::
     for I in eachindex(img)
         hist_equalised_img[I] = _histeq_pixel_rescale(img[I], cdf, minval, maxval)
     end
-    hist_equalised_img
+    return hist_equalised_img
 end
 
 function histeq(img::AbstractArray, nbins::Integer)
     Base.depwarn("`histeq` will be removed in a future release, please use `adjust_histogram(img, Equalization())` instead.", :histeq)
     T = _graytype(eltype(img))
-    histeq(img, nbins, zero(T), oneunit(T))
+    return histeq(img, nbins, zero(T), oneunit(T))
 end
 
 function histeq(img::ImageMeta, nbins::Integer, minval::NumberLike, maxval::NumberLike)
     Base.depwarn("`histeq` will be removed in a future release, please use `adjust_histogram(img, Equalization())` instead.", :histeq)
     newimg = histeq(arraydata(img), nbins, minval, maxval)
-    shareproperties(img, newimg)
+    return shareproperties(img, newimg)
 end
 
 function histeq(img::ImageMeta, nbins::Integer)
@@ -387,24 +436,26 @@ function histeq(img::ImageMeta, nbins::Integer)
 end
 
 function adjust_gamma(img::ImageMeta, gamma::Number)
-    Base.depwarn("`adjust_gamma` will be removed in a future release, please use `adjust_histogram(img, GammaCorrection())` instead.", :adjust_gamma)
+    Base.depwarn(
+        "`adjust_gamma` will be removed in a future release, please use `adjust_histogram(img, GammaCorrection())` instead.", :adjust_gamma
+    )
     return shareproperties(img, adjust_gamma(arraydata(img), gamma))
 end
 
-_gamma_pixel_rescale(pixel::T, gamma::Number) where {T<:NumberLike} = pixel ^ gamma
+_gamma_pixel_rescale(pixel::T, gamma::Number) where {T<:NumberLike} = pixel^gamma
 
-function _gamma_pixel_rescale(pixel::C, gamma::Number) where C<:Color
+function _gamma_pixel_rescale(pixel::C, gamma::Number) where {C<:Color}
     yiq = convert(YIQ, pixel)
     y = _gamma_pixel_rescale(yiq.y, gamma)
-    convert(C, YIQ(y, yiq.i, yiq.q))
+    return convert(C, YIQ(y, yiq.i, yiq.q))
 end
 
-function _gamma_pixel_rescale(pixel::C, gamma::Number) where C<:TransparentColor
-    base_colorant_type(C)(_gamma_pixel_rescale(color(pixel), gamma), alpha(pixel))
+function _gamma_pixel_rescale(pixel::C, gamma::Number) where {C<:TransparentColor}
+    return base_colorant_type(C)(_gamma_pixel_rescale(color(pixel), gamma), alpha(pixel))
 end
 
 function _gamma_pixel_rescale(original_val::Number, gamma::Number, minval::Number, maxval::Number)
-    Float32(minval + (maxval - minval) * ((original_val - minval) / (maxval - minval)) ^ gamma)
+    return Float32(minval + (maxval - minval) * ((original_val - minval) / (maxval - minval))^gamma)
 end
 
 """
@@ -483,27 +534,33 @@ See also: [histmatch](@ref),[clahe](@ref), and [imhist](@ref).
 
 
 """
-function adjust_gamma(img::AbstractArray{Gray{T}}, gamma::Number) where T<:Normed
-    Base.depwarn("`adjust_gamma` will be removed in a future release, please use `adjust_histogram(img, GammaCorrection())` instead.", :adjust_gamma)
+function adjust_gamma(img::AbstractArray{Gray{T}}, gamma::Number) where {T<:Normed}
+    Base.depwarn(
+        "`adjust_gamma` will be removed in a future release, please use `adjust_histogram(img, GammaCorrection())` instead.", :adjust_gamma
+    )
     raw_type = FixedPointNumbers.rawtype(T)
     gamma_inv = 1.0 / gamma
     table = zeros(T, typemax(raw_type) + 1)
     for i in zero(raw_type):typemax(raw_type)
-        table[i + 1] = T((i / typemax(raw_type)) ^ gamma_inv)
+        table[i + 1] = T((i / typemax(raw_type))^gamma_inv)
     end
     gamma_corrected_img = similar(img)
     for I in eachindex(img)
         gamma_corrected_img[I] = Gray(table[convert(base_colorant_type(typeof(img[I])){T}, img[I]).val.i + 1])
     end
-    gamma_corrected_img
+    return gamma_corrected_img
 end
 
 function adjust_gamma(img::AbstractArray{T}, gamma::Number) where {T<:Number}
-    Base.depwarn("`adjust_gamma` will be removed in a future release, please use `adjust_histogram(img, GammaCorrection())` instead.", :adjust_gamma)
+    Base.depwarn(
+        "`adjust_gamma` will be removed in a future release, please use `adjust_histogram(img, GammaCorrection())` instead.", :adjust_gamma
+    )
     return _adjust_gamma(img, gamma, Float64)
 end
 function adjust_gamma(img::AbstractArray{T}, gamma::Number) where {T<:Colorant}
-    Base.depwarn("`adjust_gamma` will be removed in a future release, please use `adjust_histogram(img, GammaCorrection())` instead.", :adjust_gamma)
+    Base.depwarn(
+        "`adjust_gamma` will be removed in a future release, please use `adjust_histogram(img, GammaCorrection())` instead.", :adjust_gamma
+    )
     return _adjust_gamma(img, gamma, T)
 end
 
@@ -512,16 +569,18 @@ function _adjust_gamma(img::AbstractArray, gamma::Number, C::Type)
     for I in eachindex(img)
         gamma_corrected_img[I] = _gamma_pixel_rescale(img[I], gamma)
     end
-    gamma_corrected_img
+    return gamma_corrected_img
 end
 
-function adjust_gamma(img::AbstractArray{T}, gamma::Number, minval::Number, maxval::Number) where T<:Number
-    Base.depwarn("`adjust_gamma` will be removed in a future release, please use `adjust_histogram(img, GammaCorrection())` instead.", :adjust_gamma)
+function adjust_gamma(img::AbstractArray{T}, gamma::Number, minval::Number, maxval::Number) where {T<:Number}
+    Base.depwarn(
+        "`adjust_gamma` will be removed in a future release, please use `adjust_histogram(img, GammaCorrection())` instead.", :adjust_gamma
+    )
     gamma_corrected_img = _fill(oneunit(T), axes(img))
     for I in eachindex(img)
         gamma_corrected_img[I] = _gamma_pixel_rescale(img[I], gamma, minval, maxval)
     end
-    gamma_corrected_img
+    return gamma_corrected_img
 end
 
 _fill(val, dim) = fill(val, dim) # fallback
@@ -614,26 +673,28 @@ imshow(img_transformed)
 See also: [histeq](@ref),[clahe](@ref), and [imhist](@ref).
 
 """
-function histmatch(img::ImageMeta, oimg::AbstractArray, nbins::Integer = 400)
+function histmatch(img::ImageMeta, oimg::AbstractArray, nbins::Integer=400)
     Base.depwarn("`histmatch` will be removed in a future release, please use `adjust_histogram(img, Matching())` instead.", :histmatch)
     return shareproperties(img, histmatch(arraydata(img), oimg, nbins))
 end
 
 _hist_match_pixel(pixel::T, bins, lookup_table) where {T<:NumberLike} = T(bins[lookup_table[searchsortedlast(bins, pixel)]])
 
-function _hist_match_pixel(pixel::T, bins, lookup_table) where T<:Color
+function _hist_match_pixel(pixel::T, bins, lookup_table) where {T<:Color}
     yiq = convert(YIQ, pixel)
     y = _hist_match_pixel(yiq.y, bins, lookup_table)
-    convert(T, YIQ(y, yiq.i, yiq.q))
+    return convert(T, YIQ(y, yiq.i, yiq.q))
 end
 
-_hist_match_pixel(pixel::T, bins, lookup_table) where {T<:TransparentColor} = base_colorant_type(T)(_hist_match_pixel(color(pixel), bins, lookup_table), alpha(pixel))
+function _hist_match_pixel(pixel::T, bins, lookup_table) where {T<:TransparentColor}
+    return base_colorant_type(T)(_hist_match_pixel(color(pixel), bins, lookup_table), alpha(pixel))
+end
 
-function histmatch(img::AbstractArray{T}, oimg::AbstractArray, nbins::Integer = 400) where T<:Colorant
+function histmatch(img::AbstractArray{T}, oimg::AbstractArray, nbins::Integer=400) where {T<:Colorant}
     Base.depwarn("`histmatch` will be removed in a future release, please use `adjust_histogram(img, Matching())` instead.", :histmatch)
     el_gray = _graytype(eltype(img))
     oedges, ohist = imhist(oimg, nbins, zero(el_gray), oneunit(el_gray))
-    _histmatch(img, oedges, ohist)
+    return _histmatch(img, oedges, ohist)
 end
 
 function _histmatch(img::AbstractArray, oedges::AbstractRange, ohist::AbstractArray{Int})
@@ -654,7 +715,7 @@ function _histmatch(img::AbstractArray, oedges::AbstractRange, ohist::AbstractAr
     for I in eachindex(img)
         hist_matched_img[I] = _hist_match_pixel(img[I], bins, lookup_table)
     end
-    hist_matched_img
+    return hist_matched_img
 end
 
 _graytype(::Type{T}) where {T<:Number} = T
@@ -817,7 +878,7 @@ See also: [histmatch](@ref),[histeq](@ref), [imhist](@ref) and  [adjust_gamma](@
 
 
 """
-function clahe(img::AbstractArray{C, 2}, nbins::Integer = 100; xblocks::Integer = 8, yblocks::Integer = 8, clip::Number = 3) where C
+function clahe(img::AbstractArray{C,2}, nbins::Integer=100; xblocks::Integer=8, yblocks::Integer=8, clip::Number=3) where {C}
     Base.depwarn("`clahe` will be removed in a future release, please use `adjust_histogram(img, AdaptiveEqualization())` instead.", :clahe)
     h, w = size(img)
     y_padded = ceil(Int, h / (2 * yblocks)) * 2 * yblocks
@@ -827,29 +888,29 @@ function clahe(img::AbstractArray{C, 2}, nbins::Integer = 100; xblocks::Integer 
 
     hist_equalised_img = _clahe(img_padded, nbins, xblocks, yblocks, clip)
     out = similar(img)
-    ImageTransformations.imresize!(out, hist_equalised_img)
+    return ImageTransformations.imresize!(out, hist_equalised_img)
 end
 
-function clahe(img::ImageMeta, nbins::Integer = 100; xblocks::Integer = 8, yblocks::Integer = 8, clip::Number = 3)
+function clahe(img::ImageMeta, nbins::Integer=100; xblocks::Integer=8, yblocks::Integer=8, clip::Number=3)
     Base.depwarn("`clahe` will be removed in a future release, please use `adjust_histogram(img, AdaptiveEqualization())` instead.", :clahe)
-    shareproperties(clahe(arraydata(img), nbins, xblocks = xblocks, yblocks = yblocks, clip = clip), img)
+    return shareproperties(clahe(arraydata(img), nbins; xblocks=xblocks, yblocks=yblocks, clip=clip), img)
 end
 
-function _clahe(img::AbstractArray{C, 2}, nbins::Integer = 100, xblocks::Integer = 8, yblocks::Integer = 8, clip::Number = 3) where C
+function _clahe(img::AbstractArray{C,2}, nbins::Integer=100, xblocks::Integer=8, yblocks::Integer=8, clip::Number=3) where {C}
     h, w = size(img)
-    xb = 0:1:xblocks - 1
-    yb = 0:1:yblocks - 1
+    xb = 0:1:(xblocks - 1)
+    yb = 0:1:(yblocks - 1)
     blockw = Int(w / xblocks)
     blockh = Int(h / yblocks)
-    temp_cdf = Array{Float64, 1}[]
+    temp_cdf = Array{Float64,1}[]
     T = _graytype(eltype(img))
     edges = StatsBase.histrange([Float64(zero(T)), Float64(oneunit(T))], nbins, :left)
 
     for i in xb
         for j in yb
-            temp_block = img[j * blockh + 1 : (j + 1) * blockh, i * blockw + 1 : (i + 1) * blockw]
+            temp_block = img[(j * blockh + 1):((j + 1) * blockh), (i * blockw + 1):((i + 1) * blockw)]
             _, histogram = imhist(temp_block, edges)
-            clipped_hist = cliphist(histogram[2:end - 1], clip)
+            clipped_hist = cliphist(histogram[2:(end - 1)], clip)
             cdf = cumsum(clipped_hist)
             n_cdf = cdf / max(convert(eltype(cdf), 1), cdf[end])
             push!(temp_cdf, n_cdf)
@@ -860,12 +921,12 @@ function _clahe(img::AbstractArray{C, 2}, nbins::Integer = 100, xblocks::Integer
     res_img = zeros(C, size(img))
 
     #Interpolations
-    xb = 1:2:xblocks * 2 - 2
-    yb = 1:2:yblocks * 2 - 2
+    xb = 1:2:(xblocks * 2 - 2)
+    yb = 1:2:(yblocks * 2 - 2)
 
     for j in yb
         for i in xb
-            p_block = img[j * Int(blockh / 2) + 1 : (j + 2) * Int(blockh / 2), i * Int(blockw / 2) + 1 : (i + 2) * Int(blockw / 2)]
+            p_block = img[(j * Int(blockh / 2) + 1):((j + 2) * Int(blockh / 2)), (i * Int(blockw / 2) + 1):((i + 2) * Int(blockw / 2))]
             bnum_y = floor(Int, (j + 1) / 2)
             bnum_x = floor(Int, (i + 1) / 2)
             top_left = norm_cdf[bnum_y, bnum_x]
@@ -875,36 +936,45 @@ function _clahe(img::AbstractArray{C, 2}, nbins::Integer = 100, xblocks::Integer
             temp_block = zeros(C, size(p_block))
             for l in 1:blockw
                 for m in 1:blockh
-                    temp_block[m, l] = _clahe_pixel_rescale(p_block[m, l], top_left, top_right, bot_left, bot_right, edges, l, m, blockw, blockh)
+                    temp_block[m, l] = _clahe_pixel_rescale(
+                        p_block[m, l], top_left, top_right, bot_left, bot_right, edges, l, m, blockw, blockh
+                    )
                 end
             end
-            res_img[j * Int(blockh / 2) + 1 : (j + 2) * Int(blockh / 2), i * Int(blockw / 2) + 1 : (i + 2) * Int(blockw / 2)] = temp_block
+            res_img[(j * Int(blockh / 2) + 1):((j + 2) * Int(blockh / 2)), (i * Int(blockw / 2) + 1):((i + 2) * Int(blockw / 2))] =
+                temp_block
         end
     end
 
     #Corners
 
-    block_tl = img[1 : Int(blockh / 2), 1 : Int(blockw / 2)]
+    block_tl = img[1:Int(blockh / 2), 1:Int(blockw / 2)]
     corner_tl = map(i -> _clahe_pixel_rescale(i, norm_cdf[1, 1], edges), block_tl)
-    res_img[1 : Int(blockh / 2), 1 : Int(blockw / 2)] = corner_tl
+    res_img[1:Int(blockh / 2), 1:Int(blockw / 2)] = corner_tl
 
-    block_tr = img[1 : Int(blockh / 2), (xblocks * 2 - 1) * Int(blockw / 2) + 1 : (xblocks * 2) * Int(blockw / 2)]
+    block_tr = img[1:Int(blockh / 2), ((xblocks * 2 - 1) * Int(blockw / 2) + 1):((xblocks * 2) * Int(blockw / 2))]
     corner_tr = map(i -> _clahe_pixel_rescale(i, norm_cdf[1, xblocks], edges), block_tr)
-    res_img[1 : Int(blockh / 2), (xblocks * 2 - 1) * Int(blockw / 2) + 1 : (xblocks * 2) * Int(blockw / 2)] = corner_tr
+    res_img[1:Int(blockh / 2), ((xblocks * 2 - 1) * Int(blockw / 2) + 1):((xblocks * 2) * Int(blockw / 2))] = corner_tr
 
-    block_bl = img[(yblocks * 2 - 1) * Int(blockh / 2) + 1 : (yblocks * 2) * Int(blockh / 2), 1 : Int(blockw / 2)]
+    block_bl = img[((yblocks * 2 - 1) * Int(blockh / 2) + 1):((yblocks * 2) * Int(blockh / 2)), 1:Int(blockw / 2)]
     corner_bl = map(i -> _clahe_pixel_rescale(i, norm_cdf[yblocks, 1], edges), block_bl)
-    res_img[(yblocks * 2 - 1) * Int(blockh / 2) + 1 : (yblocks * 2) * Int(blockh / 2), 1 : Int(blockw / 2)] = corner_bl
+    res_img[((yblocks * 2 - 1) * Int(blockh / 2) + 1):((yblocks * 2) * Int(blockh / 2)), 1:Int(blockw / 2)] = corner_bl
 
-    block_br = img[(yblocks * 2 - 1) * Int(blockh / 2) + 1 : (yblocks * 2) * Int(blockh / 2), (xblocks * 2 - 1) * Int(blockw / 2) + 1 : (xblocks * 2) * Int(blockw / 2)]
+    block_br = img[
+        ((yblocks * 2 - 1) * Int(blockh / 2) + 1):((yblocks * 2) * Int(blockh / 2)),
+        ((xblocks * 2 - 1) * Int(blockw / 2) + 1):((xblocks * 2) * Int(blockw / 2)),
+    ]
     corner_br = map(i -> _clahe_pixel_rescale(i, norm_cdf[yblocks, xblocks], edges), block_br)
-    res_img[(yblocks * 2 - 1) * Int(blockh / 2) + 1 : (yblocks * 2) * Int(blockh / 2), (xblocks * 2 - 1) * Int(blockw / 2) + 1 : (xblocks * 2) * Int(blockw / 2)] = corner_br
+    res_img[
+        ((yblocks * 2 - 1) * Int(blockh / 2) + 1):((yblocks * 2) * Int(blockh / 2)),
+        ((xblocks * 2 - 1) * Int(blockw / 2) + 1):((xblocks * 2) * Int(blockw / 2)),
+    ] = corner_br
 
     #Horizontal Borders
 
     for j in [0, yblocks * 2 - 1]
         for i in xb
-            p_block = img[j * Int(blockh / 2) + 1 : (j + 1) * Int(blockh / 2), i * Int(blockw / 2) + 1 : (i + 2) * Int(blockw / 2)]
+            p_block = img[(j * Int(blockh / 2) + 1):((j + 1) * Int(blockh / 2)), (i * Int(blockw / 2) + 1):((i + 2) * Int(blockw / 2))]
             bnum_x = floor(Int, (i + 1) / 2)
             left = norm_cdf[ceil(Int, (j + 1) / 2), bnum_x]
             right = norm_cdf[ceil(Int, (j + 1) / 2), bnum_x + 1]
@@ -914,7 +984,8 @@ function _clahe(img::AbstractArray{C, 2}, nbins::Integer = 100, xblocks::Integer
                     temp_block[m, l] = _clahe_pixel_rescale(p_block[m, l], left, right, edges, l, blockw)
                 end
             end
-            res_img[j * Int(blockh / 2) + 1 : (j + 1) * Int(blockh / 2), i * Int(blockw / 2) + 1 : (i + 2) * Int(blockw / 2)] = temp_block
+            res_img[(j * Int(blockh / 2) + 1):((j + 1) * Int(blockh / 2)), (i * Int(blockw / 2) + 1):((i + 2) * Int(blockw / 2))] =
+                temp_block
         end
     end
 
@@ -922,7 +993,7 @@ function _clahe(img::AbstractArray{C, 2}, nbins::Integer = 100, xblocks::Integer
 
     for i in [0, xblocks * 2 - 1]
         for j in yb
-            p_block = img[j * Int(blockh / 2) + 1 : (j + 2) * Int(blockh / 2), i * Int(blockw / 2) + 1 : (i + 1) * Int(blockw / 2)]
+            p_block = img[(j * Int(blockh / 2) + 1):((j + 2) * Int(blockh / 2)), (i * Int(blockw / 2) + 1):((i + 1) * Int(blockw / 2))]
             bnum_y = floor(Int, (j + 1) / 2)
             top = norm_cdf[bnum_y, ceil(Int, (i + 1) / 2)]
             bot = norm_cdf[bnum_y + 1, ceil(Int, (i + 1) / 2)]
@@ -932,22 +1003,23 @@ function _clahe(img::AbstractArray{C, 2}, nbins::Integer = 100, xblocks::Integer
                     temp_block[m, l] = _clahe_pixel_rescale(p_block[m, l], top, bot, edges, m, blockh)
                 end
             end
-            res_img[j * Int(blockh / 2) + 1 : (j + 2) * Int(blockh / 2), i * Int(blockw / 2) + 1 : (i + 1) * Int(blockw / 2)] = temp_block
+            res_img[(j * Int(blockh / 2) + 1):((j + 2) * Int(blockh / 2)), (i * Int(blockw / 2) + 1):((i + 1) * Int(blockw / 2))] =
+                temp_block
         end
     end
-    res_img
+    return res_img
 end
 
 _clahe_pixel_rescale(pixel::T, cdf, edges) where {T<:NumberLike} = cdf[searchsortedlast(edges, pixel, Base.Order.Forward)]
 
-function _clahe_pixel_rescale(pixel::T, first, second, edges, pos, length) where T<:NumberLike
+function _clahe_pixel_rescale(pixel::T, first, second, edges, pos, length) where {T<:NumberLike}
     id = searchsortedlast(edges, pixel, Base.Order.Forward)
     f = first[id]
     s = second[id]
-    T(((length - pos) * f + (pos - 1) * s) / (length - 1))
+    return T(((length - pos) * f + (pos - 1) * s) / (length - 1))
 end
 
-function _clahe_pixel_rescale(pixel::T, top_left, top_right, bot_left, bot_right, edges, i, j, w, h) where T<:NumberLike
+function _clahe_pixel_rescale(pixel::T, top_left, top_right, bot_left, bot_right, edges, i, j, w, h) where {T<:NumberLike}
     id = searchsortedlast(edges, pixel, Base.Order.Forward)
     tl = top_left[id]
     tr = top_right[id]
@@ -955,17 +1027,17 @@ function _clahe_pixel_rescale(pixel::T, top_left, top_right, bot_left, bot_right
     br = bot_right[id]
     r1 = ((w - i) * tl + (i - 1) * tr) / (w - 1)
     r2 = ((w - i) * bl + (i - 1) * br) / (w - 1)
-    T(((h - j) * r1 + (j - 1) * r2) / (h - 1))
+    return T(((h - j) * r1 + (j - 1) * r2) / (h - 1))
 end
 
-function _clahe_pixel_rescale(pixel::C, args...) where C<:Color
+function _clahe_pixel_rescale(pixel::C, args...) where {C<:Color}
     yiq = convert(YIQ, pixel)
     y = _clahe_pixel_rescale(yiq.y, args...)
-    convert(C, YIQ(y, yiq.i, yiq.q))
+    return convert(C, YIQ(y, yiq.i, yiq.q))
 end
 
-function _clahe_pixel_rescale(pixel::C, args...) where C<:TransparentColor
-    base_colorant_type(C)(_clahe_pixel_rescale(color(pixel), args...), alpha(pixel))
+function _clahe_pixel_rescale(pixel::C, args...) where {C<:TransparentColor}
+    return base_colorant_type(C)(_clahe_pixel_rescale(color(pixel), args...), alpha(pixel))
 end
 
 """
@@ -976,7 +1048,7 @@ clipped_hist = cliphist(hist, clip)
 Clips the histogram above a certain value `clip`. The excess left in the bins
 exceeding `clip` is redistributed among the remaining bins.
 """
-function cliphist(hist::AbstractArray{T, 1}, clip::Number) where T
+function cliphist(hist::AbstractArray{T,1}, clip::Number) where {T}
     Base.depwarn("`cliphist` will be removed in a future release.", :cliphist)
     hist_length = length(hist)
     excess = sum(map(i -> i > clip ? i - clip : zero(i - clip), hist))
@@ -1017,7 +1089,7 @@ function cliphist(hist::AbstractArray{T, 1}, clip::Number) where T
         end
         (leftover <= 0 || leftover >= oleftover) && break
     end
-    clipped_hist
+    return clipped_hist
 end
 
 # phantom images
@@ -1034,49 +1106,50 @@ omitted, the phantom is of size NxN. When setting the keyword argument
 `highConstrast` to false, the CT version of the phantom is created. Otherwise,
 the high contrast MRI version is calculated.
 """
-function shepp_logan(M,N; highContrast=true)
-  # Initially proposed in Shepp, Larry; B. F. Logan (1974).
-  # "The Fourier Reconstruction of a Head Section". IEEE Transactions on Nuclear Science. NS-21.
+function shepp_logan(M, N; highContrast=true)
+    # Initially proposed in Shepp, Larry; B. F. Logan (1974).
+    # "The Fourier Reconstruction of a Head Section". IEEE Transactions on Nuclear Science. NS-21.
 
-  Base.depwarn("`shepp_logan` will be removed in a future release, please use `TestImages.shepp_logan` instead.", :shepp_logan)
+    Base.depwarn("`shepp_logan` will be removed in a future release, please use `TestImages.shepp_logan` instead.", :shepp_logan)
 
-  P = zeros(M,N)
+    P = zeros(M, N)
 
-  x = range(-1, stop=1, length=M)'
-  y = range(1, stop=-1, length=N)
+    x = range(-1; stop=1, length=M)'
+    y = range(1; stop=-1, length=N)
 
-  centerX = [0, 0, 0.22, -0.22, 0, 0, 0, -0.08, 0, 0.06]
-  centerY = [0, -0.0184, 0, 0, 0.35, 0.1, -0.1, -0.605, -0.605, -0.605]
-  majorAxis = [0.69, 0.6624, 0.11, 0.16, 0.21, 0.046, 0.046, 0.046, 0.023, 0.023]
-  minorAxis = [0.92, 0.874, 0.31, 0.41, 0.25, 0.046, 0.046, 0.023, 0.023, 0.046]
-  theta = [0, 0, -18.0, 18.0, 0, 0, 0, 0, 0, 0]
+    centerX = [0, 0, 0.22, -0.22, 0, 0, 0, -0.08, 0, 0.06]
+    centerY = [0, -0.0184, 0, 0, 0.35, 0.1, -0.1, -0.605, -0.605, -0.605]
+    majorAxis = [0.69, 0.6624, 0.11, 0.16, 0.21, 0.046, 0.046, 0.046, 0.023, 0.023]
+    minorAxis = [0.92, 0.874, 0.31, 0.41, 0.25, 0.046, 0.046, 0.023, 0.023, 0.046]
+    theta = [0, 0, -18.0, 18.0, 0, 0, 0, 0, 0, 0]
 
-  # original (CT) version of the phantom
-  grayLevel = [2, -0.98, -0.02, -0.02, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01]
+    # original (CT) version of the phantom
+    grayLevel = [2, -0.98, -0.02, -0.02, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01]
 
-  if(highContrast)
-    # high contrast (MRI) version of the phantom
-    grayLevel = [1, -0.8, -0.2, -0.2, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
-  end
+    if (highContrast)
+        # high contrast (MRI) version of the phantom
+        grayLevel = [1, -0.8, -0.2, -0.2, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
+    end
 
-  for l=1:length(theta)
-    P += grayLevel[l] * (
-           ( (cos(theta[l] / 360*2*pi) * (x .- centerX[l]) .+
-              sin(theta[l] / 360*2*pi) * (y .- centerY[l])) / majorAxis[l] ).^2 .+
-           ( (sin(theta[l] / 360*2*pi) * (x .- centerX[l]) .-
-              cos(theta[l] / 360*2*pi) * (y .- centerY[l])) / minorAxis[l] ).^2 .< 1 )
-  end
+    for l in 1:length(theta)
+        P +=
+            grayLevel[l] * (
+                ((cos(theta[l] / 360 * 2 * pi) * (x .- centerX[l]) .+
+                  sin(theta[l] / 360 * 2 * pi) * (y .- centerY[l])) / majorAxis[l]) .^ 2 .+
+                ((sin(theta[l] / 360 * 2 * pi) * (x .- centerX[l]) .-
+                  cos(theta[l] / 360 * 2 * pi) * (y .- centerY[l])) / minorAxis[l]) .^ 2 .< 1)
+    end
 
-  return P
+    return P
 end
 
-shepp_logan(N;highContrast=true) = shepp_logan(N,N;highContrast=highContrast)
+shepp_logan(N; highContrast=true) = shepp_logan(N, N; highContrast=highContrast)
 
 # `complement` is now moved to ColorVectorSpace but we still want to keep backward compatibility
 # until Images 1.0
 function ColorVectorSpace.complement(x::AbstractArray)
     Base.depwarn("`complement(img)` is deprecated, please use the broadcasting version `complement.(img)`", :complement)
-    complement.(x)
+    return complement.(x)
 end
 
 @deprecate forwarddiffx(X) ImageBase.FiniteDiff.fdiff(X, dims=2, boundary=:zero)
@@ -1089,8 +1162,11 @@ end
 
 # This is now replaced by ImageTransformations and Interpolations
 using ImageTransformations.Interpolations: BSpline, Linear, interpolate
-function bilinear_interpolation(img::AbstractArray{T,N}, xs::Vararg{<:Number, N}) where {T,N}
-    Base.depwarn("`bilinear_interpolation` is deprecated, please use `warp`, `imresize` from ImageTransformations or `extrapolate`, `interpolate` from Interpolations", :bilinear_interpolation)
+function bilinear_interpolation(img::AbstractArray{T,N}, xs::Vararg{<:Number,N}) where {T,N}
+    Base.depwarn(
+        "`bilinear_interpolation` is deprecated, please use `warp`, `imresize` from ImageTransformations or `extrapolate`, `interpolate` from Interpolations",
+        :bilinear_interpolation,
+    )
     pad_ax = map(axes(img), xs) do ax, x
         min(floor(Int, x), first(ax)):max(ceil(Int, x), last(ax))
     end
@@ -1103,52 +1179,67 @@ export bilinear_interpolation
 import ImageFiltering: findlocalmaxima, findlocalminima, blob_LoG
 dims2window(img, dims) = ntuple(d -> d ∈ dims ? 3 : 1, ndims(img))
 function find_depwarn(sym, dims, window, edges)
-    Base.depwarn("`$sym(img, $dims, $edges)` is deprecated, please use `$sym(img; window=$window, edges=$edges)`.\nSee the documentation for details about `window`.", sym)
+    return Base.depwarn(
+        "`$sym(img, $dims, $edges)` is deprecated, please use `$sym(img; window=$window, edges=$edges)`.\nSee the documentation for details about `window`.",
+        sym,
+    )
 end
 function findlocalmaxima(img::AbstractArray, region::Union{Tuple{Int,Vararg{Int}},Vector{Int},UnitRange{Int},Int}, edges=true)
     window = dims2window(img, region)
     find_depwarn(:findlocalmaxima, region, window, edges)
-    findlocalmaxima(img; window=window, edges=edges)
+    return findlocalmaxima(img; window=window, edges=edges)
 end
 function findlocalminima(img::AbstractArray, region::Union{Tuple{Int,Vararg{Int}},Vector{Int},UnitRange{Int},Int}, edges=true)
     window = dims2window(img, region)
     find_depwarn(:findlocalminima, region, window, edges)
-    findlocalminima(img; window=window, edges=edges)
+    return findlocalminima(img; window=window, edges=edges)
 end
 @deprecate blob_LoG(img::AbstractArray{T,N}, σscales::Union{AbstractVector,Tuple},
-                    edges::Union{Bool,Tuple{Vararg{Bool}}}, σshape=ntuple(d->1, Val(N))) where {T,N} blob_LoG(img, σscales; edges=edges, σshape=(σshape...,), rthresh=0)
-@deprecate blob_LoG(img::AbstractArray{T,N}, σscales::Union{AbstractVector,Tuple}, σshape::Union{AbstractVector,NTuple{N,Real}}) where {T,N}  blob_LoG(img, σscales; edges=(true, ntuple(d->false,Val(N))...), σshape=(σshape...,), rthresh=0)
+    edges::Union{Bool,Tuple{Vararg{Bool}}}, σshape=ntuple(d -> 1, Val(N))) where {T,N} blob_LoG(
+    img, σscales; edges=edges, σshape=(σshape...,), rthresh=0
+)
+@deprecate blob_LoG(img::AbstractArray{T,N}, σscales::Union{AbstractVector,Tuple}, σshape::Union{AbstractVector,NTuple{N,Real}}) where {T,N} blob_LoG(
+    img, σscales; edges=(true, ntuple(d -> false, Val(N))...), σshape=(σshape...,), rthresh=0
+)
 
 
 import Statistics: std, var
-@deprecate var(A::AbstractArray{C}; kwargs...) where C<:ColorVectorSpace.MathTypes varmult(⊙, A; kwargs...)
-@deprecate std(A::AbstractArray{C}; kwargs...) where C<:ColorVectorSpace.MathTypes stdmult(⊙, A; kwargs...)
+@deprecate var(A::AbstractArray{C}; kwargs...) where {C<:ColorVectorSpace.MathTypes} varmult(⊙, A; kwargs...)
+@deprecate std(A::AbstractArray{C}; kwargs...) where {C<:ColorVectorSpace.MathTypes} stdmult(⊙, A; kwargs...)
 # Doing stats on non-MathTypes is a bad idea
-function var(A::AbstractArray{C}; dims=nothing, kwargs...) where C<:Colorant
+function var(A::AbstractArray{C}; dims=nothing, kwargs...) where {C<:Colorant}
     dims === nothing || error("dims was never supported, but is now for MathTypes")
-    newdims = 2:ndims(A)+1
+    newdims = 2:(ndims(A) + 1)
     Cbase = base_colorant_type(C)
-    forced_depwarn("`var(A::AbstractArray{<:Colorant})` is deprecated (and not recommended, use a MathTypes colorspace instead), please use `colorview($Cbase, var(channelview(A); dims=$newdims))[]` instead.", :var)
+    forced_depwarn(
+        "`var(A::AbstractArray{<:Colorant})` is deprecated (and not recommended, use a MathTypes colorspace instead), please use `colorview($Cbase, var(channelview(A); dims=$newdims))[]` instead.",
+        :var,
+    )
     return colorview(Cbase, var(channelview(A); dims=newdims, kwargs...))[]
 end
-function std(A::AbstractArray{C}; dims=nothing, kwargs...) where C<:Colorant
+function std(A::AbstractArray{C}; dims=nothing, kwargs...) where {C<:Colorant}
     dims === nothing || error("dims was never supported, but is now for MathTypes")
-    newdims = 2:ndims(A)+1
+    newdims = 2:(ndims(A) + 1)
     Cbase = base_colorant_type(C)
-    forced_depwarn("`std(A::AbstractArray{<:Colorant})` is deprecated (and not recommended, use a MathTypes colorspace instead), please use `colorview($Cbase, std(channelview(A); dims=$newdims))[]` instead.", :var)
+    forced_depwarn(
+        "`std(A::AbstractArray{<:Colorant})` is deprecated (and not recommended, use a MathTypes colorspace instead), please use `colorview($Cbase, std(channelview(A); dims=$newdims))[]` instead.",
+        :var,
+    )
     return colorview(Cbase, std(channelview(A); dims=newdims, kwargs...))[]
 end
 
 # Integral arrays
 @deprecate integral_image(A) IntegralArray(A)
-@deprecate boxdiff(Ai::IntegralArray{T,2}, y::UnitRange, x::UnitRange) where T               Ai[first(y)..last(y), first(x)..last(x)]
-@deprecate boxdiff(Ai::IntegralArray{T,2}, tl::CartesianIndex, br::CartesianIndex) where T   Ai[tl[1]..br[1], tl[2]..br[2]]
-@deprecate boxdiff(Ai::IntegralArray{T,2}, tl_y::Integer, tl_x::Integer, br_y::Integer, br_x::Integer) where T  Ai[tl_y..br_y, tl_x..br_x]
+@deprecate boxdiff(Ai::IntegralArray{T,2}, y::UnitRange, x::UnitRange) where {T} Ai[first(y) .. last(y), first(x) .. last(x)]
+@deprecate boxdiff(Ai::IntegralArray{T,2}, tl::CartesianIndex, br::CartesianIndex) where {T} Ai[tl[1] .. br[1], tl[2] .. br[2]]
+@deprecate boxdiff(Ai::IntegralArray{T,2}, tl_y::Integer, tl_x::Integer, br_y::Integer, br_x::Integer) where {T} Ai[
+    tl_y .. br_y, tl_x .. br_x
+]
 
 
-function imaverage(filter_size=(3,3))
+function imaverage(filter_size=(3, 3))
     Base.depwarn("imaverage(m, n) is deprecated, use `Kernel.box` or an `IntegralImage`.", :imaverage)
-    Kernel.box(filter_size)
+    return Kernel.box(filter_size)
 end
 
 @deprecate imlaplacian(alpha::Number) Kernel.laplacian2d(alpha) false

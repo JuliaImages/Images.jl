@@ -3,14 +3,14 @@ macro test_approx_eq_sigma_eps(A, B, sigma, eps)
     quote
         if size($(esc(A))) != size($(esc(B)))
             error("Sizes ", size($(esc(A))), " and ",
-                  size($(esc(B))), " do not match")
+                size($(esc(B))), " do not match")
         end
         kern = KernelFactors.IIRGaussian($(esc(sigma)))
         Af = imfilter($(esc(A)), kern, NA())
         Bf = imfilter($(esc(B)), kern, NA())
         diffscale = max(_abs(maximum_finite(abs, $(esc(A)))), _abs(maximum_finite(abs, $(esc(B)))))
         d = sad(Af, Bf)
-        if d > length(Af)*diffscale*($(esc(eps)))
+        if d > length(Af) * diffscale * ($(esc(eps)))
             error("Arrays A and B differ")
         end
     end
@@ -22,9 +22,9 @@ end
 #   eps: error allowance
 # returns: percentage difference on match, error otherwise
 function test_approx_eq_sigma_eps(A::AbstractArray, B::AbstractArray,
-                         sigma::AbstractVector{T} = ones(ndims(A)),
-                         eps::AbstractFloat = 1e-2,
-                         expand_arrays::Bool = true) where T<:Real
+    sigma::AbstractVector{T}=ones(ndims(A)),
+    eps::AbstractFloat=1e-2,
+    expand_arrays::Bool=true) where {T<:Real}
     if size(A) != size(B)
         if expand_arrays
             newsize = map(max, size(A), size(B))
@@ -50,22 +50,22 @@ function test_approx_eq_sigma_eps(A::AbstractArray, B::AbstractArray,
     if diffpct > eps
         error("Arrays differ.  Difference: $diffpct  eps: $eps")
     end
-    diffpct
+    return diffpct
 end
 
 # This should be removed when upstream ImageBase is updated
 # In ImageBase v0.1.3: `maxabsfinite` returns a RGB instead of a Number
-_abs(c::CT) where CT<:Color = mapreducec(abs, +, zero(eltype(CT)), c)
+_abs(c::CT) where {CT<:Color} = mapreducec(abs, +, zero(eltype(CT)), c)
 _abs(c::Number) = abs(c)
 
 
-@inline function _clippedinds(Router,rstp)
-    CartesianIndices(map((f,l)->f:l,
-                         (first(Router)+rstp).I,(last(Router)-rstp).I))
+@inline function _clippedinds(Router, rstp)
+    return CartesianIndices(map((f, l) -> f:l,
+        (first(Router) + rstp).I, (last(Router) - rstp).I))
 end
 
-function imgaussiannoise(img::AbstractArray{T}, variance::Number, mean::Number) where T
-    return img + sqrt(variance)*randn(size(img)) + mean
+function imgaussiannoise(img::AbstractArray{T}, variance::Number, mean::Number) where {T}
+    return img + sqrt(variance) * randn(size(img)) + mean
 end
 
 imgaussiannoise(img::AbstractArray{T}, variance::Number) where {T} = imgaussiannoise(img, variance, 0)
@@ -83,8 +83,8 @@ by a factor `downsample` > 1 and `sigma` for the gaussian kernel.
 """
 function gaussian_pyramid(img::AbstractArray{T,N}, n_scales::Int, downsample::Real, sigma::Real) where {T,N}
     kerng = KernelFactors.IIRGaussian(sigma)
-    kern = ntuple(d->kerng, Val(N))
-    gaussian_pyramid(img, n_scales, downsample, kern)
+    kern = ntuple(d -> kerng, Val(N))
+    return gaussian_pyramid(img, n_scales, downsample, kern)
 end
 
 function gaussian_pyramid(img::AbstractArray{T,N}, n_scales::Int, downsample::Real, kern::NTuple{N,Any}) where {T,N}
@@ -106,19 +106,19 @@ function gaussian_pyramid(img::AbstractArray{T,N}, n_scales::Int, downsample::Re
         push!(pyramid, img_scaled)
         prev = img_scaled
     end
-    pyramid
+    return pyramid
 end
 
 function pyramid_scale(img, downsample)
-    sz_next = map(s->ceil(Int, s/downsample), size(img))
-    imresize(img, sz_next)
+    sz_next = map(s -> ceil(Int, s / downsample), size(img))
+    return imresize(img, sz_next)
 end
 
 function pyramid_scale(img::OffsetArray, downsample)
-    sz_next = map(s->ceil(Int, s/downsample), length.(axes(img)))
-#    off = (.-ceil.(Int,(.-iterate.(axes(img).-(1,1))[1])./downsample))
-    off = (.-ceil.(Int,(.-iterate.(map(x->UnitRange(x).-1,axes(img)))[1])./downsample))
-    OffsetArray(imresize(img, sz_next), off)
+    sz_next = map(s -> ceil(Int, s / downsample), length.(axes(img)))
+    #    off = (.-ceil.(Int,(.-iterate.(axes(img).-(1,1))[1])./downsample))
+    off = (.-ceil.(Int, (.-iterate.(map(x -> UnitRange(x) .- 1, axes(img)))[1]) ./ downsample))
+    return OffsetArray(imresize(img, sz_next), off)
 end
 
 """
@@ -134,33 +134,33 @@ Parameters:
 -    bins        = Number of bins used to compute the histogram. Needed for floating-point images.
 
 """
-function otsu_threshold(img::AbstractArray{T, N}, bins::Int = 256) where {T<:Union{Gray,Real}, N}
+function otsu_threshold(img::AbstractArray{T,N}, bins::Int=256) where {T<:Union{Gray,Real},N}
 
     min, max = extrema(img)
-    edges, counts = imhist(img, range(gray(min), stop=gray(max), length=bins))
-    histogram = counts./sum(counts)
+    edges, counts = imhist(img, range(gray(min); stop=gray(max), length=bins))
+    histogram = counts ./ sum(counts)
 
     ω0 = 0
     μ0 = 0
     μt = 0
-    μT = sum((1:(bins+1)).*histogram)
-    max_σb=0.0
-    thres=1
+    μT = sum((1:(bins + 1)) .* histogram)
+    max_σb = 0.0
+    thres = 1
 
     for t in 1:bins
         ω0 += histogram[t]
         ω1 = 1 - ω0
-        μt += t*histogram[t]
+        μt += t * histogram[t]
 
-        σb = (μT*ω0-μt)^2/(ω0*ω1)
+        σb = (μT * ω0 - μt)^2 / (ω0 * ω1)
 
-        if(σb > max_σb)
+        if (σb > max_σb)
             max_σb = σb
             thres = t
         end
     end
 
-    return T((edges[thres-1]+edges[thres])/2)
+    return T((edges[thres - 1] + edges[thres]) / 2)
 end
 
 """
@@ -179,24 +179,24 @@ Parameters:
 #Citation
 Yen J.C., Chang F.J., and Chang S. (1995) “A New Criterion for Automatic Multilevel Thresholding” IEEE Trans. on Image Processing, 4(3): 370-378. DOI:10.1109/83.366472
 """
-function yen_threshold(img::AbstractArray{T, N}, bins::Int = 256) where {T<:Union{Gray, Real}, N}
+function yen_threshold(img::AbstractArray{T,N}, bins::Int=256) where {T<:Union{Gray,Real},N}
 
     min, max = extrema(img)
-    if(min == max)
+    if (min == max)
         return T(min)
     end
 
-    edges, counts = imhist(img, range(gray(min), stop=gray(max), length=bins))
+    edges, counts = imhist(img, range(gray(min); stop=gray(max), length=bins))
 
-    prob_mass_function = counts./sum(counts)
-    clamp!(prob_mass_function,eps(),Inf)
-    prob_mass_function_sq = prob_mass_function.^2
+    prob_mass_function = counts ./ sum(counts)
+    clamp!(prob_mass_function, eps(), Inf)
+    prob_mass_function_sq = prob_mass_function .^ 2
     cum_pmf = cumsum(prob_mass_function)
     cum_pmf_sq_1 = cumsum(prob_mass_function_sq)
     cum_pmf_sq_2 = reverse!(cumsum(reverse!(prob_mass_function_sq)))
 
     #Equation (4) cited in the paper.
-    criterion = log.(((cum_pmf[1:end-1].*(1.0 .- cum_pmf[1:end-1])).^2) ./ (cum_pmf_sq_1[1:end-1].*cum_pmf_sq_2[2:end]))
+    criterion = log.(((cum_pmf[1:(end - 1)] .* (1.0 .- cum_pmf[1:(end - 1)])) .^ 2) ./ (cum_pmf_sq_1[1:(end - 1)] .* cum_pmf_sq_2[2:end]))
 
     thres = edges[findmax(criterion)[2]]
     return T(thres)
