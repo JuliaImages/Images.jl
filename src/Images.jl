@@ -62,15 +62,6 @@ export
     @test_approx_eq_sigma_eps,
 
     # algorithms
-    imcorner,
-    imcorner_subpixel,
-    corner2subpixel,
-    harris,
-    shi_tomasi,
-    kitchen_rosenfeld,
-    fastcorners,
-    meancovs,
-    gammacovs,
     imedge,  # TODO: deprecate?
     imgaussiannoise,
     otsu_threshold,
