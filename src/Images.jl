@@ -19,6 +19,7 @@ const is_little_endian = ENDIAN_BOM == 0x04030201 # CHECKME(johnnychen94): is th
 
 @reexport using ImageTransformations
 @reexport using ImageAxes
+@reexport using ImageCorners
 @reexport using ImageMetadata
 @reexport using ImageFiltering
 @reexport using ImageMorphology
@@ -50,7 +51,6 @@ include("misc.jl")
 include("labeledarrays.jl")
 include("algorithms.jl")
 include("deprecations.jl")
-include("corner.jl")
 include("edge.jl")
 
 export
