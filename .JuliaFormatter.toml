@@ -1,0 +1,14 @@
+style="blue"
+indent=4
+margin=140 # for most cases, let the devloper to wrap the lines manually
+whitespace_in_kwargs=false
+whitespace_ops_in_indices=true
+remove_extra_newlines=false
+trailing_comma=true
+always_for_in=true
+align_pair_arrow=true
+align_matrix=true
+align_assignment=true
+align_struct_field=true
+align_conditional=true
+join_lines_based_on_source=true

@@ -25,8 +25,8 @@
     end
 
     @testset "Restrict with vector dimensions" begin
-        imgcol = colorview(RGB, rand(3,5,6))
-        imgmeta = ImageMeta(imgcol, myprop=1)
+        imgcol = colorview(RGB, rand(3, 5, 6))
+        imgmeta = ImageMeta(imgcol; myprop=1)
         @test isa(restrict(imgmeta, [1, 2]), ImageMeta)
     end
 
@@ -65,7 +65,7 @@
         int_img = integral_image(a)
         @test all(int_img == a)
 
-        a = ones(10,10)
+        a = ones(10, 10)
         int_img = integral_image(a)
         chk = Array(1:10)
         @test all([vec(int_img[i, :]) == chk * i for i in 1:10])
@@ -91,7 +91,7 @@
 
         a = reshape(1:100, 10, 10)
         int_img = integral_image(a)
-        @test int_img[diagind(int_img)] == Array([1, 26,  108,  280,  575, 1026, 1666, 2528, 3645, 5050])
+        @test int_img[diagind(int_img)] == Array([1, 26, 108, 280, 575, 1026, 1666, 2528, 3645, 5050])
 
         int_sum = boxdiff(int_img, 1, 1, 3, 3)
         @test int_sum == 108

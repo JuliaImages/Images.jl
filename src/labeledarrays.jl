@@ -18,11 +18,15 @@ associated with that point's label.
 This computation is performed lazily, as to be suitable even for large arrays.
 """
 function ColorizedArray(intensity, label::IndirectArray{C,N}) where {C<:Colorant,N}
-    Base.depwarn("`ColorizedArray(intensity, label)` is deprecated, use `mappedarray(*, intensity, label)` from `MappedArrays` instead", :ColorizedArray)
+    Base.depwarn(
+        "`ColorizedArray(intensity, label)` is deprecated, use `mappedarray(*, intensity, label)` from `MappedArrays` instead",
+        :ColorizedArray,
+    )
 
-    axes(intensity) == axes(label) || throw(DimensionMismatch("intensity and label must have the same axes, got $(axes(intensity)) and $(axes(label))"))
-    CI = typeof(zero(C)*zero(eltype(intensity)))
-    ColorizedArray{CI,N,typeof(intensity),typeof(label)}(intensity, label)
+    axes(intensity) == axes(label) ||
+        throw(DimensionMismatch("intensity and label must have the same axes, got $(axes(intensity)) and $(axes(label))"))
+    CI = typeof(zero(C) * zero(eltype(intensity)))
+    return ColorizedArray{CI,N,typeof(intensity),typeof(label)}(intensity, label)
 end
 
 # TODO: an implementation involving AxisArray that matches the shared
@@ -38,11 +42,11 @@ Base.IndexStyle(::Type{CA}) where {CA<:ColorizedArray} = IndexStyle(IndexStyle(i
 
 @inline function Base.getindex(A::ColorizedArray, i::Integer)
     @boundscheck checkbounds(A, i)
-    @inbounds ret = A.intensity[i]*A.label[i]
-    ret
+    @inbounds ret = A.intensity[i] * A.label[i]
+    return ret
 end
 @inline function Base.getindex(A::ColorizedArray{C,N}, I::Vararg{Int,N}) where {C,N}
     @boundscheck checkbounds(A, I...)
-    @inbounds ret = A.intensity[I...]*A.label[I...]
-    ret
+    @inbounds ret = A.intensity[I...] * A.label[I...]
+    return ret
 end
