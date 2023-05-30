@@ -148,8 +148,8 @@ using Test, Images
             @test all(ids[i].coords .≈ corner_pts[i].coords)
         end
 
-        # User specifies percentile.
-        corner_pts = imcorner_subpixel(img, Percentile(98), method = harris)
+        # User specifies ImageCorners.Percentile.
+        corner_pts = imcorner_subpixel(img, ImageCorners.Percentile(98), method = harris)
         @test length(corner_pts) == length(ids)
         for i = 1:length(ids)
             @test all(ids[i].coords .≈ corner_pts[i].coords)
@@ -216,8 +216,8 @@ using Test, Images
                     @test all(ids[i].coords .≈ corner_pts_offset[i].coords)
                 end
 
-                # User specifies percentile.
-                corner_pts_offset = imcorner_subpixel(imgo, Percentile(98), method = harris)
+                # User specifies ImageCorners.Percentile.
+                corner_pts_offset = imcorner_subpixel(imgo, ImageCorners.Percentile(98), method = harris)
                 @test length(corner_pts_offset) == length(ids)
                 for i = 1:length(ids)
                     @test all(ids[i].coords .≈ corner_pts_offset[i].coords)
@@ -227,7 +227,7 @@ using Test, Images
     end
 
     @testset "Harris" begin
-    Ac = imcorner(A, Percentile(99), method = harris)
+    Ac = imcorner(A, ImageCorners.Percentile(99), method = harris)
     # check corners
     @test Ac[16,16]
     @test Ac[16,26]
@@ -262,7 +262,7 @@ using Test, Images
     end
 
     @testset "Shi-Tomasi" begin
-    Ac = imcorner(A, Percentile(99), method = shi_tomasi)
+    Ac = imcorner(A, ImageCorners.Percentile(99), method = shi_tomasi)
     # check corners
     @test Ac[16,16]
     @test Ac[16,26]
@@ -299,7 +299,7 @@ using Test, Images
     @testset "Kitchen-Rosenfeld" begin
     A[10:30, 10:30] .= 1
     A[15:25, 15:25] .= 0
-    Ac = imcorner(A, Percentile(99), method = kitchen_rosenfeld)
+    Ac = imcorner(A, ImageCorners.Percentile(99), method = kitchen_rosenfeld)
     @test Ac[10, 10]
     @test Ac[10, 30]
     @test Ac[30, 10]

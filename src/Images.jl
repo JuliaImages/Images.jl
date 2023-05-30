@@ -47,7 +47,6 @@ import FileIO: metadata
 import Graphics: Point
 
 include("compat.jl")
-include("misc.jl")
 include("labeledarrays.jl")
 include("algorithms.jl")
 include("deprecations.jl")
@@ -56,7 +55,6 @@ include("edge.jl")
 export
     # types
     ColorizedArray,
-    Percentile,
 
     # macros
     @test_approx_eq_sigma_eps,
