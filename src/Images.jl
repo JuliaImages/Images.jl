@@ -52,6 +52,7 @@ include("algorithms.jl")
 include("deprecations.jl")
 include("corner.jl")
 include("edge.jl")
+include("dftRegistration.jl")
 
 export
     # types
@@ -98,7 +99,13 @@ export
     gaussian_pyramid,
 
     # phantoms
-    shepp_logan
+    shepp_logan,
+
+    # DFT registration
+    dftReg,
+    alignFromDft,
+    subpixelshift
+
 
 """
 Images.jl is an "umbrella package" that exports a set of packages which are useful for
