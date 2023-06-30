@@ -389,15 +389,15 @@ Parameters :
 # Example
 
 ```julia
-imgedg = canny(img, (ImageCorners.Percentile(80), ImageCorners.Percentile(20)))
+imgedg = canny(img, (Percentile(80), Percentile(20)))
 ```
 """
-function canny(img_gray::AbstractMatrix{T}, threshold::Tuple{N,N}, sigma::Number = 1.4) where {T<:NumberLike, N<:Union{NumberLike,ImageCorners.Percentile{NumberLike}}}
+function canny(img_gray::AbstractMatrix{T}, threshold::Tuple{N,N}, sigma::Number = 1.4) where {T<:NumberLike, N<:Union{NumberLike,Percentile{NumberLike}}}
     img_grayf = imfilter(img_gray, KernelFactors.IIRGaussian((sigma,sigma)), NA())
     img_grad_y, img_grad_x = imgradients(img_grayf, KernelFactors.sobel)
     img_mag, img_phase = magnitude_phase(img_grad_x, img_grad_y)
     img_nonMaxSup = thin_edges_nonmaxsup(img_mag, img_phase)
-    if N<:ImageCorners.Percentile{}
+    if N<:Percentile{}
         upperThreshold ,lowerThreshold = StatsBase.percentile(img_nonMaxSup[:], [threshold[i].p for i=1:2])
     else
         upperThreshold, lowerThreshold = threshold
@@ -407,7 +407,7 @@ function canny(img_gray::AbstractMatrix{T}, threshold::Tuple{N,N}, sigma::Number
     edges
 end
 
-canny(img::AbstractMatrix, threshold::Tuple{N,N}, args...) where {N<:Union{NumberLike,ImageCorners.Percentile{NumberLike}}} =
+canny(img::AbstractMatrix, threshold::Tuple{N,N}, args...) where {N<:Union{NumberLike,Percentile{NumberLike}}} =
     canny(convert(Array{Gray}, img), args...)
 
 function hysteresis_thresholding(img_nonMaxSup::AbstractArray{T, 2}, upperThreshold::Number, lowerThreshold::Number) where T
