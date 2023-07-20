@@ -17,6 +17,7 @@ using IndirectArrays, ImageCore.MappedArrays
 
 const is_little_endian = ENDIAN_BOM == 0x04030201 # CHECKME(johnnychen94): is this still used?
 
+@reexport using ImageBinarization
 @reexport using ImageTransformations
 @reexport using ImageAxes
 @reexport using ImageMetadata

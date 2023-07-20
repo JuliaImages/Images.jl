@@ -37,7 +37,7 @@ eye(m,n) = Matrix{Float64}(I,m,n)
         img = reinterpret(Gray{N0f8}, [0x00,0x40,0x80,0xd0])
         @test imhist(img, 5) == (0.0:0.2:1.0,[0,1,1,1,0,1,0])
         img = reinterpret(Gray{N0f8}, [0x00,0x40,0x80,0xff])
-        @test imhist(img, 6) == (0.0:0.2:1.2,[0,1,1,1,0,0,1,0])
+        @test all((≈).(imhist(img, 6), (0.0:0.2:1.2,[0,1,1,1,0,0,1,0])))
 
         # Consider an image where each intensity occurs only once and vary the number
         # of bins used in the histogram in powers of two. With the exception of the
