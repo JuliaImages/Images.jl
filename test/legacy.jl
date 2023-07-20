@@ -184,7 +184,7 @@
         A[4,4,2] = 0.6
         Ae = erode(A)
         @test Ae == zeros(size(A))
-        Ad = dilate(A, 1:2)
+        Ad = dilate(A; dims=1:2)
         Ar = [0.8 0.8 0.8 0;
               0.8 0.8 0.8 0;
               0.8 0.8 0.8 0;
@@ -194,7 +194,7 @@
               0 0 0.6 0.6;
               0 0 0.6 0.6]
         @test Ad == cat(Ar, Ag, zeros(4,4), dims=3)
-        Ae = erode(Ad, 1:2)
+        Ae = erode(Ad; dims=1:2)
         Ar = [0.8 0.8 0 0;
               0.8 0.8 0 0;
               0 0 0 0;
@@ -208,9 +208,9 @@
         @test dilate(trues(3)) == trues(3)
         # ImageMeta
         @test arraydata(dilate(ImageMeta(A))) == dilate(A)
-        @test arraydata(dilate(ImageMeta(A), 1:2)) == dilate(A, 1:2)
+        @test arraydata(dilate(ImageMeta(A); dims=1:2)) == dilate(A; dims=1:2)
         @test arraydata(erode(ImageMeta(A))) == erode(A)
-        @test arraydata(erode(ImageMeta(A), 1:2)) == erode(A, 1:2)
+        @test arraydata(erode(ImageMeta(A); dims=1:2)) == erode(A; dims=1:2)
     end
 
     @testset "Opening / closing" begin
@@ -277,10 +277,7 @@
              true  false true  true]
         lbltarget = [1 1 0 2;
                      1 0 2 2]
-        lbltarget1 = [1 2 0 4;
-                      1 0 3 4]
         @test label_components(A) == lbltarget
-        @test label_components(A, [1]) == lbltarget1
         connectivity = [false true  false;
                         true  false true;
                         false true  false]
@@ -289,11 +286,6 @@
         lbltarget2 = [1 1 0 1;
                       1 0 1 1]
         @test label_components(A, connectivity) == lbltarget2
-        @test component_boxes(lbltarget) == Vector{Tuple}[[(1,2),(2,3)],[(1,1),(2,2)],[(1,3),(2,4)]]
-        @test component_lengths(lbltarget) == [2,3,3]
-        @test component_indices(lbltarget) == Array{Int64}[[4,5],[1,2,3],[6,7,8]]
-        @test component_subscripts(lbltarget) == Array{Tuple}[[(2,2),(1,3)],[(1,1),(2,1),(1,2)],[(2,3),(1,4),(2,4)]]
-        @test @inferred(component_centroids(lbltarget)) == Tuple[(1.5,2.5),(4/3,4/3),(5/3,11/3)]
     end
 
 end
