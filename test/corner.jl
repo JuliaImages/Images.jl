@@ -148,7 +148,7 @@ using Test, Images
             @test all(ids[i].coords .≈ corner_pts[i].coords)
         end
 
-        # User specifies percentile.
+        # User specifies Percentile.
         corner_pts = imcorner_subpixel(img, Percentile(98), method = harris)
         @test length(corner_pts) == length(ids)
         for i = 1:length(ids)
@@ -216,7 +216,7 @@ using Test, Images
                     @test all(ids[i].coords .≈ corner_pts_offset[i].coords)
                 end
 
-                # User specifies percentile.
+                # User specifies Percentile.
                 corner_pts_offset = imcorner_subpixel(imgo, Percentile(98), method = harris)
                 @test length(corner_pts_offset) == length(ids)
                 for i = 1:length(ids)
@@ -383,5 +383,3 @@ using Test, Images
     end
 
 end
-
-nothing

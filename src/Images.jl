@@ -20,6 +20,7 @@ const is_little_endian = ENDIAN_BOM == 0x04030201 # CHECKME(johnnychen94): is th
 @reexport using ImageBinarization
 @reexport using ImageTransformations
 @reexport using ImageAxes
+@reexport using ImageCorners
 @reexport using ImageMetadata
 @reexport using ImageFiltering
 @reexport using ImageMorphology
@@ -47,31 +48,19 @@ import FileIO: metadata
 import Graphics: Point
 
 include("compat.jl")
-include("misc.jl")
 include("labeledarrays.jl")
 include("algorithms.jl")
 include("deprecations.jl")
-include("corner.jl")
 include("edge.jl")
 
 export
     # types
     ColorizedArray,
-    Percentile,
 
     # macros
     @test_approx_eq_sigma_eps,
 
     # algorithms
-    imcorner,
-    imcorner_subpixel,
-    corner2subpixel,
-    harris,
-    shi_tomasi,
-    kitchen_rosenfeld,
-    fastcorners,
-    meancovs,
-    gammacovs,
     imedge,  # TODO: deprecate?
     imgaussiannoise,
     otsu_threshold,
