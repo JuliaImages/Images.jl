@@ -2,6 +2,14 @@
 
 For the full changes, please check the git history and the [release page](https://github.com/JuliaImages/Images.jl/releases)
 
+# v0.26
+
+- ![BREAKING][badge-breaking] Update to [ImageMorphology 0.4](https://github.com/JuliaImages/ImageMorphology.jl/blob/master/CHANGELOG.md#version-v040), a major upgrade compared to v0.3.
+- ![BREAKING][badge-breaking] Update to [ImageCore 0.10](https://github.com/JuliaImages/ImageCore.jl/blob/master/NEWS.md#0100) which has minor breaking changes in `clamp01` and `abs2` (via [ColorVectorSpace](https://github.com/JuliaGraphics/ColorVectorSpace.jl#abs-and-abs2)).
+- ![Feature][badge-feature] Add [ImageBinarization](https://github.com/JuliaImages/ImageBinarization.jl), which contributes many new options for binarization compared to previous releases of Images.
+- ![Maintenance][badge-maintenance] As part of the ongoing work to make Images.jl purely a "meta package" that bundles functionality from focused packages, migrate corner-related algorithms to [ImageCorners](https://github.com/JuliaImages/ImageCorners.jl).
+
+
 # v0.25
 
 This release introduces a few major changes that everyone should be aware of:
