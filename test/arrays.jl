@@ -4,29 +4,26 @@ using Images.MappedArrays: mappedarray
 @testset "ColorizedArray" begin
     intensity = [0.1 0.3; 0.2 0.4]
     labels = IndirectArray([1 2; 2 1], [RGB(1,0,0), RGB(0,0,1)])
-    colorized_A = @suppress_err ColorizedArray(intensity, labels)
-    mapped_A = mappedarray(*, intensity, labels)
+    A = mappedarray(*, intensity, labels)
 
     target = intensity .* labels
 
-    for A in (colorized_A, mapped_A)
-        @test eltype(A) == RGB{Float64}
-        @test size(A) == (2,2)
-        @test axes(A) == (Base.OneTo(2), Base.OneTo(2))
-        for i = 1:4
-            @test A[i] === target[i]
-        end
-        for j = 1:2, i = 1:2
-            @test A[i,j] === target[i,j]
-        end
-        for (a,t) in zip(A, target)
-            @test a === t
-        end
+    @test eltype(A) == RGB{Float64}
+    @test size(A) == (2,2)
+    @test axes(A) == (Base.OneTo(2), Base.OneTo(2))
+    for i = 1:4
+        @test A[i] === target[i]
+    end
+    for j = 1:2, i = 1:2
+        @test A[i,j] === target[i,j]
+    end
+    for (a,t) in zip(A, target)
+        @test a === t
     end
 
-    intensity1 = [0.1 0.3 0.6; 0.2 0.4 0.1]
+   intensity1 = [0.1 0.3 0.6; 0.2 0.4 0.1]
    labels1 = IndirectArray([1 2 3; 2 1 3], [RGB(1,0,0), RGB(0,0,1),RGB(0,1,0)])
-   A1 = @suppress_err ColorizedArray(intensity1, labels1)
+   A1 = mappedarray(*, intensity1, labels1)
    target1 = intensity1 .* labels1
    @test eltype(A1) == RGB{Float64}
    @test size(A1) == (2,3)
