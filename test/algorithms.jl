@@ -9,7 +9,7 @@ using ImageBase.FiniteDiff: fdiff
         for T in (N0f8, Float32)
             A = rand(RGB{T}, 5, 4)
             Ac = channelview(A)
-            s = @suppress_err std(A)
+            s = stdmult(⊙, A)
             @test red(s) ≈ std(Ac[1,:,:])
             @test green(s) ≈ std(Ac[2,:,:])
             @test blue(s) ≈ std(Ac[3,:,:])
@@ -99,40 +99,15 @@ using ImageBase.FiniteDiff: fdiff
         @test img2 ≈ A
     end
 
-
-    # deprecated
-    @suppress_err @testset "Phantoms" begin
-        P = [ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0;
-              0.0  0.0  1.0  0.2  0.2  1.0  0.0  0.0;
-              0.0  0.0  0.2  0.3  0.3  0.2  0.0  0.0;
-              0.0  0.0  0.2  0.0  0.2  0.2  0.0  0.0;
-              0.0  0.0  0.2  0.0  0.0  0.2  0.0  0.0;
-              0.0  0.0  0.2  0.2  0.2  0.2  0.0  0.0;
-              0.0  0.0  1.0  0.2  0.2  1.0  0.0  0.0;
-              0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0 ]
-        Q = Images.shepp_logan(8)
-        @test norm((P-Q)[:]) < 1e-10
-        P = [ 0.0  0.0  0.0   0.0   0.0   0.0   0.0  0.0;
-              0.0  0.0  2.0   1.02  1.02  2.0   0.0  0.0;
-              0.0  0.0  1.02  1.03  1.03  1.02  0.0  0.0;
-              0.0  0.0  1.02  1.0   1.02  1.02  0.0  0.0;
-              0.0  0.0  1.02  1.0   1.0   1.02  0.0  0.0;
-              0.0  0.0  1.02  1.02  1.02  1.02  0.0  0.0;
-              0.0  0.0  2.0   1.02  1.02  2.0   0.0  0.0;
-              0.0  0.0  0.0   0.0   0.0   0.0   0.0  0.0 ]
-        Q = Images.shepp_logan(8, highContrast=false)
-        @test norm((P-Q)[:]) < 1e-10
-    end
-
     # functionality moved to ImageTransformations
     # tests are here as well to make sure everything
     # is exported properly.
     @testset "Image resize" begin
         img = zeros(10,10)
-        img2 = Images.imresize(img, (5,5))
+        img2 = imresize(img, (5,5))
         @test length(img2) == 25
         img = rand(RGB{Float32}, 10, 10)
-        img2 = Images.imresize(img, (6,7))
+        img2 = imresize(img, (6,7))
         @test size(img2) == (6,7)
         @test eltype(img2) == RGB{Float32}
     end
@@ -174,69 +149,6 @@ using ImageBase.FiniteDiff: fdiff
         @test sort(B)==sort(C)
     end
 
-    # deprecated
-    @suppress_err @testset "Thresholding" begin
-
-        #otsu_threshold
-        img = testimage("cameraman")
-        thres = otsu_threshold(img)
-        @test typeof(thres) == eltype(img)
-        @test ≈(gray(thres), convert(N0f8, 87/256), atol=eps(N0f8))
-        thres = otsu_threshold(img, 512)
-        @test typeof(thres) == eltype(img)
-        @test ≈(gray(thres), convert(N0f8, 87/256), atol=eps(N0f8))
-
-        img = map(x->convert(Gray{Float64}, x), img)
-        thres = otsu_threshold(img)
-        @test typeof(thres) == eltype(img)
-        @test ≈(gray(thres), 87/256, atol=0.01)
-        thres = otsu_threshold(img, 512)
-        @test typeof(thres) == eltype(img)
-        @test ≈(gray(thres), 87/256, atol=0.01)
-
-        img = map(x->convert(Float64, x), img)
-        thres = otsu_threshold(img)
-        @test typeof(thres) == eltype(img)
-        @test ≈(gray(thres), 87/256, atol=0.01)
-        thres = otsu_threshold(img, 512)
-        @test typeof(thres) == eltype(img)
-        @test ≈(gray(thres), 87/256, atol=0.01)
-
-        #test for multidimension arrays
-        img = rand(Float64, 10, 10, 3)
-        @test otsu_threshold(img) == otsu_threshold(cat(img[:,:,1], img[:,:,2], img[:,:,3], dims=1))
-
-        #yen_threshold
-        img = testimage("cameraman")
-        thres = yen_threshold(img)
-        @test typeof(thres) == eltype(img)
-        @test ≈(gray(thres), convert(N0f8, 199/256), atol=eps(N0f8))
-        thres = yen_threshold(img, 512)
-        @test typeof(thres) == eltype(img)
-        @test ≈(gray(thres), convert(N0f8, 199/256), atol=eps(N0f8))
-
-        img = map(x->convert(Gray{Float64}, x), img)
-        thres = yen_threshold(img)
-        @test typeof(thres) == eltype(img)
-        @test ≈(gray(thres), 199/256, atol=0.01)
-        thres = yen_threshold(img, 512)
-        @test typeof(thres) == eltype(img)
-        @test ≈(gray(thres), 199/256, atol=0.01)
-
-        img = map(x->convert(Float64, x), img)
-        thres = yen_threshold(img)
-        @test typeof(thres) == eltype(img)
-        @test ≈(gray(thres), 199/256, atol=0.01)
-        thres = yen_threshold(img, 512)
-        @test typeof(thres) == eltype(img)
-        @test ≈(gray(thres), 199/256, atol=0.01)
-
-        img = rand(Float64, 10, 10, 3)
-        @test yen_threshold(img) == yen_threshold(cat(img[:,:,1], img[:,:,2], img[:,:,3], dims=1))
-
-        img = zeros(Gray{Float64},10,10,3)
-        @test yen_threshold(img) == 0
-    end
 end
 
 nothing

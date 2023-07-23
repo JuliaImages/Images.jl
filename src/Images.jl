@@ -48,33 +48,17 @@ import FileIO: metadata
 import Graphics: Point
 
 include("compat.jl")
-include("labeledarrays.jl")
 include("algorithms.jl")
 include("deprecations.jl")
 include("edge.jl")
 
 export
-    # types
-    ColorizedArray,
-
     # macros
     @test_approx_eq_sigma_eps,
 
     # algorithms
     imedge,  # TODO: deprecate?
     imgaussiannoise,
-    otsu_threshold,
-    yen_threshold,
-
-    #Exposure
-    imhist,
-    histeq,
-    adjust_gamma,
-    histmatch,
-    clahe,
-    imadjustintensity,
-    imstretch,
-    cliphist,
 
     magnitude,
     magnitude_phase,
@@ -85,10 +69,8 @@ export
     thin_edges_nonmaxsup,
     thin_edges_nonmaxsup_subpix,
     canny,
-    gaussian_pyramid,
+    gaussian_pyramid
 
-    # phantoms
-    shepp_logan
 
 """
 Images.jl is an "umbrella package" that exports a set of packages which are useful for

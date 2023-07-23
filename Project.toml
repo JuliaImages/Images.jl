@@ -38,7 +38,7 @@ Graphics = "0.4, 1.0"
 ImageAxes = "0.6.9"
 ImageBase = "0.1.5"
 ImageBinarization = "0.2, 0.3"
-ImageContrastAdjustment = "0.3.3"
+ImageContrastAdjustment = "0.3.12"
 ImageCore = "0.9.3, 0.10"
 ImageCorners = "0.1.2"
 ImageDistances = "0.2.5"
@@ -61,6 +61,7 @@ TiledIteration = "0.2, 0.3, 0.4, 0.5"
 julia = "1.6"
 
 [extras]
+Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
 FFTW = "7a1cc6ca-52ef-59f5-83cd-3a7055c09341"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
@@ -69,4 +70,4 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 TestImages = "5e47fb64-e119-507b-a336-dd2b206d9990"
 
 [targets]
-test = ["FFTW", "LinearAlgebra", "Random", "Suppressor", "Test", "TestImages"]
+test = ["Aqua", "FFTW", "LinearAlgebra", "Random", "Suppressor", "Test", "TestImages"]
