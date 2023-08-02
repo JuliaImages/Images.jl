@@ -33,7 +33,7 @@ All participants are expected to abide by the [Julia Community Standards](https:
 
 ## Compatibility
 
-The codebase and dependency of Images toolbox is delibrately maintained to support all Julia minor
+The codebase and dependency of Images toolbox is deliberately maintained to support all Julia minor
 versions since the latest long-term-support(LTS) Julia version, thus you can expect it to work on
 Julia >= v1.6. Note that this is only true for the latest Images version, and currently we do not
 have Images LTS version. For the best experience, we recommend you to use the latest stable Julia
