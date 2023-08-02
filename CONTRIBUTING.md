@@ -10,7 +10,7 @@ A pre-requisite for using JuliaImages is to know at least a little about Julia i
 
 ## Learning JuliaImages
 
-Our [main documentaion](https://juliaimages.org/stable/) provides an overview and some examples of using JuliaImages.
+Our [main documentation](https://juliaimages.org/stable/) provides an overview and some examples of using JuliaImages.
 Many of the core packages are hosted at [JuliaImages](https://github.com/JuliaImages), but core components can also be found at [JuliaMath](https://github.com/JuliaMath), [JuliaGraphics](https://github.com/JuliaGraphics), and
 [JuliaArrays](https://github.com/JuliaArrays).
 

@@ -16,9 +16,9 @@ This release introduces a few major changes that everyone should be aware of:
 
 - drops compatibility to Julia 1.0. Julia at least 1.3 is required.
 - drops compatibility to ImageCore 0.8. ImageCore at least 0.9.3 is required.
-- revisited RGB-related operations to provide non-ambiguious implementation. See also the "abs and
+- revisited RGB-related operations to provide non-ambiguous implementation. See also the "abs and
   abs2" section in the [ColorVectorSpace README][ColorVectorSpace-v09-readme-abs].
-- revisits and moves a lot of legacy codes in `src/algorthms.jl` of Images to sub-packages, e.g.,
+- revisits and moves a lot of legacy codes in `src/algorithms.jl` of Images to sub-packages, e.g.,
   ImageBase, ImageFiltering, and ImageMorphology.
 - for a large number of legacy functions, positional arguments are deprecated in favor of their
   keyword alternatives.
