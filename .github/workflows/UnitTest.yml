@@ -25,7 +25,6 @@ jobs:
           - macOS-14 # arm
         arch:
           - x64
-          - x86
           - aarch64
         exclude:
           - os: ubuntu-latest
@@ -33,11 +32,7 @@ jobs:
           - os: windows-latest
             arch: aarch64
           - os: macOS-13
-            arch: x86
-          - os: macOS-13
             arch: aarch64
-          - os: macOS-14
-            arch: x86
           - os: macOS-14
             arch: x64
           - os: macOS-14
