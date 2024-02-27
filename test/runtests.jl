@@ -11,7 +11,7 @@ using Aqua
                   ambiguities=false,         # TODO? fix ambiguities? (may not be easy/possible) Currently 14 ambiguities
                   undefined_exports=false,   # TODO: remove `data` export from ImageMetadata
                   stale_deps=false,          # ImageMagick and ImageIO are not loaded
-                  piracy=false,              # TODO: fix piracy of `zero(Point)` in edges.jl
+                  piracies=false,            # TODO: fix piracy of `zero(Point)` in edges.jl
                   )
 end
 

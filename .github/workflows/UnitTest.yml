@@ -14,32 +14,44 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        julia-version: ['1.6', '1', 'nightly']
-        os: [ubuntu-latest]
-        arch: [x64]
-        include:
+        version:
+          - '1.6'
+          - '1'
+          - 'nightly'
+        os:
+          - ubuntu-latest
+          - windows-latest
+          - macOS-13 # intel
+          - macOS-14 # arm
+        arch:
+          - x64
+          - aarch64
+        exclude:
+          - os: ubuntu-latest
+            arch: aarch64
           - os: windows-latest
-            julia-version: '1'
+            arch: aarch64
+          - os: macOS-13
+            arch: aarch64
+          - os: macOS-14
             arch: x64
-          - os: macOS-latest
-            julia-version: '1'
-            arch: x64
-
+          - os: macOS-14
+            version: '1.6'
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: "Set up Julia"
         uses: julia-actions/setup-julia@v1
         with:
-          version: ${{ matrix.julia-version }}
+          version: ${{ matrix.version }}
           arch: ${{ matrix.arch }}
 
       - name: Cache artifacts
-        uses: actions/cache@v1
+        uses: actions/cache@v4
         env:
           cache-name: cache-artifacts
         with:
-          path: ~/.julia/artifacts 
+          path: ~/.julia/artifacts
           key: ${{ runner.os }}-test-${{ env.cache-name }}-${{ hashFiles('**/Project.toml') }}
           restore-keys: |
             ${{ runner.os }}-test-${{ env.cache-name }}-
@@ -49,6 +61,7 @@ jobs:
         uses: julia-actions/julia-runtest@master
 
       - uses: julia-actions/julia-processcoverage@v1
-      - uses: codecov/codecov-action@v1
+      - uses: codecov/codecov-action@v4
         with:
           file: lcov.info
+          token: ${{ secrets.CODECOV_TOKEN }}
