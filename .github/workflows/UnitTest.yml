@@ -15,28 +15,26 @@ jobs:
       fail-fast: false
       matrix:
         version:
-          - '1.6'
-          - '1'
-          - 'nightly'
+          - '1'    # Current stable version
         os:
           - ubuntu-latest
           - windows-latest
-          - macOS-13 # intel
-          - macOS-14 # arm
+          - macOS-latest
         arch:
           - x64
-          - aarch64
-        exclude:
+        include:
+          - os: macOS-14
+            arch: aarch64
+            version: '1'
           - os: ubuntu-latest
-            arch: aarch64
-          - os: windows-latest
-            arch: aarch64
-          - os: macOS-13
-            arch: aarch64
-          - os: macOS-14
+            arch: x86
+            version: '1'
+          - os: ubuntu-latest
             arch: x64
-          - os: macOS-14
             version: '1.6'
+          - os: ubuntu-latest
+            arch: x64
+            version: 'nightly'
 
     steps:
       - uses: actions/checkout@v4
