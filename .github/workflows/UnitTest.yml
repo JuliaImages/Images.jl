@@ -23,7 +23,7 @@ jobs:
         arch:
           - x64
         include:
-          - os: macOS-14
+          - os: macOS-latest
             arch: aarch64
             version: '1'
           - os: ubuntu-latest
@@ -31,7 +31,7 @@ jobs:
             version: '1'
           - os: ubuntu-latest
             arch: x64
-            version: '1.6'
+            version: 'min'
           - os: ubuntu-latest
             arch: x64
             version: 'nightly'
