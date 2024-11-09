@@ -304,7 +304,7 @@ eye(m,n) = Matrix{Float64}(I,m,n)
 
         imgp = padarray(img, Fill(zero(eltype(img)), (2,2)))
         retp = adjust_histogram(imgp, GammaCorrection(; gamma=1))
-        @test_broken imgp == retp
+        @test imgp == retp
 
         img = reshape(1:1:100, 10, 10)
         ret = adjust_histogram(img, GammaCorrection(; gamma=2))
